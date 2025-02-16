@@ -18,6 +18,16 @@ const { fetchGamesFromApi, getGamesByCategory, addGame } = require('../Controlle
 const Refresh_blance = require('../Controllers/Refresh_blance');
 const { loadBalance } = require('../Controllers/LenchGameApiController');
 const  LoginService  = require('../Services/LoginService');
+const FrontCetegoryController = require('../Controllers/FrontCetegoryController');
+// const Promotion = require('../Models/PromotionSchema');
+const PromotionController = require('../Controllers/PromotionController');
+const AuthVerifyMiddleWare = require('../MiddleWare/AuthVerifyMiddleWare');
+
+
+
+router.get('/odds-sync',AdminController.SyncOdds)
+
+
 
 
 // Admin Route
@@ -25,9 +35,9 @@ const  LoginService  = require('../Services/LoginService');
 
 
 router.post('/createUser', CreateUserService.register);
-router.post('/login', CreateUserService.loginUser);
-router.post('/update-name',authMiddleware, UpdateProfile.updateName);
-router.post('/update-birthday',authMiddleware, UpdateProfile.verifyBirthday);
+router.post('/login_user', CreateUserService.loginUser);
+router.post('/update-name', UpdateProfile.updateName);
+router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
 router.get('/send-otp', UpdateProfile.VerifyOpt);
 router.get('/verify-email', UpdateProfile.SandOpt);
@@ -43,9 +53,10 @@ router.get('/verify-email', UpdateProfile.SandOpt);
 
 
 
-router.get('/', (req, res) => {
-  res.send("IT'S router WORKING!");
-});
+
+// router.get('/', (req, res) => {
+//   res.send("IT'S router WORKING!");
+// });
 
 
 
@@ -81,27 +92,59 @@ router.post("/bank_add", AdminController.AddBank)
 
 
 
+// 
+
+// router.post('/set-create-promotion',PromotionController.setCreatePromotion) ;
 
 
-router.get("/sports-list",ModelBettingController.Sports_list);
+
+
+//game font
+router.post("/assign-category",FrontCetegoryController.assignCategory)
+router.get("/categories",FrontCetegoryController.GetFontCategories) 
+router.get("/games", FrontCetegoryController.GetFontGames)
+
+// Admin Game Page
+
+// router.get("/sports-list",ModelBettingController.Sports_list);
 // router.post('/add-sports',AdminController.AddSportsBetting);
+router.get('/search',ModelBettingController.searchGames)
 router.post('/casino_item_add', ModelBettingController.CasinoItemAdd)
+router.post('/create-category', ModelBettingController.CreateCategory)
+router.post('/casino_item_update', ModelBettingController.CasinoItemSingleUpdate)
+router.get('/get-all-category', ModelBettingController.GetAllCategory)
 router.get('/games/:id', ModelBettingController.ShowGameListById)
-router.get('/user_balance',Refresh_blance.refreshBalance)
+router.get('/get_all_provider', ModelBettingController.GetAllProvider)
+router.post('/user_balance',Refresh_blance.refreshBalance)
 router.get('/user-history/:id',ModelBettingController.UserHistory)
+router.post("/launch_game", ModelBettingController.launchGame);
+router.post("/game-update-serial", ModelBettingController.updateSerialNumber);
+router.post("/game-update-category", ModelBettingController.updateCategoryGameByID);
+router.get("/New-table-categories", ModelBettingController.getCategoriesWithGamesAndProviders);
+router.get("/New-table-Games-with-Providers", ModelBettingController.getCategoriesWithProviders);
+router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCategoriesWithProvidersGameList);
+
+
+
+
+
+
+
+
 // router.get('/user_blance_his',Refresh_blance.fetchBalance)
 
 
 // router.get('/games/:id', ModelBettingController.ShowGameListById);
-router.post("/launch_game", ModelBettingController.launchGame);
+
 
 
 // router.get('/games', ModelBettingController.GetGameList);
 
 
 router.post('/betting',Controllers.Betting);
+
 router.post('/odds_event',Controllers.OddEvents);
-router.get('/category_sports',ModelBettingController.Category);
+// router.get('/category_sports',ModelBettingController.Category);
 router.put('/update-sports/:id', AdminController.UpdateSportsBettingCategory)
 // router.get('/sports',AdminController.GetSports);
 router.get('/casino',AdminController.GetCasino);
@@ -111,11 +154,13 @@ router.put('/updat-status-type',AdminController.UpdateStatusType);
 // router.put('/updat-provider-status',AdminController.UpdateStatusProvider);
 // router.put('/updat-provider-status',AdminController.UpdateStatusProvider);
 router.post('/add-ports',AdminController.AddSports);
-router.post('/modal_data',ModelBettingController.Modal);
+// router.post('/modal_data',ModelBettingController.Modal);
 // router.get('/sync-casino-info',AdminController.syncCasinoInfo);
 // router.post('/update-game-type',AdminController.UpdateGameType);
 // router.post('/delete-game-type/:id',AdminController.DeleteGameType);
 router.get('/api/sports',AdminController.GetSportsCategories);
+
+router.get('/GateAllGames',AdminController.GateAllGames);
 router.post('/sports_category_add',AdminController.Category_Add);
 router.get('/get_sub_category/:cat_id',AdminController.GetSubcategoryById)
 // router.get('/odds-sync',AdminController.OddSynrouter)

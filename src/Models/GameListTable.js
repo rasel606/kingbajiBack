@@ -15,7 +15,9 @@ const GameListTableSchema = new mongoose.Schema({
     gameName_zhtw: String
   },
   imgFileName: String,
-  category_name: { type: String},
+  category_name: { type: String,ref: 'Category'},
+  serial_number: { type: Number,unique: true},
+ 
   
   // image_url: { type: Boolean, default: true },
   is_active: { type: Boolean, default: true },

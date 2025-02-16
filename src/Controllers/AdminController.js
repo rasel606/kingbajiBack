@@ -483,10 +483,12 @@ exports.oddsBetting = async (req, res) => {
 //router.get('/odds-sync'
 
 exports.SyncOdds = async (req, res) => {
+
   try {
-    const response = await axios.get(`https://api.the-odds-api.com/v4/sports/?apiKey=${getApiKey()}`);
+    const response = await axios.get(`https://api.the-odds-api.com/v4/sports/?apiKey=	
+8c3ea523d47df9099d369920dddd1841`);
     const data = response.data;
-    
+    console.log( data )
     // Clear current data from the database
     await SportsBet.deleteMany({});
 
@@ -724,3 +726,12 @@ exports.UpdateSportsBettingCategory = async (req, res) => {
     res.status(500).json({ return: false, message: error.message });
   }
 }
+
+exports.GateAllGames = async (req, res) => {
+  try {
+    const games = await GameListTable.find({ is_active: true, is_hot: true });
+    res.json(games);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

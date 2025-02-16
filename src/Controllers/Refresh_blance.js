@@ -6,190 +6,6 @@ const GameTable = require('../Models/GamesTable');
 const BetProviderTable = require('../Models/BetProviderTable');
 const { default: axios } = require('axios');
 
-
-
-
-
-
-
-async function fetchApi(endpoint, data) {
-    try {
-        // Simulated API call for transactions
-        const response = await axios.post(`http://fetch.336699bet.com/${endpoint}`, data);
-        return response.data;
-    } catch (error) {
-        console.error("Error fetching API:", error);
-        return { errCode: 2, errMsg: "API error" };
-    }
-}
-
-
-// exports.fetchBalance = async (agentID, userName)=> {
-//     console.log(agentID, userName)
-
-//     // Fetch the agent details from MongoDB
-//     const agent = await BetProviderTable.findOne(agentID);
-//     if (!agent) {
-//         return 0; // Return 0 if agent is not found
-//     }
-
-//     console.log(agentID, userName)
-
-//     // Making the API call
-//     try {
-
-//       const signatureLunchGame = generateSignatureBlance(
-//         agent.operatorcode,
-//         agent.auth_pass,
-//         agent.providercode,
-//         userName,
-//         agent.key
-
-
-//       )
-
-//       console.log(signatureLunchGame);
-//         const response = await axios.get('http://fetch.336699bet.com/getBalance.aspx', {
-//             params: {
-//                 operatorcode: agent.operatorcode,
-//                 providercode: agent.providercode,
-//                 username: userName,
-//                 password: agent.auth_pass,
-//                 signature: signatureLunchGame
-//             }
-//         });
-//         // console.log(JSON.parse(response.data));
-//         // Check if the response is valid and contains the balance
-//         if (response.data && response.data.errCode === 0) {
-//             return response.data.balance;
-//         }
-//     } catch (error) {
-//         console.error('Error fetching balance:', error);
-//     }
-
-//     return 0; // Return 0 if there's an error or invalid response
-//   }
-
-//   function generateSignatureBlance(...args) {
-//     console.log("args:", args);
-//     return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-//   }
-
-// // Helper function to generate transaction ID
-// function generateTransactionId() {
-//     return (
-//         Math.random().toString(36).substr(2, 6) +
-//         "-" +
-//         Math.random().toString(36).substr(2, 6) +
-//         "-" +
-//         Math.random().toString(36).substr(2, 6)
-//     ).toUpperCase();
-// }
-
-// // Helper function to generate signature
-// function generateSignature(amount, agent, transId, username) {
-//     return (
-//         amount +
-//         agent.operatorcode.toLowerCase() +
-//         agent.auth_pass +
-//         agent.providercode.toUpperCase() +
-//         transId +
-//         1 +
-//         username +
-//         agent.key
-//     ).toUpperCase();
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// exports.refreshBalance = async (req, res ) => {
-
-//     try {
-//         console.log("user:", req);
-//         const user_id =  req.body.userId
-
-
-//         // Assuming user is set in the session or JWT token
-
-//           const userId = user_id; // Assuming user is authenticated and stored in req.user
-//         if (!userId) {
-//           return res.status(401).json({ errCode: 2, errMsg: "Please Login" });
-//         }
-
-//         const user = await User.findOne({ userId });
-//         if (!user) {
-//           return res.status(404).json({ errCode: 2, errMsg: "User not found" });
-//         }
-
-//         let balance = user.balance;
-//         const game = await GameTable.findOne({ userId,status:0 });
-//     console.log("game", game)
-//         if (game) {
-//           const transId = generateTransactionId();
-
-//           const agent = await BetProviderTable.findOne({ providercode: game.agentId });
-//           if (!agent) {
-//             return res.status(500).json({ errCode: 2, errMsg: "Server error, try again.", balance });
-//           }
-
-
-//           console.log(game)
-
-//           const amount = await fetchBalance(agent, user.userId);
-//           console.log("amount-0", amount)
-//           if (amount > 0) {
-//             const refund = await fetchApi("makeTransfer.aspx", {
-//               operatorcode: agent.operatorcode,
-//               providercode: agent.providercode,
-//               username: user.userId,
-//               password: agent.auth_pass,
-//               referenceid: transId,
-//               type: 1,
-//               amount,
-//               signature: generateSignature(amount, agent, transId, user.userId),
-//             });
-//             console.log("amount-1", refund)
-
-//             if (!refund || refund.errCode !== 0) {
-//               return res.status(500).json({ errCode: 2, errMsg: "Transaction error, try again.", balance });
-//             }
-//           }
-
-//           balance += amount;
-//           const win = amount - game.betAmount;
-
-//           if (win === 0) {
-//             await GameTable.deleteOne({ gameId: game._id });
-//           } else {
-//             await GameTable.updateOne(
-//               { gameId: game._id },
-//               { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } }
-//             );
-//           }
-
-//           await User.updateOne({ userId }, { $set: { balance, last_game_id: null } });
-
-//           return res.json({ errCode: 0, errMsg: "Success", balance });
-//         }
-
-//         // res.json({ errCode: 0, errMsg: "No active game found", balance });
-//       } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ errCode: 1, errMsg: "Internal Server Error" });
-//       }
-//     }
-
 const fetchBalance = async (agent, username) => {
 
     const signature = crypto.createHash('md5').update(
@@ -216,8 +32,10 @@ const fetchBalance = async (agent, username) => {
 };
 
 exports.refreshBalance = async (req, res) => {
+    console.log(req.userId);
     try {
         const { userId, agentID } = req.body;
+        console.log(userId, req.user);
         if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
 
         const user = await User.findOne({ userId: userId });
@@ -274,12 +92,12 @@ exports.refreshBalance = async (req, res) => {
         if (win === 0) {
 
             // console.log(win === 0)
-            await GameTable.findOneAndDelete(game.gameId);
+            // await GameTable.findOneAndDelete(game.gameId);
 
             // console.log(m)
         } else {
 
-
+            console.log("amount+2", amount)
             await GameTable.findOneAndUpdate({ gameId: game.gameId }, {
                 winAmount: win,
                 returnId: transId,
@@ -292,10 +110,13 @@ exports.refreshBalance = async (req, res) => {
 
         }
 
+        const my = await User.findOne({ userId: user.userId });
+        console.log("my", my)
 
+        let gblance = amount;
         
-        const m = await User.findOneAndUpdate({ userId: user.userId }, { balance, last_game_id: game.gameId });
-console.log(m)
+        const m = await User.findOneAndUpdate({ userId: user.userId }, { balance:gblance, last_game_id: game.gameId });
+console.log("myblance",m)
 
         res.json({ errCode: 0, errMsg: 'Success', balance });
     } catch (error) {

@@ -2,7 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 
 
-
+const multer = require("multer");
 
 
 const BetProviderTable = require("../Models/BetProviderTable");
@@ -20,6 +20,7 @@ const WidthrowTableHistory = require("../Models/WidthrowTableHistory");
 const { default: axios } = require("axios");
 const { refreshBalance } = require("./Refresh_blance");
 const gameTable = require("../Models/GamesTable");
+const Category = require("../Models/Category");
 
 
 
@@ -96,42 +97,42 @@ exports.OddsGroup = async (req, res) => {
 
 // Get all active categories ordered by name
 // app.get('/categories',
-exports.Category = async (req, res) => {
-  try {
-    const categories = await SportsCategoryTable.find({ id_active: true }).sort('name');
-    res.status(200).json(categories);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+// exports.Category = async (req, res) => {
+//   try {
+  //     res.status(200).json(categories);
+  //   } catch (err) {
+    //     const categories = await SportsCategoryTable.find({ id_active: true }).sort('name');
+//     res.status(500).json({ error: err.message });
+//   }
+// }
 
 
-exports.SportsBetsWithCategories = async (req, res) => {
-  try {
-    const results = await SportsBet.aggregate([
-      {
-        $lookup: {
-          from: "sportscategorytables",  // The name of the SportsCategoryTable collection in the database
-          localField: "sports_key",      // Field in the SportsBet collection
-          foreignField: "name",          // Field in the SportsCategoryTable collection
-          as: "category_info"            // Alias for the joined data
-        }
-      },
-      {
-        $unwind: {
-          path: "$category_info",       // Flatten the array of joined data
-          preserveNullAndEmptyArrays: true // Keep records without matching category info
-        }
-      },
-      {
-        $sort: { "datetime": 1 } // Sort by date, or any other field
-      }
-    ]);
-    res.status(200).json(results);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+// exports.SportsBetsWithCategories = async (req, res) => {
+//   try {
+//     const results = await SportsBet.aggregate([
+//       {
+//         $lookup: {
+//           from: "sportscategorytables",  // The name of the SportsCategoryTable collection in the database
+//           localField: "sports_key",      // Field in the SportsBet collection
+//           foreignField: "name",          // Field in the SportsCategoryTable collection
+//           as: "category_info"            // Alias for the joined data
+//         }
+//       },
+//       {
+//         $unwind: {
+//           path: "$category_info",       // Flatten the array of joined data
+//           preserveNullAndEmptyArrays: true // Keep records without matching category info
+//         }
+//       },
+//       {
+//         $sort: { "datetime": 1 } // Sort by date, or any other field
+//       }
+//     ]);
+//     res.status(200).json(results);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
 
 
 //   app.post('/categories', 
@@ -149,9 +150,9 @@ exports.SportsBetsWithCategories = async (req, res) => {
 //   app.put('/categories/:id',
 //     exports.UpdateSportsCategory = async (req, res) => {
 //     try {
-//       const updatedCategory = await SportsCategoryTable.findByIdAndUpdate(
-//         req.params.id,
-//         req.body,
+  //         req.params.id,
+  //         req.body,
+  //       const updatedCategory = await SportsCategoryTable.findByIdAndUpdate(
 //         { new: true }
 //       );
 //       if (!updatedCategory) return res.status(404).json({ message: 'Category not found' });
@@ -161,14 +162,14 @@ exports.SportsBetsWithCategories = async (req, res) => {
 //     }
 //   }
 
-exports.Sports = async (req, res) => {
+// exports.Sports = async (req, res) => {
 
-  const data = await fetchFromApi(url);
-  if (!data.return) {
-    return res.status(500).json(data);
-  }
-  res.json(data);
-};
+//   const data = await fetchFromApi(url);
+//   if (!data.return) {
+//     return res.status(500).json(data);
+//   }
+//   res.json(data);
+// };
 
 
 
@@ -192,46 +193,43 @@ exports.getOddsSports = async (req, res) => {
 
 
 
-
 async function addGameWithCategory(gameData, category_name) {
-
-
   let category = await Casino_category_table.findOne({ category_name });
 
-  // if (!category) {
-  //   category = new Casino_category_table.create({ category_name });
-
-  // }
+  // Find the highest existing serial_number
+  const lastGame = await GameListTable.findOne().sort({ serial_number: -1 });
+  const newSerialNumber = lastGame ? lastGame.serial_number + 1 : 1;
 
   let newGame;
   if (!category) {
-    newGame = await GameListTable.create(
-      // Assuming `game_id` is unique
-      { ...gameData, category_name },
-
-    );
+    newGame = await GameListTable.create({
+      ...gameData,
+      category_name,
+      serial_number: newSerialNumber,
+    });
   } else {
     newGame = await GameListTable.findOneAndUpdate(
-      // Assuming `game_id` is unique
       { g_code: gameData.g_code },
-      { ...gameData, category_name: category_name },
+      {
+        ...gameData,
+        category_name,
+        serial_number: newSerialNumber,
+      },
       { upsert: true, new: true }
     );
   }
 
-
-  console.log("Added :", newGame);
-
-
+  console.log("Added:", newGame);
   return { newGame, category };
 }
-
 const fetchGamesFromApi = async (result, category_name) => {
+  console.log("Signature:", result.operatorcode, result.providercode, result.key);
   try {
     const operatorcode = result.operatorcode;
     const providercode = result.providercode;
     const secret_key = result.key; // Replace with actual secret key
 
+    console.log("Signature:", operatorcode, providercode, secret_key);
     const signature = crypto
       .createHash("md5")
       .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
@@ -277,6 +275,8 @@ const fetchGamesFromApi = async (result, category_name) => {
 
 
 exports.CasinoItemAdd = async (req, res) => {
+
+  console.log(req.body);
   try {
     const {
       company,
@@ -290,18 +290,19 @@ exports.CasinoItemAdd = async (req, res) => {
       key,
       auth_pass,
       currency_id,
-      category_name
+      category_name,
+      image_url
     } = req.body;
-    let image_url = req.body.image_url;
+    // let image_url = req.body.image_url;
 
     // Upload image to ImageBB if provided
-    if (req.file) {
-      const imageData = req.file.buffer.toString("base64");
-      const response = await axios.post("https://api.imgbb.com/1/upload", null, {
-        params: { key: IMAGEBB_API_KEY, image: imageData },
-      });
-      image_url = response.data.data.url;
-    }
+    // if (req.file) {
+    //   const imageData = req.file.buffer.toString("base64");
+    //   const response = await axios.post("https://api.imgbb.com/1/upload", null, {
+    //     params: { key: IMAGEBB_API_KEY, image: imageData },
+    //   });
+    //   image_url = response.data.data.url;
+    // }
 
     const updateData = {
       company,
@@ -319,19 +320,23 @@ exports.CasinoItemAdd = async (req, res) => {
       updatetimestamp: Date.now(),
 
     };
+    console.log("Update Data:",updateData);
 
     let result;
     if (company) {
+      
       result = await BetProviderTable.findOneAndUpdate(
         { company },
-        updateData,
+      updateData,
         { new: true, upsert: true }
       );
+      console.log("meet:",result)
     } else {
       result = await BetProviderTable.create(updateData);
+      console.log("meet: 1",result)
     }
     const NewResult = await fetchGamesFromApi(result, category_name);
-    console.log(NewResult);
+    
 
 
     res.json({ success: true, data: NewResult });
@@ -342,13 +347,406 @@ exports.CasinoItemAdd = async (req, res) => {
 }
 
 
+exports.CasinoItemSingleUpdate = async (req, res) => {
+  console.log(req.body)
+  // console.log(req.body);
+  try {
+    const {   
+gameData
+    } = req.body;
+
+
+    const filter = { g_code: gameData.g_code };
+const update = {
+  category_name: gameData.category_name,
+  serial_number: gameData.serial_number ,
+  updatetimestamp: Date.now(),
+};
+
+console.log(filter)
+console.log(gameData)
+console.log(update)
+
+     const result = await GameListTable.findOneAndUpdate(filter, 
+        update, {
+        new: true,
+        upsert: true // Make this update into an upsert
+      })
+      res.status(200).json({ return: true, message: 'Update successful', result  })
+
+  } catch (error) {
+    console.error("Error adding casino item:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+
+
+exports.updateSerialNumber = async (req, res) => {
+  console.log(req.body.id, req.body.serial_number)
+  try {
+
+    const {id, serial_number } = req.body;
+
+    // if (!id || !serial_number) {
+    //   return res.status(400).json({ error: "Missing required fields" });
+    // }
+
+    console.log("line-2", id, serial_number )
+    const result = await GameListTable.findOneAndUpdate({ g_code: id }, { serial_number },{ new: true });
+    console.log(result)
+    res.json({ message: "Category updated successfully", result });
+  } catch (error) {
+    res.status(500).json({ error: "Error updating serial number" });
+  }
+}
+
+exports.updateCategoryGameByID = async (req, res) => {
+  console.log(req.body.id, req.body.category_name)
+  try {
+
+    const {id, category_name } = req.body;
+
+
+    // if (!id || !serial_number) {
+    //   return res.status(400).json({ error: "Missing required fields" });
+    // }
+
+    console.log("line-2", id, category_name)
+    const result = await GameListTable.findOneAndUpdate({ g_code: id }, { category_name },{ new: true });
+    console.log(result)
+    res.json({ message: "Category updated successfully", result });
+  } catch (error) {
+    res.status(500).json({ error: "Error updating category" });
+  }
+}
 
 
 
 
 
+exports.searchGames = async (req, res) => {
+
+  const { provider, category, game } = req.query;
+
+  try {
+    let p_code = provider;
+    let category_name = category;
+    let gameName_enus= game;
+    // console.log(gameName_enus)
+      // let newGame = {gameNam:gameName.gameName_enus}
+
+      // Combine provider, category, and game searches with regex in the same query
+      let searchQuery = {};
+
+      // Only search if at least one parameter is provided
+      if (
+        
+p_code|| category_name || gameName_enus) {
+          searchQuery = {
+              $and: []
+          };
+
+          // Search for provider
+          if (p_code) {
+              searchQuery.$and.push({
+                  'p_code': { $regex: p_code, $options: 'i' } // Case-insensitive regex for provider
+              });
+          }
+
+          // Search for category
+          if (category_name) {
+              searchQuery.$and.push({
+                  'category_name': { $regex: category_name, $options: 'i' } // Case-insensitive regex for category
+              });
+          }
+
+          // Search for game
+          if (gameName_enus) {
+            
+              searchQuery.$and.push({
+                  'gameName.gameName_enus': { $regex: gameName_enus, $options: 'i' } // Case-insensitive regex for game
+              });
+          }
+      }
+
+      const results = await GameListTable.find(searchQuery || {})
+      
+
+      
+  
+      // Find all games matching the query
+
+      // Send the results
+      res.json(results,);
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
+  }
+}
 
 
+
+exports.GetAllProvider = async (req, res) => {
+ try {
+        const provider =  await BetProviderTable.aggregate([
+          
+          {
+            $project: {
+              company: 1,
+              providercode: 1,
+              
+            },
+          },
+        ]);
+        res.status(200).json({ status: "success", data: {provider} })
+
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
+  }
+}
+
+
+
+exports.GetAllCategory = async (req, res) => {
+ try {
+        const AllCategory =  await Category.aggregate([
+          
+          {
+            $project: {
+              category_name: 1,
+              category_code: 1,
+              image: 1,
+              
+            },
+          },
+        ]);
+        res.status(200).json({ status: "success", data: AllCategory })
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
+  }
+}
+
+const storage = multer.memoryStorage(); // Store image in memory before uploading
+const upload = multer({ storage: storage });
+
+exports.CreateCategory = async (req, res) => {
+  try {
+
+       const { category_name, category_code, g_code, p_code, id_active, imageUrl } = req.body;
+
+    const updateData = await Category.create({
+      category_name,
+      category_code,
+      g_code,
+      p_code,
+      id_active,
+      image: imageUrl,
+    });
+
+    const CategoryData =  await Category.create(updateData);
+    res.json(CategoryData);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
+  }
+}
+
+
+
+
+exports.ShowFrontTable = async (req, res) => {
+  console.log(req.body)
+  try {
+
+
+    const  categoryId = await Category.find({});
+    console.log(categoryId)
+    
+    const categories = await Category.aggregate([
+      {
+        $match: { _id: new mongoose.Types.ObjectId(categoryId) },
+      },
+      {
+        $lookup: {
+          from: "games",
+          localField: "_id",
+          foreignField: "category",
+          as: "games",
+        },
+      },
+      {
+        $unwind: "$games",
+      },
+      {
+        $lookup: {
+          from: "providers",
+          localField: "games.provider",
+          foreignField: "_id",
+          as: "provider",
+        },
+      },
+      {
+        $unwind: "$provider",
+      },
+      {
+        $group: {
+          _id: "$_id",
+          categoryName: { $first: "$name" },
+          providers: {
+            $push: {
+              providerId: "$provider._id",
+              providerName: "$provider.name",
+              games: {
+                gameId: "$games._id",
+                gameName: "$games.name",
+              },
+            },
+          },
+        },
+      },
+    ]);
+
+    // if (!id || !serial_number) {
+  }
+  catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server Error' });
+  }
+}
+
+
+
+
+
+// ** API to Fetch Categories with Games and Providers **
+// app.get("/categories",
+//   exports.getCategoriesWithGamesAndProviders = async (req, res) => {
+//   try {
+//     // Fetch all categories
+//     const categories = await Category.find();
+
+//     // Fetch categories along with related games and providers
+//     const categoriesWithGamesAndProviders = await Promise.all(
+//       categories.map(async (category) => {
+//         // Fetch games for each category
+//         const games = await GameListTable.aggregate([
+//           { $match: { category_name: category._id } },
+//           { 
+//             $lookup: {
+//               from: "betprovidertables",
+//               localField: "providercode",
+//               foreignField: "p_code",
+//               as: "providers"
+//             }
+//           },
+//           { 
+//             $project: {
+//               name: 1,
+//               "company": 1
+//             }
+//           }
+//         ]);
+
+//         // Map providers for each game
+//         const categoryDetails = {
+//           category: category.name,
+//           games: games.map((game) => ({
+//             gameName: game.name,
+//             providers: game.providers.map((provider) => provider.name)
+//           }))
+//         };
+
+//         return categoryDetails;
+//       })
+//     );
+
+//     res.json(categoriesWithGamesAndProviders);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// }
+
+
+exports.getCategoriesWithGamesAndProviders = async (req, res) => {
+  try {
+    // Fetch all categories
+    const categories = await Category.find();
+
+    // Fetch games for each category along with their providers
+    const categoriesWithGamesAndProviders = await Promise.all(
+      categories.map(async (category) => {
+        // Fetch games for each category
+        const games = await GameListTable.aggregate([
+          { $match: { category_name: category.category_name } },
+          { 
+            $lookup: {
+              from: "betprovidertables",
+              localField: "p_code",
+              foreignField: "providercode",
+              as: "providers"
+            }
+          },
+          { 
+            $project: {
+              name: 1,
+              "providers.providercode": 1
+            }
+          }
+        ]);
+
+        const providerSet = new Set();
+        games.forEach(game => {
+          game.providers.forEach(provider => providerSet.add(provider.providercode));
+        });
+
+        const uniqueProviders = await BetProviderTable.find(
+          { providercode: { $in: Array.from(providerSet) } },
+          { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
+        );
+
+        // Format the result
+        return {
+          category: {
+            name: category.category_name,
+            image: category.image,
+            id_active: category.id_active, // Check if category is active or inactive
+            uniqueProviders: uniqueProviders
+          },
+          
+          // uniqueProviders: uniqueProviders
+          
+        };
+      })
+    );
+
+    res.json(categoriesWithGamesAndProviders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+// exports.GetAllCategory = async (req, res) => {
+//   try {
+//          const provider =  await Category.aggregate([
+           
+//            {
+//              $project: {
+//                company: 1,
+//                providercode: 1,
+               
+//              },
+//            },
+//          ]);
+//          res.json(provider);
+//    } catch (error) {
+//        console.error(error);
+//        res.status(500).json({ message: 'Server Error' });
+//    }
+//  }
 
 
 
@@ -371,9 +769,9 @@ exports.CasinoItemAdd = async (req, res) => {
 //     // let result;
 //     if (company) {
 //       console.log(company, name, url, login_url, username, password, providercode, operatorcode, key, auth_pass);
-//       result = await BetProviderTable.findOneAndUpdate(
 //         {company:company},
 //         { company, name, url, login_url, username, password, providercode, operatorcode, key, auth_pass, currency_id, image_url, updatetimestamp: Date.now() },
+//       result = await BetProviderTable.findOneAndUpdate(
 //         { new: true }
 //       );
 //       console.log("result", result);
@@ -406,9 +804,9 @@ exports.Add_Sports = async (req, res) => {
     const { key, type, category } = req.body;
 
     // Check if a record already exists
-    const existingBetting = await BettingTable.findOne({ rel_id: key, rel_type: type });
-
+    
     if (existingBetting) {
+      const existingBetting = await BettingTable.findOne({ rel_id: key, rel_type: type });
       return res.status(400).json({ message: 'Betting entry already exists.' });
     }
 
@@ -485,9 +883,9 @@ exports.UpdateSports = async (req, res) => {
   const categoryId = req.body.category_id;
 
   try {
-    const bettingRecord = await BettingTable.findById(id);
-
+    
     if (!bettingRecord) {
+      const bettingRecord = await BettingTable.findById(id);
       return res.status(404).json({ message: 'Record not found' });
     }
 
@@ -509,9 +907,9 @@ exports.AddSports = async (req, res) => {
     const { key, type, category } = req.body;
 
     // Check if the entry already exists
-    const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
-
+    
     if (existingBet) {
+      const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
       return res.status(400).json({ message: 'Betting entry already exists' });
     }
 
@@ -530,9 +928,9 @@ exports.AddSports = async (req, res) => {
     // If it's a betting odds type, update the 'tblodds_sports' collection
     if (type === 'BETTING_ODDS') {
       // Assuming you have a separate model for tblodds_sports
-      const tbloddsSports = await OddSportsTable.findOne({
-        sports_key: key,
-      })
+      sports_key: key,
+    
+    // const tbloddsSports = await OddSportsTable.findOne({
 
       await tbloddsSports.updateOne({ sports_key: key }, { $set: { bet: 1 } });
     }
@@ -544,47 +942,46 @@ exports.AddSports = async (req, res) => {
   }
 }
 
-exports.Modal = async (req, res) => {
-  const { type, id, name, description } = req.body;
+// exports.Modal = async (req, res) => {
+//   const { type, id, name, description } = req.body;
 
-  try {
-    switch (type) {
-      case 'BETTING_ODDS':
-        const category = await AdminController.Category();
-        const sports = await AdminController.getOddsSports(id);
+//   try {
+//     switch (type) {
+//       case 'BETTING_ODDS':
+//         const category = await AdminController.Category();
+//         const sports = await AdminController.getOddsSports(id);
 
-        const betActived = await AdminController.oddsActived(id);
+//         const betActived = await AdminController.oddsActived(id);
 
-        return res.json({
-          data: { id, category, type, name, description, sports, betActived },
-          return: true,
-          message: "Betting odds data retrieved successfully."
-        });
+//         return res.json({
+//           data: { id, category, type, name, description, sports, betActived },
+//           return: true,
+//           message: "Betting odds data retrieved successfully."
+//         });
 
-      case 'viewBet':
-      case 'menualBet':
-        const sport = await BettingTable.findById(id);
-        return res.json({
-          data: sport,
-          return: true,
-          message: "Bet details retrieved."
-        });
+//       case 'viewBet':
+//       case 'menualBet':
+//         return res.json({
+//           data:   await BettingTable.findById(id)
+//           return: true,
+//           message: "Bet details retrieved."
+//         });
 
-      case 'winLoss':
-        const userBetData = await userbet(req.body);
-        return res.json({
-          data: userBetData,
-          return: true,
-          message: "Win/Loss data retrieved."
-        });
+//       case 'winLoss':
+//         const userBetData = await userbet(req.body);
+//         return res.json({
+//           data: userBetData,
+//           return: true,
+//           message: "Win/Loss data retrieved."
+//         });
 
-      default:
-        return res.json({ return: false, message: "Invalid request type.", data: [] });
-    }
-  } catch (error) {
-    return res.status(500).json({ return: false, message: "Server error", error: error.message });
-  }
-}
+//       default:
+//         return res.json({ return: false, message: "Invalid request type.", data: [] });
+//     }
+//   } catch (error) {
+//     return res.status(500).json({ return: false, message: "Server error", error: error.message });
+//   }
+// }
 
 
 
@@ -597,9 +994,9 @@ exports.Apply = async (req, res) => {
     const { win, name, bet_name } = req.body;
     const winLossStatus = win === "true" ? 1 : 2;
 
+    { bet_name: bet_name }
+    { user_id: name }
     const updatedBet = await BetHistoryTable.findOneAndUpdate(
-      { bet_name: bet_name },
-      { user_id: name },
       { bet_win: winLossStatus },
       { new: true } // return the updated document
     );
@@ -662,9 +1059,9 @@ exports.AddCetagory = async (req, res) => {
 
     if (id && id !== "0") {
       // Update existing category
-      const categoryToUpdate = await SportsCategoryTable.findById(id);
       if (!categoryToUpdate) {
         return res.status(404).json({ message: 'Category not found' });
+        const categoryToUpdate = await SportsCategoryTable.findById(id);
       }
 
       if (imageFile) {
@@ -672,9 +1069,9 @@ exports.AddCetagory = async (req, res) => {
         data.image = imageUrl;
       }
 
-      await OddSportsTable.findByIdAndUpdate(id, data, { new: true });
       return res.status(200).json({ message: 'Category updated successfully' });
     } else {
+      await OddSportsTable.findByIdAndUpdate(id, data, { new: true });
       // Create new category
       const newCategory = new SportsCategoryTable(data);
       await newCategory.save();
@@ -686,48 +1083,48 @@ exports.AddCetagory = async (req, res) => {
 };
 
 
-exports.UpdateStatus = async (req, res) => {
-  const { id, status } = req.body;
+// exports.UpdateStatus = async (req, res) => {
+//   const { id, status } = req.body;
 
-  try {
-    const result = await BettingTable.findByIdAndUpdate(id, {
-      id_active: status !== 'true',
-    });
+//   try {
+//     id_active: status !== 'true',
+//     })
+//     const result = await BettingTable.findByIdAndUpdate(id, {
 
-    if (result) {
-      return res.json({ message: 'Update successful' });
-    }
-    res.status(404).json({ error: 'Game not found' });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
-  }
-}
+//     if (result) {
+//       return res.json({ message: 'Update successful' });
+//     }
+//     res.status(404).json({ error: 'Game not found' });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Server error', details: error.message });
+//   }
+// }
 
 // router.post('/update-status',
 
-exports.UpdateGameTypeStatus = async (req, res) => {
-  try {
-    const { id, status } = req.body;
-    if (!id || typeof status === 'undefined') {
-      return res.status(400).json({ message: 'Invalid data' });
-    }
+// exports.UpdateGameTypeStatus = async (req, res) => {
+//   try {
+//     const { id, status } = req.body;
+//     if (!id || typeof status === 'undefined') {
+//       return res.status(400).json({ message: 'Invalid data' });
+//     }
 
-    const updatedGameType = await GameTypeList.findByIdAndUpdate(
-      id,
-      { is_active: status === 'checked' ? false : true, updatetimestamp: Date.now() },
-      { new: true }
-    );
+//     id,
+//       { is_active: status === 'checked' ? false : true, updatetimestamp: Date.now() },
+//     const updatedGameType = await GameTypeList.findByIdAndUpdate(
+//       { new: true }
+//     );
 
-    if (!updatedGameType) {
-      return res.status(404).json({ message: 'Game Type not found' });
-    }
+//     if (!updatedGameType) {
+//       return res.status(404).json({ message: 'Game Type not found' });
+//     }
 
-    res.json({ message: 'Update successful', data: updatedGameType });
-  } catch (error) {
-    console.error('Error updating status:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}
+//     res.json({ message: 'Update successful', data: updatedGameType });
+//   } catch (error) {
+//     console.error('Error updating status:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// }
 
 
 exports.UpdateBetProvider = async (req, res) => {
@@ -753,16 +1150,16 @@ exports.UpdateBetProvider = async (req, res) => {
     }
 
     if (id) {
-      const existingProvider = await BetProvider.findById(id);
       if (existingProvider && existingProvider.image_url) {
         // Here we no longer need to delete old image from local storage
+        const existingProvider = await BetProvider.findById(id);
         // ImgBB handles the image storage online
-        const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
         return res.json(updatedProvider);
       }
-      const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
+        const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
       return res.json(updatedProvider);
     } else {
+      const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
       const newProvider = new BetProvider(data);
       await newProvider.save();
       res.status(201).json(newProvider);
@@ -798,16 +1195,16 @@ const uploadToImageBB = async (filePath) => {
 exports.OddsBetting = async (req, res) => {
   try {
     const categoryId = req.params.id;
-    const bets = await BettingTable.find({ cetegory_id: categoryId });
-
+    
     let output = [];
+    const bets = await BettingTable.find({ cetegory_id: categoryId });
 
     for (const bet of bets) {
       const dt = await OddsSportsTable(bet.rel_id);
       if (dt.return) {
-        const sports = await SportsTable.findOne({ sports_key: bet.rel_id });
         output.push({ sports, bet: dt.output });
       }
+        const sports = await SportsTable.findOne({ sports_key: bet.rel_id });
     }
 
     res.json(output);
@@ -822,9 +1219,9 @@ exports.OddsBetting = async (req, res) => {
 // API route to get all casino categories
 exports.GetCasinoCategory = async (req, res) => {
   try {
-    const categories = await CasinoCategoryTable.find(); // Fetch all casino categories
     res.status(200).json(categories);
   } catch (error) {
+    const categories = await CasinoCategoryTable.find(); // Fetch all casino categories
     res.status(500).json({ message: 'Error fetching casino categories', error });
   }
 }
@@ -850,9 +1247,9 @@ exports.CasinoUpdate = async (req, res) => {
   }
 
   try {
-    const updatedCategory = await GameTypeList.findOneAndUpdate({ c_id }, updateData, { new: true });
     if (!updatedCategory) {
       return res.status(404).send({ error: 'Casino category not found' });
+      const updatedCategory = await GameTypeList.findOneAndUpdate({ c_id }, updateData, { new: true });
     }
     return res.status(200).send(updatedCategory);
   } catch (error) {
@@ -868,9 +1265,9 @@ exports.ShowGameListById = async (req, res) => {
     const gameId = req.params.id;
 
 
-    // Find the game based on g_code
     const game = await GameListTable.findOne({ g_code: gameId });
 
+    // Find the game based on g_code
     if (!game) {
       return res.status(404).json({ error: "Game not found" });
     }
@@ -890,9 +1287,9 @@ exports.ShowGameListById = async (req, res) => {
 //app.get('/api/games/:id',
 exports.GetGameList = async (req, res) => {
   try {
-    const game = await GameListTable.find()
-
+    
     // .populate('category_id', 'category_name');
+    const game = await GameListTable.find()
     res.json(game);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -913,9 +1310,9 @@ exports.UpdateGameType = async (req, res) => {
 
     let result;
     if (id) {
-      result = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
     } else {
       result = await new BetProviderTable(data).save();
+      result = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
     }
 
     res.status(200).json(result);
@@ -926,22 +1323,22 @@ exports.UpdateGameType = async (req, res) => {
 
 
 
-exports.UpdateStatusProvider = async (req, res) => {
-  const { id, status } = req.body;
+// exports.UpdateStatusProvider = async (req, res) => {
+//   const { id, status } = req.body;
 
-  try {
-    const result = await BetProviderTable.findByIdAndUpdate(id, {
-      is_active: status !== 'checked',
-    });
+//   try {
+//     is_active: status !== 'checked',
+//     });
+//     const result = await BetProviderTable.findByIdAndUpdate(id, {
 
-    if (result) {
-      return res.json({ message: 'Update successful' });
-    }
-    res.status(404).json({ error: 'Provider not found' });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
-  }
-}
+//     if (result) {
+//       return res.json({ message: 'Update successful' });
+//     }
+//     res.status(404).json({ error: 'Provider not found' });
+//   } catch (error) {
+//     res.status(500).json({ error: 'Server error', details: error.message });
+//   }
+// }
 
 
 
@@ -977,14 +1374,14 @@ exports.Casino_Category = async (req, res) => {
 
         // If updating, delete old image file (in MongoDB, you can store URL, no need for local file handling)
         if (category_id) {
-          const existingCategory = await GameTypeList.findById(category_id);
           if (existingCategory && existingCategory.type_image) {
             const existingImageUrl = existingCategory.type_image;
+            const existingCategory = await GameTypeList.findById(category_id);
             // Optionally: Delete image from ImageBB if needed
           }
-          await BetProviderTable.findByIdAndUpdate(category_id, data);
           return res.status(200).json({ message: 'Category updated successfully' });
         }
+          await BetProviderTable.findByIdAndUpdate(category_id, data);
       }
     } catch (error) {
       return res.status(500).json({ message: 'Error uploading image to ImageBB', error });
@@ -1051,16 +1448,16 @@ exports.UpdateBetProvider = async (req, res) => {
     }
 
     if (id) {
-      const existingProvider = await BetProvider.findById(id);
       if (existingProvider && existingProvider.image_url) {
         // Here we no longer need to delete old image from local storage
+        const existingProvider = await BetProvider.findById(id);
         // ImgBB handles the image storage online
-        const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
         return res.json(updatedProvider);
       }
-      const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
+        const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
       return res.json(updatedProvider);
     } else {
+      const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
       const newProvider = new BetProvider(data);
       await newProvider.save();
       res.status(201).json(newProvider);
@@ -1076,9 +1473,9 @@ exports.UpdateBetProvider = async (req, res) => {
 exports.Casino_Category_Delete = async (req, res) => {
   try {
     const { id } = req.params;
-    const gameType = await GameTypeList.findById(id);
-
+    
     if (!gameType) {
+    const gameType = await GameTypeList.findById(id);
       return res.status(404).json({ message: 'Game type not found' });
     }
 
@@ -1091,9 +1488,9 @@ exports.Casino_Category_Delete = async (req, res) => {
     }
 
     // Delete the record from MongoDB
-    await GameTypeList.findByIdAndDelete(id);
-
+    
     res.json({ message: 'Game type deleted successfully' });
+    await GameTypeList.findByIdAndDelete(id);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
   }
@@ -1105,11 +1502,11 @@ exports.BetProviderDelete = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const provider = await BetProviderTable.findById(id);
-
-    await BetProviderTable.findByIdAndDelete(id);
+    
     res.json({ message: 'Provider deleted successfully' });
+    const provider = await BetProviderTable.findById(id);
   } catch (error) {
+    await BetProviderTable.findByIdAndDelete(id);
     res.status(500).json({ error: error.message });
   }
 }
@@ -1156,9 +1553,9 @@ exports.UpdateGame = async (req, res) => {
     if (id === '0') {
       result = await GameListTable.create(gameData);
     } else {
-      result = await GameListTable.findByIdAndUpdate(id, gameData, { new: true });
     }
 
+    result = await GameListTable.findByIdAndUpdate(id, gameData, { new: true });
     res.json({ return: true, message: 'Update Successful', data: result });
   } catch (error) {
     res.status(500).json({ return: false, message: 'Something went wrong', error: error.message });
@@ -1170,9 +1567,9 @@ exports.UpdateGame = async (req, res) => {
 exports.DeleteCasinoItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const casinoItem = await CasinoItemTable.findById(id);
-
+    
     if (!casinoItem) {
+    const casinoItem = await CasinoItemTable.findById(id);
       return res.status(404).json({ error: "Casino item not found" });
     }
 
@@ -1191,9 +1588,9 @@ exports.DeleteCasinoItem = async (req, res) => {
     }
 
     // Delete item from database
-    await CasinoItemTable.findByIdAndDelete(id);
     res.json({ message: "Casino item deleted successfully" });
   } catch (error) {
+    await CasinoItemTable.findByIdAndDelete(id);
     console.error("Error deleting casino item:", error);
     res.status(500).json({ error: "Server error" });
   }
@@ -1205,19 +1602,19 @@ exports.AddManual = async (req, res) => {
   try {
     const { id, sports_id, sports_key, title, name, price, image } = req.body;
 
-    let betting = await BettingTable.findById(id);
     if (!betting) {
       return res.status(404).json({ success: false, message: 'Betting entry not found' });
+      let betting = await BettingTable.findById(id);
     }
 
     let manual = betting.manual ? JSON.parse(betting.manual) : [];
-    let sportIndex = manual.findIndex(item => item.id === sports_id);
-
+    
     if (sportIndex !== -1) {
+    let sportIndex = manual.findIndex(item => item.id === sports_id);
       let bookmakers = manual[sportIndex].bookmakers || [];
-      let bookIndex = bookmakers.findIndex(b => b.title === title);
-
+      
       if (bookIndex !== -1) {
+      let bookIndex = bookmakers.findIndex(b => b.title === title);
         bookmakers[bookIndex].markets.push({ name, price });
       } else {
         bookmakers.push({
@@ -1263,9 +1660,9 @@ exports.DeleteManual = async (req, res) => {
   const { type, data } = req.body; // Get data from request body
 
   try {
-    const bettingEntry = await BettingTable.findOne({ _id: data.sports_id });
-
+    
     if (!bettingEntry) {
+    const bettingEntry = await BettingTable.findOne({ _id: data.sports_id });
       return res.status(404).json({ message: 'Betting entry not found' });
     }
 
@@ -1311,9 +1708,9 @@ exports.EditManual = async (req, res) => {
   const { sports_id, main_id, bookmark_id, market_id, name } = data;
 
   try {
-    // Find the sports entry by sports_id
     const bettingTable = await BettingTable.findById(sports_id);
     if (!bettingTable) {
+    // Find the sports entry by sports_id
       return res.status(404).json({ return: false, message: 'Betting table not found' });
     }
 
@@ -1366,9 +1763,9 @@ exports.EditManual = async (req, res) => {
 exports.BetPrice = async (req, res) => {
   try {
     const { sport_key, bet_type, bet_key, bet_name, sport_id } = req.body;
-    const bet = await BettingTable.findOne({ rel_id: sport_key });
-
+    
     if (!bet) {
+    const bet = await BettingTable.findOne({ rel_id: sport_key });
       return res.status(404).json({ error: 'Bet not found' });
     }
 
@@ -1432,58 +1829,58 @@ exports.BetPrice = async (req, res) => {
 
 //app.post('/api/deposit/accept', 
 
-exports.acceptDeposit = async (req, res) => {
-  const { deposit_id } = req.body;
+// exports.acceptDeposit = async (req, res) => {
+//   const { deposit_id } = req.body;
 
-  try {
-    // Find the deposit with status '0' (Hold)
-    const deposit = await Deposit.findOne({
-      deposit_id,
-      status: 0,
-    });
+//   try {
+//     const deposit = await Deposit.findOne({
+//       deposit_id,
+//       // Find the deposit with status '0' (Hold)
+//       status: 0,
+//     });
 
-    if (!deposit) {
-      return res.status(404).json({
-        return: false,
-        message: 'Deposit not found or already accepted',
-      });
-    }
+//     if (!deposit) {
+//       return res.status(404).json({
+//         return: false,
+//         message: 'Deposit not found or already accepted',
+//       });
+//     }
 
-    // Update the user's balance
-    const user = await User.findById(deposit.deposit_user_id);
-    if (!user) {
-      return res.status(404).json({
-        return: false,
-        message: 'User not found',
-      });
-    }
+//     // Update the user's balance
+//     if (!user) {
+//       return res.status(404).json({
+//       const user = await User.findById(deposit.deposit_user_id);
+//         return: false,
+//         message: 'User not found',
+//       });
+//     }
 
-    user.balance += deposit.amount;
-    await user.save();
+//     user.balance += deposit.amount;
+//     await user.save();
 
-    // Update the deposit status to '1' (Accepted)
-    deposit.status = 1;
-    await deposit.save();
+//     // Update the deposit status to '1' (Accepted)
+//     deposit.status = 1;
+//     await deposit.save();
 
-    return res.json({
-      return: true,
-      message: 'Deposit accepted and user balance updated successfully',
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({
-      return: false,
-      message: 'Something went wrong',
-    });
-  }
-}
+//     return res.json({
+//       return: true,
+//       message: 'Deposit accepted and user balance updated successfully',
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       return: false,
+//       message: 'Something went wrong',
+//     });
+//   }
+// }
 
 //app.get('/api/withdraw',
 exports.Users_withdraw = async (req, res) => {
   try {
-    const users = await User.find();
     res.json(users);  // Send user data to frontend
   } catch (error) {
+    const users = await User.find();
     res.status(500).send('Error fetching users');
   }
 }
@@ -1499,9 +1896,9 @@ exports.withdraw_accept = async (req, res) => {
   const { id, trans_id } = req.body;
 
   try {
-    const transaction = await WidthrowTableHistory.findById(id);
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found' });
+      const transaction = await WidthrowTableHistory.findById(id);
     }
 
     transaction.status = 1; // Accept
@@ -1522,15 +1919,15 @@ exports.withdraw_reject = async (req, res) => {
   const { id } = req.body;
 
   try {
-    const transaction = await WidthrowTableHistory.findOne({ _id: id, status: 0 });
     if (!transaction) {
       return res.status(404).json({ message: 'Transaction not found or already processed' });
+      const transaction = await WidthrowTableHistory.findOne({ _id: id, status: 0 });
     }
 
     // Assuming you have a User model to handle user balances
-    const user = await User.findById(transaction.user_id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+      const user = await User.findById(transaction.user_id);
     }
 
     user.balance += transaction.amount; // Revert balance
@@ -1547,70 +1944,70 @@ exports.withdraw_reject = async (req, res) => {
 
 
 // router.get("/sports-list",
-exports.Sports_list = async (req, res) => {
-  try {
-    const mode = req.query.mode || "In-Play";
-    const categoryId = req.query.category_id || 0;
+// exports.Sports_list = async (req, res) => {
+//   try {
+//     const mode = req.query.mode || "In-Play";
+//     const categoryId = req.query.category_id || 0;
 
-    let query = { id_active: true };
-    if (categoryId != 0) {
-      query._id = categoryId;
-    }
+//     let query = { id_active: true };
+//     if (categoryId != 0) {
+//       query._id = categoryId;
+//     }
 
-    const categories = await SportsCategoryTable.find(query);
-    let responseData = [];
+//     let responseData = [];
 
-    for (const category of categories) {
-      const bettingRecords = await BettingTable.find({
-        cetegory_id: category._id,
-        is_active: true,
-      });
+//     const categories = await SportsCategoryTable.find(query);
+//     for (const category of categories) {
+//       cetegory_id: category._id,
+//         is_active: true,
+//       const bettingRecords = await BettingTable.find({
+//       });
 
-      let number = 0;
-      let categoryData = {
-        categoryName: category.name,
-        bets: [],
-      };
+//       let number = 0;
+//       let categoryData = {
+//         categoryName: category.name,
+//         bets: [],
+//       };
 
-      for (const record of bettingRecords) {
-        if (record.json) {
-          let jsonData = JSON.parse(record.json);
-          if (jsonData.odds && jsonData.odds.output) {
-            for (const bet of jsonData.odds.output) {
-              const commenceDate = new Date(bet.commence_time);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const tomorrow = new Date(today);
-              tomorrow.setDate(today.getDate() + 1);
+//       for (const record of bettingRecords) {
+//         if (record.json) {
+//           let jsonData = JSON.parse(record.json);
+//           if (jsonData.odds && jsonData.odds.output) {
+//             for (const bet of jsonData.odds.output) {
+//               const commenceDate = new Date(bet.commence_time);
+//               const today = new Date();
+//               today.setHours(0, 0, 0, 0);
+//               const tomorrow = new Date(today);
+//               tomorrow.setDate(today.getDate() + 1);
 
-              if ((mode === "In-Play" && commenceDate <= new Date()) ||
-                (mode === "Today" && commenceDate.toDateString() === today.toDateString()) ||
-                (mode === "Tomorrow" && commenceDate.toDateString() === tomorrow.toDateString()) ||
-                (mode === "all")) {
-                number++;
-                categoryData.bets.push({
-                  number,
-                  sportTitle: bet.sport_title,
-                  mode,
-                  commenceTime: bet.commence_time,
-                  awayTeam: bet.away_team,
-                  homeTeam: bet.home_team,
-                  betId: bet.id,
-                  sportKey: bet.sport_key,
-                  recordId: record._id,
-                });
-              }
-            }
-          }
-        }
-      }
-      responseData.push(categoryData);
-    }
-    res.json(responseData);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-}
+//               if ((mode === "In-Play" && commenceDate <= new Date()) ||
+//                 (mode === "Today" && commenceDate.toDateString() === today.toDateString()) ||
+//                 (mode === "Tomorrow" && commenceDate.toDateString() === tomorrow.toDateString()) ||
+//                 (mode === "all")) {
+//                 number++;
+//                 categoryData.bets.push({
+//                   number,
+//                   sportTitle: bet.sport_title,
+//                   mode,
+//                   commenceTime: bet.commence_time,
+//                   awayTeam: bet.away_team,
+//                   homeTeam: bet.home_team,
+//                   betId: bet.id,
+//                   sportKey: bet.sport_key,
+//                   recordId: record._id,
+//                 });
+//               }
+//             }
+//           }
+//         }
+//       }
+//       responseData.push(categoryData);
+//     }
+//     res.json(responseData);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// }
 
 
 
@@ -1621,9 +2018,9 @@ exports.Sports_list = async (req, res) => {
 
    const { id } = req.body;
    try {
-     const provider = await betproviderList.findOne({ is_active: true, _id: id });
- 
+    
      if (!provider) {
+   const provider = await betproviderList.findOne({ is_active: true, _id: id });
        return { err: true, message: 'No provider found.' };
      }
  
@@ -1655,9 +2052,9 @@ exports.Sports_list = async (req, res) => {
        const gameCode = item.g_code;
        const categoryCode = item.p_type.toUpperCase();
  
-       let category = await GameTypeTable.findOne({ type_code: categoryCode });
- 
+       
        if (!category) {
+       let category = await GameTypeTable.findOne({ type_code: categoryCode });
          category = new GameTypeTable({
            type_name: item.g_type,
            type_code: categoryCode,
@@ -1667,9 +2064,9 @@ exports.Sports_list = async (req, res) => {
          categoryId = category._id;
        }
  
-       let game = await GameListTable.findOne({ game_id: gameCode, agent_id: provider._id });
- 
+       
        if (!game) {
+       let game = await GameListTable.findOne({ game_id: gameCode, agent_id: provider._id });
          const imageUrl = await uploadImageToImageBB(item.imgFileName);
          const newGame = new GameListTable({
            game_name: item.gameName.gameName_enus.toUpperCase(),
@@ -1739,118 +2136,121 @@ const fetchApi = async (endpoint, data = {}) => {
 
 
 
-const BetrefreshBalance = async (req, res) => {
-  console.log(req)
-  try {
-      const {userId,agentID} = req.body;
-      if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
+// const BetrefreshBalance = async (req, res) => {
+//   console.log(req)
+//   try {
+//       const {userId,agentID} = req.body;
+//       if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
 
-      const user = await User.findOne({userId: userId});
-      if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
-      // console.log("user",user)
-      let balance = user.balance;
-      const game = await gameTable.findOne({ userId:user.userId, status: 0,agentID, betAmount: { $gt: 0 } });
-      console.log("game",game)
+//       if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
+//       // console.log("user",user)
+//       const user = await User.findOne({userId: userId});
+//       let balance = user.balance;
+//       console.log("game",game)
 
-      if (game === null) return res.json({ errCode: 0, errMsg: 'Success', balance });
+//       const game = await gameTable.findOne({ userId:user.userId, status: 0,agentID, betAmount: { $gt: 0 } });
+//       if (game === null) return res.json({ errCode: 0, errMsg: 'Success', balance });
       
-      const transId = crypto.randomUUID();
-      const agent = await BetProviderTable.findOne(game.agentId);
-      console.log(agent)
-      if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+//       const transId = crypto.randomUUID();
+//       console.log(agent)
+//       if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+//       const agent = await BetProviderTable.findOne(game.agentId);
 
-      const amount = await fetchBalance(agent, user.userId);
+//       const amount = await fetchBalance(agent, user.userId);
 
-      console.log("amount",amount)
-      if (amount > 0) {
-          const signature = crypto.createHash('md5').update(
-              `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
-          ).digest('hex').toUpperCase();
+//       console.log("amount",amount)
+//       if (amount > 0) {
+//           const signature = crypto.createHash('md5').update(
+//               `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
+//           ).digest('hex').toUpperCase();
 
-          const refund = await fetch('http://fetch.336699bet.com/makeTransfer.aspx', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  operatorcode: agent.opcode,
-                  providercode: agent.provider,
-                  username: user.userId,
-                  password: agent.pass,
-                  referenceid: transId,
-                  type: 1,
-                  amount,
-                  signature
-              })
-          });
+//           const refund = await fetch('http://fetch.336699bet.com/makeTransfer.aspx', {
+//               method: 'POST',
+//               headers: { 'Content-Type': 'application/json' },
+//               body: JSON.stringify({
+//                   operatorcode: agent.opcode,
+//                   providercode: agent.provider,
+//                   username: user.userId,
+//                   password: agent.pass,
+//                   referenceid: transId,
+//                   type: 1,
+//                   amount,
+//                   signature
+//               })
+//           });
 
-          const refundData = await refund.json();
+//           const refundData = await refund.json();
 
-          console.log(refundData)
-          if (!refundData || refundData.errCode !== 0) {
-              return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
-          }
-      }
+//           console.log(refundData)
+//           if (!refundData || refundData.errCode !== 0) {
+//               return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
+//           }
+//       }
 
-      balance += amount;
+//       balance += amount;
 
-      console.log("amount", amount)
-      const win = amount - game.betAmount;
+//       console.log("amount", amount)
+//       const win = amount - game.betAmount;
 
-      if (win === 0) {
+//       if (win === 0) {
 
-          console.log(win === 0)
-          await gameTable.findOneAndDelete(game.gameId);
-
+//           console.log(win === 0)
           
-      } else {
+          
+//           await gameTable.findOneAndDelete(game.gameId);
+//       } else {
 
-          console.log( win < 0 ? 2 : 1)
-          await gameTable.findOneAndUpdate(game.gameId, {
-              winAmount: win,
-              returnId: transId,
-              status: win < 0 ? 2 : 1
-          });
-          const usBalance = await User.gameTable.aggregate([
-            {
-              $match: { last_game_id: game_id }
-            },
-            {
-              $lookup: {
-                from: "user",
-                localField: "betAmount",
-                foreignField: "balance",
-                as: "blance"
-              }
-            },
+//           console.log( win < 0 ? 2 : 1)
+//           winAmount: win,
+//               returnId: transId,
+//           await gameTable.findOneAndUpdate(game.gameId, {
+//               status: win < 0 ? 2 : 1
+//           });
+//           const usBalance = await User.gameTable.aggregate([
+//             {
+//               $match: { last_game_id: game_id }
+//             },
+//             {
+//               $lookup: {
+//                 from: "user",
+//                 localField: "betAmount",
+//                 foreignField: "balance",
+//                 as: "blance"
+//               }
+//             },
             
-          ]);;
+//           ]);;
           
-      }
+//       }
 
       
 
-      res.json({ errCode: 0, errMsg: 'Success', balance });
-  } catch (error) {
-      console.error(error);
-      res.status(500).json({ errCode: 2, errMsg: 'Internal Server Error' });
-  }
-}
+//       res.json({ errCode: 0, errMsg: 'Success', balance });
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ errCode: 2, errMsg: 'Internal Server Error' });
+//   }
+// }
 
 
 
 
 exports.launchGame = async (req, res) => {
+  
+  console.log(
+    "req.body",
+    req.body
+  )
   try {
     // Check if user is logged in
-    // if (!req.user) {
-    //     return res.json({ login: true });
-    // }
-
-    const { userId, game_id, is_demo, newProvider } = req.body;
-    const user = await User.findOne({ userId });
-    console.log(user)
-    if (!user) {
+    
+   const { userId, game_id, is_demo, newProvider } = req.body;
+console.log("userId",userId)
+    if (!userId) {
+    
       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
     }
+    const user = await User.findOne({ userId });
 
     let amount = user.balance;
     console.log("amount", amount)
@@ -1880,6 +2280,7 @@ exports.launchGame = async (req, res) => {
         }
       }
     ]);
+
 
 
 
@@ -2061,9 +2462,9 @@ function generateSignature(...args) {
 
 // app.get('/betting', async (req, res) => {
 //   try {
-//     const sports = await Betting.find({ is_active: true, rel_type: 'odds' });
-//     res.json(sports);
+  //     res.json(sports);
 //   } catch (err) {
+  //     const sports = await Betting.find({ is_active: true, rel_type: 'odds' });
 //     res.status(500).json({ message: 'Error fetching betting data' });
 //   }
 // });
@@ -2073,9 +2474,9 @@ function generateSignature(...args) {
 
 // app.get('/corn', async (req, res) => {
 //   try {
-//     const sports = await Betting.find({ is_active: true, rel_type: 'odds' });
-
+  
 //     for (const sport of sports) {
+//     const sports = await Betting.find({ is_active: true, rel_type: 'odds' });
 //       await updateJson(sport.rel_id, sport._id);
 //     }
 
@@ -2109,9 +2510,9 @@ function generateSignature(...args) {
 //       history = await oddsHistorical(key, odds.output[0].commence_time);
 //     }
 
-//     await Betting.findByIdAndUpdate(id, {
 //       history: JSON.stringify(history),
 //       json: JSON.stringify({ odds, event: allEvent, score, history })
+//     await Betting.findByIdAndUpdate(id, {
 //     });
 
 //   } catch (err) {
@@ -2197,9 +2598,9 @@ function generateSignature(...args) {
 // app.post('/bet_sync', async (req, res) => {
 //   try {
 //     const { id } = req.body;
-//     const sport = await Betting.findOne({ _id: id });
 
 //     if (sport) {
+//     const sport = await Betting.findOne({ _id: id });
 //       await updateJson(sport.rel_id, sport._id);
 //       res.json({ return: true, message: 'b_sync_done' });
 //     } else {
@@ -2217,9 +2618,9 @@ function generateSignature(...args) {
 // app.post('/delete', async (req, res) => {
 //   try {
 //     const { type, sports_id, main_id, bookmark_id, market_id } = req.body;
-//     const sport = await Betting.findOne({ _id: sports_id });
 
 //     if (sport && sport.manual) {
+//     const sport = await Betting.findOne({ _id: sports_id });
 //       let manual = JSON.parse(sport.manual);
 
 //       if (type === 'bookmark') {
@@ -2247,9 +2648,9 @@ function generateSignature(...args) {
 // app.post('/edit', async (req, res) => {
 //   try {
 //     const { type, sports_id, main_id, bookmark_id, market_id, name } = req.body;
-//     const sport = await Betting.findOne({ _id: sports_id });
 
 //     if (sport && sport.manual) {
+//     const sport = await Betting.findOne({ _id: sports_id });
 //       let manual = JSON.parse(sport.manual);
 
 //       if (type === 'bookmark') {
@@ -2344,3 +2745,152 @@ function generateSignature(...args) {
       res.status(500).json({ error: error.message });
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+exports.getCategoriesWithProviders = async (req, res) => {
+  try {
+    // const { provider, category, game } = req.body
+    const { provider, category, game } = req.query;
+    // Fetch all categories
+    const categories = await Category.find({category_name: category});
+    
+
+    // Fetch games for each category along with their providers
+    const categoriesWithGamesAndProviders = await Promise.all(
+      categories.map(async (category) => {
+        // Fetch games for each category
+        const games = await GameListTable.aggregate([
+          { $match: { category_name: category.category_name } },
+          { 
+            $lookup: {
+              from: "betprovidertables",
+              localField: "p_code",
+              foreignField: "providercode",
+              as: "providers"
+            }
+          },
+          { 
+            $project: {
+              name: 1,
+              "providers.providercode": 1
+            }
+          }
+        ]);
+
+        const providerSet = new Set();
+        games.forEach(game => {
+          game.providers.forEach(provider => providerSet.add(provider.providercode));
+        });
+
+        const uniqueProviders = await BetProviderTable.find(
+          { providercode: { $in: Array.from(providerSet) } },
+          { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
+        );
+
+        // Format the result
+        return {
+          
+          uniqueProviders
+          
+          
+        };
+      })
+    );
+
+    res.json(categoriesWithGamesAndProviders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+
+exports.getCategoriesWithProvidersGameList = async (req, res) => {
+  try {
+    // const { provider, category } = req.body
+    const { provider, category } = req.query;
+    // Fetch all categories
+      if(!provider || !category){
+        return res.status(404).json({ message: 'Provider and Category not found' });
+      }
+      const game = await GameListTable.find({ p_code: provider, category_name: category }).sort({ serial_number: -1 });;
+console.log(game)
+
+    res.json(game);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
+
+
+
+// exports.getGamesAndProviders = async (req, res) => {
+//   try {
+//     // Fetch all categories
+//     const categories = await Category.find();
+
+//     // Fetch games for each category and their providers
+//     const categoriesWithGamesAndProviders = await Promise.all(
+//       categories.map(async (category) => {
+//         // Fetch games and provider details in a single query
+//         const gamesWithProviders = await GameListTable.aggregate([
+//           { $match: { category_name: category.category_name } },
+//           {
+//             $lookup: {
+//               from: "betprovidertables",
+//               localField: "p_code",
+//               foreignField: "providercode",
+//               as: "providers"
+//             }
+//           },
+//           {
+//             $project: {
+//               name: 1,
+//               p_code: 1,
+//               providers: { providercode: 1, company: 1, url: 1, image_url: 1 }
+//             }
+//           }
+//         ]);
+
+//         // Extract unique providers
+//         const providerMap = new Map();
+//         gamesWithProviders.forEach(game => {
+//           game.providers.forEach(provider => {
+//             if (!providerMap.has(provider.providercode)) {
+//               providerMap.set(provider.providercode, provider);
+//             }
+//           });
+//         });
+
+//         return {
+//           category: {
+//             name: category.category_name,
+//             image: category.image,
+//             id_active: category.id_active, // Indicates if the category is active
+//           },
+//            uniqueProviders: Array.from(providerMap.values()), // Unique providers
+//            games: gamesWithProviders.map(({ name, p_code }) => ({  })) // Return games if needed
+//         };
+//       })
+//     );
+
+//     res.json(categoriesWithGamesAndProviders);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// }

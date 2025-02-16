@@ -22,9 +22,12 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: '*',
+    origin:[ 'http://localhost:3000','http://localhost:3001'], // Allow only your frontend origin
+    credentials: true, // Allow cookies and authentication headers,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
+
+
 
 
 

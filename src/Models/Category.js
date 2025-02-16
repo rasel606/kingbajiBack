@@ -1,30 +1,28 @@
 const mongoose = require('mongoose');
 
 const CategorySchema = new mongoose.Schema({
-      name: {
-        type: String,
-        required: true,
-      },
-      image: {
-        type: String, // Assuming image is a URL or file path
-        
-      },
-      staff_id: {
-        type: Number,  // Assuming staff_id is numeric
-        
-      },
-      gameId:[{ type: mongoose.Schema.Types.ObjectId, ref: 'game' }],
-      g_type:[{ type: mongoose.Schema.Types.ObjectId, ref: 'game' }],
-      id_active: {
-        type: Boolean,
-        
-        default: true,
-      },
-      datetime: {
-        type: Date,
-        required: true,
-        default: Date.now,  // You can set default value to current time if required
-      },
+  category_name: {
+    type: String,
+    
+  },
+  image: {
+    type: String, // Assuming image is a URL or file path
+
+  },
+  category_code: {
+    type: String,
+    
+  },
+
+  g_code: [{ type: String}],
+
+  p_code: [{ type: String, }],
+  id_active: {
+    type: Boolean,
+
+    default: true,
+  },
+  timestamp: { type: Date, default: Date.now },
   updatetimestamp: { type: Date, default: Date.now },
 });
 

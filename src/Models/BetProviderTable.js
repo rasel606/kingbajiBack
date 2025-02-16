@@ -12,6 +12,7 @@ const BetProviderTableSchema = new mongoose.Schema({
   operatorcode: { type: String },
   key: { type: String },
   auth_pass: { type: String},
+  id_active: { type: Boolean, default: true },
   
   timestamp: { type: Date, default: Date.now },
   updatetimestamp: { type: Date, default: Date.now },
