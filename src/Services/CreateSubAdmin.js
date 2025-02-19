@@ -22,7 +22,7 @@ console.log("referredbyCode",email, phone, password, countryCode, referredbyCode
     if (referredbyCode) {
       const referredbyUser = await SubAdmin.findOne({ referredCode: referredCode });
       const referrUser = await SubAdmin.findOneAndDelete({ referredCode: referredCode });
-      if(referrUser){
+      if(!referrUser){
         return res.status(400).json({ success: false, message: "Invalid referred code" });
       }
     }
