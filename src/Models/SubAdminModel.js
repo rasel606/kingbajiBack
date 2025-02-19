@@ -22,6 +22,6 @@ const subAdminSchema = new mongoose.Schema({
   updatetimestamp: { type: Date, default: Date.now },
 });
 
-const SubAdmin = mongoose.model('subAdmin', subAdminSchema);
+const SubAdmin = mongoose.models.subAdmin || mongoose.model("subAdmin", subAdminSchema);
 
 module.exports = SubAdmin;

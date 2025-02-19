@@ -59,19 +59,19 @@ router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
 router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////affiliate    ///////////////////////////////////////////////
-router.post('/register_affiliate',AffiliateController.registerSubAdmin) ;
-router.post('/login_affiliate',AffiliateController.loginSubAdmin) ;
-router.get('/verify_affiliate', AffiliateController.verifySubAdmin);
+router.post('/register_affiliate',AffiliateController.register) ;
+router.post('/login_affiliate',AffiliateController.login) ;
+router.get('/verify_affiliate', AffiliateController.verify);
 router.get('/sub_affiliate', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////////////////agent   ///////////////////////////////////////////////
-router.post('/register_agent',AgentController.registerSubAdmin) ;
-router.post('/login_agent',AgentController.loginSubAdmin) ;
-router.get('/verify_agent', AgentController.verifySubAdmin);
+router.post('/register_agent',AgentController.registerAgent) ;
+router.post('/login_agent',AgentController.loginAgent) ;
+router.get('/verify_agent', AgentController.verifyAgent);
 router.get('/sub_agent_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////////////////  Sub-agent   ///////////////////////////////////////////////
-router.post('/register_Sub_agent',AgentController.registerSubAdmin) ;
-router.post('/login_Sub_agent',AgentController.loginSubAdmin) ;
-router.get('/verify_Sub_agent', AgentController.verifySubAdmin);
+router.post('/register_Sub_agent',AgentController.register) ;
+router.post('/login_Sub_agent',AgentController.login) ;
+router.get('/verify_Sub_agent', AgentController.verify);
 router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 
 ///////////////////////////////////////////////////  Deposit   ///////////////////////////////////////////////
