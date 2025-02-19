@@ -1,47 +1,45 @@
-// // models/affiliateModel.js
-// const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-// const affiliateSchema = new mongoose.Schema({
-//     username: { type: String, required: true },
-//     firstName: String,
-//     lastName: String,
-//     dateOfBirth: Date,
-//     lastWithdrawalTime: Date,
-//     accountStatus: { type: String, default: 'Active' },
-//     approvedDateTime: { type: Date, default: Date.now },
-//     lastLoginTime: Date,
-//     referralCode: String,
-//     contactInfo: {
-//         phoneNumber: String,
-//         email: String,
-//         whatsApp: String
+// const contactInfoSchema = new mongoose.Schema({
+//     phoneNumber: { type: String, trim: true, required: false },
+//     email: { 
+//         type: String, 
+//         trim: true, 
+//         required: false, 
+//         match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'] 
 //     },
-//     potential: { type: Number, default: 0 },
-//     earnings: {
-//         totalRevenue: { type: Number, default: 0 },
-//         totalProfitLoss: { type: Number, default: 0 },
-//         totalJackpot: { type: Number, default: 0 },
-//         totalDeduction: { type: Number, default: 0 },
-//         totalBonus: { type: Number, default: 0 },
-//         totalVipCashBonus: { type: Number, default: 0 },
-//         totalRevenueAdjustment: { type: Number, default: 0 },
-//         totalReferralCommission: { type: Number, default: 0 },
-//         totalPaymentFee: { type: Number, default: 0 },
-//         negativeCarryForward: { type: Number, default: 0 },
-//         totalNetProfit: { type: Number, default: 0 }
-//     },
-//     commission: { type: Number, default: 0 },
-//     earningsStatus: {
-//         pending: { type: Number, default: 0 },
-//         available: { type: Number, default: 0 },
-//         processingWithdrawal: { type: Number, default: 0 }
-//     },
-//     links: [{
-//         domain: String,
-//         status: String,
-//         keywords: String,
-//         pageAction: String
-//     }]
+//     whatsApp: { type: String, trim: true, required: false }
 // });
 
-// module.exports = mongoose.model('Affiliate', affiliateSchema);
+
+// const earningsStatusSchema = new mongoose.Schema({
+//     pending: { type: Number, default: 0 },
+//     available: { type: Number, default: 0 },
+//     processingWithdrawal: { type: Number, default: 0 }
+// });
+
+
+
+const AffiliateSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true, trim: true },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+    dateOfBirth: { type: Date, required: false },
+    lastWithdrawalTime: { type: Date, required: false },
+    referralByCode: { type: String, min: 11, max: 11 },
+    referralCode: { type: String, unique: true, min: 11, max: 11 },
+    SubAdminId: { type: String, min: 11, max: 11 },
+    accountStatus: { type: String, enum: ['Active', 'Suspended', 'Closed'], default: 'Active' },
+    approvedDateTime: { type: Date, default: Date.now },
+    lastLoginTime: { type: Date, required: false },
+    referralCode: { type: String, trim: true, required: false, unique: true },
+    // contactInfo: { type: contactInfoSchema, required: true },
+    // earnings: earningsSchema,
+    commission: { type: Number, default: 0 },
+    // earningsStatus: earningsStatusSchema,
+    // links: [linksSchema],
+    timestamps: { type: Date, default: Date.now }
+})
+
+const Affiliate = mongoose.model('Affiliate', AffiliateSchema);
+module.exports = Affiliate;

@@ -31,6 +31,16 @@ exports.register = async (req, res) => {
       apiVerified: false, // Add a field to check API success later
     });
 
+
+
+     // ✅ Step 3: Call External API Asynchronously
+     const operatorcode = "rbdb";
+     const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
+     const newUserCreate = userId.toLowerCase();
+     const signature = crypto.createHash("md5").update(operatorcode + newUserCreate + secret).digest("hex").toUpperCase();
+ 
+     const apiUrl = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcode}&username=${newUserCreate}&signature=${signature}`;
+
     // ✅ Step 2: Generate JWT Token (Send Response Immediately)
     const token = jwt.sign({ id: newUser.userId }, JWT_SECRET, { expiresIn: "2h" });
 
@@ -49,18 +59,12 @@ exports.register = async (req, res) => {
       },
     });
 
-    // ✅ Step 3: Call External API Asynchronously
-    const operatorcode = "rbdb";
-    const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
-    const newUserCreate = userId.toLowerCase();
-    const signature = crypto.createHash("md5").update(operatorcode + newUserCreate + secret).digest("hex").toUpperCase();
-
-    const apiUrl = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcode}&username=${newUserCreate}&signature=${signature}`;
+   
 
     try {
       const apiResponse = await axios.get(apiUrl);
 
-      console.log("API Response Data:", apiResponse.data);
+      console.log("API Response Data:", apiResponse);
 
       // ✅ Step 4: If API response is successful, update user in DB
       if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS") {

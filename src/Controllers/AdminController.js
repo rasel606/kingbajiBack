@@ -735,3 +735,36 @@ exports.GateAllGames = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////////
+
+// Admin - Get All Users
+// router.get("/admin/users", async (req, res) => {
+//   try {
+//       const users = await User.find();
+//       res.status(200).json(users);
+//   } catch (error) {
+//       res.status(500).json({ message: "Server error", error });
+//   }
+// });
+
+
+
+
+
+///////////////////////////////////
+// Admin - Get All Transactions
+// router.get("/admin/transactions", async (req, res) => {
+//   try {
+//       const transactions = await Transaction.find().populate("user_id");
+//       res.status(200).json(transactions);
+//   } catch (error) {
+//       res.status(500).json({ message: "Server error", error });
+//   }
+// });

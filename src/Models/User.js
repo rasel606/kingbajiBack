@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
   isEmailVerified: { type: Boolean, default: false },
   isBirthdayVerified: { type: Boolean, default: false },
   timestamp: { type: Date, default: Date.now },
-  lest_game_id: { type: String },
+  last_game_id: { type: String },
   bonus: {
     name: { type: String },
     eligibleGames: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Game' }],

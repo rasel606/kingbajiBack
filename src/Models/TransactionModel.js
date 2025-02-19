@@ -7,7 +7,6 @@ const transactionSchema = new mongoose.Schema({
     currency_rate: { type: Number, required: true },
     amount: { type: Number, required: true },
     currency_id: { type: mongoose.Schema.Types.ObjectId, ref: "Currency", required: true },
-    agent_id: { type: mongoose.Schema.Types.ObjectId, ref: "Agent" },
     gateway: { type: Number, enum: [0, 1, 2, 3], required: true }, // 0 = Agent, 1 = Online, 2 = Token, 3 = Bank
     getway_name: { type: String, required: true },
     type: { type: String, required: true },

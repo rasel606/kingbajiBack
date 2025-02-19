@@ -17,8 +17,8 @@ exports.registerSubAdmin  = async (req, res) => {
     }
 console.log("referredbyCode",email, phone, password, countryCode, referredbyCode )
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const referredCode = Math.random().toString(36).substring(2, 10);
-    const referrUserCode = Math.random().toString(36).substring(2, 10);
+    const referredCode = Math.random().toString(36).substring(2, 12);
+    const referrUserCode = Math.random().toString(36).substring(2, 12);
     if (referredbyCode) {
       const referredbyUser = await SubAdmin.findOne({ referredCode: referredCode });
       const referrUser = await SubAdmin.findOneAndDelete({ referredCode: referredCode });
@@ -27,7 +27,7 @@ console.log("referredbyCode",email, phone, password, countryCode, referredbyCode
       }
     }
 
-    const SubAdminId = Math.random().toString(36).substring(2, 10);
+    const SubAdminId = Math.random().toString(36).substring(2, 12);
 
 
 
@@ -225,3 +225,9 @@ exports.verifySubAdmin = async (req, res) => {
     res.status(400).json({ message: "Invalid token!" });
   }
 };
+
+
+
+
+//////////////////////////////////////////// SubAdmin-withdrawal   //////////////////////////////////////////////////
+

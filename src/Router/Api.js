@@ -3,7 +3,6 @@ const router = express.Router()
 const AdminController = require("../Controllers/AdminController")
 const CreateUserService = require("../Services/CreateUserService");
 const UpdateProfile = require('../Controllers/UpdateProfile');
-
 const { authMiddleware } = require('../MiddleWare/AuthVerifyMiddleWare');
 const multer = require('multer');
 const path = require('path');
@@ -12,16 +11,20 @@ const BettingController = require('../Controllers/BettingController');
 const BankController = require('../Controllers/BankController');
 const OddBettingController = require('../Controllers/OddBettingController');
 const ModelBettingController = require('../Controllers/ModelBettingController');
+const TransactionController = require('../Controllers/TransactionController');
+const AffiliateController = require('../Controllers/AffiliateController');
+const AgentController = require('../Controllers/AgentController');
 const Controllers = require('../Controllers/CornController');
-
-const { fetchGamesFromApi, getGamesByCategory, addGame } = require('../Controllers/MyController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
-const { loadBalance } = require('../Controllers/LenchGameApiController');
-const  LoginService  = require('../Services/LoginService');
-const FrontCetegoryController = require('../Controllers/FrontCetegoryController');
+const CreateSubAdmin = require('../Services/CreateSubAdmin');
+
+
+
 // const Promotion = require('../Models/PromotionSchema');
 const PromotionController = require('../Controllers/PromotionController');
 const AuthVerifyMiddleWare = require('../MiddleWare/AuthVerifyMiddleWare');
+const GetAllUser= require('../Services/GetAllUser');
+const { Transaction } = require('mongodb');
 
 
 
@@ -50,25 +53,35 @@ router.get('/verify-email', UpdateProfile.SandOpt);
 
 
 
+///////////////////////////////////////SUb Admin    ///////////////////////////////////////////////
+router.post('/register_sub_admin',CreateSubAdmin.registerSubAdmin) ;
+router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
+router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
+router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
+///////////////////////////////////////affiliate    ///////////////////////////////////////////////
+router.post('/register_affiliate',AffiliateController.registerSubAdmin) ;
+router.post('/login_affiliate',AffiliateController.loginSubAdmin) ;
+router.get('/verify_affiliate', AffiliateController.verifySubAdmin);
+router.get('/sub_affiliate', GetAllUser.GetAllUserForSUbAdmin);
+///////////////////////////////////////////////////agent   ///////////////////////////////////////////////
+router.post('/register_agent',AgentController.registerSubAdmin) ;
+router.post('/login_agent',AgentController.loginSubAdmin) ;
+router.get('/verify_agent', AgentController.verifySubAdmin);
+router.get('/sub_agent_agent_user', GetAllUser.GetAllUserForSUbAdmin);
+///////////////////////////////////////////////////  Sub-agent   ///////////////////////////////////////////////
+router.post('/register_Sub_agent',AgentController.registerSubAdmin) ;
+router.post('/login_Sub_agent',AgentController.loginSubAdmin) ;
+router.get('/verify_Sub_agent', AgentController.verifySubAdmin);
+router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
+
+///////////////////////////////////////////////////  Deposit   ///////////////////////////////////////////////
 
 
-
-
-// router.get('/', (req, res) => {
-//   res.send("IT'S router WORKING!");
-// });
-
-
-
-
-
-
-
-//  router.get('/fetch-games',fetchGamesFromApi)
-//  router.get('/games/:category',getGamesByCategory)
-// router.post('/add-game', addGame)
-
-
+router.get('/deposits_list', TransactionController.DepositsList);
+router.get('/withdrawals_list', TransactionController.WithdrawalsList);
+router.get('/withdraw_with_turenover', TransactionController.withdrawWIthTurenover);
+router.get('/deposit_with_bonus', TransactionController.depositWIthBonus);
+router.get('/admin_withdraw_action', TransactionController.adminWithdrawAction);
 
 // router.post('/validate', validateUserDetails);
 // router.post('/send-otp', CreateUserService.sendOtp);
@@ -77,7 +90,7 @@ router.get('/verify-email', UpdateProfile.SandOpt);
 // Admin Route
 router.post("/adminregistation", AdminController.CreateAdmin)
 router.post("/adminlogin", AdminController.AdminLogin)
-router.post('/verifyAdmin', LoginService.verifyAdmin);
+// router.get('/verifyAdmin', AdminController.verifySubAdmin);
 
 // Sub Admin  Route
 // router.post("/adminregistation", AdminController.CreateAdmin)
@@ -100,9 +113,9 @@ router.post("/bank_add", AdminController.AddBank)
 
 
 //game font
-router.post("/assign-category",FrontCetegoryController.assignCategory)
-router.get("/categories",FrontCetegoryController.GetFontCategories) 
-router.get("/games", FrontCetegoryController.GetFontGames)
+// router.post("/assign-category",FrontCetegoryController.assignCategory)
+// router.get("/categories",FrontCetegoryController.GetFontCategories) 
+// router.get("/games", FrontCetegoryController.GetFontGames)
 
 // Admin Game Page
 
@@ -128,17 +141,6 @@ router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCa
 
 
 
-
-
-
-// router.get('/user_blance_his',Refresh_blance.fetchBalance)
-
-
-// router.get('/games/:id', ModelBettingController.ShowGameListById);
-
-
-
-// router.get('/games', ModelBettingController.GetGameList);
 
 
 router.post('/betting',Controllers.Betting);
@@ -167,9 +169,7 @@ router.get('/get_sub_category/:cat_id',AdminController.GetSubcategoryById)
 // router.get('/categories',AdminController.Category)
 // router.get('/odds/:key',AdminController.OddByKey)
 router.post('/category/add',ModelBettingController.AddCetagory)
-// router.get('/get-casino-category',AdminController.GetCasinoCategory)
-// router.post('/casino/update',AdminController.CasinoUpdate)
-// router.post('/casino_category',AdminController.CasinoItemAdd)
+
 // router.post('/bet-price',AdminController.BetPrice);
 router.get('/get_casino',AdminController.GetCasinoData);
 router.get('/get_active_sports',AdminController.GetActiveSports);

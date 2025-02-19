@@ -153,3 +153,74 @@ console.log("myblance",m)
 //     { userId },
 //     { $set: { balance: newBalance, lest_game_id: user.lest_game_id } }
 // );
+
+
+
+
+    exports.SettleBlance = async (userId)=> {
+    try {
+        let settleAmount = 0;
+        
+        // Get the latest settled amount
+        const latestSettle = await MeasureWithdraw.findOne({ user_id: userId }).sort({ _id: -1 });
+        if (latestSettle) {
+            settleAmount = latestSettle.settle_amount;
+        }
+
+        // Get all games of the user
+        const games = await Game.find({ user_id: userId });
+        
+        for (const game of games) {
+            const existingMeasure = await MeasureWithdraw.findOne({ game_id: game._id, user_id: userId });
+            if (!existingMeasure) {
+                let amount = 0;
+                
+                if (game.action === 'bet') {
+                    amount = game.bet_amount;
+                    if (parseFloat(game.after_amount) >= settleAmount) {
+                        // settleAmount remains the same
+                    } else {
+                        settleAmount = game.after_amount;
+                    }
+                } else if (game.action === 'settle') {
+                    amount = game.win_amount;
+                    if (parseFloat(game.after_amount) >= settleAmount) {
+                        settleAmount += game.win_amount;
+                    } else {
+                        settleAmount = game.after_amount;
+                    }
+                }
+
+                // Insert new measure withdrawal record
+                await MeasureWithdraw.create({
+                    action: game.action,
+                    user_id: userId,
+                    game_id: game._id,
+                    amount,
+                    before_balance: game.before_amount,
+                    after_balance: game.after_amount,
+                    settle_amount: settleAmount,
+                });
+            }
+        }
+
+        // Get pending and accepted withdrawal amounts
+        const withdrawPending = await WithdrawHistory.aggregate([
+            { $match: { user_id: userId, status: 0 } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+        
+        const withdrawAccepted = await WithdrawHistory.aggregate([
+            { $match: { user_id: userId, status: 1 } },
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        const withdrawTotal = (withdrawPending[0]?.total || 0) + (withdrawAccepted[0]?.total || 0);
+
+        return settleAmount - withdrawTotal;
+    } catch (error) {
+        console.error("Error calculating settled balance:", error);
+        throw error;
+    }
+}
+

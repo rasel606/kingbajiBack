@@ -1,60 +1,27 @@
-// const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-// const agentSchema = new mongoose.Schema({
-//   name: { type: String, required: true },
-//   email: { type: String, required: true, unique: true },
-//   password: { type: String, required: true },
-//   referralCode: { type: String, unique: true },
-//   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
-//   users: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-//   IsActive: { type: Boolean, default: true },
-//   timestamp: { type: Date, default: Date.now },
-//   updatetimestamp: { type: Date, default: Date.now },
-// });
+const subAdminSchema = new mongoose.Schema({
+  name: { type: String },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  balance: { type: Number, default: 0 },
+  referralByCode: { type: String, min: 7, max: 7 },
+  referralCode: { type: String, unique: true, min: 7, max: 7 },
+  user_referredLink: { type: String, unique: true },
+  agent_referredLink: { type: String, unique: true },
+  affiliate_referredLink: { type: String, unique: true },
+  SubAdminId: { type: String, min: 7, max: 7 },
+  countryCode: { type: String},
+  phone: { type: String },
+  user_role: { type: String,  default: 'subAdmin' },
+  users: [{ type: String, ref: 'User' }],
+  Agent: [{ type: String, ref: 'Agent' }],
+  Affiliate: [{ type: String, ref: 'Affiliate' }],
+  IsActive: { type: Boolean, default: true },
+  timestamp: { type: Date, default: Date.now },
+  updatetimestamp: { type: Date, default: Date.now },
+});
 
-// const Agent = mongoose.model('Agent', agentSchema);
+const SubAdmin = mongoose.model('subAdmin', subAdminSchema);
 
-// module.exports = Agent;
-
-
-
-
-
-
-// // Deposit History model
-// const DepositHistorySchema = new mongoose.Schema({
-//   deposit_user_id: mongoose.Schema.Types.ObjectId,
-//   transactionID: String,
-//   base_amount: Number,
-//   currency_rate: Number,
-//   amount: Number,
-//   currency: mongoose.Schema.Types.ObjectId,
-//   contact_id: mongoose.Schema.Types.ObjectId,
-//   agent_id: mongoose.Schema.Types.ObjectId,
-//   gateway: Number,
-//   gateway_name: String,
-//   status: Number,
-//   remark: String,
-// });
-
-// // Withdraw History model
-// const WithdrawHistorySchema = new mongoose.Schema({
-//   user_id: mongoose.Schema.Types.ObjectId,
-//   base_amount: Number,
-//   currency_rate: Number,
-//   amount: Number,
-//   currency_id: mongoose.Schema.Types.ObjectId,
-//   contact_id: mongoose.Schema.Types.ObjectId,
-//   agent_id: mongoose.Schema.Types.ObjectId,
-//   gateway: Number,
-//   gateway_name: String,
-//   status: Number,
-//   details: String,
-// });
-
-// // Agent Details model
-// const AgentDetailsSchema = new mongoose.Schema({
-//   details: String,
-//   type: String,
-//   contact_id: mongoose.Schema.Types.ObjectId,
-// });
+module.exports = SubAdmin;
