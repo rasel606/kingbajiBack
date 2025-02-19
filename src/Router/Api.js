@@ -69,9 +69,9 @@ router.post('/login_agent',AgentController.loginAgent) ;
 router.get('/verify_agent', AgentController.verifyAgent);
 router.get('/sub_agent_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////////////////  Sub-agent   ///////////////////////////////////////////////
-router.post('/register_Sub_agent',AgentController.register) ;
-router.post('/login_Sub_agent',AgentController.login) ;
-router.get('/verify_Sub_agent', AgentController.verify);
+router.post('/register_Sub_agent',AgentController.registerAgent) ;
+router.post('/login_Sub_agent',AgentController.loginAgent) ;
+router.get('/verify_Sub_agent', AgentController.verifyAgent);
 router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 
 ///////////////////////////////////////////////////  Deposit   ///////////////////////////////////////////////
