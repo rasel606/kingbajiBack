@@ -7,29 +7,47 @@ const BetProviderTable = require('../Models/BetProviderTable');
 const { default: axios } = require('axios');
 
 const fetchBalance = async (agent, username) => {
+    try {
+        const signature = crypto.createHash('md5').update(
+            `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
+        ).digest('hex').toUpperCase();
 
-    const signature = crypto.createHash('md5').update(
-        `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
-    ).digest('hex').toUpperCase();
-    const params = {
-        operatorcode: agent.operatorcode,
-        providercode: agent.providercode,
-        username: username,
-        password: agent.auth_pass,
-        signature
+        console.log("Generated Signature:", signature);
 
-    }
-    const apiUrl = `http://fetch.336699bet.com/getBalance.aspx?`;
-    const response = await axios.get(apiUrl, { params }, {
-        headers: {
-            'Content-Type': 'application/json'
+        const params = {
+            operatorcode: agent.operatorcode,
+            providercode: agent.providercode,
+            username: username,
+            password: agent.auth_pass,
+            signature
+        };
+
+        const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
+
+        // Make the API request
+        const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
+
+        // Log response for debugging
+        if (!response.data || typeof response.data !== 'object' || !("balance" in response.data)) {
+            throw new Error("Invalid API response format");
         }
-    });
-    const data = await response;
-    
 
-    return parseFloat(data.data.balance);
+        const parsedData = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+
+        if (!parsedData.balance || isNaN(parsedData.balance)) {
+            throw new Error("Invalid balance received from API");
+        }
+
+        return parseFloat(parsedData.balance);
+    } catch (error) {
+        console.log("Error fetching balance:", error.message);
+        return null; // or handle the error accordingly
+    }
 };
+
+function randomStr() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
 
 exports.refreshBalance = async (req, res) => {
     console.log(req.userId);
@@ -44,81 +62,82 @@ exports.refreshBalance = async (req, res) => {
 
         let balance = user.balance;
         const game = await GameTable.findOne({ userId: user.userId });
-      
+
 
         if (game === null) return res.json({ errCode: 0, errMsg: 'Success', balance });
 
-        const transId = crypto.randomUUID();
+        const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 20);
         const agent = await BetProviderTable.findOne({ providercode: game.agentId });
-        
+
         if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+        const username = user.userId
+        let amount = await fetchBalance(agent, username);
 
-        const amount = await fetchBalance(agent, user.userId);
-
+        if (amount === null) {
+            console.log("Failed to fetch valid balance, keeping previous balance:", balance);
+        } else {
+            balance += parseFloat(amount);
+            await User.updateOne({ userId: userId },{$set: { balance: balance, last_game_id: game.gameId }});
+        }
         
-        if (amount > 0) {
+
+        console.log("pi blance", amount)
+        if (amount !== null && amount > 0) {
             const signature = crypto.createHash('md5').update(
                 `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
             ).digest('hex').toUpperCase();
+            console.log(transId)
+            const params = {
+                operatorcode: agent.operatorcode,
+                providercode: agent.providercode,
+                username: user.userId,
+                password: agent.auth_pass,
+                referenceid: transId,
+                type: 1,
+                amount: amount,
+                signature
+            };
 
-            const refund = await fetch('http://fetch.336699bet.com/makeTransfer.aspx', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    operatorcode: agent.opcode,
-                    providercode: agent.provider,
-                    username: user.userId,
-                    password: agent.pass,
-                    referenceid: transId,
-                    type: 1,
-                    amount,
-                    signature
-                })
-            });
+            console.log(signature);
 
-            const refundData = await refund
+            const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
 
+
+            const refundData = await refund.data
+            // amount = refundData
             console.log("refundData", refundData)
-            if (!refundData || refundData.status !== 200) {
+            if (refundData.innerCode === null) {
                 return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
             }
         }
 
+
+
+
+        console.log("amount+2", amount === null)
+        // const win = amount - game.betAmount;
+        // console.log("amount+4", win)
+        // if (amount !== null && !isNaN(amount)) {
+        //     balance += parseFloat(amount);
+        // }
         
+        const win =  amount - game.betAmount ;
 
-        console.log("amount+2", amount)
-        const win = amount - game.betAmount;
-
+console.log(win)
         if (win === 0) {
-
-            // console.log(win === 0)
-            // await GameTable.findOneAndDelete(game.gameId);
-
-            // console.log(m)
+            // await GameTable.deleteOne({ gameId: game.gameId });
         } else {
-
-            console.log("amount+2", amount)
-            await GameTable.findOneAndUpdate({ gameId: game.gameId }, {
-                winAmount: win,
-                returnId: transId,
-                status: win < 0 ? 2 : 1
-            });
-
-
-            // console.log(my)
-
-
+            await GameTable.updateOne(
+                { gameId: game.gameId },
+                { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } }
+            );
         }
 
-        const my = await User.findOne({ userId: user.userId });
-        console.log("my", my)
-
-        let gblance = amount;
         
-        const m = await User.findOneAndUpdate({ userId: user.userId }, { balance:gblance, last_game_id: game.gameId });
-console.log("myblance",m)
 
-        res.json({ errCode: 0, errMsg: 'Success', balance });
+    const newUser = await User.findOne({ userId: userId });
+
+        res.json({ errCode: 0, errMsg: 'Success', balance:newUser.balance });
     } catch (error) {
         console.error(error);
         res.status(500).json({ errCode: 2, errMsg: 'Internal Server Error' });
@@ -129,98 +148,4 @@ console.log("myblance",m)
 
 
 
-
-
-// const result = await GameTable.aggregate([
-//     { $match: { userId } },  // Find all games for the user
-//     {
-//         $group: {
-//             _id: "$userId",
-//             totalWin: { $sum: "$winAmount" },
-//             totalBet: { $sum: "$betAmount" }
-//         }
-//     }
-// ]);
-// console.log(result)
-// let newBalance = 0;
-// if (result.length > 0) {
-//     newBalance = result[0].totalWin - result[0].totalBet;
-//     console.log(newBalance)
-// }
-
-// // Update user's balance and last played game ID
-// await User.updateOne(
-//     { userId },
-//     { $set: { balance: newBalance, lest_game_id: user.lest_game_id } }
-// );
-
-
-
-
-    exports.SettleBlance = async (userId)=> {
-    try {
-        let settleAmount = 0;
-        
-        // Get the latest settled amount
-        const latestSettle = await MeasureWithdraw.findOne({ user_id: userId }).sort({ _id: -1 });
-        if (latestSettle) {
-            settleAmount = latestSettle.settle_amount;
-        }
-
-        // Get all games of the user
-        const games = await Game.find({ user_id: userId });
-        
-        for (const game of games) {
-            const existingMeasure = await MeasureWithdraw.findOne({ game_id: game._id, user_id: userId });
-            if (!existingMeasure) {
-                let amount = 0;
-                
-                if (game.action === 'bet') {
-                    amount = game.bet_amount;
-                    if (parseFloat(game.after_amount) >= settleAmount) {
-                        // settleAmount remains the same
-                    } else {
-                        settleAmount = game.after_amount;
-                    }
-                } else if (game.action === 'settle') {
-                    amount = game.win_amount;
-                    if (parseFloat(game.after_amount) >= settleAmount) {
-                        settleAmount += game.win_amount;
-                    } else {
-                        settleAmount = game.after_amount;
-                    }
-                }
-
-                // Insert new measure withdrawal record
-                await MeasureWithdraw.create({
-                    action: game.action,
-                    user_id: userId,
-                    game_id: game._id,
-                    amount,
-                    before_balance: game.before_amount,
-                    after_balance: game.after_amount,
-                    settle_amount: settleAmount,
-                });
-            }
-        }
-
-        // Get pending and accepted withdrawal amounts
-        const withdrawPending = await WithdrawHistory.aggregate([
-            { $match: { user_id: userId, status: 0 } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-        
-        const withdrawAccepted = await WithdrawHistory.aggregate([
-            { $match: { user_id: userId, status: 1 } },
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-
-        const withdrawTotal = (withdrawPending[0]?.total || 0) + (withdrawAccepted[0]?.total || 0);
-
-        return settleAmount - withdrawTotal;
-    } catch (error) {
-        console.error("Error calculating settled balance:", error);
-        throw error;
-    }
-}
 

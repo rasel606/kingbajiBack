@@ -25,6 +25,8 @@ const PromotionController = require('../Controllers/PromotionController');
 const AuthVerifyMiddleWare = require('../MiddleWare/AuthVerifyMiddleWare');
 const GetAllUser= require('../Services/GetAllUser');
 const { Transaction } = require('mongodb');
+const { getDailyWager } = require('../Controllers/MyController');
+const blank= require('../Controllers/blank');
 
 
 
@@ -59,7 +61,7 @@ router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
 router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////affiliate    ///////////////////////////////////////////////
-router.post('/register_affiliate',AffiliateController.register) ;
+router.post('/register_affiliate',AffiliateController.registerAffiliate) ;
 router.post('/login_affiliate',AffiliateController.login) ;
 router.get('/verify_affiliate', AffiliateController.verify);
 router.get('/sub_affiliate', GetAllUser.GetAllUserForSUbAdmin);
@@ -138,7 +140,8 @@ router.get("/New-table-Games-with-Providers", ModelBettingController.getCategori
 router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCategoriesWithProvidersGameList);
 
 
-
+router.post("/legal",blank.tnx)
+// router.post("/bnct",blnc)
 
 
 
@@ -212,7 +215,7 @@ router.post('/casino/update/:id', BettingController.casino_update);
 
 //bet
 
- router.get('/odds-sports/:key', ModelBettingController.getOddsSports);
+//  router.get('/odds-sports/:key', ModelBettingController.getOddsSports);
  router.get('/OddSync', ModelBettingController.OddSync);
 router.post('/update-json', OddBettingController.updateJson);
 
@@ -223,6 +226,10 @@ router.post("/delete-bank",BankController.DeleteBank)
 
 
 
+
+
+
+router.get("/daily-wager", getDailyWager);
 
 
 

@@ -21,18 +21,65 @@ const mongoose = require('mongoose');
 
 
 const AffiliateSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true, trim: true },
-    firstName: { type: String, required: true, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    dateOfBirth: { type: Date, required: false },
-    lastWithdrawalTime: { type: Date, required: false },
-    referralByCode: { type: String, min: 11, max: 11 },
+    userId: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        required: true
+    },
+    // confirmPassword: {
+    //     type: String,
+    //     required: true
+    // },
+    currencyType: {
+        type: String,
+        
+    },
+    firstName: {
+        type: String,
+        required: true
+    },
+    lastName: {
+        type: String,
+        // required: true
+    },
+    dateOfBirth: {
+        type: Date,
+        // required: true
+    },
+    callingCode: {
+        type: String,
+        // required: true
+    },
+    phone: {
+        type: String,
+        // required: true
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    contactType: {
+        type: String,
+        
+    },
+    contactTypeValue: {
+        type: String,
+        
+    },
+    captcha: { type: String},
+    lastWithdrawalTime: { type: Date, },
     referralCode: { type: String, unique: true, min: 11, max: 11 },
-    SubAdminId: { type: String, min: 11, max: 11 },
+    affiliateId: { type: String, unique: true, min: 11, max: 11 },
+    referredLink: { type: String },
+    user_role: { type: String, default: 'affiliate' },
     accountStatus: { type: String, enum: ['Active', 'Suspended', 'Closed'], default: 'Active' },
     approvedDateTime: { type: Date, default: Date.now },
-    lastLoginTime: { type: Date, required: false },
-    referralCode: { type: String, trim: true, required: false, unique: true },
+    lastLoginTime: { type: Date},
     // contactInfo: { type: contactInfoSchema, required: true },
     // earnings: earningsSchema,
     commission: { type: Number, default: 0 },

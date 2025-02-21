@@ -134,3 +134,28 @@ async function addGameWithCategory(gameData, categoryName) {
       res.status(500).json({ message: 'Error adding game' });
     }
   }
+
+
+
+  const generateSignature = (operatorCode, secretKey) => {
+    return md5(operatorCode + secretKey).toUpperCase();
+  }
+  exports.getDailyWager = async (req, res) => {
+    try {
+      const { dateF, dateT,operatorCode,secretKey, providercode } = req.query;
+  
+      if (!dateF || !dateT || !providercode) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+  
+      const signature = generateSignature(secretKey, providercode);
+  
+      const apiUrl = `${"http://fetch.336699bet.com"}/getDailyWager.ashx?operatorcode=${operatorCode}&dateF=${dateF}&dateT=${dateT}&providercode=${providercode}&signature=${signature}`;
+  
+      const response = await axios.get(apiUrl);
+      res.json(response.data);
+    } catch (error) {
+      console.error("Error fetching wager data:", error.message);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  };
