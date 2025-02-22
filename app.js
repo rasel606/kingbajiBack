@@ -27,6 +27,11 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
+app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
+  
+
 
 
 
