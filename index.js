@@ -50,7 +50,7 @@ const app = require('./app'); // Import the main application
 
 
 // HTTP server listens on port 5000
-app.listen(6000, () => {
-    console.log('HTTP server running on http://localhost:6000');
+app.listen(5000, () => {
+    console.log('HTTP server running on http://localhost:5000');
 });
 
