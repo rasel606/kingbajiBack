@@ -50,12 +50,12 @@ console.log("referredbyCode",email, phone, password, countryCode, referredbyCode
       balance: 0,
       SubAdminId: SubAdminId,
       isActive: true,
-      user_referredLink: `http:/localhost:3000/${referredCode || referrUserCode}`,
-      agent_referredLink: `http:/localhost:3000/agent/${referredCode || referrUserCode}`,
-      affiliate_referredLink: `http:/localhost:3000/affiliate/${referredCode || referrUserCode}`,
+      user_referredLink: `http://localhost:3000/?ref=${referredCode || referrUserCode}`,
+      agent_referredLink: `http://localhost:3000/?ref=${referredCode || referrUserCode}`,
+      affiliate_referredLink: `http://localhost:3000/?ref=${referredCode || referrUserCode}`,
     });
 
-    console.log("newUser",newUser)
+
     if (!newUser) {
       return res.status(500).json({ success: false, message: "Failed to create user" });
     }
@@ -121,7 +121,7 @@ exports.loginSubAdmin = async (req, res) => {
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     const user = await SubAdmin.findOne({ email:email });
-    console.log("user",user)
+
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -138,8 +138,9 @@ exports.loginSubAdmin = async (req, res) => {
             phone: 1,
             countryCode: 1,
             balance: 1,
+            referralCode:1,
             referralByCode: 1,
-            // referredLink: 1,
+            referredLink: 1,
             user_referredLink: 1,
             agent_referredLink: 1,
             affiliate_referredLink: 1,
@@ -153,9 +154,9 @@ exports.loginSubAdmin = async (req, res) => {
       if (!response.length) return res.status(500).json({ message: "Error fetching user data" });
 
       const userDetails = response[0];
-      console.log("userDetails",userDetails)
+
       const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "2h" });
-      console.log("userDetails",userDetails)
+
     
       res.status(201).json({
         success: true,
@@ -181,7 +182,7 @@ exports.verifySubAdmin = async (req, res) => {
     if (!token) return res.status(401).json({ message: "Token missing!" });
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("Decoded Token:", decoded);
+
 
     const decodedEmail = decoded?.email;
     const decodedRole = decoded?.user_role; // Fix role field
@@ -195,21 +196,25 @@ exports.verifySubAdmin = async (req, res) => {
       {
         $project: {
           email: 1,
-          name: 1,
-          phone: 1,
-          countryCode: 1,
-          balance: 1,
-          referredbyCode: 1,
-          referredLink: 1,
-          referredCode: 1,
-          user_role: 1,
+            name: 1,
+            phone: 1,
+            countryCode: 1,
+            balance: 1,
+            referralCode:1,
+            referralByCode: 1,
+            referredLink: 1,
+            user_referredLink: 1,
+            agent_referredLink: 1,
+            affiliate_referredLink: 1,
+            referralCode: 1,
+            user_role:1,
           isActive: 1,
         },
       },
     ]);
 
     const userDetails = response[0];
-
+    console.log(userDetails)
     if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
 
 

@@ -79,11 +79,12 @@ router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////////////////  Deposit   ///////////////////////////////////////////////
 
 
-router.get('/deposits_list', TransactionController.DepositsList);
-router.get('/withdrawals_list', TransactionController.WithdrawalsList);
-router.get('/withdraw_with_turenover', TransactionController.withdrawWIthTurenover);
-router.get('/deposit_with_bonus', TransactionController.depositWIthBonus);
-router.get('/admin_withdraw_action', TransactionController.adminWithdrawAction);
+router.post('/deposits_list', TransactionController.DepositsList);
+router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
+// router.get('/withdrawals_list', TransactionController.WithdrawalsList);
+// router.get('/withdraw_with_turenover', TransactionController.withdrawWIthTurenover);
+// router.get('/deposit_with_bonus', TransactionController.depositWIthBonus);
+// router.get('/admin_withdraw_action', TransactionController.adminWithdrawAction);
 
 // router.post('/validate', validateUserDetails);
 // router.post('/send-otp', CreateUserService.sendOtp);
@@ -111,7 +112,19 @@ router.post("/bank_add", AdminController.AddBank)
 
 // router.post('/set-create-promotion',PromotionController.setCreatePromotion) ;
 
+///////////////////////////////////////////////////// Transaction ///////////////////////////////////////////////
 
+
+router.post('/deposit_with_bonus', TransactionController.addTransaction)
+router.post('/deposit_with_approveDeposit', TransactionController.approveDeposit)
+
+
+
+
+
+
+
+///////////////////////////////////////////////////// Transaction ///////////////////////////////////////////////
 
 
 //game font

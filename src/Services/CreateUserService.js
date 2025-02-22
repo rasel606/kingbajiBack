@@ -11,7 +11,9 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 exports.register = async (req, res) => {
   try {
-    const { userId, phone, password, countryCode, referredbyCode } = req.body;
+    const {referredbyCode} = req.params
+    console.log(referredbyCode)
+    const { userId, phone, password, countryCode } = req.body;
 
     if (!userId || !phone || !password || !countryCode) {
       return res.status(400).json({ success: false, message: "Please enter all fields" });
