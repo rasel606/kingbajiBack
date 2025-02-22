@@ -33,7 +33,7 @@ const fetchBalance = async (agent, username) => {
             try {
                 parsedData = JSON.parse(parsedData);
             } catch (error) {
-                throw new Error("Failed to parse API response");
+                console.log("Failed to parse API response");
             }
         }
 
@@ -86,11 +86,14 @@ console.log("agent", agent)
         if(balance == 0 ){
         amount = await fetchBalance(agent, username);
         }
+        else{
+            res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
+        }
         console.log("amounty", amount)
         console.log("pi blance", amount)
         if (amount !== null && amount > 0) {
             balance += amount
-            const blt = await User.findOneAndUpdate(
+             return await User.findOneAndUpdate(
                 { userId: userId },
                 { 
                     $set: { balance: parseFloat(balance) },
@@ -98,9 +101,10 @@ console.log("agent", agent)
                 },
                 { new: true }
             );
+
             console.log("blt", blt)
             console.log("balance", balance)
-            res.json({ errCode: 0, Msg: 'Success', balance });
+            // res.json({ errCode: 0, Msg: 'Success', balance });
         } else {
             console.log("Failed to fetch valid balance, keeping previous balance");
             // res.json({ errCode: 0, errMsg: 'Success', balance:"balance already update" });
@@ -131,7 +135,7 @@ console.log("agent", agent)
             const refundData = await refund.data
             // amount = refundData
             console.log("refundData", refundData)
-            if (refundData.innerCode === null && refundData.errMsg === 'INSUFFICIENT_BALANCE') {
+            if (refundData.innerCode === null ) {
                 return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
             }
          }
@@ -160,10 +164,13 @@ console.log(win)
 
     const newUser = await User.findOne({ userId: userId });
 
-        res.json({ errCode: 0, errMsg: 'Success', balance:newUser.balance });
+        res.json(newUser.balance );
     } catch (error) {
-        console.log(error.message);
+        // console.log(error.message);
         res.status(500).json({ errCode: 2, Msg: 'Internal Server Error', balance:0 });
+        // if (!res.headersSent) {
+        //     return res.status(500).json({ error: "Internal Server Error" });
+        //   }
     }
 }
 
