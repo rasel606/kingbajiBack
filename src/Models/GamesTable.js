@@ -6,7 +6,7 @@ const gameTableSchema = new mongoose.Schema({
   gameId: { type: String, required: true },
   transactionId: { type: String, required: true },
   currencyId: { type: String },
-  status: { type: Number, enum: [0, 1, 2] },
+  status: { type: Number, enum: [0,1,2] },
   betAmount: { type: Number },
   winAmount: { type: Number },
   returnId: { type: String },

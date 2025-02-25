@@ -117,7 +117,7 @@ exports.loginSubAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    console.log(req.body);
+
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     const user = await SubAdmin.findOne({ email:email });
@@ -214,7 +214,7 @@ exports.verifySubAdmin = async (req, res) => {
     ]);
 
     const userDetails = response[0];
-    console.log(userDetails)
+  
     if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
 
 

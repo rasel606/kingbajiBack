@@ -16,6 +16,7 @@ const AffiliateController = require('../Controllers/AffiliateController');
 const AgentController = require('../Controllers/AgentController');
 const Controllers = require('../Controllers/CornController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
+const messageController = require('../Controllers/messageController');
 const CreateSubAdmin = require('../Services/CreateSubAdmin');
 
 
@@ -116,7 +117,7 @@ router.post("/bank_add", AdminController.AddBank)
 
 
 router.post('/deposit_with_bonus', TransactionController.addTransaction)
-router.post('/deposit_with_approveDeposit', TransactionController.approveDeposit)
+// router.post('/deposit_with_approveDeposit', TransactionController.approveDeposit)
 
 
 
@@ -153,12 +154,29 @@ router.get("/New-table-Games-with-Providers", ModelBettingController.getCategori
 router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCategoriesWithProvidersGameList);
 
 
-router.post("/legal",blank.tnx)
+// router.post("/legal",blank.tnx)
 // router.post("/bnct",blnc)
 
+///////////////////////////////////chat //////////////////////////////////////////
+// router.post('/api/chat', chat);
+// router.get('/api/message', authenticate, messageRoutes);
+router.post('/send-message', messageController.sendMessage);
+router.get('/messages/:receiver', messageController.getMessages);
 
+/////////////////////////////////////////////////////////////////////////////
+// router.post('/send', sendNotification);
+// router.get('/', getNotifications);
 
+/////////////////////////////////////////////////////////////////////////////////////////////
 
+router.post('/addpaymentMethodNumber', TransactionController.AddPaymentMethodNumber);
+router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
+router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
+router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
+
+router.get("/submitTransaction", TransactionController.submitTransaction );
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 router.post('/betting',Controllers.Betting);
 
 router.post('/odds_event',Controllers.OddEvents);

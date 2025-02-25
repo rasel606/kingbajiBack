@@ -22,15 +22,17 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:[ 'http://localhost:3000','http://localhost:3001','http://192.168.25.188:3000'], // Allow only your frontend origin
+    origin:[ 'http://localhost:3000','http://localhost:3001',], // Allow only your frontend origin
     credentials: true, // Allow cookies and authentication headers,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
-app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  });
+// app.get('/', function (req, res) {
+//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
+//   });
   
+
+
 
 
 
@@ -43,26 +45,6 @@ app.set('trust proxy', true);
 
 
 
-// const limiter = rateLimit({
-//     windowMs: 150 * 60 * 1000,
-//     max: 1000,
-//     standardHeaders: true,
-//     legacyHeaders: false,
-// })
-// const limiter = rateLimit({
-// 	validate: {
-// 		validationsConfig: false,
-// 		// ...
-// 		default: true,
-// 	},
-// 	// ...
-// })
-
-
-// app.use(limiter)
-
-
-//mongodb database connection
 
 
 let URI = `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
@@ -76,14 +58,6 @@ mongoose.connect(URI,)
 
 
     })
-
-
-
-
-
-
-
-
 
 
 

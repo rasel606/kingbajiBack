@@ -1,6 +1,10 @@
+const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
 const Transaction = require('../Models/TransactionModel');
 const User = require('../Models/User');
-
+const SubAdmin = require('../Models/SubAdminModel');
+const bcrypt = require('bcryptjs');
+const jwt = require("jsonwebtoken");
+const axios = require("axios");
 // exports.addTransaction = async (req, res) => {
 //   try {
 //     const { userId, amount, type } = req.body;
@@ -19,18 +23,33 @@ const User = require('../Models/User');
 // };
 
 
-
+const saltRounds = 10;
+const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 
 ////////////////////////////////////////////////////////////////
+// app.post("/process-payment", async (req, res) => {
+//     const { userId, amount, method } = req.body;
+  
+//     // Fetch user data from the database
+//     const user = await User.findById(userId);
+  
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+  
+//     // Generate the redirect URL with user details
 
+    
+//   });
+  
 
 
 
 // router.post("/deposit", 
 exports.addTransaction = async (req, res) => {
-    const { userId, amount, gateway_name, referredbyCode } = req.body;
-
+    const { userId, amount, gateway_name,gateway_Number, payment_type, referredbyCode } = req.body;
+    console.log(req.body);
     try {
         const user = await User.findOne({ userId });
 
@@ -47,19 +66,23 @@ exports.addTransaction = async (req, res) => {
             }
         }
 
+        
+
         // Calculate bonus (3.5% of the deposit)
         const bonus = (amount * 3.5) / 100;
-
+const type = 'Deposit';
         // Create a deposit transaction
-        const transactionID = `TXN-${Date.now()}`;
+        const transactionID = `waiting-${Date.now()}`;
         const newTransaction = new Transaction({
             userId: user.userId,
-            transactionID,
+             transactionID,
             base_amount: amount,
             amount: amount + bonus,
             currency_id: user.currency_id,  // Assuming this is set in User model
-            gateway_name: gateway_name,  // Assuming a fixed gateway name for now
-            type: 'Deposit',
+            gateway_name: gateway_name,
+            gateway_Number: gateway_Number, // Assuming a fixed gateway name for now
+            payment_type: payment_type,
+            type: type,
             status: 0,  // 0 = pending
             referredbyCode: referralCode, // Assign the referral code to the transaction
             is_commission: false,
@@ -67,7 +90,7 @@ exports.addTransaction = async (req, res) => {
 
         // Save the transaction
         await newTransaction.save();
-
+console.log(newTransaction);
         // If the status is not pending (0), update the user's balance
         if (newTransaction.status !== 0) {
             user.balance += amount + bonus;
@@ -77,7 +100,10 @@ exports.addTransaction = async (req, res) => {
             await user.save();
         }
 
-        return res.status(200).json({ success: true, transactionID, balance: user.balance });
+          const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
+
+        let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user._id || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(transactionID)}&token=${encodeURIComponent(token)}`;
+        res.json( redirectUrl );
 
     } catch (err) {
         console.error(err);
@@ -85,6 +111,36 @@ exports.addTransaction = async (req, res) => {
     }
 };
 
+
+
+// app.post("/api/v1/submitTransaction", 
+    exports.submitTransaction = async (req, res) => {
+    try {
+        const { userId, gateway_name, amount, referredByCode, payment_type, gatewayNumber,transactionID } = req.params;
+  console.log(req.body);
+    //   if (!/^[a-zA-Z0-9]{10}$/.test(transactionID)) {
+    //     return res.status(400).json({ error: "Invalid transaction ID format." });
+    //   }
+  
+    //   const newTransaction ={
+    //     userId,
+    //     name,
+    //     amount,
+    //     referredByCode,
+    //     paymentType,
+    //     gatewayNumber,
+    //     transactionID,
+    //   };
+
+      const user = await User.findOneAndUpdate({ userId,referredByCode }, { $inc: { transactionID: transactionID } }, { new: true });
+  
+    //   await newTransaction.save();
+      res.json({ success: true, message: `Transaction submitted successfully ${user?.transactionID}` });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+  
 
 
 ///////////////////////////////////////////////////////////////
@@ -146,9 +202,50 @@ exports.approveDeposit = async (req, res) => {
     }
 }
 
+exports.AddPaymentMethodNumber = async (req, res) => {
+    try {
+        const { user_role, email, gateway_Number, referralCode, gateway_name, type, payment_type, image_url } = req.body.formData;
+        console.log("Received Data:", user_role, email, gateway_Number, referralCode, gateway_name, type, payment_type);
 
+        
+        // Check if user exists
+        const user = await SubAdmin.findOne({ user_role, email, referralCode });
+        console.log("user", user);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
 
+        console.log("User Found:", user);
 
+        // Ensure you have a PaymentGateWayTable model
+        const newPaymentMethod = new PaymentGateWayTable({
+            user_role: user.user_role,  // Assuming the user ID should be linked
+            email,
+            gateway_Number,
+            gateway_name,
+            type,
+            payment_type,
+            image_url,
+            referredbyCode: user.referralCode,  // Using correct field name
+            start_time: { hours: new Date().getHours(), minutes: new Date().getMinutes() },
+            end_time: { 
+                hours: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).getHours(), 
+                minutes: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).getMinutes() 
+            },
+            is_active: true,
+            updatetime: new Date()
+        });
+
+        // Save to Database
+        await newPaymentMethod.save();
+
+        return res.status(201).json({ message: "Payment method added successfully", data: newPaymentMethod });
+
+    } catch (error) {
+        console.error("Error adding payment method:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
 
 
 
@@ -175,7 +272,7 @@ exports.approveDepositAdmin = async (req, res) => {
 
         // If the transaction is being approved, update the user's balance and bonus
         if (transaction.status === 0) {
-            const bonusAmount = (transaction.amount * 0.35) / 100;
+            const bonusAmount = (transaction.amount * 0.30) / 100;
             user.balance += transaction.amount + bonusAmount;
             user.bonus += bonusAmount;
             await user.save();
@@ -543,16 +640,92 @@ exports.DepositsList = async (req, res) => {
         const transactions = await Transaction.find({ referredbyCode: referredbyCode });
 
         const transactionscount = await Transaction.find({ referredbyCode  }).countDocuments();
-        // Find transactions for the user
-
-        
-        // If no transactions are found, return an empty array
-        // if (transactions.length === 0) {
-        //     return res.status(404).json({ message: 'No transactions found for this user' });
-        // }
-
-        // Return the found transactions
         res.status(200).json({ transactionscount, transactions });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+
+
+// Get list of active payment methods for user with time validation
+
+exports.GetPaymentMethodsUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        console.log("User ID:", userId);
+
+        // Validate User
+        const user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        console.log("User found:", user);
+
+        // Get current time
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+
+        // Use aggregation to filter active payment methods within time range
+        const paymentMethods = await PaymentGateWayTable.aggregate([
+            {
+                $match: {
+                    is_active: true,
+                    referredbyCode: user.referredbyCode
+                }
+            },
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $lte: ["$startTotalMinutes", "$currentTotalMinutes"] },
+                            { $gte: ["$endTotalMinutes", "$currentTotalMinutes"] }
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    gateway_name: 1,
+                    gateway_Number: 1,
+                    payment_type: 1,
+                    image_url: 1,
+                    start_time: 1,
+                    end_time: 1,
+                    is_active: 1
+                }
+            }
+        ]);
+
+        console.log("Available Payment Methods:", paymentMethods);
+
+        return res.status(200).json({   paymentMethods });
+    } catch (error) {
+        console.error("Error retrieving payment methods:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+
+
+
+
+
+exports.subAdminGetWayList = async (req, res) => {
+    console.log(req.body);
+    try {
+        const { user_role, email,referralCode } = req.body;
+        console.log(user_role, email,referralCode);
+
+        // Find the user based on the referredCode
+        const Getway = await PaymentGateWayTable.find({ user_role, email,referredbyCode: referralCode });
+        const Getwaycount = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode }).countDocuments();;
+        
+        res.status(200).json({ Getwaycount, Getway });
 
     } catch (error) {
         console.error(error);

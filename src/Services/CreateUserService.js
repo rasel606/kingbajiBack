@@ -141,12 +141,13 @@ exports.verify =async (req, res) => {
           phone: 1,
           balance: 1,
           
+          referredbyCode: 1,
           referredLink: 1,
           referredCode: 1,
         },
       },
     ]);
-    console.log( "decoded",details );
+    // console.log( "decoded",details );
     res.status(200).json({ message: "User authenticated", userId: decoded.id,user:details[0]});
   } catch (error) {
     res.status(400).json({ message: "Invalid token!" });

@@ -25,24 +25,7 @@ const fetchBalance = async (agent, username) => {
         const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
 
         let parsedData = response.data;
-        if (typeof parsedData === 'string') {
-            try {
-                parsedData = JSON.parse(parsedData);
-            } catch (error) {
-                console.log("Failed to parse API response");
-                return null;
-            }
-        }
-
-        if (!parsedData || typeof parsedData !== 'object' || !("balance" in parsedData)) {
-            console.log("Invalid API response format");
-            return null;
-        }
-
-        if (parsedData.balance === null || isNaN(parsedData.balance)) {
-            console.log("Invalid balance received from API");
-            return null;
-        }
+        
 
         return parseFloat(parsedData.balance);
     } catch (error) {
@@ -67,12 +50,12 @@ exports.refreshBalance = async (req, res) => {
 
         let balance = user.balance;
         const game = await GameTable.findOne({ userId: user.userId, gameId: user.last_game_id });
-        console.log("game", game);
+        console.log("game refresh", game);
 
         if (!game) return res.json({ errCode: 0, errMsg: 'Success', balance });
 
         const agent = await BetProviderTable.findOne({ providercode: game.agentId });
-        console.log("agent", agent);
+        console.log("agent refresh", agent);
         if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
 
         const username = user.userId;
@@ -120,6 +103,7 @@ exports.refreshBalance = async (req, res) => {
             signature
         };
 
+        console.log("Transfer Params:", params);
         try {
             const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
             console.log("Refund Response:", refund.data);
@@ -140,7 +124,7 @@ exports.refreshBalance = async (req, res) => {
         console.log("Win Amount:", win);
 
         if (win === 0) {
-            await GameTable.deleteOne({ gameId: game.gameId });
+            // await GameTable.deleteOne({ gameId: game.gameId });
         } else {
             await GameTable.updateOne(
                 { gameId: game.gameId },
