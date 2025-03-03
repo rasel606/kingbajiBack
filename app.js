@@ -22,12 +22,17 @@ const cors = require('cors');
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const cors = require('cors');
+
 app.use(cors({
-    origin:[ 'http://localhost:3000','http://localhost:3001','kingbaji365.live'], // Allow only your frontend origin
-    credentials: true, // Allow cookies and authentication headers,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://kingbaji365.live'], // Explicitly allow frontend
+    credentials: true, // Allow cookies/auth headers
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
 }));
 
+
+app.options('*', cors())
 // app.get('/', function (req, res) {
 //     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 //   });
