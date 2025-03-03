@@ -738,6 +738,51 @@ exports.GateAllGames = async (req, res) => {
 
 
 
+exports.approveDepositAdmin = async (req, res) => {
+  try {
+      const { userId, referralCode, status, transactionID } = req.body;
+
+      // Find the user
+      const user = await User.findOne({ userId });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+      const SubAdminuser = await SubAdmin.findOne({ referralCode: referralCode });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      console.log(user);
+      // Find the transaction
+      const transaction = await TransactionModel.findOne({ userId, type, referredbyCode: SubAdminuser.referralCode, transactionID });
+      if (!transaction) return res.status(404).json({ message: "Transaction not found" });
+      console.log(transaction);
+
+      // Find the transaction
+      // const transaction = await Transaction.findOne({ userId, transactionID });
+      // if (!transaction) {
+      //     return res.status(404).json({ message: "Transaction not found" });
+      // }
+
+      // Check if the transaction status is "Hold" (0)
+      if (transaction.status !== 0) {
+          return res.status(400).json({ message: "Transaction already processed" });
+      }
+
+      // If the transaction is being approved, update the user's balance and bonus
+      if (transaction.status === 0) {
+          const bonusAmount = (transaction.amount * 0.30) / 100;
+          user.balance += transaction.amount + bonusAmount;
+          user.bonus += bonusAmount;
+          await user.save();
+      }
+
+      // Update the transaction status to "Accepted" (1)
+      transaction.status = 1;
+      await transaction.save();
+
+      res.status(200).json({ message: "Deposit approved", user });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+};
 
 
 

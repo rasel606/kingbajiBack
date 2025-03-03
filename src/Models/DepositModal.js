@@ -13,6 +13,8 @@ const DepositSchema = new mongoose.Schema({
   getway_name: { type: String, required: true },
   contact_id: { type: String, required: true },
   agent_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent', required: true },
+  mobile: { type: String },
+  payment_method_number: { type: String },
   remark: { type: String },
   status: { type: Number, enum: [0, 1, 2], default: 0 }, // 0 = Hold, 1 = Accept, 2 = Reject
   datetime: { type: Date, default: Date.now },

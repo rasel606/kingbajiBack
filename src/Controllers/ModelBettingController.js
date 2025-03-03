@@ -265,6 +265,8 @@ const fetchGamesFromApi = async (result, category_name) => {
     }
     await addGameWithCategory(gameData, category_name);
     // console.log("Added Games:", gameResults.length);
+
+    console.log("Added Games:", gameResults);
     return gameResults;
   } catch (error) {
     console.error("Error fetching games:", error.message);
@@ -328,7 +330,7 @@ exports.CasinoItemAdd = async (req, res) => {
     if (company) {
 
       result = await BetProviderTable.findOneAndUpdate(
-        { company },
+        { providercode: providercode },
         updateData,
         { new: true, upsert: true }
       );
@@ -704,12 +706,12 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
         games.forEach(game => {
           game.providers.forEach(provider => providerSet.add(provider.providercode));
         });
-
+console.log(providerSet)
         const uniqueProviders = await BetProviderTable.find(
           { providercode: { $in: Array.from(providerSet) } },
           { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
         );
-
+console.log(uniqueProviders)
         // Format the result
         return {
           category: {
@@ -1946,7 +1948,7 @@ exports.withdraw_reject = async (req, res) => {
    };
    
    function randomStr() {
-       return Math.random().toString(36).substring(2, 10).toUpperCase();
+       return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
    }
    
   const refreshBalancebefore = async (userId, game_id) => {

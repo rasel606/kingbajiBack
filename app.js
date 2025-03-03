@@ -1,6 +1,7 @@
 const express = require('express');
 const router = require('./src/Router/Api');
 
+require('dotenv').config();
 
 const app = new express()
 
@@ -33,6 +34,7 @@ app.use(cors({
   
 
 
+const connectedUsers = {};
 
 
 
@@ -64,9 +66,9 @@ mongoose.connect(URI,)
 app.use("/api/v1", router);
 
 
-// app.use("*", (req, res) => {
-//     res.status(404).json({ status: "Fail", data: "Data not found" })
-// });
+app.use("/", (req, res) => {
+    res.status(404).json({ status: "success", data: "Data  found" })
+});
 
 
 

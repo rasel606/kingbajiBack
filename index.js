@@ -1,31 +1,9 @@
-
 const app = require('./app'); // Import the main application
+// const http = require('http');
+require('dotenv').config();
 
-const socketIo = require('socket.io');
-
-
-
-const http = require('http');
-
-const httpServer = http.createServer(app);
-const io = socketIo(httpServer);
-
-
-io.on('connection', (socket) => {
-    console.log('New user connected:', socket.id);
-
-    // Handle incoming messages
-    socket.on('sendMessage', (data) => {
-        io.to(data.receiver).emit('receiveMessage', data); // Emit to the receiver
-    });
-
-    // Handle disconnections
-    socket.on('disconnect', () => {
-        console.log('User disconnected');
-    });
-});
-
-
-httpServer.listen(5000, () => {
-    console.log('Server running on http://localhost:5000');
+// const httpServer = http.createServer(app);
+const PORT = process.env.PORT || 5000;
+app.listen(process.env.PORT || 80, () => {
+    console.log(`Server running on port ${PORT}`);
 });

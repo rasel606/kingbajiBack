@@ -18,7 +18,7 @@ const Controllers = require('../Controllers/CornController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 const messageController = require('../Controllers/messageController');
 const CreateSubAdmin = require('../Services/CreateSubAdmin');
-
+const socketIo = require('socket.io');
 
 
 // const Promotion = require('../Models/PromotionSchema');
@@ -80,8 +80,7 @@ router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////////////////  Deposit   ///////////////////////////////////////////////
 
 
-router.post('/deposits_list', TransactionController.DepositsList);
-router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
+
 // router.get('/withdrawals_list', TransactionController.WithdrawalsList);
 // router.get('/withdraw_with_turenover', TransactionController.withdrawWIthTurenover);
 // router.get('/deposit_with_bonus', TransactionController.depositWIthBonus);
@@ -114,10 +113,27 @@ router.post("/bank_add", AdminController.AddBank)
 // router.post('/set-create-promotion',PromotionController.setCreatePromotion) ;
 
 ///////////////////////////////////////////////////// Transaction ///////////////////////////////////////////////
+router.post('/addpaymentMethodNumber', TransactionController.AddPaymentMethodNumber);
+router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
+router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
+router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
 
+router.get("/submitTransaction", TransactionController.submitTransaction );
+router.post('/deposits_list', TransactionController.DepositsList);
+// router.post('/deposits_list', TransactionController.DepositsList);
 
+router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
 router.post('/deposit_with_bonus', TransactionController.addTransaction)
-// router.post('/deposit_with_approveDeposit', TransactionController.approveDeposit)
+router.post('/widthdraw_with_transaction', TransactionController.WidthdrawTransaction)
+router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
+router.post('/deposit_with_approvewidthraw_subadmin', TransactionController.approveWidthdraw)
+router.post('/searchDepositTransactions', TransactionController.searchDepositTransactions)
+router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
+router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
+router.post('/GetAllUser_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
+router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
+
+
 
 
 
@@ -160,8 +176,8 @@ router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCa
 ///////////////////////////////////chat //////////////////////////////////////////
 // router.post('/api/chat', chat);
 // router.get('/api/message', authenticate, messageRoutes);
-router.post('/send-message', messageController.sendMessage);
-router.get('/messages/:receiver', messageController.getMessages);
+// router.post('/send-message', messageController.sendMessage);
+// router.get('/messages/:receiver', messageController.getMessages);
 
 /////////////////////////////////////////////////////////////////////////////
 // router.post('/send', sendNotification);
@@ -169,12 +185,7 @@ router.get('/messages/:receiver', messageController.getMessages);
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-router.post('/addpaymentMethodNumber', TransactionController.AddPaymentMethodNumber);
-router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
-router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
-router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
 
-router.get("/submitTransaction", TransactionController.submitTransaction );
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 router.post('/betting',Controllers.Betting);

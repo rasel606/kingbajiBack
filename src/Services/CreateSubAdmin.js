@@ -91,7 +91,7 @@ console.log("referredbyCode",email, phone, password, countryCode, referredbyCode
     console.log("userDetails",userDetails)
     console.log(" response[0]", response[0])
 
-    const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "2h" });
+    const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
 console.log("token",token)
 
 
@@ -115,6 +115,7 @@ res.status(201).json({
 
 exports.loginSubAdmin = async (req, res) => {
   const { email, password } = req.body;
+  console.log(req.body);
 
   try {
 
@@ -155,7 +156,7 @@ exports.loginSubAdmin = async (req, res) => {
 
       const userDetails = response[0];
 
-      const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "2h" });
+      const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
 
     
       res.status(201).json({
@@ -226,7 +227,7 @@ exports.verifySubAdmin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Token verification error:", error);
+    
     res.status(400).json({ message: "Invalid token!" });
   }
 };
