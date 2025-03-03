@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 const cors = require('cors');
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://kingbaji365.live'], // Explicitly allow frontend
+    origin: ['https://kingbaji365.live'], // Explicitly allow frontend
     credentials: true, // Allow cookies/auth headers
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
     allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
