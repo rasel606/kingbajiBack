@@ -1,7 +1,6 @@
 const express = require('express');
 const router = require('./src/Router/Api');
 
-require('dotenv').config();
 
 const app = new express()
 
@@ -22,23 +21,11 @@ const cors = require('cors');
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// const cors = require('cors');
-
 app.use(cors({
-    origin: ['https://kingbaji365.live'], // Explicitly allow frontend
-    credentials: true, // Allow cookies/auth headers
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+    origin:[ 'http://localhost:3000','http://localhost:3001',], // Allow only your frontend origin
+    credentials: true, // Allow cookies and authentication headers,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
-
-
-router.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    next();
-});
 
 // app.get('/', function (req, res) {
 //     res.sendFile(path.join(__dirname, 'build', 'index.html'));
@@ -78,9 +65,9 @@ mongoose.connect(URI,)
 app.use("/api/v1", router);
 
 
-app.use("/", (req, res) => {
-    res.status(404).json({ status: "success", data: "Data  found" })
-});
+// app.use("*", (req, res) => {
+//     res.status(404).json({ status: "Fail", data: "Data not found" })
+// });
 
 
 

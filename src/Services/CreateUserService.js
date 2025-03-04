@@ -153,3 +153,47 @@ exports.verify =async (req, res) => {
     res.status(400).json({ message: "Invalid token!" });
   }
 };
+
+
+
+
+exports.userDetails =async (req, res) => {
+  const { userId } = req.body;
+  // const authHeader = req.header("Authorization");
+  console.log("userId", req.body.userId);
+  console.log("userId :            1", userId);
+  // const token = authHeader?.split(" ")[1];
+  // if (!token) return res.status(401).json({ message: "Token missing!" }); 
+  try {
+    // const decoded = jwt.verify(token, "Kingbaji");
+
+    // const decodedId = decoded?.id;
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.balance !== 0) {
+    const details = await User.aggregate([
+      { $match: { userId:user.userId } },
+      {
+        $project: {
+          userId: 1,
+          name: 1,
+          phone: 1,
+          balance: 1,
+          referredbyCode: 1,
+          referredLink: 1,
+          referredCode: 1,
+        },
+      },
+    ]);
+    console.log( "decoded",details );
+    res.status(200).json({ message: "User balance",user:details[0]});
+  } else {
+    res.status(200).json({ message: "User game balance is 0",user:details[0]});
+  }
+  } catch (error) {
+    console.log( "error",error );
+    res.status(400).json({ message: "Invalid token!" });
+  }
+};
+
