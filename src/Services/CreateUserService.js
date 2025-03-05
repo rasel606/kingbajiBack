@@ -111,7 +111,7 @@ console.log(req.body);
           referredbyCode: 1,
           referredLink: 1,
           referredCode: 1,
-          datetime:1,
+          timestamp:1,
         },
       },
     ]);
@@ -145,7 +145,7 @@ exports.verify =async (req, res) => {
           referredbyCode: 1,
           referredLink: 1,
           referredCode: 1,
-          datetime:1,
+          timestamp:1,
         },
       },
     ]);
@@ -185,7 +185,7 @@ exports.userDetails =async (req, res) => {
           referredbyCode: 1,
           referredLink: 1,
           referredCode: 1,
-          datetime:1,
+          timestamp:1,
         },
       },
     ]);

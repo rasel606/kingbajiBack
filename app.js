@@ -21,11 +21,21 @@ const cors = require('cors');
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const allowedOrigins = [
+    'https://kingbaji365.live',
+    'https://kingbajipaymentgetway.com.kingbaji365.live'
+];
+
 app.use(cors({
-    origin: 'https://kingbaji365.live', // Allow only your frontend
-    credentials: true, // Allow cookies/auth headers
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allowed methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+    origin: function (origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
 // app.get('/', function (req, res) {
@@ -36,14 +46,14 @@ app.use(cors({
 
 const connectedUsers = {};
 
-
 router.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
+    res.setHeader("Access-Control-Allow-Origin", ["https://kingbaji365.live","https://kingbajipaymentgetway.com.kingbaji365.live"]);
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.setHeader("Access-Control-Allow-Credentials", "true");
     next();
 });
+
 
 
 app.use(mongoSanitize());

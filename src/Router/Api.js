@@ -30,9 +30,8 @@ const { getDailyWager } = require('../Controllers/MyController');
 const blank= require('../Controllers/blank');
 
 
-
 router.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
+    res.setHeader("Access-Control-Allow-Origin", ["https://kingbaji365.live","https://kingbajipaymentgetway.com.kingbaji365.live"]);
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.setHeader("Access-Control-Allow-Credentials", "true");
