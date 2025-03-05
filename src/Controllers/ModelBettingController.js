@@ -2612,7 +2612,7 @@ function generateSignature(...args) {
 // router.get('/user-history/:id',
 exports.UserHistory = async (req, res) => {
   try {
-    const userId = req.params.id;
+    const userId = req.body.userId;
 
     const history = await gameTable.aggregate([
       {

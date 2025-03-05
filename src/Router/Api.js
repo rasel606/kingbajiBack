@@ -32,6 +32,14 @@ const blank= require('../Controllers/blank');
 
 
 
+router.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    next();
+});
+
 router.get('/odds-sync',AdminController.SyncOdds)
 
 
@@ -51,7 +59,7 @@ router.get('/send-otp', UpdateProfile.VerifyOpt);
 router.get('/verify-email', UpdateProfile.SandOpt);
 
 
-
+router.post('/searchTransactionsbyUserId', TransactionController.searchTransactionsbyUserId)
 
 
 
@@ -126,11 +134,11 @@ router.post('/deposits_list', TransactionController.DepositsList);
 
 router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
 router.post('/deposit_with_bonus', TransactionController.addTransaction)
-router.post('/widthdraw_with_transaction', TransactionController.WidthdrawTransaction)
+// router.post('/widthdraw_with_transaction', TransactionController.WidthdrawTransaction)
 router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
-router.post('/deposit_with_approvewidthraw_subadmin', TransactionController.approveWidthdraw)
+router.post('/deposit_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
 router.post('/searchDepositTransactions', TransactionController.searchDepositTransactions)
-router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
+router.post('/widthdraw_with_transaction', TransactionController.searchWidthdrawTransactions)
 router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
 router.post('/GetAllUser_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
 router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
@@ -163,7 +171,7 @@ router.get('/get-all-category', ModelBettingController.GetAllCategory)
 router.get('/games/:id', ModelBettingController.ShowGameListById)
 router.get('/get_all_provider', ModelBettingController.GetAllProvider)
 router.post('/user_balance',Refresh_blance.refreshBalance)
-router.get('/user-history/:id',ModelBettingController.UserHistory)
+router.get('/user-history',ModelBettingController.UserHistory)
 router.post("/launch_game", ModelBettingController.launchGame);
 router.post("/game-update-serial", ModelBettingController.updateSerialNumber);
 router.post("/game-update-category", ModelBettingController.updateCategoryGameByID);

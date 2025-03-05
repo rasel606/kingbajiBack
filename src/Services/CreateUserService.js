@@ -160,8 +160,8 @@ exports.verify =async (req, res) => {
 exports.userDetails =async (req, res) => {
   const { userId } = req.body;
   // const authHeader = req.header("Authorization");
-  console.log("userId", req.body.userId);
-  console.log("userId :            1", userId);
+  // console.log("userId", req.body.userId);
+  // console.log("userId :            1", userId);
   // const token = authHeader?.split(" ")[1];
   // if (!token) return res.status(401).json({ message: "Token missing!" }); 
   try {
@@ -186,7 +186,7 @@ exports.userDetails =async (req, res) => {
         },
       },
     ]);
-    console.log( "decoded",details );
+    // console.log( "decoded",details );
     res.status(200).json({ message: "User balance",user:details[0]});
   } else {
     res.status(200).json({ message: "User game balance is 0",user:details[0]});
