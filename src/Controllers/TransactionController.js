@@ -69,29 +69,28 @@ exports.addTransaction = async (req, res) => {
 
 
 
-        // Calculate bonus (3.5% of the deposit)
-        const bonus = (amount * 3) / 100;
-        const type = 0;
-        // Create a deposit transaction
-        const transactionID = `waiting-${Date.now()}`;
-        const newTransaction = new Transaction({
-            userId: user.userId,
-            transactionID,
-            base_amount: amount,
-            amount: amount + bonus,
-            currency_id: user.currency_id,  // Assuming this is set in User model
-            gateway_name: gateway_name,
-            gateway_Number: gateway_Number, // Assuming a fixed gateway name for now
-            payment_type: payment_type,
-            type: type,
-            status: 0,  // 0 = pending
-            referredbyCode: referralCode, // Assign the referral code to the transaction
-            is_commission: false,
-        });
 
-        // Save the transaction
-        await newTransaction.save();
-        console.log(newTransaction);
+        // const bonus = (amount * 3) / 100;
+        // const type = 0;
+     
+        // const transactionID = `waiting-${Date.now()}`;
+        // const newTransaction = new Transaction({
+        //     userId: user.userId,
+        //     transactionID,
+        //     base_amount: amount,
+        //     amount: amount + bonus,
+        //     currency_id: user.currency_id,  // Assuming this is set in User model
+        //     gateway_name: gateway_name,
+        //     gateway_Number: gateway_Number, // Assuming a fixed gateway name for now
+        //     payment_type: payment_type,
+        //     type: type,
+        //     status: 0,  // 0 = pending
+        //     referredbyCode: referralCode, // Assign the referral code to the transaction
+        //     is_commission: false,
+        // });
+
+        // await newTransaction.save();
+        // console.log(newTransaction);
         // If the status is not pending (0), update the user's balance
         // if (newTransaction.status !== 0) {
         //     user.balance += amount + bonus;
@@ -103,7 +102,7 @@ exports.addTransaction = async (req, res) => {
 
         const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-        let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user._id || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(transactionID)}&token=${encodeURIComponent(token)}`;
+        let redirectUrl = `http://localhost:3000/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
         res.json(redirectUrl);
 
     } catch (err) {
@@ -116,24 +115,59 @@ exports.addTransaction = async (req, res) => {
 
 // app.post("/api/v1/submitTransaction", 
 exports.submitTransaction = async (req, res) => {
+  
     try {
-        const { userId, gateway_name, amount, referredByCode, payment_type, gatewayNumber, transactionID } = req.params;
+        const {
+            userId,
+            gateway_name,
+            amount,
+            referredByCode,
+            payment_type,
+            gateway_number,
+            transactionID,
+          } = req.body;
         console.log(req.body);
-        //   if (!/^[a-zA-Z0-9]{10}$/.test(transactionID)) {
-        //     return res.status(400).json({ error: "Invalid transaction ID format." });
-        //   }
+          if (!/^[a-zA-Z0-9]{10}$/.test(transactionID)) {
+            return res.status(400).json({ error: "Invalid transaction ID format." });
+          }
 
-        //   const newTransaction ={
-        //     userId,
-        //     name,
-        //     amount,
-        //     referredByCode,
-        //     paymentType,
-        //     gatewayNumber,
-        //     transactionID,
-        //   };
+          const user = await User.findOne({ userId });
 
-        const user = await User.findOneAndUpdate({ userId, referredByCode }, { $inc: { transactionID: transactionID } }, { new: true });
+          if (!user) {
+              return res.status(404).json({ message: 'User not found' });
+          }
+  
+
+      
+
+
+
+             // Calculate bonus (3.5% of the deposit)
+             const bonus = (amount * 0.3) / 100;
+             const type = 0;
+             // Create a deposit transaction
+
+             const newTransaction = new TransactionModel({
+                 userId: user.userId,
+                 transactionID,
+                 base_amount: amount,
+                 amount: amount + bonus,
+                 currency_id: user.currency_id,  // Assuming this is set in User model
+                 gateway_name: gateway_name,
+                 mobile:userId.phone,
+                 gateway_Number: gateway_number, // Assuming a fixed gateway name for now
+                 payment_type: payment_type,
+                 type: parseInt(type),
+                 status: 0,  // 0 = pending
+                 referredbyCode: referralCode, // Assign the referral code to the transaction
+                 is_commission: false,
+             });
+     
+             // Save the transaction
+             const tnx = await newTransaction.save();
+             console.log(tnx);
+
+        // const user = await TransactionModel.findOneAndUpdate({ userId, referredByCode, }, { $inc: { transactionID: transactionID } }, { new: true });
 
         //   await newTransaction.save();
         res.json({ success: true, message: `Transaction submitted successfully ${user?.transactionID}` });

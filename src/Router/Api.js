@@ -32,13 +32,7 @@ const blank= require('../Controllers/blank');
 
 
 
-router.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    next();
-});
+
 
 router.get('/odds-sync',AdminController.SyncOdds)
 
@@ -128,7 +122,8 @@ router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
 router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
 router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
 
-router.get("/submitTransaction", TransactionController.submitTransaction );
+// router.get("/api/v1/submitTransaction", (req,res)=>console.log(req));
+router.post("/submitTransaction", TransactionController.submitTransaction);
 router.post('/deposits_list', TransactionController.DepositsList);
 // router.post('/deposits_list', TransactionController.DepositsList);
 
