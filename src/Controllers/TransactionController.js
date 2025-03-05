@@ -103,7 +103,7 @@ exports.addTransaction = async (req, res) => {
 
         const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-        let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user._id || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(transactionID)}&token=${encodeURIComponent(token)}`;
+        let redirectUrl = `http://localhost:3000/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user._id || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(transactionID)}&token=${encodeURIComponent(token)}`;
         res.json(redirectUrl);
 
     } catch (err) {
