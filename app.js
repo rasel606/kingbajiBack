@@ -24,13 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = [ 'https://kingbaji365.live'];
 
 app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: "*",
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
@@ -44,7 +38,7 @@ app.use(cors({
 const connectedUsers = {};
 
 router.use((req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.setHeader("Access-Control-Allow-Credentials", "true");
