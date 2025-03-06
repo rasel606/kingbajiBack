@@ -21,22 +21,12 @@ const cors = require('cors');
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-const allowedOrigins = ['https://kingbaji365.live/', 'http://localhost:3000'];
+app.use(cors({
+    origin:[ 'https://kingbaji365.live','http://localhost:3001',], // Allow only your frontend origin
+    credentials: true, // Allow cookies and authentication headers,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}));
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      // Allow requests with no origin (like mobile apps or Postman)
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-};
-
-app.use(cors(corsOptions));
 // app.get('/', function (req, res) {
 //     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 //   });
