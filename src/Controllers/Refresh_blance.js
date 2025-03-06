@@ -72,7 +72,7 @@ exports.refreshBalance = async (req, res) => {
 
         // console.log("Fetched Balance:", amount);
         setTimeout(async () => {
-            if (amount > 0) {
+            if (amount > 0 && balance === 0) {
                 balance += amount;
 
                 await User.findOneAndUpdate(

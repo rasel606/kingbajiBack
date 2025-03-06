@@ -237,3 +237,46 @@ exports.verifySubAdmin = async (req, res) => {
 
 //////////////////////////////////////////// SubAdmin-withdrawal   //////////////////////////////////////////////////
 
+
+
+exports.SubAdminUserDetails =async (req, res) => {
+  const { email } = req.body;
+  console.log(email)
+  // const authHeader = req.header("Authorization");
+  // console.log("userId", req.body.userId);
+  // console.log("userId :            1", userId);
+  // const token = authHeader?.split(" ")[1];
+  // if (!token) return res.status(401).json({ message: "Token missing!" }); 
+  try {
+    // const decoded = jwt.verify(token, "Kingbaji");
+
+    // const decodedId = decoded?.id;
+    const user = await SubAdmin.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    
+    const details = await SubAdmin.aggregate([
+      { $match: { email:user.email } },
+      {
+        $project: {
+          name: 1,
+          email: 1,
+          phone: 1,
+          balance: 1,
+          SubAdminId: 1,
+          IsActive: 1,
+          user_referredLink: 1,
+          affiliate_referredLink: 1,
+          referredCode: 1,
+          timestamp:1,
+        },
+      },
+    ]);
+    console.log( "decoded",details[0] );
+    res.status(200).json({ message: "User ",user:details[0]});
+
+  } catch (error) {
+    console.log( "error",error );
+    res.status(400).json({ message: "Invalid token!" });
+  }
+};

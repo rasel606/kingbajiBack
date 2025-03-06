@@ -64,6 +64,12 @@ router.post('/register_sub_admin',CreateSubAdmin.registerSubAdmin) ;
 router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
 router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
+router.post('/sub_admin_User_details', CreateSubAdmin.SubAdminUserDetails);
+router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
+router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
+router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
+router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
+router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
 ///////////////////////////////////////affiliate    ///////////////////////////////////////////////
 router.post('/register_affiliate',AffiliateController.registerAffiliate) ;
 router.post('/login_affiliate',AffiliateController.login) ;
