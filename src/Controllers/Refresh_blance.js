@@ -123,14 +123,14 @@ exports.refreshBalance = async (req, res) => {
         const win = parseFloat(amount) - parseFloat(game.betAmount);
         console.log("Win Amount:", win);
 
-        if (win === 0) {
-            // await GameTable.deleteOne({ gameId: game.gameId });
-        } else {
+        if (win !== 0) {
             await GameTable.updateOne(
                 { gameId: game.gameId },
                 { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
                 {upsert:true}
             );
+        } else {
+           
         }
 
         const updatedUser = await User.findOne({ userId: userId });
