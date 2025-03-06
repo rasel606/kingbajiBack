@@ -70,40 +70,9 @@ exports.addTransaction = async (req, res) => {
 
 
 
-
-        // const bonus = (amount * 3) / 100;
-        // const type = 0;
-
-        // const transactionID = `waiting-${Date.now()}`;
-        // const newTransaction = new Transaction({
-        //     userId: user.userId,
-        //     transactionID,
-        //     base_amount: amount,
-        //     amount: amount + bonus,
-        //     currency_id: user.currency_id,  // Assuming this is set in User model
-        //     gateway_name: gateway_name,
-        //     gateway_Number: gateway_Number, // Assuming a fixed gateway name for now
-        //     payment_type: payment_type,
-        //     type: type,
-        //     status: 0,  // 0 = pending
-        //     referredbyCode: referralCode, // Assign the referral code to the transaction
-        //     is_commission: false,
-        // });
-
-        // await newTransaction.save();
-        // console.log(newTransaction);
-        // If the status is not pending (0), update the user's balance
-        // if (newTransaction.status !== 0) {
-        //     user.balance += amount + bonus;
-        //     user.bonus.bonusAmount += bonus;
-        //     user.bonus.isActive = true;
-        //     user.bonus.appliedDate = new Date();
-        //     await user.save();
-        // }
-
         const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-        let redirectUrl = `http://localhost:5000/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
+        let redirectUrl = `http://localhost:5000/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
         res.redirect(redirectUrl);
 
     } catch (err) {
