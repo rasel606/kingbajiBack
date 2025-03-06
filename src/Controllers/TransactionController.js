@@ -1013,41 +1013,41 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
     console.log(req.body);
 
     try {
-        const { referralCode, userId, email, phone, searchQuery = '' } = req.body;
+        const { referralCode, userId, email, phone } = req.body;
 
         if (!referralCode) {
             return res.status(400).json({ message: "Referral code is required" });
         }
 
         // Check if SubAdmin exists
-        const subAdminExists = await SubAdmin.exists({ referralCode });
+        const subAdminExists = await SubAdmin.findOne({ referralCode });
         if (!subAdminExists) {
             return res.status(404).json({ message: 'SubAdmin not found' });
         }
 
-        // Construct search filter
-        const searchFilter = { referredbyCode: referralCode };
-        const orConditions = [];
+        let query = {};
 
-        if (userId) orConditions.push({ userId });
-        if (email) orConditions.push({ email });
-        if (phone) orConditions.push({ phone });
-
-        if (searchQuery) {
-            orConditions.push(
-                { userId: { $regex: searchQuery, $options: 'i' } },
-                { email: { $regex: searchQuery, $options: 'i' } },
-                { phone: { $regex: searchQuery, $options: 'i' } }
-            );
+        // Only apply filters if provided
+        if (userId) {
+            query.userId = userId;
         }
-
-        if (orConditions.length > 0) {
-            searchFilter.$or = orConditions;
+        if (email) {
+            query.email = email;
+        }
+        if (phone) {
+            query.phone = phone;
         }
 
         // Fetch users using aggregation
         const users = await User.aggregate([
-            { $match: searchFilter },
+            // First, match the referralByCode
+            { 
+                $match: { referralByCode: subAdminExists.referralCode }
+            },
+            // Then apply additional filters like userId, email, and phone
+            { 
+                $match: query 
+            },
             {
                 $project: {
                     userId: 1,
@@ -1072,10 +1072,12 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
         }
 
         return res.json(users);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 
 

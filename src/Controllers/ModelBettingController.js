@@ -2032,15 +2032,16 @@ exports.withdraw_reject = async (req, res) => {
                return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
            }
        }, 5000);
-           const win = amount - game.betAmount;
+       const win = parseFloat(amount) - parseFloat(game.betAmount);
            console.log("Win Amount:", win);
    
            if (win === 0) {
           //      await GameTable.deleteOne({ gameId: game.gameId });
           //  } else {
-               await gameTable.updateOne(
-                   { gameId: game.gameId },
-                   { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } }
+            await gameTable.updateOne(
+              { gameId: game.gameId },
+              { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+              {upsert:true}
                );
            }
    
