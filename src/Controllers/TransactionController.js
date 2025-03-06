@@ -1010,17 +1010,19 @@ exports.getUserTransactionHistory = async (req, res) => {
 
 
 exports.GetAllUser_For_Sub_Admin = async (req, res) => {
-    console.log(req.body);
+    
 
     try {
+        console.log(req.body);
         const { referralCode, userId, email, phone } = req.body;
-
+        console.log(referralCode);
         if (!referralCode) {
             return res.status(400).json({ message: "Referral code is required" });
         }
-
+        console.log(req.body.referralCode);
         // Check if SubAdmin exists
         const subAdminExists = await SubAdmin.findOne({ referralCode });
+        console.log(subAdminExists)
         if (!subAdminExists) {
             return res.status(404).json({ message: 'SubAdmin not found' });
         }
@@ -1042,9 +1044,9 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
         const users = await User.aggregate([
             // First, match the referralByCode
             { 
-                $match: { referralByCode: subAdminExists.referralCode }
+                $match: { referredbyCode: subAdminExists.referralCode }
             },
-            // Then apply additional filters like userId, email, and phone
+
             { 
                 $match: query 
             },
@@ -1066,10 +1068,10 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
                 },
             },
         ]);
-
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'No users found' });
-        }
+console.log(users)
+        // if (users.length === 0) {
+        //     return res.status(404).json({ message: 'No users found' });
+        // }
 
         return res.json(users);
 

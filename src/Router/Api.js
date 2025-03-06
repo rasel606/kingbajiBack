@@ -140,7 +140,7 @@ router.post('/deposit_with_approvewidthraw_subadmin/:transactionID', Transaction
 router.post('/searchDepositTransactions', TransactionController.searchDepositTransactions)
 router.post('/widthdraw_with_transaction', TransactionController.searchWidthdrawTransactions)
 router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
-router.post('/GetAllUser_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
+router.post('/get_all_user_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
 router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
 
 
