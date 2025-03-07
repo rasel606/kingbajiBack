@@ -1973,9 +1973,9 @@ exports.withdraw_reject = async (req, res) => {
            const username = user.userId;
            let amount = balance === 0 ? await fetchBalance(agent, username) : null;
    
-           if (amount === null) return balance 
+          //  if (amount === null) return balance 
    
-           if (amount > 0 && balance === 0) {
+           if (amount > 0 && balance === 0 && balance !== amount && amount === null ) {
                balance += amount;
    
                await User.findOneAndUpdate(
