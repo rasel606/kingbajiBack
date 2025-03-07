@@ -72,7 +72,7 @@ exports.addTransaction = async (req, res) => {
 
         const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-        let redirectUrl = `http://localhost:5000/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
+        let redirectUrl = `https://kingbaji.live/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
         res.redirect(redirectUrl);
 
     } catch (err) {
