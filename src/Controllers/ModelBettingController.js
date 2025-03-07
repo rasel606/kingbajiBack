@@ -2036,7 +2036,7 @@ exports.withdraw_reject = async (req, res) => {
            console.log("Win Amount:", win);
    
             if (!isNaN(win) && win !== 0) {
-                await GameTable.updateOne(
+                await gameTable.updateOne(
                     { gameId: game.gameId },
                     { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
                     { upsert: true }
