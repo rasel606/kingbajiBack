@@ -168,12 +168,12 @@ exports.userDetails =async (req, res) => {
   // if (!token) return res.status(401).json({ message: "Token missing!" }); 
   try {
     // const decoded = jwt.verify(token, "Kingbaji");
-
+console.log(userId)
     // const decodedId = decoded?.id;
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).json({ message: "User not found" });
-
-    if (user.balance !== 0) {
+    console.log(user.userId )
+    if (user) {
     const details = await User.aggregate([
       { $match: { userId:user.userId } },
       {
@@ -189,7 +189,7 @@ exports.userDetails =async (req, res) => {
         },
       },
     ]);
-    // console.log( "decoded",details );
+    console.log( "decoded",details );
     res.status(200).json({ message: "User balance",user:details[0]});
   } else {
     res.status(200).json({ message: "User game balance is 0",user:details[0]});

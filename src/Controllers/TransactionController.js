@@ -669,7 +669,16 @@ exports.searchDepositTransactions = async (req, res) => {
         }
         console.log(query);
         const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(0) }).sort({ createdAt: -1 });
-        res.json({ transactions });
+
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: referredbyCode, type: 0, status: 0} }, // Filter deposits & accepted transactions
+             { $match: { ...query  } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+console.log("totalDeposit",totalDeposit[0].total)
+const total= totalDeposit[0]
+
+        res.json({ transactions , total });
     } catch (error) {
         console.error("Error searching transactions:", error);
         res.status(500).json({ message: "Server error" });

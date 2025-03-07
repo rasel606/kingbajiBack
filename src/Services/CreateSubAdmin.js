@@ -267,7 +267,7 @@ exports.SubAdminUserDetails =async (req, res) => {
           IsActive: 1,
           user_referredLink: 1,
           affiliate_referredLink: 1,
-          referredCode: 1,
+          referralCode: 1,
           timestamp:1,
         },
       },

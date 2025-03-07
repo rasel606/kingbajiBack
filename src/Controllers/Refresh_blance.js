@@ -72,7 +72,7 @@ exports.refreshBalance = async (req, res) => {
 
         // console.log("Fetched Balance:", amount);
         setTimeout(async () => {
-            if (amount > 0 && balance === 0) {
+            if (amount > 0) {
                 balance += amount;
 
                 await User.findOneAndUpdate(
@@ -120,17 +120,16 @@ exports.refreshBalance = async (req, res) => {
                 return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
             }
         }, 5000);
-        const win = parseFloat(amount) - parseFloat(game.betAmount);
+        const win = amount - game.betAmount;
         console.log("Win Amount:", win);
 
-        if (win !== 0) {
+        if (win === 0) {
+            // await GameTable.deleteOne({ gameId: game.gameId });
+        } else {
             await GameTable.updateOne(
                 { gameId: game.gameId },
-                { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-                {upsert:true}
+                { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } }
             );
-        } else {
-           
         }
 
         const updatedUser = await User.findOne({ userId: userId });
