@@ -61,9 +61,9 @@ exports.refreshBalance = async (req, res) => {
         const username = user.userId;
         let amount = null;
 
-        if (balance === 0) {
+        if (balance === 0 ) {
             amount = await fetchBalance(agent, username);
-            if (amount === null) {
+            if (amount === null ) {
                 return res.json({ errCode: 0, errMsg: 'Success', balance });
             }
         } else {
@@ -72,7 +72,9 @@ exports.refreshBalance = async (req, res) => {
 
         // console.log("Fetched Balance:", amount);
         setTimeout(async () => {
-            if (amount > 0) {
+            
+            if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+                console.log((amount > 0 && balance === 0 && amount !== balance))
                 balance += amount;
 
                 await User.findOneAndUpdate(
@@ -120,20 +122,21 @@ exports.refreshBalance = async (req, res) => {
                 return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
             }
         }, 5000);
-        const win = amount - game.betAmount;
+        const win = parseFloat(amount) - parseFloat(game.betAmount);
         console.log("Win Amount:", win);
 
-        if (win === 0) {
-            // await GameTable.deleteOne({ gameId: game.gameId });
-        } else {
-            await GameTable.updateOne(
+        if (!isNaN(win) && win !== 0 && win !== NaN) {
+            await GameTable.findOneAndUpdate(
                 { gameId: game.gameId },
-                { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } }
+                { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+                { new: true }
             );
+        } else {
+           await GameTable.deleteOne({ gameId: game.gameId })
         }
 
         const updatedUser = await User.findOne({ userId: userId });
-        return res.json({ errCode: 0, errMsg: 'Success', balance: updatedUser.balance });
+        res.json({ errCode: 0, errMsg: 'Success', balance: updatedUser.balance });
 
     } catch (error) {
         console.log("Error:", error.message);
