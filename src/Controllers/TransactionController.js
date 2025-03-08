@@ -72,8 +72,8 @@ exports.addTransaction = async (req, res) => {
 
         const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-        let redirectUrl = `https://kingbaji.live/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
-        res.redirect(redirectUrl);
+        let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
+        res.json(redirectUrl);
 
     } catch (err) {
         console.error(err);
@@ -566,16 +566,15 @@ exports.searchWidthdrawTransactions = async (req, res) => {
 
         const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
-        console.log("SubAdminuser",SubAdminuser);
+        console.log(SubAdminuser);
         // Find the transaction
         // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.find({ referredbyCode:SubAdminuser.referralCode, type: parseInt(1) });
-        console.log("SubAdminuser-----------3",transactionExists);
-        if (!transactionExists) return res.status(404).json({ transactions:0 });
-        
+        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
+        if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
+        console.log(transactionExists);
 
 
         let query = {};
@@ -605,8 +604,15 @@ exports.searchWidthdrawTransactions = async (req, res) => {
         console.log(query);
         const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(1) }).sort({ createdAt: -1 });
 
-        console.log("SubAdminuser ---------2",transactions)
-        res.json({ transactions:transactions });
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: referredbyCode, type:1, status: 0} }, // Filter deposits & accepted transactions
+             { $match: { ...query  } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+console.log("totalDeposit",totalDeposit[0].total)
+const total= totalDeposit[0]
+
+        res.json({ transactions , total });
     } catch (error) {
         console.error("Error searching transactions:", error);
         res.status(500).json({ message: "Server error" });
