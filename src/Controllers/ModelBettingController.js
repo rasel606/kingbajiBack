@@ -196,7 +196,7 @@ exports.getOddsSports = async (req, res) => {
 
 async function addGameWithCategory(gameData, category_name) {
   let category = await Casino_category_table.findOne({ category_name });
-console.log("line-3", gameData);
+  console.log("line-3", gameData);
   // Find the highest existing serial_number
   const lastGame = await GameListTable.findOne().sort({ serial_number: -1 });
   const newSerialNumber = lastGame ? lastGame.serial_number + 1 : 1;
@@ -611,7 +611,7 @@ exports.ShowFrontTable = async (req, res) => {
     ]);
 
 
-console.log(categories)
+    console.log(categories)
     res.json(categories);
 
     // if (!id || !serial_number) {
@@ -706,12 +706,12 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
         games.forEach(game => {
           game.providers.forEach(provider => providerSet.add(provider.providercode));
         });
-console.log(providerSet)
+        console.log(providerSet)
         const uniqueProviders = await BetProviderTable.find(
           { providercode: { $in: Array.from(providerSet) } },
           { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
         );
-console.log(uniqueProviders)
+        console.log(uniqueProviders)
         // Format the result
         return {
           category: {
@@ -1916,149 +1916,154 @@ exports.withdraw_reject = async (req, res) => {
 
 
 
-   
-   const fetchBalance = async (agent, username) => {
-       try {
-           const signature = crypto.createHash('md5').update(
-               `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
-           ).digest('hex').toUpperCase();
-   
-           console.log("Generated Signature:", signature);
-   
-           const params = {
-               operatorcode: agent.operatorcode,
-               providercode: agent.providercode,
-               username: username,
-               password: agent.auth_pass,
-               signature
-           };
-   
-           const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
-   
-           const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
-   
-           let parsedData = response.data;
-           
-   
-           return parseFloat(parsedData.balance);
-       } catch (error) {
-           console.log("Error fetching balance:", error.message);
-           return null;
-       }
-   };
-   
-   function randomStr() {
-       return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-   }
-   
-  const refreshBalancebefore = async (userId, game_id) => {
 
-       
- 
-           if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
-   
-           const user = await User.findOne({ userId: userId });
-           if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
-   
-           let balance = user.balance;
-           const game = await gameTable.findOne({ userId: user.userId, gameId: user.last_game_id, game_id: game_id });
-          //  console.log("game", game);
-   
-           if (!game) return  balance 
-   
-           const agent = await BetProviderTable.findOne({ providercode: game.agentId });
-          //  console.log("agent", agent);
-           if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
-   
-           const username = user.userId;
-           let amount = null;
-   
-           if (balance === 0) {
-               amount = await fetchBalance(agent, username);
-               if (amount === null) {
-                   return res.json({ errCode: 0, errMsg: 'Success', balance });
-               }
-           } else {
-               return  balance 
-           }
-   
-           console.log("Fetched Balance:", amount);
-           setTimeout(async () => {
-           if (amount > 0) {
-               balance += amount;
-   
-               await User.findOneAndUpdate(
-                   { userId: userId },
-                   { $set: { balance: parseFloat(balance) } },
-                   { new: true }
-               );
-   
-               console.log("Updated Balance:", balance);
-              console.log("Updated Balance:", balance);
-           }
-           
-           const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
-           const signature = crypto.createHash('md5').update(
-               `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
-           ).digest('hex').toUpperCase();
-   
-           console.log("Transaction ID:", transId);
-           console.log("Signature:", signature);
-   
-           const params = {
-               operatorcode: agent.operatorcode,
-               providercode: agent.providercode,
-               username: user.userId,
-               password: agent.auth_pass,
-               referenceid: transId,
-               type: 1,
-               amount: amount,
-               signature
-           };
-   
-           try {
-               const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
-               console.log("Refund Response:", refund.data);
-               console.log("Updated Balance:", balance);
-               if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
-                   return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
-               }
-   
-               if (refund.innerCode === null) {
-                   return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
-               }
-           } catch (transferError) {
-               console.log("Transfer API Error:", transferError.message);
-               return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
-           }
-       }, 5000);
-           const win = amount - game.betAmount;
-           console.log("Win Amount:", win);
-   
-            if (!isNaN(win) && win !== 0) {
-                await gameTable.updateOne(
-                    { gameId: game.gameId },
-                    { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-                    { upsert: true }
-                );
-            }
-           const updatedUser = await User.findOne({ userId: userId });
-           return  updatedUser.balance 
-   
-      
-   };
+const fetchBalance = async (agent, username) => {
+  try {
+    const signature = crypto.createHash('md5').update(
+      `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
+    ).digest('hex').toUpperCase();
+
+    console.log("Generated Signature:", signature);
+
+    const params = {
+      operatorcode: agent.operatorcode,
+      providercode: agent.providercode,
+      username: username,
+      password: agent.auth_pass,
+      signature
+    };
+
+    const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
+
+    const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
+
+    let parsedData = response.data;
+
+
+    return parseFloat(parsedData.balance);
+  } catch (error) {
+    console.log("Error fetching balance:", error.message);
+    return null;
+  }
+};
+
+function randomStr() {
+  return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+}
+
+const refreshBalancebefore = async (userId, game_id) => {
 
 
 
+  if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
+
+  const user = await User.findOne({ userId: userId });
+  if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
+
+  let balance = user.balance;
+  const game = await gameTable.findOne({ userId: user.userId, gameId: user.last_game_id, game_id: game_id });
+  //  console.log("game", game);
+
+  if (!game) return balance
+
+  const agent = await BetProviderTable.findOne({ providercode: game.agentId });
+  //  console.log("agent", agent);
+  if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+
+  const username = user.userId;
+  let amount = null;
+
+  if (balance === 0) {
+    amount = await fetchBalance(agent, username);
+    if (amount === null) {
+      return balance
+    }
+  } else {
+    return balance
+  }
+
+  console.log("Fetched Balance:", amount);
+  setTimeout(async () => {
+    if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+      balance += amount;
+
+      await User.findOneAndUpdate(
+        { userId: userId },
+        { $set: { balance: parseFloat(balance) } },
+        { new: true }
+      );
+
+      console.log("Updated Balance:", balance);
+      console.log("Updated Balance:", balance);
 
 
+    } else {
+      return balance
+    }
 
 
+    const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
+    const signature = crypto.createHash('md5').update(
+      `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
+    ).digest('hex').toUpperCase();
+
+    console.log("Transaction ID:", transId);
+    console.log("Signature:", signature);
+
+    const params = {
+      operatorcode: agent.operatorcode,
+      providercode: agent.providercode,
+      username: user.userId,
+      password: agent.auth_pass,
+      referenceid: transId,
+      type: 1,
+      amount: amount,
+      signature
+    };
+
+    try {
+      const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
+      console.log("Refund Response:", refund.data);
+      console.log("Updated Balance:", balance);
+      if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
+        return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
+      }
+
+      if (refund.innerCode === null) {
+        return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
+      }
+    } catch (transferError) {
+      console.log("Transfer API Error:", transferError.message);
+      return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
+    }
+  }, 5000);
+  const win = amount - game.betAmount;
+  console.log("Win Amount:", win);
+
+  if (!isNaN(win) && win !== 0 && win !== NaN) {
+    await gameTable.updateOne(
+      { gameId: game.gameId },
+      { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+      { upsert: true }
+    );
+  }
+  const updatedUser = await User.findOne({ userId: userId });
+  return updatedUser.balance
+
+
+};
 
 
 
 
-   
+
+
+
+
+
+
+
+
 
 
 
@@ -2090,7 +2095,7 @@ const fetchApi = async (endpoint, data = {}) => {
 
     const response = await axios(config);
 
-    
+
     return response.data
     // 
   } catch (error) {
@@ -2108,18 +2113,18 @@ const fetchApi = async (endpoint, data = {}) => {
 
 
 exports.launchGame = async (req, res) => {
-  
+
   console.log(
     "req.body",
     req.body
   )
   try {
     // Check if user is logged in
-    
-   const { userId, game_id, is_demo, newProvider } = req.body;
-console.log("userId",userId,game_id)
+
+    const { userId, game_id, is_demo, newProvider } = req.body;
+    console.log("userId", userId, game_id)
     if (!userId) {
-    
+
       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
     }
     const user = await User.findOne({ userId });
@@ -2158,11 +2163,11 @@ console.log("userId",userId,game_id)
 
 
     console.log("agent", agent)
-    
+
     if (last_game_id) {
 
-     
-      const resBalance = await refreshBalancebefore (user.userId,agent);
+
+      const resBalance = await refreshBalancebefore(user.userId, agent);
       console.log("resBalance", resBalance)
       // if (!resBalance || resBalance.errCode !== 0) {
       //   return res.json(resBalance);
@@ -2171,23 +2176,23 @@ console.log("userId",userId,game_id)
 
       // console.log("amount-3", amount)
     }
-    
+
     // Insufficient balance check
     if (amount < 1) {
       return res.json({ errCode: 2, errMsg: "Insufficient balance." });
     }
 
     // Fetch game and provider details using aggregation
-    
 
-    
+
+
 
     if (!agent || agent.length === 0) {
       return res.json({ errCode: 1, errMsg: "Agent not found." });
     }
 
     const provider = agent[0]
-    
+
 
     console.log("provider", provider);
     let game_url;
@@ -2248,7 +2253,7 @@ console.log("userId",userId,game_id)
       });
 
 
-      
+
       console.log("transferResponse", transferResponse);
 
       // if (!transferResponse || transferResponse.errCode !== "0") {
