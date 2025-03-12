@@ -22,7 +22,7 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:['https://kingbajiback-1.onrender.com'], // Allow only your frontend origin
+    origin:['https://kingbajiback-1.onrender.com', 'http://localhost:3001','http://localhost:3000'], // Allow only your frontend origin
     credentials: true, // Allow cookies and authentication headers,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
@@ -55,13 +55,13 @@ app.get('/', function (req, res) {
 
 const connectedUsers = {};
 
-// router.use((req, res, next) => {
-//     res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
-//     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//     res.setHeader("Access-Control-Allow-Credentials", "true");
-//     next();
-// });
+router.use((req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    next();
+});
 
 
 
