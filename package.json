@@ -32,6 +32,7 @@
     "nodemon": "^3.1.9",
     "socket.io": "^4.8.1",
     "upgrade-node-modules": "^1.5.1",
+    "winston": "^3.17.0",
     "xss-clean": "^0.1.4"
   }
 }

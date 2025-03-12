@@ -22,16 +22,36 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:[ 'https://kingbaji365.live','http://localhost:3001','http://localhost:3000','https://king5648.live.kingbaji365.live'], // Allow only your frontend origin
+    origin:[ 'http://localhost:3001','http://localhost:3000'], // Allow only your frontend origin
     credentials: true, // Allow cookies and authentication headers,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
-// app.get('/', function (req, res) {
-//     res.sendFile(path.join(__dirname, 'build', 'index.html'));
-//   });
+app.get('/', function (req, res) {
+    console.log('index.html');
+    res.json('index.html');
+  });
   
+// const winston = require('winston');
 
+// const logger = winston.createLogger({
+//   level: 'info',
+//   transports: [
+//     new winston.transports.Console({
+//       format: winston.format.combine(
+//         winston.format.colorize(),
+//         winston.format.timestamp(),
+//         winston.format.simple()
+//       )
+//     }),
+//     new winston.transports.File({ filename: 'app.log' })
+//   ]
+// });
+
+// app.use((req, res, next) => {
+//   logger.info(`Request URL: ${req.originalUrl} - Method: ${req.method} - IP: ${req.ip}`);
+//   next();
+// });
 
 const connectedUsers = {};
 

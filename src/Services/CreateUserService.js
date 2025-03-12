@@ -86,7 +86,7 @@ exports.register = async (req, res) => {
 };
 exports.loginUser = async (req, res) => {
   const { userId, password } = req.body;
-console.log(req.body);
+// console.log(req.body);
   try {
     if (!userId) {
       return res.status(400).json({ message: "User Not Found, Please Login Or Sign Up" });
@@ -126,7 +126,7 @@ console.log(req.body);
 
 exports.verify =async (req, res) => {
   const authHeader = req.header("Authorization");
-  console.log("userId",authHeader);
+  // console.log("userId",authHeader);
   const token = authHeader?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "Token missing!" }); 
   try {
@@ -168,11 +168,11 @@ exports.userDetails =async (req, res) => {
   // if (!token) return res.status(401).json({ message: "Token missing!" }); 
   try {
     // const decoded = jwt.verify(token, "Kingbaji");
-console.log(userId)
+// console.log(userId)
     // const decodedId = decoded?.id;
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).json({ message: "User not found" });
-    console.log(user.userId )
+    // console.log(user.userId )
     if (user) {
     const details = await User.aggregate([
       { $match: { userId:user.userId } },
@@ -189,7 +189,7 @@ console.log(userId)
         },
       },
     ]);
-    console.log( "decoded",details );
+    // console.log( "decoded",details );
     res.status(200).json({ message: "User balance",user:details[0]});
   } else {
     res.status(200).json({ message: "User game balance is 0",user:details[0]});

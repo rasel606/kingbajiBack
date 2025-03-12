@@ -1,4 +1,4 @@
-const express = require("express");
+// const express = require("express");
 const crypto = require("crypto");
 
 
@@ -190,55 +190,35 @@ exports.getOddsSports = async (req, res) => {
 };
 
 
-
-
-
-
 async function addGameWithCategory(gameData, category_name) {
   let category = await Casino_category_table.findOne({ category_name });
-  console.log("line-3", gameData);
-  // Find the highest existing serial_number
-  const lastGame = await GameListTable.findOne().sort({ serial_number: -1 });
-  const newSerialNumber = lastGame ? lastGame.serial_number + 1 : 1;
 
-  let newGame;
   if (!category) {
-    newGame = await GameListTable.create({
-      ...gameData,
-      category_name,
-      serial_number: newSerialNumber,
-    });
-  } else {
-    newGame = await GameListTable.findOneAndUpdate(
-      { g_code: gameData.g_code },
-      {
-        ...gameData,
-        category_name,
-        serial_number: newSerialNumber,
-      },
-      { upsert: true, new: true }
-    );
+    category = await Casino_category_table.create({ category_name });
   }
 
-  console.log("Added:", newGame);
+  const newGame = await GameListTable.findOneAndUpdate(
+    { g_code: gameData.g_code }, // Assuming `g_code` is a unique identifier
+    { ...gameData, category_name },
+    { upsert: true, new: true }
+  );
+
+  console.log("Added Game:", newGame);
+
   return { newGame, category };
 }
-const fetchGamesFromApi = async (result, category_name) => {
-  console.log("Signature:", result.operatorcode, result.providercode, result.key);
-  try {
-    const operatorcode = result.operatorcode;
-    const providercode = result.providercode;
-    const secret_key = result.key; // Replace with actual secret key
 
-    console.log("Signature:", operatorcode, providercode, secret_key);
+const fetchGamesFromApi = async (result, category_name) => {
+  console.log("Fetching games for:", result.company);
+
+  try {
+    const { operatorcode, providercode, key: secret_key } = result;
+
     const signature = crypto
       .createHash("md5")
       .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
       .digest("hex")
       .toUpperCase();
-
-
-    console.log("Signature:", signature);
 
     const response = await axios.get("https://gsmd.336699bet.com/getGameList.ashx", {
       params: {
@@ -251,22 +231,14 @@ const fetchGamesFromApi = async (result, category_name) => {
       },
     });
 
-    // console.log("Fetched Games:", response);
+    const gameData = JSON.parse(response.data?.gamelist || "[]");
 
-    const gameData = JSON.parse(response.data?.gamelist);
-    // console.log("Fetched Games:", gameData.length);
+    console.log(`Fetched ${gameData.length} games from API`);
 
-    let gameResults = [];
+    const gameResults = await Promise.all(
+      gameData.map((game) => addGameWithCategory(game, category_name))
+    );
 
-    for (let game of gameData) {
-      const addedGame = await addGameWithCategory(game, category_name);
-      gameResults.push(addedGame);
-      console.log("Added Games:", gameResults);
-    }
-    await addGameWithCategory(gameData, category_name);
-    // console.log("Added Games:", gameResults.length);
-
-    console.log("Added Games:", gameResults);
     return gameResults;
   } catch (error) {
     console.error("Error fetching games:", error.message);
@@ -274,13 +246,9 @@ const fetchGamesFromApi = async (result, category_name) => {
   }
 };
 
-
-
-
-
 exports.CasinoItemAdd = async (req, res) => {
+  console.log("Received request:", req.body);
 
-  console.log(req.body);
   try {
     const {
       company,
@@ -295,18 +263,8 @@ exports.CasinoItemAdd = async (req, res) => {
       auth_pass,
       currency_id,
       category_name,
-      image_url
+      image_url,
     } = req.body;
-    // let image_url = req.body.image_url;
-
-    // Upload image to ImageBB if provided
-    // if (req.file) {
-    //   const imageData = req.file.buffer.toString("base64");
-    //   const response = await axios.post("https://api.imgbb.com/1/upload", null, {
-    //     params: { key: IMAGEBB_API_KEY, image: imageData },
-    //   });
-    //   image_url = response.data.data.url;
-    // }
 
     const updateData = {
       company,
@@ -322,33 +280,28 @@ exports.CasinoItemAdd = async (req, res) => {
       currency_id,
       image_url,
       updatetimestamp: Date.now(),
-
     };
-    console.log("Update Data:", updateData);
 
-    let result;
-    if (company) {
+    console.log("Updating provider data:", updateData);
 
-      result = await BetProviderTable.findOneAndUpdate(
-        { providercode: providercode },
-        updateData,
-        { new: true, upsert: true }
-      );
-      console.log("meet:", result)
-    } else {
-      result = await BetProviderTable.create(updateData);
-      console.log("meet: 1", result)
-    }
+    let result = await BetProviderTable.findOneAndUpdate(
+      { company },
+      updateData,
+      { upsert: true, new: true }
+    );
+
+    console.log("Provider updated:", result);
+
     const NewResult = await fetchGamesFromApi(result, category_name);
 
-
+    console.log(`Successfully processed ${NewResult.length} games.`);
 
     res.json({ success: true, data: NewResult });
   } catch (error) {
     console.error("Error adding casino item:", error);
     res.status(500).json({ success: false, error: error.message });
   }
-}
+};
 
 
 exports.CasinoItemSingleUpdate = async (req, res) => {
@@ -679,7 +632,7 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
   try {
     // Fetch all categories
     const categories = await Category.find();
-
+console.log(categories)
     // Fetch games for each category along with their providers
     const categoriesWithGamesAndProviders = await Promise.all(
       categories.map(async (category) => {
@@ -805,9 +758,9 @@ exports.AddSports = async (req, res) => {
     const { key, type, category } = req.body;
 
     // Check if the entry already exists
-
+    const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
     if (existingBet) {
-      const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
+      
       return res.status(400).json({ message: 'Betting entry already exists' });
     }
 
@@ -1917,443 +1870,457 @@ exports.withdraw_reject = async (req, res) => {
 
 
 
-const fetchBalance = async (agent, username) => {
-  try {
-    const signature = crypto.createHash('md5').update(
-      `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
-    ).digest('hex').toUpperCase();
-
-    console.log("Generated Signature:", signature);
-
-    const params = {
-      operatorcode: agent.operatorcode,
-      providercode: agent.providercode,
-      username: username,
-      password: agent.auth_pass,
-      signature
-    };
-
-    const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
-
-    const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
-
-    let parsedData = response.data;
-
-
-    return parseFloat(parsedData.balance);
-  } catch (error) {
-    console.log("Error fetching balance:", error.message);
-    return null;
-  }
-};
-
-function randomStr() {
-  return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-}
-
-const refreshBalancebefore = async (userId, game_id) => {
-
-
-
-  if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
-
-  const user = await User.findOne({ userId: userId });
-  if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
-
-  let balance = user.balance;
-  const game = await gameTable.findOne({ userId: user.userId, gameId: user.last_game_id, game_id: game_id });
-  //  console.log("game", game);
-
-  if (!game) return balance
-
-  const agent = await BetProviderTable.findOne({ providercode: game.agentId });
-  //  console.log("agent", agent);
-  if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
-
-  const username = user.userId;
-  let amount = null;
-
-  if (balance === 0) {
-    amount = await fetchBalance(agent, username);
-    if (amount === null) {
-      return balance
-    }
-  } else {
-    return balance
-  }
-
-  console.log("Fetched Balance:", amount);
-  setTimeout(async () => {
-    if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
-      balance += amount;
-
-      await User.findOneAndUpdate(
-        { userId: userId },
-        { $set: { balance: parseFloat(balance) } },
-        { new: true }
-      );
-
-      console.log("Updated Balance:", balance);
-      console.log("Updated Balance:", balance);
-
-
-    } else {
-      return balance
-    }
-
-
-    const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
-    const signature = crypto.createHash('md5').update(
-      `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
-    ).digest('hex').toUpperCase();
-
-    console.log("Transaction ID:", transId);
-    console.log("Signature:", signature);
-
-    const params = {
-      operatorcode: agent.operatorcode,
-      providercode: agent.providercode,
-      username: user.userId,
-      password: agent.auth_pass,
-      referenceid: transId,
-      type: 1,
-      amount: amount,
-      signature
-    };
-
+   const fetchBalance = async (agent, username) => {
     try {
-      const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
-      console.log("Refund Response:", refund.data);
-      console.log("Updated Balance:", balance);
-      if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
-        return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
-      }
-
-      if (refund.innerCode === null) {
-        return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
-      }
-    } catch (transferError) {
-      console.log("Transfer API Error:", transferError.message);
-      return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
+      const signature = crypto.createHash('md5').update(
+        `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
+      ).digest('hex').toUpperCase();
+  
+      console.log("Generated Signature:", signature);
+  
+      const params = {
+        operatorcode: agent.operatorcode,
+        providercode: agent.providercode,
+        username: username,
+        password: agent.auth_pass,
+        signature
+      };
+  
+      const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
+  
+      const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
+  
+      let parsedData = response.data;
+  
+  
+      return parseFloat(parsedData.balance);
+    } catch (error) {
+      console.log("Error fetching balance:", error.message);
+      return null;
     }
-  }, 5000);
-  const win = amount - game.betAmount;
-  console.log("Win Amount:", win);
-
-  if (!isNaN(win) && win !== 0 && win !== NaN) {
-    await gameTable.updateOne(
-      { gameId: game.gameId },
-      { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-      { upsert: true }
-    );
+  };
+  
+  function randomStr() {
+    return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
   }
-  const updatedUser = await User.findOne({ userId: userId });
-  return updatedUser.balance
-
-
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Launch game API
-// router.post("/launch_game",
-const fetchApi = async (endpoint, data = {}) => {
-  try {
-    const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
-    const url = `${baseURL}${endpoint}`;
-
-    const config = {
-      method: "GET", // Default: POST
-      url,
-      timeout: 10000, // 10 seconds timeout
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-
-      },
-    };
-
-    if (config.method === "POST") {
-      config.data = data;
+  
+  const refreshBalancebefore = async (userId, game_id) => {
+  
+  
+  
+    if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
+  
+    const user = await User.findOne({ userId: userId });
+    if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
+  
+    let balance = user.balance;
+    const game = await gameTable.findOne({ userId: user.userId, gameId: user.last_game_id});
+     console.log("game", game);
+  
+    if (!game) return balance
+  
+    const agent = await BetProviderTable.findOne({ providercode: game.agentId });
+    //  console.log("agent", agent);
+    if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+  
+    const username = user.userId;
+    let amount = null;
+  
+    if (balance === 0) {
+      amount = await fetchBalance(agent, username);
+      if (amount === null) {
+        return balance
+      }
     } else {
-      config.params = data;
+      return balance
     }
-
-    const response = await axios(config);
-
-
-    return response.data
-    // 
-  } catch (error) {
-    console.error("API Request Failed:", error.message);
-    return { errCode: 3, errMsg: "Network or API Error" };
-  }
-};
-
-
-
-
-
-
-
-
-
-exports.launchGame = async (req, res) => {
-
-  console.log(
-    "req.body",
-    req.body
-  )
-  try {
-    // Check if user is logged in
-
-    const { userId, game_id, is_demo, newProvider } = req.body;
-    console.log("userId", userId, game_id)
-    if (!userId) {
-
-      return res.status(400).json({ errCode: 1, errMsg: "User not found." });
-    }
-    const user = await User.findOne({ userId });
-
-    let amount = user.balance;
-    const last_game_id = user.last_game_id;
-    console.log("amount", amount)
-    // Refresh balance if last game exists
-
-    const agent = await GameListTable.aggregate([
-      {
-        $match: { g_code: game_id, }
-      },
-      {
-        $lookup: {
-          from: "betprovidertables",
-          localField: "p_code",
-          foreignField: "providercode",
-          as: "provider"
-        }
-      },
-      { $unwind: "$provider" },
-      {
-        $project: {
-          // id: "$provider._id",
-          providercode: "$provider.providercode",
-          operatorcode: "$provider.operatorcode",
-          key: "$provider.key",
-          auth_pass: "$provider.auth_pass",
-          game_type: "$p_type"
-        }
+  
+    console.log("Fetched Balance:", amount);
+    setTimeout(async () => {
+      if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+        balance += amount;
+  
+        await User.findOneAndUpdate(
+          { userId: userId },
+          { $set: { balance: parseFloat(balance) } },
+          { new: true }
+        );
+  
+        console.log("Updated Balance:", balance);
+        console.log("Updated Balance:", balance);
+  
+  
+      } else {
+        return balance
       }
-    ]);
-
-
-
-
-    console.log("agent", agent)
-
-    if (last_game_id) {
-
-
-      const resBalance = await refreshBalancebefore(user.userId, agent);
-      console.log("resBalance", resBalance)
-      // if (!resBalance || resBalance.errCode !== 0) {
-      //   return res.json(resBalance);
-      // }
-      // amount += resBalance.balance || 0;
-
-      // console.log("amount-3", amount)
+  
+  
+      const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
+      const signature = crypto.createHash('md5').update(
+        `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
+      ).digest('hex').toUpperCase();
+  
+      console.log("Transaction ID:", transId);
+      console.log("Signature:", signature);
+  
+      const params = {
+        operatorcode: agent.operatorcode,
+        providercode: agent.providercode,
+        username: user.userId,
+        password: agent.auth_pass,
+        referenceid: transId,
+        type: 1,
+        amount: amount,
+        signature
+      };
+  
+      try {
+        const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
+        console.log("Refund Response:", refund.data);
+        console.log("Updated Balance:", balance);
+        if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
+          return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
+        }
+  
+        if (refund.innerCode === null) {
+          return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
+        }
+      } catch (transferError) {
+        console.log("Transfer API Error:", transferError.message);
+        return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
+      }
+    }, 5000);
+    const win = amount - game.betAmount;
+    console.log("Win Amount:", win);
+  
+    if (!isNaN(win) && win !== 0 && win !== NaN) {
+      await gameTable.updateOne(
+        { gameId: game.gameId },
+        { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+        { upsert: true }
+      );
     }
-
-    // Insufficient balance check
-    if (amount < 1) {
-      return res.json({ errCode: 2, errMsg: "Insufficient balance." });
+    const updatedUser = await User.findOne({ userId: userId });
+    return updatedUser.balance
+  
+  
+  };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  // Launch game API
+  // router.post("/launch_game",
+  const fetchApi = async (endpoint, data = {}) => {
+    try {
+      const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
+      const url = `${baseURL}${endpoint}`;
+  
+      const config = {
+        method: "GET", // Default: POST
+        url,
+        timeout: 10000, // 10 seconds timeout
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+  
+        },
+      };
+  
+      if (config.method === "POST") {
+        config.data = data;
+      } else {
+        config.params = data;
+      }
+  
+      const response = await axios(config);
+  
+  
+      return response.data
+      // 
+    } catch (error) {
+      console.error("API Request Failed:", error.message);
+      return { errCode: 3, errMsg: "Network or API Error" };
     }
+  };
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  exports.launchGame = async (req, res) => {
+  
+    console.log(
+      "req.body",
+      req.body
+    )
+ 
+    try {
+      // Check if user is logged in
+  
+      const { userId, game_id, is_demo, newProvider } = req.body;
+      console.log("userId", userId, game_id)
+      if (!userId) {
+  
+        return res.status(400).json({ errCode: 1, errMsg: "User not found." });
+      }
+      const user = await User.findOne({ userId });
+  
+      let amount = user.balance;
+      const last_game_id = user.last_game_id;
+      console.log("amount", amount)
+      // Refresh balance if last game exists
+  
+      const agent = await GameListTable.aggregate([
+        {
+          $match: { g_code: game_id, }
+        },
+        {
+          $lookup: {
+            from: "betprovidertables",
+            localField: "p_code",
+            foreignField: "providercode",
+            as: "provider"
+          }
+        },
+        { $unwind: "$provider" },
+        {
+          $project: {
+            // id: "$provider._id",
+            providercode: "$provider.providercode",
+            operatorcode: "$provider.operatorcode",
+            key: "$provider.key",
+            auth_pass: "$provider.auth_pass",
+            game_type: "$p_type"
+          }
+        }
+      ]);
+  
+  
+  
+  
+      console.log("agent", agent)
+  
+    //   if (last_game_id) {
+  
+  
+    //     const resBalance = await refreshBalancebefore(user.userId, agent);
+    //     console.log("resBalance", resBalance)
+    //     // if (!resBalance || resBalance.errCode !== 0) {
+    //     //   return res.json(resBalance);
+    //     // }
+    //     // amount += resBalance.balance || 0;
+  
+    //     // console.log("amount-3", amount)
+    //   }
+  
+      // Insufficient balance check
+      if (amount < 1) {
+        return res.json({ errCode: 2, errMsg: "Insufficient balance." });
+      }
+  
+      // Fetch game and provider details using aggregation
+  
+  
+  
+  
+      if (!agent || agent.length === 0) {
+        return res.json({ errCode: 1, errMsg: "Agent not found." });
+      }
+  
+      const provider = agent[0]
+  
+      const Newgame = await GameListTable.findOne({ g_code: game_id });
+    console.log("Newgame",Newgame);
 
-    // Fetch game and provider details using aggregation
-
-
-
-
-    if (!agent || agent.length === 0) {
+    if (!Newgame || Newgame.length === 0) {
       return res.json({ errCode: 1, errMsg: "Agent not found." });
     }
-
-    const provider = agent[0]
-
-
-    console.log("provider", provider);
-    let game_url;
-
-
-    const signature = generateSignature(
-      provider.operatorcode,
-      provider.auth_pass,
-      provider.providercode,
-      provider.game_type,
-      user.userId,
-      provider.key
-
-    )
-    const field = {
-      operatorcode: provider.operatorcode,
-      providercode: provider.providercode,
-      username: user.userId,
-      password: provider.auth_pass,
-      type: provider.game_type,
-      gameid: game_id,
-      lang: "en-US",
-      html5: 1,
-      signature: signature
-    };
-
-    // console.log("field - All", field);
-
-
-
-    if (!is_demo) {
-      // Generate transaction ID
-      const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
-
-
+      console.log("provider", provider);
+      let game_url;
+  
+  
       const signature = generateSignature(
-        amount.toString(),
-        provider.operatorcode,
-        provider.auth_pass,
-        provider.providercode,
-        transId,
-        0,
-        user.userId,
-        provider.key
-
-      )
-      console.log("signature", signature);
-      // Make transfer API call
-      const transferResponse = await fetchApi("makeTransfer.aspx", {
-        operatorcode: provider.operatorcode,
-        providercode: provider.providercode,
-        username: user.userId,
-        password: provider.auth_pass,
-        referenceid: transId,
-        type: 0,
-        amount: amount,
-        signature: signature
-      });
-
-
-
-      console.log("transferResponse", transferResponse);
-
-      // if (!transferResponse || transferResponse.errCode !== "0") {
-
-      //   return res.json({ errCode: 2, errMsg: "Failed to load balance." });
-      // }
-
-      // Insert game transaction
-      await gameTable.create({
-        userId: user.userId,
-        agentId: provider.providercode,
-        gameId: game_id,
-        currencyId: user.currencyId,
-        betAmount: amount,
-        transactionId: transId
-      });
-
-      // Update user balance
-      await User.updateOne(
-        { userId: user.userId },
-        { balance: 0, last_game_id: game_id }
-      );
-
-      const signatureLunchGame = generateSignature(
         provider.operatorcode,
         provider.auth_pass,
         provider.providercode,
         provider.game_type,
         user.userId,
         provider.key
-
+  
       )
       const field = {
         operatorcode: provider.operatorcode,
         providercode: provider.providercode,
         username: user.userId,
         password: provider.auth_pass,
-        type: provider.game_type,
+        type: Newgame.p_type,
         gameid: game_id,
         lang: "en-US",
         html5: 1,
-        signature: signatureLunchGame
+        signature: signature
       };
-      console.log("field:", field);
-
-
-
-      game_url = await fetchApi("launchGames.aspx", field);
-      console.log("game_url:", game_url);
-    } else {
-      game_url = await fetchApi("launchDGames.ashx", field);
-      console.log(game_url)
+  
+      // console.log("field - All", field);
+  
+  
+  
+      if (!is_demo) {
+        // Generate transaction ID
+        const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
+  
+  
+        const signature = generateSignature(
+          amount.toString(),
+          provider.operatorcode,
+          provider.auth_pass,
+          provider.providercode,
+          transId,
+          0,
+          user.userId,
+          provider.key
+  
+        )
+        console.log("signature", signature);
+        // Make transfer API call
+        const transferResponse = await fetchApi("makeTransfer.aspx", {
+          operatorcode: provider.operatorcode,
+          providercode: provider.providercode,
+          username: user.userId,
+          password: provider.auth_pass,
+          referenceid: transId,
+          type: 0,
+          amount: amount,
+          signature: signature
+        });
+  
+  
+  
+        console.log("transferResponse", transferResponse);
+  
+        if (!transferResponse || transferResponse.errCode !== "0") {
+  
+          return res.json({ errCode: 2, errMsg: "Failed to load balance." });
+        }
+        console.log("Newgame",Newgame);
+        // Insert game transaction
+        await gameTable.create({
+          userId: user.userId,
+          agentId: provider.providercode,
+          gameId: Newgame.g_code,
+          currencyId: user.currencyId,
+          betAmount: amount,
+          transactionId: transId
+        });
+  
+        // Update user balance
+        await User.updateOne(
+          { userId: user.userId },
+          { balance: 0, last_game_id: Newgame.g_code }
+        );
+  
+        const signatureLunchGame = generateSignature(
+          provider.operatorcode,
+          provider.auth_pass,
+          provider.providercode,
+          provider.game_type,
+          user.userId,
+          provider.key
+  
+        )
+        const field = {
+          operatorcode: provider.operatorcode,
+          providercode: provider.providercode,
+          username: user.userId,
+          password: provider.auth_pass,
+          type: Newgame.p_type,
+          gameid: game_id,
+          lang: "en-US",
+          html5: 1,
+          signature: signatureLunchGame
+        };
+        console.log("field:", field);
+  
+  
+  
+        game_url = await fetchApi("launchGames.aspx", field);
+        console.log("game_url:", game_url);
+      } else {
+        game_url = await fetchApi("launchDGames.ashx", field);
+        console.log(game_url)
+      }
+  
+      return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+    } catch (error) {
+      console.error("Launch Game Error:", error);
+      console.log("Launch Game Error:", error);
+      res.status(500).json({ errCode: 500, errMsg: "Server error." });
     }
 
-    return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
-  } catch (error) {
-    console.error("Launch Game Error:", error);
-    console.log("Launch Game Error:", error);
-    res.status(500).json({ errCode: 500, errMsg: "Server error." });
   }
-}
-
-// Generate a random string for transaction ID
-function randomStr() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
-}
-
-// Generate API signature
-function generateSignature(...args) {
-  console.log("args:", args);
-  return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-}
-
-
-
-
-
-// Generate a random string for transaction ID
-function randomStr() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
-}
-
-// Generate API signature
-function generateSignature(...args) {
-  console.log("args:", args);
-  return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-}
-
-
-// Generate a random string for transaction ID
-function randomStr() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
-}
-
-// Generate API signature
-function generateSignature(...args) {
-  console.log("args:", args);
-  return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-}
-
+  
+  // Generate a random string for transaction ID
+  function randomStr() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+  
+  // Generate API signature
+  function generateSignature(...args) {
+    console.log("args:", args);
+    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  }
+  
+  
+  
+  
+  
+  // Generate a random string for transaction ID
+  function randomStr() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+  
+  // Generate API signature
+  function generateSignature(...args) {
+    console.log("args:", args);
+    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  }
+  
+  
+  // Generate a random string for transaction ID
+  function randomStr() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+  
+  // Generate API signature
+  function generateSignature(...args) {
+    console.log("args:", args);
+    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  }
+  
+  
+  
+  
+  
+  
+  
+  
 
 
 
