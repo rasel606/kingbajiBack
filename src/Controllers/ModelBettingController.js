@@ -521,9 +521,6 @@ exports.ShowFrontTable = async (req, res) => {
 
     const categories = await Category.aggregate([
       {
-        $match: { categoryId: { $in: categoryId } },
-      },
-      {
         $lookup: {
           from: "games",
           localField: "_id",
@@ -560,6 +557,11 @@ exports.ShowFrontTable = async (req, res) => {
             },
           },
         },
+      },
+      {
+        $sort: { 
+          category_code:1
+        }
       },
     ]);
 
