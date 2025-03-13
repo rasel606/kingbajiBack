@@ -521,6 +521,9 @@ exports.ShowFrontTable = async (req, res) => {
 
     const categories = await Category.aggregate([
       {
+        $match: { categoryId: { $in: categoryId } },
+      },
+      {
         $lookup: {
           from: "games",
           localField: "_id",
@@ -557,11 +560,6 @@ exports.ShowFrontTable = async (req, res) => {
             },
           },
         },
-      },
-      {
-        $sort: { 
-          category_code:1
-        }
       },
     ]);
 
@@ -2073,11 +2071,10 @@ exports.withdraw_reject = async (req, res) => {
       "req.body",
       req.body
     )
- 
     try {
       // Check if user is logged in
   
-      const { userId, game_id, is_demo, newProvider } = req.body;
+      const { userId, game_id, is_demo, p_code } = req.body;
       console.log("userId", userId, game_id)
       if (!userId) {
   
@@ -2092,7 +2089,7 @@ exports.withdraw_reject = async (req, res) => {
   
       const agent = await GameListTable.aggregate([
         {
-          $match: { g_code: game_id, }
+          $match: { g_code: game_id,p_code:p_code }
         },
         {
           $lookup: {
@@ -2151,10 +2148,6 @@ exports.withdraw_reject = async (req, res) => {
   
       const Newgame = await GameListTable.findOne({ g_code: game_id });
     console.log("Newgame",Newgame);
-
-    if (!Newgame || Newgame.length === 0) {
-      return res.json({ errCode: 1, errMsg: "Agent not found." });
-    }
       console.log("provider", provider);
       let game_url;
   
@@ -2221,21 +2214,21 @@ exports.withdraw_reject = async (req, res) => {
   
           return res.json({ errCode: 2, errMsg: "Failed to load balance." });
         }
-        console.log("Newgame",Newgame);
-        // Insert game transaction
-        await gameTable.create({
-          userId: user.userId,
-          agentId: provider.providercode,
-          gameId: Newgame.g_code,
-          currencyId: user.currencyId,
-          betAmount: amount,
-          transactionId: transId
-        });
   
+        
+        await gameTable.create({
+            userId: user.userId,
+            agentId: provider.providercode,
+            gameId: Newgame.g_code,
+            currencyId: user.currencyId,
+            betAmount: amount,
+            transactionId: transId
+          });
+    
         // Update user balance
         await User.updateOne(
           { userId: user.userId },
-          { balance: 0, last_game_id: Newgame.g_code }
+          { balance: 0, last_game_id: game_id }
         );
   
         const signatureLunchGame = generateSignature(

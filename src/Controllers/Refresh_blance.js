@@ -196,8 +196,8 @@ exports.launchGamePlayer =async (req,res)=>{
     try {
           // Check if user is logged in
       
-          const { userId, game_id, is_demo, newProvider } = req.body;
-          console.log("userId", userId, game_id)
+          const { userId, game_id, is_demo, p_code, p_type } = req.body;
+          console.log("userId", userId, game_id, is_demo,p_code, p_type);
           if (!userId) {
       
             return res.status(400).json({ errCode: 1, errMsg: "User not found." });
@@ -207,11 +207,14 @@ exports.launchGamePlayer =async (req,res)=>{
           let amount = user.balance;
           const last_game_id = user.last_game_id;
           console.log("amount", amount)
+
+          const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
+        console.log("Newgame",Newgame);
           // Refresh balance if last game exists
       
           const agent = await GameListTable.aggregate([
             {
-              $match: { g_code: game_id, }
+              $match: { g_code: game_id, p_code: p_code }
             },
             {
               $lookup: {
@@ -268,8 +271,7 @@ exports.launchGamePlayer =async (req,res)=>{
       
           const provider = agent[0]
       
-          const Newgame = await GameListTable.findOne({ g_code: game_id });
-        console.log("Newgame",Newgame);
+          
           console.log("provider", provider);
           let game_url;
       
@@ -295,7 +297,7 @@ exports.launchGamePlayer =async (req,res)=>{
             signature: signature
           };
       
-          // console.log("field - All", field);
+          console.log("field - All", field);
       
       
       
@@ -315,7 +317,7 @@ exports.launchGamePlayer =async (req,res)=>{
               provider.key
       
             )
-            console.log("signature", signature);
+            console.log("signature blance", signature);
             // Make transfer API call
             const transferResponse = await fetchApi("makeTransfer.aspx", {
               operatorcode: provider.operatorcode,

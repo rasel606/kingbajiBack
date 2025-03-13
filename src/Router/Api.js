@@ -282,7 +282,7 @@ router.post('/update-json', OddBettingController.updateJson);
 // router.get("/getDailyWager",blank3.getDailyWager)
 // router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
 // router.get("/kickPlayer",blank3.kickPlayer )
-// router.get("/api/games",blank3.getGames)
+router.get("/api/games",blank3.getGames)
 // router.post('/create-member',blank3.createMember)
 // router.post("/api/place-bet",blank3.placeBet)
 // router.post("/api/deposit",blank3.depositFunds)
