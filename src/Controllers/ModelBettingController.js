@@ -2072,8 +2072,8 @@ exports.withdraw_reject = async (req, res) => {
     try {
       // Check if user is logged in
   
-      const { userId, game_id, is_demo, p_code } = req.body;
-      console.log("userId", userId, game_id)
+      const { userId, game_id, is_demo, p_code, p_type } = req.body;
+      console.log("userId", userId, game_id, is_demo,p_code, p_type);
       if (!userId) {
   
         return res.status(400).json({ errCode: 1, errMsg: "User not found." });
@@ -2083,11 +2083,14 @@ exports.withdraw_reject = async (req, res) => {
       let amount = user.balance;
       const last_game_id = user.last_game_id;
       console.log("amount", amount)
+
+      const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
+    console.log("Newgame",Newgame);
       // Refresh balance if last game exists
   
       const agent = await GameListTable.aggregate([
         {
-          $match: { g_code: game_id,p_code:p_code }
+          $match: { g_code: game_id, p_code: p_code }
         },
         {
           $lookup: {
@@ -2144,8 +2147,7 @@ exports.withdraw_reject = async (req, res) => {
   
       const provider = agent[0]
   
-      const Newgame = await GameListTable.findOne({ g_code: game_id });
-    console.log("Newgame",Newgame);
+      
       console.log("provider", provider);
       let game_url;
   
@@ -2171,7 +2173,7 @@ exports.withdraw_reject = async (req, res) => {
         signature: signature
       };
   
-      // console.log("field - All", field);
+      console.log("field - All", field);
   
   
   
@@ -2191,7 +2193,7 @@ exports.withdraw_reject = async (req, res) => {
           provider.key
   
         )
-        console.log("signature", signature);
+        console.log("signature blance", signature);
         // Make transfer API call
         const transferResponse = await fetchApi("makeTransfer.aspx", {
           operatorcode: provider.operatorcode,
@@ -2214,7 +2216,7 @@ exports.withdraw_reject = async (req, res) => {
         }
   
         
-        await gameTable.create({
+        await GameTable.create({
             userId: user.userId,
             agentId: provider.providercode,
             gameId: Newgame.g_code,
@@ -2226,7 +2228,8 @@ exports.withdraw_reject = async (req, res) => {
         // Update user balance
         await User.updateOne(
           { userId: user.userId },
-          { balance: 0, last_game_id: game_id }
+          { balance: 0, last_game_id: game_id,agentId:provider.providercode }
+          // {upsert: true}
         );
   
         const signatureLunchGame = generateSignature(
