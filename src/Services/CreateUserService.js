@@ -37,12 +37,17 @@ exports.register = async (req, res) => {
 
 
      // ✅ Step 3: Call External API Asynchronously
+     const operatorcodeIND = "rcdi";
      const operatorcode = "rbdb";
      const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
+     const secretIND = "ce624ff66a45d7557128c228fa51b396";
      const newUserCreate = userId.toLowerCase();
      const signature = crypto.createHash("md5").update(operatorcode + newUserCreate + secret).digest("hex").toUpperCase();
  
      const apiUrl = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcode}&username=${newUserCreate}&signature=${signature}`;
+     const signatureIND = crypto.createHash("md5").update(operatorcodeIND + newUserCreate + secretIND).digest("hex").toUpperCase();
+ 
+     const apiUrlIND = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcodeIND}&username=${newUserCreate}&signature=${signatureIND}`;
 
     // ✅ Step 2: Generate JWT Token (Send Response Immediately)
     const token = jwt.sign({ id: newUser.userId }, JWT_SECRET, { expiresIn: "2h" });
@@ -66,11 +71,12 @@ exports.register = async (req, res) => {
 
     try {
       const apiResponse = await axios.get(apiUrl);
+      const apiResponseIND = await axios.get(apiUrlIND);
 
-      console.log("API Response Data:", apiResponse);
+      console.log("API Response Data:", apiResponse,apiResponseIND);
 
       // ✅ Step 4: If API response is successful, update user in DB
-      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS") {
+      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS" && apiResponseIND.data && apiResponseIND.data.errMsg === "SUCCESS") {
         await User.updateOne({ userId }, { $set: { apiVerified: true } });
         console.log(`✅ User ${userId} verified with external API`);
       } else {

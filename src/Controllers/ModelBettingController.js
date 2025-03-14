@@ -198,13 +198,13 @@ async function addGameWithCategory(gameData, category_name) {
   }
 
   const newGame = await GameListTable.findOneAndUpdate(
-    { g_code: gameData.g_code }, // Assuming `g_code` is a unique identifier
+    { g_code: gameData.g_code, p_code: gameData.p_code,
+      p_type: gameData.p_type }, // Unique identifier
     { ...gameData, category_name },
-    { upsert: true, new: true }
+    { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
-  console.log("Added Game:", newGame);
-
+  console.log("Added/Updated Game:", newGame);
   return { newGame, category };
 }
 
@@ -230,19 +230,16 @@ const fetchGamesFromApi = async (result, category_name) => {
         signature,
       },
     });
-
-    const gameData = JSON.parse(response.data?.gamelist || "[]");
+    console.log(`Fetched ${response.data} games from API`);
+    const gameData = response.data?.gamelist ? JSON.parse(response.data.gamelist) : [];
 
     console.log(`Fetched ${gameData.length} games from API`);
+    console.log(`Fetched ${gameData} games from API`);
 
-    const gameResults = await Promise.all(
-      gameData.map((game) => addGameWithCategory(game, category_name))
-    );
-
-    return gameResults;
+    return await Promise.all(gameData.map((game) => addGameWithCategory(game, category_name)));
   } catch (error) {
     console.error("Error fetching games:", error.message);
-    return [];
+    throw new Error("Failed to fetch games from API");
   }
 };
 
@@ -287,7 +284,7 @@ exports.CasinoItemAdd = async (req, res) => {
     let result = await BetProviderTable.findOneAndUpdate(
       { company },
       updateData,
-      { upsert: true, new: true }
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     console.log("Provider updated:", result);
@@ -521,7 +518,8 @@ exports.ShowFrontTable = async (req, res) => {
 
     const categories = await Category.aggregate([
       {
-        $match: { categoryId: { $in: categoryId } },
+        $match: { categoryId: { $in: categoryId } ,p_type: {$in:p_type}},
+        
       },
       {
         $lookup: {

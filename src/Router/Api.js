@@ -277,12 +277,19 @@ router.post('/casino/update/:id', BettingController.casino_update);
 router.post('/update-json', OddBettingController.updateJson);
 /////////////////////////////////////////////////////////test api//////////////////////////////////////////////////
 // router.get("/get-deeplink",blank2.getDeepLink)
-// router.get("/checkTransaction",blank2.checkTransaction)
+// // router.get("/checkTransaction",blank2.checkTransaction)
 // router.get("/fetchBettingHistory",blank3.fetchBettingHistory)
+// router.get("/launch-app",blank3.launchApp)
+// // router.get("/launch",blank3.generateGameLaunchUrl)
 // router.get("/getDailyWager",blank3.getDailyWager)
 // router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
 // router.get("/kickPlayer",blank3.kickPlayer )
-router.get("/api/games",blank3.getGames)
+// router.get("/api/games",blank3.getGames)
+// router.get('/api/game/log',blank3.logGameSessionone) //app.post('/api/game/log',
+// router.get('/api/odds/:key/:id',blank3.getEventOddsById) //  app.post('/api/betting/update',
+// router.post('/api/betting/update',blank3.updateBettingEvents) 
+// router.get('/corn',blank3.BettingUpdate)
+// router.post("/api/gamesADD",blank3.CasinoItemAddNew)
 // router.post('/create-member',blank3.createMember)
 // router.post("/api/place-bet",blank3.placeBet)
 // router.post("/api/deposit",blank3.depositFunds)

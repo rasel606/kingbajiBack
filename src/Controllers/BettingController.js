@@ -293,7 +293,7 @@ exports.getBetHistory = async (req, res) => {
     try {
       const { id } = req.params;
   
-      const bet = await Bet.findOne({ bet_id: id });
+      const bet = await BetHistoryTable.findOne({ bet_id: id });
       if (!bet) return res.status(404).json({ message: 'Bet history not found' });
   
       res.json(bet);

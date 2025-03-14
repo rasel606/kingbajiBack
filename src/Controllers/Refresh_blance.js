@@ -42,16 +42,16 @@ function randomStr() {
 exports.refreshBalance = async (req, res) => {
     
     try {
-        const { userId } = req.body;
-        console.log(userId);
+        const { userId,agentID } = req.body;
+        console.log(userId,agentID);
         if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
         console.log(userId);
         const user = await User.findOne({ userId: userId });
         if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
         console.log("user.userId:",user.userId);
         let balance = user.balance;
-        const game = await GameTable.findOne({ userId: user.userId, gameId: user.last_game_id });
-        console.log("game refresh", game,user.last_game_id);
+        const game = await GameTable.findOne({ userId: user.userId, gameId: user.last_game_id,agentId:user.agentId });
+        console.log("game refresh", game,user.last_game_id,game.agentId);
 
         if (!game) return res.json({ errCode: 0, errMsg: 'Success', balance });
 
@@ -181,7 +181,7 @@ console.log("Updated Balance -----------------2 :", balance);
   
       const response = await axios(config);
   
-  
+  console.log("response.data",response.data);
       return response.data
       // 
     } catch (error) {
@@ -352,7 +352,8 @@ exports.launchGamePlayer =async (req,res)=>{
             // Update user balance
             await User.updateOne(
               { userId: user.userId },
-              { balance: 0, last_game_id: game_id }
+              { balance: 0, last_game_id: game_id,agentId:provider.providercode }
+              // {upsert: true}
             );
       
             const signatureLunchGame = generateSignature(
@@ -399,4 +400,8 @@ exports.launchGamePlayer =async (req,res)=>{
     console.log("args:", args);
     return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
   }
+  
+
+
+
   
