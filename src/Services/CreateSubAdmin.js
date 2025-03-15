@@ -9,99 +9,89 @@ const SubAdmin = require("../Models/SubAdminModel");
 const saltRounds = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
-exports.registerSubAdmin  = async (req, res) => {
+exports.registerSubAdmin = async (req, res) => {
   try {
     const { email, phone, password, countryCode, referredbyCode } = req.body;
+
     if (!email || !phone || !password || !countryCode) {
       return res.status(400).json({ success: false, message: "Please enter all fields" });
     }
-console.log("referredbyCode",email, phone, password, countryCode, referredbyCode )
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const referredCode = Math.random().toString(36).substring(2, 12);
-    const referrUserCode = Math.random().toString(36).substring(2, 12);
-    if (referredbyCode) {
-      const referredbyUser = await SubAdmin.findOne({ referredCode: referredCode });
-      const referrUser = await SubAdmin.findOneAndDelete({ referredCode: referredCode });
-      if(!referrUser){
-        return res.status(400).json({ success: false, message: "Invalid referred code" });
-      }
-    }
 
-    const SubAdminId = Math.random().toString(36).substring(2, 12);
-
-
-
-
-    const existingUser = await SubAdmin.findOne({ email:email });
+    // Check if user already exists
+    const existingUser = await SubAdmin.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
 
+    // Generate required IDs
+    const SubAdminId = Math.random().toString(36).substring(2, 11);
+   const hashedPassword = await bcrypt.hash(password, saltRounds)
+    const referredCode = Math.random().toString(36).substring(2, 10);
 
+    const baseUrl = "https://kingbaji365.live/?ref=";
+    // const agentbaseUrl = "http://co.king5623agent.live.kingbaji365.live/?ref=";
+    // const affiliatebaseUrl = "http://co.king5623affiliate.live.kingbaji365.live/?ref=";
+const user_referredLink = baseUrl + referredCode;
+// const agent_referred_Link = agentbaseUrl + referredCode;
+// const affiliate_referredsLink = affiliatebaseUrl + referredCode;
+if (!referredCode) {
+  return res.status(500).json({ success: false, message: "Failed to generate referral code" });
+}
 
-    const newUser = await SubAdmin.create({
+    console.log("SubAdminId",SubAdminId);
+    console.log("hashedPassword",hashedPassword);
+    console.log("referredCode",referredCode);
+    // Create new SubAdmin
+    const newUser = await SubAdmin({
       email,
       phone,
       countryCode,
       referredbyCode,
-      referredCode:referrUserCode || referredCode,
+      referralCode: referredCode,
       password: hashedPassword,
       balance: 0,
       SubAdminId: SubAdminId,
       isActive: true,
-      user_referredLink: `https://kingbaji365.live/?ref=${referredCode || referrUserCode}`,
-      agent_referredLink: `https://kingbaji365.live/?ref=${referredCode || referrUserCode}`,
-      affiliate_referredLink: `https://kingbaji365.live/?ref=${referredCode || referrUserCode}`,
+      user_referredLink,
+      // agent_referred_Link,
+      // affiliate_referredsLink,
     });
 
+    newUser.save();
+    
+    // Fetch user details using aggregation
+    const response = await SubAdmin.aggregate([
+      { $match: { email: newUser.email } },
+      {
+        $project: {
+          email: 1,
+          phone: 1,
+          countryCode: 1,
+          balance: 1,
+          referredbyCode: 1,
+          user_referredLink: 1,
+          // agent_referredLink: 1,
+          // affiliate_referredLink: 1,
+          referralCode: 1,
+          user_role: 1,
+        },
+      },
+    ]);
 
-    if (!newUser) {
-      return res.status(500).json({ success: false, message: "Failed to create user" });
+    if (!response.length) {
+      return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
     }
 
-   
-
-    const response = await SubAdmin.aggregate([
-        { $match: { email: newUser.email } },
-        {
-          $project: {
-            email: 1,
-            name: 1,
-            phone: 1,
-            countryCode: 1,
-            balance: 1,
-            referralByCode: 1,
-            // referredLink: 1,
-            user_referredLink: 1,
-            agent_referredLink: 1,
-            affiliate_referredLink: 1,
-            referralCode: 1,
-            user_role:1,
-          },
-        },
-      ]);
-
-
-
-
-
-    // ✅ Step 2: Generate JWT Token (Send Response Immediately)
+    // Generate JWT token
     const userDetails = response[0];
-    console.log("userDetails",userDetails)
-    console.log(" response[0]", response[0])
-
     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
-console.log("token",token)
 
-
-res.status(201).json({
-  success: true,
-
-  token,
-  userDetails
-});
-
+    res.status(201).json({
+      success: true,
+      token,
+      userDetails,
+    });
   } catch (error) {
     console.error("❌ Error in register function:", error);
     res.status(500).json({ success: false, error: error.message });
@@ -121,7 +111,7 @@ exports.loginSubAdmin = async (req, res) => {
 
     if (!email) return res.status(400).json({ message: "Email is required" });
 
-    const user = await SubAdmin.findOne({ email:email });
+    const user = await SubAdmin.findOne({ email: email });
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
@@ -129,43 +119,43 @@ exports.loginSubAdmin = async (req, res) => {
     if (!isPasswordValid) return res.status(401).json({ message: "Invalid password" });
 
 
-    
+
     const response = await SubAdmin.aggregate([
-        { $match: { email: user.email } },
-        {
-          $project: {
-            email: 1,
-            name: 1,
-            phone: 1,
-            countryCode: 1,
-            balance: 1,
-            referralCode:1,
-            referralByCode: 1,
-            referredLink: 1,
-            user_referredLink: 1,
-            agent_referredLink: 1,
-            affiliate_referredLink: 1,
-            referralCode: 1,
-            user_role:1,
-            _id:0
-          },
+      { $match: { email: user.email } },
+      {
+        $project: {
+          email: 1,
+          name: 1,
+          phone: 1,
+          countryCode: 1,
+          balance: 1,
+          referralCode: 1,
+          referralByCode: 1,
+          referredLink: 1,
+          user_referredLink: 1,
+          agent_referredLink: 1,
+          affiliate_referredLink: 1,
+          referralCode: 1,
+          user_role: 1,
+          _id: 0
         },
-      ]);
-      
-      if (!response.length) return res.status(500).json({ message: "Error fetching user data" });
+      },
+    ]);
 
-      const userDetails = response[0];
+    if (!response.length) return res.status(500).json({ message: "Error fetching user data" });
 
-      const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
+    const userDetails = response[0];
 
-    
-      res.status(201).json({
-        success: true,
-  
-        token,
-        userDetails
-      });
-  
+    const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
+
+
+    res.status(201).json({
+      success: true,
+
+      token,
+      userDetails
+    });
+
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -179,7 +169,7 @@ exports.verifySubAdmin = async (req, res) => {
   try {
     const authHeader = req.header("Authorization");
     const token = authHeader?.split(" ")[1];
-    
+
     if (!token) return res.status(401).json({ message: "Token missing!" });
 
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -197,25 +187,25 @@ exports.verifySubAdmin = async (req, res) => {
       {
         $project: {
           email: 1,
-            name: 1,
-            phone: 1,
-            countryCode: 1,
-            balance: 1,
-            referralCode:1,
-            referralByCode: 1,
-            referredLink: 1,
-            user_referredLink: 1,
-            agent_referredLink: 1,
-            // affiliate_referredLink: 1,
-            referralCode: 1,
-            user_role:1,
+          name: 1,
+          phone: 1,
+          countryCode: 1,
+          balance: 1,
+          referralCode: 1,
+          referralByCode: 1,
+          referredLink: 1,
+          user_referredLink: 1,
+          agent_referredLink: 1,
+          // affiliate_referredLink: 1,
+          referralCode: 1,
+          user_role: 1,
           isActive: 1,
         },
       },
     ]);
 
     const userDetails = response[0];
-  
+
     if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
 
 
@@ -227,7 +217,7 @@ exports.verifySubAdmin = async (req, res) => {
     });
 
   } catch (error) {
-    
+
     res.status(400).json({ message: "Invalid token!" });
   }
 };
@@ -239,7 +229,7 @@ exports.verifySubAdmin = async (req, res) => {
 
 
 
-exports.SubAdminUserDetails =async (req, res) => {
+exports.SubAdminUserDetails = async (req, res) => {
   const { email } = req.body;
   console.log(email)
   // const authHeader = req.header("Authorization");
@@ -254,9 +244,9 @@ exports.SubAdminUserDetails =async (req, res) => {
     const user = await SubAdmin.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    
+
     const details = await SubAdmin.aggregate([
-      { $match: { email:user.email } },
+      { $match: { email: user.email } },
       {
         $project: {
           name: 1,
@@ -268,15 +258,15 @@ exports.SubAdminUserDetails =async (req, res) => {
           user_referredLink: 1,
           affiliate_referredLink: 1,
           referralCode: 1,
-          timestamp:1,
+          timestamp: 1,
         },
       },
     ]);
-    console.log( "decoded",details[0] );
-    res.status(200).json({ message: "User ",user:details[0]});
+    console.log("decoded", details[0]);
+    res.status(200).json({ message: "User ", user: details[0] });
 
   } catch (error) {
-    console.log( "error",error );
+    console.log("error", error);
     res.status(400).json({ message: "Invalid token!" });
   }
 };

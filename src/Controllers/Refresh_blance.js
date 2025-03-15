@@ -210,7 +210,7 @@ console.log("Updated Balance -----------------2 :", balance);
     const username = user.userId;
     let amount = null;
   
-    if (balance === 0) {
+    if (balance === 0 && amount === null && amount !== 0) {
       amount = await fetchBalance(agent, username);
       if (amount === null) {
         return balance
