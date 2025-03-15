@@ -50,9 +50,9 @@ console.log("referredbyCode",email, phone, password, countryCode, referredbyCode
       balance: 0,
       SubAdminId: SubAdminId,
       isActive: true,
-      user_referredLink: `http://localhost:3000/?ref=${referredCode || referrUserCode}`,
-      agent_referredLink: `http://localhost:3000/?ref=${referredCode || referrUserCode}`,
-      affiliate_referredLink: `http://localhost:3000/?ref=${referredCode || referrUserCode}`,
+      user_referredLink: `https://kingbaji365.live/?ref=${referredCode || referrUserCode}`,
+      agent_referredLink: `https://kingbaji365.live/?ref=${referredCode || referrUserCode}`,
+      affiliate_referredLink: `https://kingbaji365.live/?ref=${referredCode || referrUserCode}`,
     });
 
 
@@ -206,7 +206,7 @@ exports.verifySubAdmin = async (req, res) => {
             referredLink: 1,
             user_referredLink: 1,
             agent_referredLink: 1,
-            affiliate_referredLink: 1,
+            // affiliate_referredLink: 1,
             referralCode: 1,
             user_role:1,
           isActive: 1,

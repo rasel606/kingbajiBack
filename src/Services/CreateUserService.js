@@ -24,15 +24,7 @@ exports.register = async (req, res) => {
     const referredCode = Math.random().toString(36).substring(2, 8);
 
     // ✅ Step 1: Create User Immediately
-    const newUser = await User.create({
-      userId,
-      phone,
-      countryCode,
-      password: hashedPassword, // Store hashed password
-      referredbyCode: referredbyCode || null,
-      referredCode,
-      apiVerified: false, // Add a field to check API success later
-    });
+   
 
 
 
@@ -50,22 +42,9 @@ exports.register = async (req, res) => {
      const apiUrlIND = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcodeIND}&username=${newUserCreate}&signature=${signatureIND}`;
 
     // ✅ Step 2: Generate JWT Token (Send Response Immediately)
-    const token = jwt.sign({ id: newUser.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-    res.status(201).json({
-      success: true,
-      message: "User created successfully. API verification pending...",
-      token,
-      user: {
-        userId: newUser.userId,
-        phone: newUser.phone,
-        countryCode: newUser.countryCode,
-        balance: newUser.balance || 0,
-        referredbyCode: newUser.referredbyCode,
-        referredCode: newUser.referredCode,
-        apiVerified: false,
-      },
-    });
+
+   
 
    
 
@@ -76,12 +55,42 @@ exports.register = async (req, res) => {
       console.log("API Response Data:", apiResponse,apiResponseIND);
 
       // ✅ Step 4: If API response is successful, update user in DB
-      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS" && apiResponseIND.data && apiResponseIND.data.errMsg === "SUCCESS") {
+      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS" && apiResponseIND.data ) {
         await User.updateOne({ userId }, { $set: { apiVerified: true } });
-        console.log(`✅ User ${userId} verified with external API`);
-      } else {
-        console.warn(`⚠️ External API verification failed for user ${userId}`);
-      }
+
+
+        const newUser = await User.create({
+          userId,
+          phone,
+          countryCode,
+          password: hashedPassword, // Store hashed password
+          referredbyCode: referredbyCode || null,
+          referredCode,
+          apiVerified: false, // Add a field to check API success later
+        });
+
+
+
+
+
+        const token = jwt.sign({ id: newUser.userId }, JWT_SECRET, { expiresIn: "2h" });
+
+
+        res.status(201).json({
+          success: true,
+          message: "User created successfully. API verification pending...",
+          token,
+          user: {
+            userId: newUser.userId,
+            phone: newUser.phone,
+            countryCode: newUser.countryCode,
+            balance: newUser.balance || 0,
+            referredbyCode: newUser.referredbyCode,
+            referredCode: newUser.referredCode,
+            apiVerified: false,
+          },
+        });
+      } 
     } catch (apiError) {
       console.error(`❌ External API error for user ${userId}:`, apiError.message);
     }
