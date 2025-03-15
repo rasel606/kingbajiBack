@@ -629,7 +629,7 @@ exports.ShowFrontTable = async (req, res) => {
 exports.getCategoriesWithGamesAndProviders = async (req, res) => {
   try {
     // Fetch all categories
-    const categories = await Category.find();
+    const categories = await Category.find({ id_active: true }).sort({ category_code: 1 });
     console.log("Categories:", categories);
 
     // Fetch games for each category along with their providers
@@ -2850,7 +2850,7 @@ exports.getCategoriesWithProvidersGameList = async (req, res) => {
     // if (!provider || !category) {
     //   return res.status(404).json({ message: 'Provider and Category not found' });
     // }
-    const game = await GameListTable.find({ p_code: provider,p_type:p_type }).sort({ serial_number: -1 });;
+    const game = await GameListTable.find({ p_code: provider,p_type:p_type,is_active: true }).sort({ serial_number: -1 });;
     // console.log(game)
 
     res.json(game);
