@@ -281,7 +281,7 @@ router.post('/update-json', OddBettingController.updateJson);
 // router.get("/fetchBettingHistory",blank3.fetchBettingHistory)
 // router.get("/launch-app",blank3.launchApp)
 // // router.get("/launch",blank3.generateGameLaunchUrl)
-// router.get("/getDailyWager",blank3.getDailyWager)
+
 // router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
 // router.get("/kickPlayer",blank3.kickPlayer )
 // router.get("/api/games",blank3.getGames)

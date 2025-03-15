@@ -224,3 +224,90 @@ exports.CasinoItemAddNEWs = async (req, res) => {
   }
 };
 
+exports.getCategoriesWithGamesAndProvidersnew = async (req, res) => {
+//  const getMatchingGames = async () => {
+  // exports.getCategoriesWithGamesAndProviders = async (req, res) => {
+    try {
+      // Fetch all categories
+      const categories = await Category.find();
+      console.log("Categories:", categories);
+  
+      // Fetch games for each category along with their providers
+      const categoriesWithGamesAndProviders = await Promise.all(
+        categories.map(async (category) => {
+          // Fetch games that match category's `p_type`
+          const games = await GameListTable.aggregate([
+            {
+              $lookup: {
+                from: "categories",
+                localField: "p_type",
+                foreignField: "p_type",
+                as: "matchedCategories",
+              },
+            },
+            {
+              $match: {
+                "matchedCategories.category_name": category.category_name, // Match category name
+              },
+            },
+            {
+              $lookup: {
+                from: "betprovidertables",
+                localField: "p_code",
+                foreignField: "providercode",
+                as: "providers",
+              },
+            },
+            {
+              $project: {
+                g_code: 1,
+                g_type: 1,
+                p_code: 1,
+                p_type: 1,
+                gameName: 1,
+                imgFileName: 1,
+                serial_number: 1,
+                "providers.providercode": 1,
+              },
+            },
+          ]);
+  
+          // Extract unique provider codes
+          const providerSet = new Set();
+          games.forEach((game) => {
+            game.providers.forEach((provider) =>
+              providerSet.add(provider.providercode)
+            );
+          });
+  
+          console.log("Provider Set:", providerSet);
+  
+          // Fetch unique providers from BetProviderTable
+          const uniqueProviders = await BetProviderTable.find(
+            { providercode: { $in: Array.from(providerSet) } },
+            { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
+          );
+  
+          console.log("Unique Providers:", uniqueProviders);
+  
+          // Format the result
+          return {
+            category: {
+              name: category.category_name,
+              image: category.image,
+              id_active: category.id_active, // Check if category is active
+              uniqueProviders: uniqueProviders,
+            },
+            games: games, // Include games under the category
+          };
+        })
+      );
+  
+      res.json(categoriesWithGamesAndProviders);
+    } catch (error) {
+      console.error("Error fetching categories with games and providers:", error);
+      res.status(500).json({ error: error.message });
+    }
+  
+};
+

@@ -4,6 +4,7 @@ const GameTable = require('../Models/GamesTable');
 const BetProviderTable = require('../Models/BetProviderTable');
 const { default: axios } = require('axios');
 const GameListTable = require('../Models/GameListTable');
+const Category = require('../Models/Category');
 
 const fetchBalance = async (agent, username) => {
     try {
@@ -39,11 +40,19 @@ function randomStr() {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
+
+
+
+
+
+
+
+
 exports.refreshBalance = async (req, res) => {
     
     try {
-        const { userId,agentID } = req.body;
-        console.log(userId,agentID);
+        const { userId,agentId } = req.body;
+        console.log(userId,agentId);
         if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
         console.log(userId);
         const user = await User.findOne({ userId: userId });
@@ -157,6 +166,129 @@ console.log("Updated Balance -----------------2 :", balance);
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  function randomStr() {
+    return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+  }
+  
+  const refreshBalancebefore = async (userId, game_id) => {
+  
+  
+  
+    if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
+  
+    const user = await User.findOne({ userId: userId });
+    if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
+  
+    let balance = user.balance;
+    const game = await GameTable.findOne({ userId: user.userId, gameId: user.last_game_id});
+     console.log("game", game);
+  
+    if (!game) return balance
+  
+    const agent = await BetProviderTable.findOne({ providercode: game.agentId });
+    //  console.log("agent", agent);
+    if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+  
+    const username = user.userId;
+    let amount = null;
+  
+    if (balance === 0) {
+      amount = await fetchBalance(agent, username);
+      if (amount === null) {
+        return balance
+      }
+    } else {
+      return balance
+    }
+  
+    console.log("Fetched Balance:", amount);
+    setTimeout(async () => {
+      if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+        balance += amount;
+  
+        await User.findOneAndUpdate(
+          { userId: userId },
+          { $set: { balance: parseFloat(balance) } },
+          { new: true }
+        );
+  
+        console.log("Updated Balance:", balance);
+        console.log("Updated Balance:", balance);
+  
+  
+      } else {
+        return balance
+      }
+  
+  
+      const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
+      const signature = crypto.createHash('md5').update(
+        `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
+      ).digest('hex').toUpperCase();
+  
+      console.log("Transaction ID:", transId);
+      console.log("Signature:", signature);
+  
+      const params = {
+        operatorcode: agent.operatorcode,
+        providercode: agent.providercode,
+        username: user.userId,
+        password: agent.auth_pass,
+        referenceid: transId,
+        type: 1,
+        amount: amount,
+        signature
+      };
+  
+      try {
+        const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
+        console.log("Refund Response:", refund.data);
+        console.log("Updated Balance:", balance);
+        if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
+          return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
+        }
+  
+        if (refund.innerCode === null) {
+          return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
+        }
+      } catch (transferError) {
+        console.log("Transfer API Error:", transferError.message);
+        return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
+      }
+    }, 5000);
+    const win = amount - game.betAmount;
+    console.log("Win Amount:", win);
+  
+    if (!isNaN(win) && win !== 0 && win !== NaN) {
+      await GameTable.updateOne(
+        { gameId: game.gameId },
+        { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+        { upsert: true }
+      );
+    }
+    const updatedUser = await User.findOne({ userId: userId });
+    return updatedUser.balance
+  
+  
+  };
  const fetchApi = async (endpoint, data = {}) => {
     try {
       const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
@@ -242,18 +374,18 @@ exports.launchGamePlayer =async (req,res)=>{
       
           console.log("agent", agent)
       
-        //   if (last_game_id) {
+          if (last_game_id) {
       
       
-        //     const resBalance = await refreshBalancebefore(user.userId, agent);
-        //     console.log("resBalance", resBalance)
-        //     // if (!resBalance || resBalance.errCode !== 0) {
-        //     //   return res.json(resBalance);
-        //     // }
-        //     // amount += resBalance.balance || 0;
+            const resBalance = await refreshBalancebefore(user.userId, agent);
+            console.log("resBalance", resBalance)
+            // if (!resBalance || resBalance.errCode !== 0) {
+            //   return res.json(resBalance);
+            // }
+            // amount += resBalance.balance || 0;
       
-        //     // console.log("amount-3", amount)
-        //   }
+            // console.log("amount-3", amount)
+          }
       
           // Insufficient balance check
           if (amount < 1) {
@@ -301,7 +433,7 @@ exports.launchGamePlayer =async (req,res)=>{
       
       
       
-          if (!is_demo) {
+          if (user.balance > 0) {
             // Generate transaction ID
             const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
       

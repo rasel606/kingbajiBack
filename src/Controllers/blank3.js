@@ -963,3 +963,63 @@ const secret_key="9332fd9144a3a1a8bd3ab7afac3100b0"
     return [];
   }
 };
+
+
+exports.getCategoriesWithGamesAndProvidersnew = async (req, res) => {
+  try {
+    // Fetch all categories
+    const categories = await Category.find({});
+console.log(categories)
+
+    const categoriesWithGamesAndProviders = await Promise.all(
+      categories.map(async (category) => {
+        // Fetch games for each category
+        const games = await GameListTable.aggregate([
+          { $match: { category_name: categories.category_name,p_type:categori.p_type } },
+          {
+            $lookup: {
+              from: "betprovidertables",
+              localField: "p_code",
+              foreignField: "providercode",
+              as: "providers"
+            }
+          },
+          {
+            $project: {
+              name: 1,
+              "providers.providercode": 1
+            }
+          }
+        ]);
+        console.log(games)
+        const providerSet = new Set();
+        games.forEach(game => {
+          game.providers.forEach(provider => providerSet.add(provider.providercode));
+        });
+        console.log(providerSet)
+        const uniqueProviders = await BetProviderTable.find(
+          { providercode: { $in: Array.from(providerSet) } },
+          { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0, p_type: 1 }
+        );
+        console.log(uniqueProviders)
+        // Format the result
+        return {
+          category: {
+            name: category.category_name,
+            image: category.image,
+            id_active: category.id_active, // Check if category is active or inactive
+            uniqueProviders: uniqueProviders
+          },
+
+          // uniqueProviders: uniqueProviders
+
+        };
+      })
+    );
+    
+console.log(games)
+    res.json(categoriesWithGamesAndProviders);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}

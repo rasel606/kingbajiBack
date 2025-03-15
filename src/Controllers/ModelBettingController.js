@@ -630,56 +630,83 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
   try {
     // Fetch all categories
     const categories = await Category.find();
-console.log(categories)
+    console.log("Categories:", categories);
+
     // Fetch games for each category along with their providers
     const categoriesWithGamesAndProviders = await Promise.all(
       categories.map(async (category) => {
-        // Fetch games for each category
+        // Fetch games that match category's `p_type`
         const games = await GameListTable.aggregate([
-          { $match: { category_name: category.category_name } },
+          {
+            $lookup: {
+              from: "categories",
+              localField: "p_type",
+              foreignField: "p_type",
+              as: "matchedCategories",
+            },
+          },
+          {
+            $match: {
+              "matchedCategories.category_name": category.category_name, // Match category name
+            },
+          },
           {
             $lookup: {
               from: "betprovidertables",
               localField: "p_code",
               foreignField: "providercode",
-              as: "providers"
-            }
+              as: "providers",
+            },
           },
           {
             $project: {
-              name: 1,
-              "providers.providercode": 1
-            }
-          }
+              g_code: 1,
+              g_type: 1,
+              p_code: 1,
+              p_type: 1,
+              gameName: 1,
+              imgFileName: 1,
+              serial_number: 1,
+              "providers.providercode": 1,
+            },
+          },
         ]);
 
+        // Extract unique provider codes
         const providerSet = new Set();
-        games.forEach(game => {
-          game.providers.forEach(provider => providerSet.add(provider.providercode));
+        games.forEach((game) => {
+          game.providers.forEach((provider) =>
+            providerSet.add(provider.providercode)
+          );
         });
-        console.log(providerSet)
+
+        console.log("Provider Set:", providerSet);
+
+        // Fetch unique providers from BetProviderTable
         const uniqueProviders = await BetProviderTable.find(
           { providercode: { $in: Array.from(providerSet) } },
           { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
         );
-        console.log(uniqueProviders)
+
+        console.log("Unique Providers:", uniqueProviders);
+
         // Format the result
         return {
           category: {
             name: category.category_name,
+            p_type: category.p_type,
             image: category.image,
-            id_active: category.id_active, // Check if category is active or inactive
-            uniqueProviders: uniqueProviders
+            id_active: category.id_active, // Check if category is active
+            uniqueProviders: uniqueProviders,
           },
-
-          // uniqueProviders: uniqueProviders
-
+          games: games, // Include games under the category
         };
       })
     );
 
     res.json(categoriesWithGamesAndProviders);
   } catch (error) {
+    console.error("Error fetching categories with games and providers:", error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -2118,18 +2145,18 @@ exports.withdraw_reject = async (req, res) => {
   
       console.log("agent", agent)
   
-    //   if (last_game_id) {
+      if (last_game_id) {
   
   
-    //     const resBalance = await refreshBalancebefore(user.userId, agent);
-    //     console.log("resBalance", resBalance)
-    //     // if (!resBalance || resBalance.errCode !== 0) {
-    //     //   return res.json(resBalance);
-    //     // }
-    //     // amount += resBalance.balance || 0;
+        const resBalance = await refreshBalancebefore(user.userId, agent);
+        console.log("resBalance", resBalance)
+        // if (!resBalance || resBalance.errCode !== 0) {
+        //   return res.json(resBalance);
+        // }
+        // amount += resBalance.balance || 0;
   
-    //     // console.log("amount-3", amount)
-    //   }
+        // console.log("amount-3", amount)
+      }
   
       // Insufficient balance check
       if (amount < 1) {
@@ -2177,7 +2204,7 @@ exports.withdraw_reject = async (req, res) => {
   
   
   
-      if (!is_demo) {
+      if (user.balance > 0) {
         // Generate transaction ID
         const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
   
@@ -2216,7 +2243,7 @@ exports.withdraw_reject = async (req, res) => {
         }
   
         
-        await GameTable.create({
+        await gameTable.create({
             userId: user.userId,
             agentId: provider.providercode,
             gameId: Newgame.g_code,
@@ -2643,7 +2670,87 @@ exports.UserHistory = async (req, res) => {
 
 
 
+  // try {
+  //   // Fetch all categories
+  //   const categories = await Category.find();
+  //   console.log("Categories:", categories);
 
+  //   // Fetch games for each category along with their providers
+  //   const categoriesWithGamesAndProviders = await Promise.all(
+  //     categories.map(async (category) => {
+  //       // Fetch games that match category's `p_type`
+  //       const games = await GameListTable.aggregate([
+  //         {
+  //           $lookup: {
+  //             from: "categories",
+  //             localField: "p_type",
+  //             foreignField: "p_type",
+  //             as: "matchedCategories",
+  //           },
+  //         },
+  //         {
+  //           $match: {
+  //             "matchedCategories.category_name": category.category_name, // Match category name
+  //           },
+  //         },
+  //         {
+  //           $lookup: {
+  //             from: "betprovidertables",
+  //             localField: "p_code",
+  //             foreignField: "providercode",
+  //             as: "providers",
+  //           },
+  //         },
+  //         {
+  //           $project: {
+  //             g_code: 1,
+  //             g_type: 1,
+  //             p_code: 1,
+  //             p_type: 1,
+  //             gameName: 1,
+  //             imgFileName: 1,
+  //             serial_number: 1,
+  //             "providers.providercode": 1,
+  //           },
+  //         },
+  //       ]);
+
+  //       // Extract unique provider codes
+  //       const providerSet = new Set();
+  //       games.forEach((game) => {
+  //         game.providers.forEach((provider) =>
+  //           providerSet.add(provider.providercode)
+  //         );
+  //       });
+
+  //       console.log("Provider Set:", providerSet);
+
+  //       // Fetch unique providers from BetProviderTable
+  //       const uniqueProviders = await BetProviderTable.find(
+  //         { providercode: { $in: Array.from(providerSet) } },
+  //         { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0 }
+  //       );
+
+  //       console.log("Unique Providers:", uniqueProviders);
+
+  //       // Format the result
+  //       return {
+  //         category: {
+  //           name: category.category_name,
+  //           image: category.image,
+  //           id_active: category.id_active, // Check if category is active
+  //           uniqueProviders: uniqueProviders,
+  //         },
+  //         games: games, // Include games under the category
+  //       };
+  //     })
+  //   );
+
+  //   res.json(categoriesWithGamesAndProviders);
+  // } catch (error) {
+  //   console.error("Error fetching categories with games and providers:", error);
+  //   res.status(500).json({ error: error.message });
+  // }
 
 
 
@@ -2666,22 +2773,40 @@ exports.getCategoriesWithProviders = async (req, res) => {
       categories.map(async (category) => {
         // Fetch games for each category
         const games = await GameListTable.aggregate([
-          { $match: { category_name: category.category_name } },
-          {
-            $lookup: {
-              from: "betprovidertables",
-              localField: "p_code",
-              foreignField: "providercode",
-              as: "providers"
-            }
-          },
-          {
-            $project: {
-              name: 1,
-              "providers.providercode": 1
-            }
-          }
-        ]);
+                  {
+                    $lookup: {
+                      from: "categories",
+                      localField: "p_type",
+                      foreignField: "p_type",
+                      as: "matchedCategories",
+                    },
+                  },
+                  {
+                    $match: {
+                      "matchedCategories.category_name": category.category_name, // Match category name
+                    },
+                  },
+                  {
+                    $lookup: {
+                      from: "betprovidertables",
+                      localField: "p_code",
+                      foreignField: "providercode",
+                      as: "providers",
+                    },
+                  },
+                  {
+                    $project: {
+                      g_code: 1,
+                      g_type: 1,
+                      p_code: 1,
+                      p_type: 1,
+                      gameName: 1,
+                      imgFileName: 1,
+                      serial_number: 1,
+                      "providers.providercode": 1,
+                    },
+                  },
+                ]);
 
         const providerSet = new Set();
         games.forEach(game => {
@@ -2696,7 +2821,8 @@ exports.getCategoriesWithProviders = async (req, res) => {
         // Format the result
         return {
 
-          uniqueProviders
+          uniqueProviders,
+          categories
 
 
         };
@@ -2710,23 +2836,28 @@ exports.getCategoriesWithProviders = async (req, res) => {
 }
 
 
+
 exports.getCategoriesWithProvidersGameList = async (req, res) => {
   try {
     // const { provider, category } = req.body
-    const { provider, category } = req.query;
+    const { provider, category,p_type } = req.query;
+    console.log("png",category,provider)
     // Fetch all categories
-    if (!provider || !category) {
-      return res.status(404).json({ message: 'Provider and Category not found' });
-    }
-    const game = await GameListTable.find({ p_code: provider, category_name: category }).sort({ serial_number: -1 });;
-    console.log(game)
+    const categories = await Category.findOne({category_name: category });
+    console.log("pg cat",categories.p_type)
+    // const providerCode = await BetProviderTable.find({ providercode: provider });
+    
+    // if (!provider || !category) {
+    //   return res.status(404).json({ message: 'Provider and Category not found' });
+    // }
+    const game = await GameListTable.find({ p_code: provider,p_type:p_type }).sort({ serial_number: -1 });;
+    // console.log(game)
 
     res.json(game);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
-
 
 
 
