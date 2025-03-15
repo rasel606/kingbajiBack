@@ -199,7 +199,7 @@ async function addGameWithCategory(gameData, category_name) {
 
   const newGame = await GameListTable.findOneAndUpdate(
     { g_code: gameData.g_code, p_code: gameData.p_code,
-      p_type: gameData.p_type }, // Unique identifier
+      g_type: gameData.g_type }, // Unique identifier
     { ...gameData, category_name },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
@@ -518,7 +518,7 @@ exports.ShowFrontTable = async (req, res) => {
 
     const categories = await Category.aggregate([
       {
-        $match: { categoryId: { $in: categoryId } ,p_type: {$in:p_type}},
+        $match: { categoryId: { $in: categoryId } ,g_type: {$in:g_type}},
         
       },
       {
@@ -640,8 +640,8 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
           {
             $lookup: {
               from: "categories",
-              localField: "p_type",
-              foreignField: "p_type",
+              localField: "g_type",
+              foreignField: "g_type",
               as: "matchedCategories",
             },
           },
@@ -653,7 +653,7 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
           {
             $lookup: {
               from: "betprovidertables",
-              localField: "p_code",
+              localField: "g_code",
               foreignField: "providercode",
               as: "providers",
             },
@@ -694,7 +694,7 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
         return {
           category: {
             name: category.category_name,
-            p_type: category.p_type,
+            g_type: category.g_type,
             image: category.image,
             id_active: category.id_active, // Check if category is active
             uniqueProviders: uniqueProviders,
@@ -2099,8 +2099,8 @@ exports.withdraw_reject = async (req, res) => {
     try {
       // Check if user is logged in
   
-      const { userId, game_id, is_demo, p_code, p_type } = req.body;
-      console.log("userId", userId, game_id, is_demo,p_code, p_type);
+      const { userId, game_id, is_demo, p_code, g_type } = req.body;
+      console.log("userId", userId, game_id, is_demo,p_code, g_type);
       if (!userId) {
   
         return res.status(400).json({ errCode: 1, errMsg: "User not found." });
@@ -2111,7 +2111,7 @@ exports.withdraw_reject = async (req, res) => {
       const last_game_id = user.last_game_id;
       console.log("amount", amount)
 
-      const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
+      const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, g_type: g_type });
     console.log("Newgame",Newgame);
       // Refresh balance if last game exists
   
@@ -2135,7 +2135,7 @@ exports.withdraw_reject = async (req, res) => {
             operatorcode: "$provider.operatorcode",
             key: "$provider.key",
             auth_pass: "$provider.auth_pass",
-            game_type: "$p_type"
+            game_type: "$g_type"
           }
         }
       ]);
@@ -2776,8 +2776,8 @@ exports.getCategoriesWithProviders = async (req, res) => {
                   {
                     $lookup: {
                       from: "categories",
-                      localField: "p_type",
-                      foreignField: "p_type",
+                      localField: "g_type",
+                      foreignField: "g_type",
                       as: "matchedCategories",
                     },
                   },
@@ -2840,17 +2840,17 @@ exports.getCategoriesWithProviders = async (req, res) => {
 exports.getCategoriesWithProvidersGameList = async (req, res) => {
   try {
     // const { provider, category } = req.body
-    const { provider, category,p_type } = req.query;
+    const { provider, category,g_type } = req.query;
     console.log("png",category,provider)
     // Fetch all categories
     const categories = await Category.findOne({category_name: category });
-    console.log("pg cat",categories.p_type)
+    console.log("pg cat",categories.g_type)
     // const providerCode = await BetProviderTable.find({ providercode: provider });
     
     // if (!provider || !category) {
     //   return res.status(404).json({ message: 'Provider and Category not found' });
     // }
-    const game = await GameListTable.find({ p_code: provider,p_type:p_type,is_active: true }).sort({ serial_number: -1 });;
+    const game = await GameListTable.find({ p_code: provider,g_type:g_type,is_active: true }).sort({ serial_number: -1 });;
     // console.log(game)
 
     res.json(game);

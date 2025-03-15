@@ -264,7 +264,7 @@ console.log("Updated Balance -----------------2 :", balance);
         console.log("Updated Balance:", balance);
         if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
           console.log("refund.errMsg:", refund.errMsg);
-          res.status(500).json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
+          return balance;
       }
   
       const updatedUser = await User.findOne({ userId: userId });
@@ -280,23 +280,25 @@ console.log("Updated Balance -----------------2 :", balance);
 
     
     }, 1000);
-  
-    const win = amount - game.betAmount;
-    console.log("Win Amount:", win);
-  
-    if (!isNaN(win) && win !== 0 && win !== NaN) {
-      await GameTable.updateOne(
-        { gameId: game.gameId },
-        { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-        { upsert: true }
-      );
-    }
   }
 
-    // const updatedUser = await User.findOne({ userId: userId });
+    const win = parseFloat(amount) - parseFloat(game.betAmount);
+    console.log("Win Amount:", win);
+
+    if (!isNaN(win) && win !== 0 && win !== NaN) {
+        await GameTable.findOneAndUpdate(
+            { gameId: game.gameId, },
+            { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+            { new: true }
+        );}else { 
+            await GameTable.deleteOne({ gameId: game.gameId })
+        }
+  }
+
+     // const updatedUser = await User.findOne({ userId: userId });
     // return updatedUser.balance
   
-}
+
 
  const fetchApi = async (endpoint, data = {}) => {
     try {
@@ -380,13 +382,15 @@ exports.launchGamePlayer =async (req,res)=>{
       
       
       
-      
+      let resBalances = 0
           console.log("agent", agent)
+          console.log("amount-2", resBalances)
       
           if (last_game_id) {
       
       
             const resBalance = await refreshBalancebefore(user.userId, agent);
+            resBalances = resBalance
             console.log("resBalance", resBalance)
             // if (!resBalance || resBalance.errCode !== 0) {
             //   return res.json(resBalance);
@@ -442,7 +446,7 @@ exports.launchGamePlayer =async (req,res)=>{
       
       
       
-          if (user.balance > 0) {
+          if (user.balance > 0 && resBalances === amount) {
             // Generate transaction ID
             const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
       
@@ -493,7 +497,7 @@ exports.launchGamePlayer =async (req,res)=>{
             // Update user balance
             await User.updateOne(
               { userId: user.userId },
-              { balance: 0, last_game_id: game_id,agentId:provider.providercode }
+              { balance: 0, last_game_id: Newgame.g_code,agentId:provider.providercode }
               // {upsert: true}
             );
       
