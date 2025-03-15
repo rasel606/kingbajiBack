@@ -70,7 +70,7 @@ exports.refreshBalance = async (req, res) => {
 
         const username = user.userId;
         let amount = null;
-
+        setTimeout(async () => {
         if (balance === 0 ) {
             amount = await fetchBalance(agent, username);
             if (amount === null ) {
@@ -82,7 +82,7 @@ exports.refreshBalance = async (req, res) => {
         }
         const transId = await `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
         console.log("Fetched Balance:", amount);
-        setTimeout(async () => {
+        
 
             if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
                 console.log((amount > 0 && balance === 0  && amount !== null));
@@ -139,7 +139,7 @@ exports.refreshBalance = async (req, res) => {
                 console.log("Transfer API Error:", transferError.message);
                 return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
             }
-        }, 500);
+        }, 5000);
         const win = parseFloat(amount) - parseFloat(game.betAmount);
         console.log("Win Amount:", win);
 
@@ -220,8 +220,10 @@ console.log("Updated Balance -----------------2 :", balance);
     }
   
     console.log("Fetched Balance:", amount);
+
+    if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
     setTimeout(async () => {
-      if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+      
         balance += amount;
   
         await User.findOneAndUpdate(
@@ -234,9 +236,7 @@ console.log("Updated Balance -----------------2 :", balance);
         console.log("Updated Balance:", balance);
   
   
-      } else {
-        return balance
-      }
+     
   
   
       const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
@@ -263,17 +263,24 @@ console.log("Updated Balance -----------------2 :", balance);
         console.log("Refund Response:", refund.data);
         console.log("Updated Balance:", balance);
         if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
-          return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
-        }
+          console.log("refund.errMsg:", refund.errMsg);
+          res.status(500).json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
+      }
   
-        if (refund.innerCode === null) {
-          return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
-        }
+      const updatedUser = await User.findOne({ userId: userId });
+      return balance;
+    
       } catch (transferError) {
         console.log("Transfer API Error:", transferError.message);
         return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
       }
-    }, 5000);
+
+
+
+
+    
+    }, 1000);
+  
     const win = amount - game.betAmount;
     console.log("Win Amount:", win);
   
@@ -284,11 +291,13 @@ console.log("Updated Balance -----------------2 :", balance);
         { upsert: true }
       );
     }
-    const updatedUser = await User.findOne({ userId: userId });
-    return updatedUser.balance
+  }
+
+    // const updatedUser = await User.findOne({ userId: userId });
+    // return updatedUser.balance
   
-  
-  };
+}
+
  const fetchApi = async (endpoint, data = {}) => {
     try {
       const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
