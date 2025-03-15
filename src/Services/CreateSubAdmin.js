@@ -26,7 +26,7 @@ exports.registerSubAdmin = async (req, res) => {
 
     // Generate required IDs
     const SubAdminId = Math.random().toString(36).substring(2, 11);
-   const hashedPassword = await bcrypt.hash(password)
+   const hashedPassword = await bcrypt.hash(password, saltRounds);
     const referredCode = Math.random().toString(36).substring(2, 10);
 
     const baseUrl = "https://kingbaji365.live/?ref=";
@@ -116,6 +116,7 @@ exports.loginSubAdmin = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("isPasswordValid", isPasswordValid);
     if (!isPasswordValid) return res.status(401).json({ message: "Invalid password" });
 
 
