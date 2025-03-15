@@ -26,7 +26,7 @@ exports.registerSubAdmin = async (req, res) => {
 
     // Generate required IDs
     const SubAdminId = Math.random().toString(36).substring(2, 11);
-   const hashedPassword = await bcrypt.hash(password, saltRounds)
+   const hashedPassword = await bcrypt.hash(password)
     const referredCode = Math.random().toString(36).substring(2, 10);
 
     const baseUrl = "https://kingbaji365.live/?ref=";
