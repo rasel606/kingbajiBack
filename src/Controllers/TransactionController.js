@@ -85,7 +85,7 @@ exports.addTransaction = async (req, res) => {
 
 // app.post("/api/v1/submitTransaction", 
 exports.submitTransaction = async (req, res) => {
-
+    console.log("req.body  --------- 1 ", req.body);
     try {
         const {
             userId,
