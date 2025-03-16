@@ -22,7 +22,7 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:['https://kingbaji365.live', 'http://localhost:3001','http://localhost:3000'], // Allow only your frontend origin
+    origin:"*", // Allow only your frontend origin
     credentials: true, // Allow cookies and authentication headers,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
