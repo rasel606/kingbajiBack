@@ -84,6 +84,20 @@ exports.addTransaction = async (req, res) => {
 
 
 // app.post("/api/v1/submitTransaction", 
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////// user trnx /////////////////
 exports.submitTransaction = async (req, res) => {
     console.log("req.body  --------- 1 ", req.body);
     try {
@@ -93,7 +107,7 @@ exports.submitTransaction = async (req, res) => {
             amount,
             referredbyCode,
             payment_type,
-            gateway_number,
+            gateway_Number,
             transactionID,
         } = req.body;
 
@@ -116,14 +130,14 @@ exports.submitTransaction = async (req, res) => {
         console.log("req.body ------------------ 3", transaction);
         if (transaction) {
             res.status(404).json({ message: 'User transaction already used' });
-        }else{
+        } else {
 
             const bonus = (parseFloat(amount) * 0.03);
             const type = 0;
-    
-    
+
+
             console.log("req.body ------------------ 2", req.body);
-    
+
             const newTransaction = await Transaction.create({
                 userId: user.userId,
                 transactionID,
@@ -131,7 +145,7 @@ exports.submitTransaction = async (req, res) => {
                 amount: amount + bonus,
                 currency_id: user.currency_id,  // Assuming this is set in User model
                 gateway_name: gateway_name,
-                gateway_Number: gateway_number, // Assuming a fixed gateway name for now
+                gateway_Number: gateway_Number, // Assuming a fixed gateway name for now
                 payment_type: payment_type,
                 mobile: user.phone,
                 type: type,
@@ -139,16 +153,16 @@ exports.submitTransaction = async (req, res) => {
                 referredbyCode: user.referredbyCode, // Assign the referral code to the transaction
                 is_commission: false,
             });
-    
-    
+
+
             console.log("newTransaction", newTransaction);
-    
+
             res.json({ success: true, message: `Transaction submitted successfully ${user?.transactionID}` });
         }
 
 
         // Calculate bonus (3.5% of the deposit)
-       
+
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: error.message });
@@ -156,6 +170,23 @@ exports.submitTransaction = async (req, res) => {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////// user trnx /////////////////
 
 ///////////////////////////////////////////////////////////////
 
@@ -176,7 +207,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             return res.status(400).json({ message: 'Invalid Match' });
         }
         // Find the transaction
-        const transaction = await TransactionModel.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode });
+        const transaction = await TransactionModel.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode, type: 0 });
 
 
         // Ensure transaction is not already processed
@@ -201,7 +232,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
                 subAdmin.balance -= transaction.amount;
 
 
-                const bonusAmount = (transaction.amount * 0.03) 
+                const bonusAmount = (transaction.amount * 0.03)
                 user.balance += transaction.amount + bonusAmount;
                 if (user.bonus) {
                     user.bonus.bonusAmount += bonusAmount;
@@ -221,11 +252,11 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             await transaction.save();
 
 
-            return res.status(200).json({ message: "Deposit processed successfully", transaction });
+            let Admin_Balance = SubAdmin.balance
+            res.status(200).json({ message: "Admin balance not enough", Admin_Balance });
         }
 
-        let Admin_Balance = SubAdmin.balance
-        res.status(200).json({ message: "Admin balance not enough", Admin_Balance });
+
 
 
 
@@ -237,7 +268,179 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 
 
 
+
+exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
+    try {
+        const { userId, referralCode, email, mobile, amount, type } = req.body;
+        console.log(userId, referralCode, email, amount, type);
+        
+        // Find the user
+        const user = await User.findOne({ userId, referredbyCode: referralCode });
+        if (!user || user.referredbyCode !== referralCode) {
+            return res.status(404).json({ message: 'User not found or referral code mismatch' });
+        }
+        
+        if (user.phone !== mobile) {
+            return res.status(404).json({ message: 'User phone number mismatch' });
+        }
+
+        // Find the sub-admin
+        const subAdmin = await SubAdmin.findOne({ email: email });
+        if (!subAdmin) {
+            return res.status(404).json({ message: 'Sub-admin not found' });
+        }
+        
+        
+        if (subAdmin.referralCode !== referralCode) {
+            return res.status(400).json({ message: 'Referral code mismatch with sub-admin' });
+        }
+        console.log(subAdmin);
+        console.log("user",user);
+        // Validate amount and type
+        if (!amount || amount <= 0 || amount !== amount || !mobile || !user.phone || user.phone !== mobile) {
+            return res.status(400).json({ message: 'Invalid amount or mobile' });
+        }
+        console.log("user ----- 1",user);
+        console.log("subAdmin ----- 1",subAdmin);
+        const transactionID = `waiting-${Date.now()}`;
+        const isValidTransaction = subAdmin.balance >= amount && 
+                                   user.referredbyCode === subAdmin.referralCode && 
+                                   user.userId === userId && 
+                                   type === 1 && 
+                                   user.balance >= 0 && 
+                                   subAdmin.balance >= 0 &&
+                                   amount > 0 && 
+                                   user.balance >= amount;
+
+        if (isValidTransaction) {
+            const newTransaction = new Transaction({
+                userId: user.userId,
+                transactionID,
+                base_amount: amount,
+                gateway_name: "transfer",
+                payment_type: "transfer",
+                mobile: mobile,
+                type: 1,  // Withdrawal type
+                status: 1,  // 0 = pending
+                referredbyCode: referralCode || null,
+                is_commission: false,
+            });
+
+            // Deduct balance and save transaction
+            user.balance -= parseInt(amount);
+            subAdmin.balance += parseInt(amount);
+
+            await newTransaction.save();
+            await user.save();
+            await subAdmin.save();
+
+            console.log("New Transaction:", newTransaction);
+            console.log("Updated User:", user);
+            res.status(200).json({ message: "Transaction successfully completed" });
+        } else {
+            // Calculate bonus and create transaction
+            const bonus = (parseFloat(amount) * 0.03);
+            const newTransaction = new Transaction({
+                userId: user.userId,
+                transactionID,
+                base_amount: amount,
+                amount: amount + bonus,
+                currency_id: user.currency_id,  // Assuming this is set in User model
+                gateway_name: "transfer",
+                payment_type: "transfer",
+                mobile: user.phone,
+                type: 0,  // Deposit type
+                status: 1,  // 0 = pending
+                referredbyCode: user.referredbyCode,
+                is_commission: false,
+            });
+
+            user.balance += parseInt(amount);
+            subAdmin.balance -= parseInt(amount);
+
+            await newTransaction.save();
+            await user.save();
+            await subAdmin.save();
+
+            console.log("New Transaction:", newTransaction);
+            console.log("Updated User:", user);
+            res.status(200).json({ message: "Transaction completed with bonus", Admin_Balance: subAdmin.balance });
+        }
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
+
+
+
+exports.WithdrawTransaction = async (req, res) => {
+    const { userId, amount, gateway_name, mobile, referredbyCode } = req.body;
+    console.log(req.body);
+
+    try {
+        const user = await User.findOne({ userId });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        console.log("User Balance Before Withdrawal:", user.balance);
+
+        // Check if the user has enough balance
+        if (user.balance < amount) {
+            return res.status(400).json({ message: 'Insufficient balance' });
+        }
+
+        // Validate referral code (if provided)
+        if (referredbyCode) {
+            const referredUser = await User.findOne({ referredbyCode });
+
+            if (!referredUser) {
+                return res.status(404).json({ message: 'Invalid referral code' });
+            }
+        }
+
+        const transactionID = `waiting-${Date.now()}`;
+        const newTransaction = new Transaction({
+            userId: user.userId,
+            transactionID,
+            base_amount: amount,
+            gateway_name: gateway_name,
+            mobile: mobile,
+            type: 1,  // Withdrawal type
+            status: 0,  // 0 = pending
+            referredbyCode: referredbyCode || null,
+            is_commission: false,
+        });
+
+        // Deduct balance
+        user.balance -= parseInt(amount);
+
+        // Save transaction and user balance update
+        await newTransaction.save();
+        await user.save();
+
+        console.log("New Transaction:", newTransaction);
+        console.log("Updated User:", user);
+
+        res.json({
+            message: "Withdrawal request submitted successfully",
+            transactionID,
+        });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
 // exports.approveDepositbySubAdmin = async (req, res) => {
+
 //     try {
 //         const { userId, referralCode, status } = req.body;
 //         const transactionID = req.params.transactionID;
@@ -300,6 +503,127 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 //         res.status(500).json({ message: error.message });
 //     }
 // };
+////////////////////////////////////////////////Payment method//////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////
+exports.approveWidthdrawBySubAdmin = async (req, res) => {
+
+
+    try {
+        const { userId, referralCode, status } = req.body;
+        const transactionID = req.params.transactionID;
+        console.log(userId, referralCode, status, transactionID);
+        // Find the user
+        const user = await User.findOne({ userId, referredbyCode: referralCode });
+        if (user.referredbyCode !== referralCode) return res.status(404).json({ message: 'User not found' });
+
+        // Find the sub-admin
+        const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
+
+        if (!subAdmin.referralCode === referralCode) {
+            return res.status(400).json({ message: 'Invalid Match' });
+        }
+        // Find the transaction
+        const transaction = await TransactionModel.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode, type: 1 });
+
+
+        // Ensure transaction is not already processed
+        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.referredbyCode === user.referredbyCode) {
+
+            return res.status(400).json({ message: "Transaction already processed" });
+        }
+
+
+        console.log("all-----1", transaction.referredbyCode !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredbyCode !== user.referredbyCode);
+        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredbyCode !== user.referredbyCode) {
+            res.status(400).json({ message: "Transaction not found" });
+        }
+
+        console.log("all", transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode);
+        if (user.balance > 0 && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode) {
+            if (user.balance < transaction.base_amount) {
+                return res.status(400).json({ message: "Insufficient user balance" });
+            }
+
+            console.log(transaction);
+
+            if (parseInt(status) === 1) {
+                // Approve the withdrawal
+                user.balance -= transaction.base_amount;
+                subAdmin.balance += transaction.base_amount;
+
+                transaction.status = 1; // Approved
+                transaction.updatetime = new Date();
+
+                await user.save();
+                await subAdmin.save();
+                await transaction.save();
+
+                return res.status(200).json({ message: "Withdrawal approved successfully", userBalance: user.balance, subAdminBalance: subAdmin.balance });
+            } else {
+                // Reject the withdrawal
+                transaction.status = 2; // Rejected
+                transaction.updatetime = new Date();
+                await transaction.save();
+
+                return res.status(200).json({ message: "Withdrawal rejected successfully" });
+            }
+        }
+
+
+        // res.status(200).json({ message: "Admin balance not enough", Admin_Balance });
+
+
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: error.message });
+    }
+}
 
 
 exports.AddPaymentMethodNumber = async (req, res) => {
@@ -348,8 +672,95 @@ exports.AddPaymentMethodNumber = async (req, res) => {
 };
 
 
+exports.subAdminGetWayList = async (req, res) => {
+    console.log(req.body);
+    try {
+        const { user_role, email, referralCode } = req.body;
+        console.log(user_role, email, referralCode);
+
+        // Find the user based on the referredCode
+        const Getway = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode });
+        const Getwaycount = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode }).countDocuments();;
+
+        res.status(200).json({ Getwaycount, Getway });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
 
 
+
+
+
+
+
+
+
+
+
+
+exports.GetPaymentMethodsUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        console.log("User ID:", userId);
+
+        // Validate User
+        const user = await User.findOne({ userId: userId });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        console.log("User found:", user);
+
+        // Get current time
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+
+        // Use aggregation to filter active payment methods within time range
+        const paymentMethods = await PaymentGateWayTable.aggregate([
+            {
+                $match: {
+                    is_active: true,
+                    referredbyCode: user.referredbyCode
+                }
+            },
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $lte: ["$startTotalMinutes", "$currentTotalMinutes"] },
+                            { $gte: ["$endTotalMinutes", "$currentTotalMinutes"] }
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    gateway_name: 1,
+                    gateway_Number: 1,
+                    payment_type: 1,
+                    image_url: 1,
+                    start_time: 1,
+                    end_time: 1,
+                    is_active: 1
+                }
+            }
+        ]);
+
+        console.log("Available Payment Methods:", paymentMethods);
+
+        return res.status(200).json({ paymentMethods });
+    } catch (error) {
+        console.error("Error retrieving payment methods:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+
+////////////////////////////////////////////////Payment method//////////////////////////////////////
 
 //////////////////////////////////withdrawWIth///////////////////////////////
 
@@ -413,147 +824,15 @@ exports.AddPaymentMethodNumber = async (req, res) => {
 // }
 
 
-exports.WidthdrawTransaction = async (req, res) => {
-    const { userId, amount, gateway_name, gateway_Number, payment_type, referredbyCode } = req.body;
-    console.log(req.body);
-    try {
-        const user = await User.findOne({ userId });
-
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-
-        // Check for referredCode and find the referral
-        let referralCode = null;  // Renamed to avoid overwriting `referredbyCode`
-        if (referredbyCode) {
-            const referredUser = await User.findOne({ referredbyCode });
-            if (referredUser) {
-                referralCode = referredUser.referredbyCode; // Assign the actual referred user's code
-            }
-        }
-
-
-
-        const type = 1
-
-        // const transactionID = `waiting-${Date.now()}`;
-        const newTransaction = new Transaction({
-            userId: user.userId,
-            //  transactionID,
-            base_amount: amount,
-            //currency_id: user.currency_id,  // Assuming this is set in User model
-            // gateway_name: gateway_name,
-            //gateway_Number: gateway_Number, // Assuming a fixed gateway name for now
-            payment_type: payment_type,
-            type: type,
-            status: 0,  // 0 = pending
-            referredbyCode: referralCode, // Assign the referral code to the transaction
-            is_commission: false,
-        });
-
-
-        await newTransaction.save();
-        console.log(newTransaction);
-        // if (newTransaction.status !== 0) {
-        user.balance -= amount
-        await user.save();
-        // }
-
-        const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
-
-        // let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user._id || '')}&name=${encodeURIComponent(user.name || '')}&amount=${encodeURIComponent(amount || 0)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type || '')}&gateway_Number=${encodeURIComponent(gateway_Number || '')}&token=${encodeURIComponent(transactionID)}&token=${encodeURIComponent(token)}`;
-        res.json({
-            message: "withdraw processed successfully",
-        });
-
-    } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: 'Server error' });
-    }
-};
 
 
 ///////////////////////////////////////////
 
-exports.approveWidthdrawBySubAdmin = async (req, res) => {
-
-
-    try {
-        const { userId, referralCode, status } = req.body;
-        const transactionID = req.params.transactionID;
-        console.log(userId, referralCode, status, transactionID);
-        // Find the user
-        const user = await User.findOne({ userId, referredbyCode: referralCode });
-        if (user.referredbyCode !== referralCode) return res.status(404).json({ message: 'User not found' });
-
-        // Find the sub-admin
-        const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
-
-        if (!subAdmin.referralCode === referralCode) {
-            return res.status(400).json({ message: 'Invalid Match' });
-        }
-        // Find the transaction
-        const type = 1
-        const transaction = await TransactionModel.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode, type: type });
-
-
-        // Ensure transaction is not already processed
-        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.referredbyCode === user.referredbyCode) {
-
-            return res.status(400).json({ message: "Transaction already processed" });
-        }
-
-
-        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredbyCode !== user.referredbyCode) {
-            res.status(400).json({ message: "Transaction not found" });
-        }
-
-
-        console.log(subAdmin.balance >= transaction.amount && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode);
-        if (subAdmin.balance >= transaction.amount && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode) {
-
-
-            console.log(transaction);
-
-            if (parseInt(req.body.status) === parseInt(1)) {
-
-                subAdmin.balance += transaction.amount;
 
 
 
-                user.balance -= transaction.amount;
 
-
-                transaction.updatetime = new Date();
-                transaction.status = 1; // Mark as approved
-                await user.save();
-                await subAdmin.save();
-                await transaction.save();
-                return res.status(200).json({ message: "Deposit processed successfully", user });
-            }
-            transaction.updatetime = new Date();
-            transaction.status = parseInt(2)// Mark as approved
-            await transaction.save();
-
-
-            return res.status(200).json({ message: "Deposit processed successfully", transaction });
-        }
-
-        let Admin_Balance = SubAdmin.balance
-        res.status(200).json({ message: "Admin balance not enough", Admin_Balance });
-
-
-
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-
-
-///////////////////////////////// search Transaction //////////////////////////////////////////
+///////////////////////////////// search Transaction widthraw request //////////////////////////////////////////
 
 
 exports.searchWidthdrawTransactions = async (req, res) => {
@@ -572,7 +851,7 @@ exports.searchWidthdrawTransactions = async (req, res) => {
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
+        const transactionExists = await TransactionModel.findOne({ referredbyCode: SubAdminuser.referralCode, type: 1, status: parseInt(0) });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -602,17 +881,143 @@ exports.searchWidthdrawTransactions = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(1) }).sort({ createdAt: -1 });
+        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(1), status: parseInt(0) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type:1, status: 0} }, // Filter deposits & accepted transactions
-             { $match: { ...query  } }, // Filter deposits & accepted transactions
+            { $match: { referredbyCode: referredbyCode, type: parseInt(1), status: parseInt(0) } }, // Filter deposits & accepted transactions
+            { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
-console.log("totalDeposit",totalDeposit[0].total)
-const total= totalDeposit[0]
+        // console.log("totalDeposit",totalDeposit[0].total)
+        const total = totalDeposit[0]
 
-        res.json({ transactions , total });
+        res.json({ transactions, total });
+    } catch (error) {
+        console.error("Error searching transactions:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+exports.searchWidthdrawTransactionsReportAprove = async (req, res) => {
+    try {
+        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        // console.log(req.body);
+
+
+
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
+        console.log(SubAdminuser);
+        // Find the transaction
+        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // if (!user) return res.status(404).json({ message: 'User not found' });
+        // console.log(user);
+
+        const transactionExists = await TransactionModel.findOne({ referredbyCode: SubAdminuser.referralCode, type: 1, });
+        if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
+        console.log(transactionExists);
+
+
+        let query = {};
+
+        if (userId) {
+            query.userId = userId;
+        }
+        if (amount) {
+            query.base_amount = { $gte: parseFloat(amount) }; // Filters transactions where amount is greater than or equal
+        }
+        if (gateway_name) {
+            query.gateway_name = gateway_name;
+        }
+        if (status !== undefined && !isNaN(status) && status !== "") {
+            query.status = parseInt(status);
+        }
+
+
+        if (startDate && endDate) {
+            query.datetime = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate),
+            };
+        } else if (startDate) {
+            query.datetime = { $gte: new Date(startDate) };
+        }
+        console.log(query);
+        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 0, status: 1 }).sort({ datetime: -1 });
+
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: referredbyCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
+            { $match: { ...query } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+        // console.log("totalDeposit",totalDeposit[0].total)
+        const total = totalDeposit[0]
+
+        res.json({ transactions, total });
+    } catch (error) {
+        console.error("Error searching transactions:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+exports.searchWidthdrawTransactionsReportReject = async (req, res) => {
+    try {
+        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        // console.log(req.body);
+
+
+
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
+        console.log(SubAdminuser);
+        // Find the transaction
+        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // if (!user) return res.status(404).json({ message: 'User not found' });
+        // console.log(user);
+
+        const transactionExists = await TransactionModel.findOne({ referredbyCode: SubAdminuser.referralCode, type: 1, });
+        if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
+        console.log(transactionExists);
+
+
+        let query = {};
+
+        if (userId) {
+            query.userId = userId;
+        }
+        if (amount) {
+            query.base_amount = { $gte: parseFloat(amount) }; // Filters transactions where amount is greater than or equal
+        }
+        if (gateway_name) {
+            query.gateway_name = gateway_name;
+        }
+        if (status !== undefined && !isNaN(status) && status !== "") {
+            query.status = parseInt(status);
+        }
+
+
+        if (startDate && endDate) {
+            query.datetime = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate),
+            };
+        } else if (startDate) {
+            query.datetime = { $gte: new Date(startDate) };
+        }
+        console.log(query);
+        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 1, status: 2 }).sort({ datetime: -1 });
+
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: SubAdminuser.referralCode, type: 1, status: 2 } }, // Filter deposits & accepted transactions
+            { $match: { ...query } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$base_amount" } } }
+        ]);
+        console.log("totalDeposit", totalDeposit[0].total)
+        const total = totalDeposit[0]
+
+        res.json({ transactions, total });
     } catch (error) {
         console.error("Error searching transactions:", error);
         res.status(500).json({ message: "Server error" });
@@ -626,6 +1031,23 @@ const total= totalDeposit[0]
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////// search Transaction widthraw request //////////////////////////////////////////
+
+/////////////////////////////////////////////////////// search Transaction deposit request////////////////////////////////
 
 
 exports.searchDepositTransactions = async (req, res) => {
@@ -674,17 +1096,17 @@ exports.searchDepositTransactions = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(0) }).sort({ createdAt: -1 });
+        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(0), status: parseInt(0) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: 0} }, // Filter deposits & accepted transactions
-             { $match: { ...query  } }, // Filter deposits & accepted transactions
+            { $match: { referredbyCode: referredbyCode, type: 0, status: 0 } }, // Filter deposits & accepted transactions
+            { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
-console.log("totalDeposit",totalDeposit[0].total)
-const total= totalDeposit[0]
+        // console.log("totalDeposit",totalDeposit[0].total)
+        const total = totalDeposit[0]
 
-        res.json({ transactions , total });
+        res.json({ transactions, total });
     } catch (error) {
         console.error("Error searching transactions:", error);
         res.status(500).json({ message: "Server error" });
@@ -694,29 +1116,126 @@ const total= totalDeposit[0]
 
 
 
-exports.searchTransactionsbyUserId = async (req, res) => {
-    try {
 
-        const { userId, status, startDate, endDate } = req.body;
-        console.log("u", userId, status, startDate, endDate);
+exports.searchDepositTransactionsReportAprove = async (req, res) => {
+    try {
+        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
         // console.log(req.body);
 
 
 
-        // const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
-        // if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
-        // console.log(SubAdminuser);
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
+        console.log(SubAdminuser);
         // Find the transaction
-        const user = await User.findOne({ userId: userId });
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        console.log(user);
+        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // if (!user) return res.status(404).json({ message: 'User not found' });
+        // console.log(user);
 
-        const transactionExists = await TransactionModel.find({ userId: user.userId, referredbyCode: user.referredbyCode }).sort({ createdAt: -1 });
+        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
+        console.log(transactionExists);
+
+
+        let query = {};
+
+        if (userId) {
+            query.userId = userId;
+        }
+        if (amount) {
+            query.base_amount = { $gte: parseFloat(amount) }; // Filters transactions where amount is greater than or equal
+        }
+        if (gateway_name) {
+            query.gateway_name = gateway_name;
+        }
+        if (status !== undefined && !isNaN(status) && status !== "") {
+            query.status = parseInt(status);
+        }
+
+
+        if (startDate && endDate) {
+            query.datetime = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate),
+            };
+        } else if (startDate) {
+            query.datetime = { $gte: new Date(startDate) };
+        }
+        console.log(query);
+        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 0, status: parseInt(1) }).sort({ datetime: -1 });
+
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: referredbyCode, type: 0, status: parseInt(1) } }, // Filter deposits & accepted transactions
+            { $match: { ...query } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$base_amount" } } }
+        ]);
+        // console.log("totalDeposit",totalDeposit[0].total)
+        const total = totalDeposit[0]
+
+        res.json({ transactions, total });
+    } catch (error) {
+        console.error("Error searching transactions:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+exports.searchDepositTransactionsReportreject = async (req, res) => {
+    try {
+        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        // console.log(req.body);
 
 
 
-        res.json({ transactionExists });
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
+        console.log(SubAdminuser);
+        // Find the transaction
+        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // if (!user) return res.status(404).json({ message: 'User not found' });
+        // console.log(user);
+
+        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
+        if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
+        console.log(transactionExists);
+
+
+        let query = {};
+
+        if (userId) {
+            query.userId = userId;
+        }
+        if (amount) {
+            query.base_amount = { $gte: parseFloat(amount) }; // Filters transactions where amount is greater than or equal
+        }
+        if (gateway_name) {
+            query.gateway_name = gateway_name;
+        }
+        if (status !== undefined && !isNaN(status) && status !== "") {
+            query.status = parseInt(status);
+        }
+
+
+        if (startDate && endDate) {
+            query.datetime = {
+                $gte: new Date(startDate),
+                $lte: new Date(endDate),
+            };
+        } else if (startDate) {
+            query.datetime = { $gte: new Date(startDate) };
+        }
+        console.log(query);
+        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 0, status: parseInt(2) }).sort({ datetime: -1 });
+
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: referredbyCode, type: 0, status: parseInt(2) } }, // Filter deposits & accepted transactions
+            { $match: { ...query } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$base_amount" } } }
+        ]);
+        // console.log("totalDeposit",totalDeposit[0].total)
+        const total = totalDeposit[0]
+
+        res.json({ transactions, total });
     } catch (error) {
         console.error("Error searching transactions:", error);
         res.status(500).json({ message: "Server error" });
@@ -724,9 +1243,29 @@ exports.searchTransactionsbyUserId = async (req, res) => {
 };
 
 
+exports.DepositsList = async (req, res) => {
+    // console.log(req.body);
+    try {
+        const { referredbyCode } = req.body;
+        console.log(referredbyCode);
 
+        // Find the user based on the referredCode
+        const users = await User.find({ referredbyCode: referredbyCode });
+        console.log(users);
+        // If user not found, return 404
+        if (!users) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const transactions = await Transaction.find({ referredbyCode: referredbyCode, status: 0 });
 
-///////////////////////////////////////////////////////////////////////////
+        const transactionscount = await Transaction.find({ referredbyCode }).countDocuments();
+        res.status(200).json({ transactionscount, transactions });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
 
 exports.getTransactionDepositTotals = async (req, res) => {
     try {
@@ -743,7 +1282,7 @@ exports.getTransactionDepositTotals = async (req, res) => {
         const last30Days = new Date();
         last30Days.setDate(now.getDate() - 30);
 
-        
+
 
         // Aggregate query
         const results = await Transaction.aggregate([
@@ -789,7 +1328,7 @@ exports.getTransactionDepositTotals = async (req, res) => {
             last7Days: 0,
             last30Days: 0
         };
-       
+
         results.forEach(item => {
             summary[item._id] = item.totalAmount;
         });
@@ -802,11 +1341,139 @@ exports.getTransactionDepositTotals = async (req, res) => {
     }
 };
 
+///////////////////////////////////////////////////////deposit////////////////////////////////
+
+
+
+///////////////////////////////////////////////////////deposit user////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+exports.searchTransactionsbyUserId = async (req, res) => {
+    try {
+
+        const { userId, status, startDate, endDate } = req.body;
+        console.log("u", userId, status, startDate, endDate);
+        // console.log(req.body);
+
+
+
+        // const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        // if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
+        // console.log(SubAdminuser);
+        // Find the transaction
+        const user = await User.findOne({ userId: userId });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        console.log(user);
+
+        const transactionExists = await TransactionModel.find({ userId: user.userId, referredbyCode: user.referredbyCode }).sort({ datetime: -1 });
+        if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
+
+
+
+        res.json({ transactionExists });
+    } catch (error) {
+        console.error("Error searching transactions:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////
 
-exports.chatsSummary = async  (req, res) => {
+exports.getTransactionDepositTotals = async (req, res) => {
+    try {
+        const { referredbyCode } = req.body;
+
+        // Get date ranges
+        const now = new Date();
+        const lastDay = new Date();
+        lastDay.setDate(now.getDate() - 1);
+
+        const last7Days = new Date();
+        last7Days.setDate(now.getDate() - 7);
+
+        const last30Days = new Date();
+        last30Days.setDate(now.getDate() - 30);
+
+
+
+        // Aggregate query
+        const results = await Transaction.aggregate([
+            {
+                $match: {
+                    referredbyCode: referredbyCode,
+                    type: 0, // Only deposits
+                    status: 0, // Accepted transactions only
+                    datetime: { $gte: last30Days }, // Only fetch last 30 days' data
+                },
+            },
+            {
+                $project: {
+                    amount: 1,
+                    period: {
+                        $cond: {
+                            if: { $gte: ["$datetime", lastDay] },
+                            then: "lastDay",
+                            else: {
+                                $cond: {
+                                    if: { $gte: ["$datetime", last7Days] },
+                                    then: "last7Days",
+                                    else: "last30Days"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: "$period",
+                    totalAmount: { $sum: "$amount" },
+                },
+            },
+        ]);
+
+
+
+        // Initialize summary
+        let summary = {
+            lastDay: 0,
+            last7Days: 0,
+            last30Days: 0
+        };
+
+        results.forEach(item => {
+            summary[item._id] = item.totalAmount;
+        });
+
+        res.json({ success: true, data: summary });
+
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.chatsSummary = async (req, res) => {
     try {
         const { referredbyCode, startDate, endDate } = req.body;
 
@@ -832,7 +1499,7 @@ exports.chatsSummary = async  (req, res) => {
         last30Days.setHours(0, 0, 0, 0);
 
         // Filter for accepted transactions with the referredbyCode
-        const filter = { referredbyCode, status: 0,type:0 };
+        const filter = { referredbyCode, status: 0, type: 0 };
 
         const totals = await Promise.all([
             // Last day total
@@ -870,7 +1537,6 @@ exports.chatsSummary = async  (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 }
-///////////////////////////////////////////////////////////////////////////
 
 exports.getTransactionWidthrawTotals = async (req, res) => {
     try {
@@ -945,30 +1611,9 @@ exports.getTransactionWidthrawTotals = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-///////////////////////////////////////////////////////////////////////////
-
-exports.totalDeposit = async (req, res) => {
-    try {
-        const { referredbyCode } = req.body;
-        if (!referredbyCode) {
-            return res.status(400).json({ error: "referredbyCode is required" });
-        }
-
-        const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
-            { $group: { _id: null, total: { $sum: "$amount" } } }
-        ]);
-        
-        res.json({ totalDeposit: totalDeposit.length > 0 ? totalDeposit[0].total : 0 });
-    
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
 
 
-///////////////////////////////////////////////////////////////////////////
+
 
 
 exports.totalWidthraw = async (req, res) => {
@@ -991,6 +1636,48 @@ exports.totalWidthraw = async (req, res) => {
 }
 
 
+
+
+exports.totalDeposit = async (req, res) => {
+    try {
+        const { referredbyCode } = req.body;
+        if (!referredbyCode) {
+            return res.status(400).json({ error: "referredbyCode is required" });
+        }
+
+        const totalDeposit = await Transaction.aggregate([
+            { $match: { referredbyCode: referredbyCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
+            { $group: { _id: null, total: { $sum: "$amount" } } }
+        ]);
+
+        res.json({ totalDeposit: totalDeposit.length > 0 ? totalDeposit[0].total : 0 });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////////////////////////////////////////////
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////
 
 
@@ -1008,7 +1695,7 @@ exports.totalWidthraw = async (req, res) => {
 
 
 
-
+//////////////////////////////////////////////sub admin  user details //////////////////////////////
 
 
 exports.getUserTransactionHistory = async (req, res) => {
@@ -1025,7 +1712,7 @@ exports.getUserTransactionHistory = async (req, res) => {
 
 
 exports.GetAllUser_For_Sub_Admin = async (req, res) => {
-    
+
 
     try {
         console.log(req.body);
@@ -1058,12 +1745,12 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
         // Fetch users using aggregation
         const users = await User.aggregate([
             // First, match the referralByCode
-            { 
+            {
                 $match: { referredbyCode: subAdminExists.referralCode }
             },
 
-            { 
-                $match: query 
+            {
+                $match: query
             },
             {
                 $project: {
@@ -1083,7 +1770,7 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
                 },
             },
         ]);
-console.log(users)
+        console.log(users)
         // if (users.length === 0) {
         //     return res.status(404).json({ message: 'No users found' });
         // }
@@ -1096,116 +1783,13 @@ console.log(users)
 };
 
 
-
-
-
-
-// const express = require('express');
-// const mongoose = require('mongoose');
-// const User = require('./models/User'); // আপনার User মডেল ইমপোর্ট করুন
-
-
-
-// router.post('/deposit', 
-//     exports.depositWIthBonus = async (req, res) => {
-//     try {
-//         const { userId, amount } = req.body;
-
-//         if (!userId || !amount || amount <= 0) {
-//             return res.status(400).json({ message: "Invalid deposit amount" });
-//         }
-
-//         const user = await User.findOne({ userId });
-
-//         if (!user) {
-//             return res.status(404).json({ message: "User not found" });
-//         }
-
-//         // ৩.৫% বোনাস হিসাব
-//         const bonusAmount = (amount * 3.5) / 100;
-//         const totalBalance = user.balance + amount + bonusAmount;
-
-//         user.balance = totalBalance;
-//         user.bonus.bonusAmount += bonusAmount;
-//         user.bonus.wageringRequirement += (bonusAmount * 10); // ১০x ওয়েজারিং রিকোয়ারমেন্ট
-
-//         await user.save();
-
-//         res.json({ message: "Deposit successful", balance: user.balance, bonus: user.bonus });
-//     } catch (error) {
-//         console.error(error);
-//         res.status(500).json({ message: "Internal server error" });
-//     }
-// }
+//////////////////////////////////////////////sub admin  user details //////////////////////////////
 
 
 
 
 
 
-
-
-
-// Admin - Approve or Reject Withdraw Request
-// router.post("/admin/withdraw-action", 
-exports.adminWithdrawAction = async (req, res) => {
-    try {
-        const { transactionID, status } = req.body;
-        const transaction = await Transaction.findOne({ transactionID });
-
-        if (!transaction) return res.status(404).json({ message: "Transaction not found" });
-        if (![1, 2].includes(status)) return res.status(400).json({ message: "Invalid status" });
-
-        transaction.status = status;
-        await transaction.save();
-
-        if (status === Reject) { // If rejected, refund balance
-            const user = await User.findOne(transaction.userId);
-            user.balance += transaction.amount;
-            await user.save();
-        }
-
-        res.status(200).json({ message: "Transaction updated", transaction });
-    } catch (error) {
-        res.status(500).json({ message: "Server error", error });
-    }
-}
-
-
-
-
-
-
-
-
-
-///////////////////
-
-
-
-exports.DepositsList = async (req, res) => {
-    // console.log(req.body);
-    try {
-        const { referredbyCode } = req.body;
-        console.log(referredbyCode);
-
-        // Find the user based on the referredCode
-        const users = await User.find({ referredbyCode: referredbyCode });
-        console.log(users);
-        // If user not found, return 404
-        if (!users) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        const transactions = await Transaction.find({ referredbyCode: referredbyCode, status: 0 });
-
-        const transactionscount = await Transaction.find({ referredbyCode }).countDocuments();
-        res.status(200).json({ transactionscount, transactions });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
 
 
 exports.WidthdrawListByUser = async (req, res) => {
@@ -1236,133 +1820,11 @@ exports.WidthdrawListByUser = async (req, res) => {
 
 // Get list of active payment methods for user with time validation
 
-exports.GetPaymentMethodsUser = async (req, res) => {
-    try {
-        const { userId } = req.body;
-        console.log("User ID:", userId);
-
-        // Validate User
-        const user = await User.findOne({ userId: userId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-        console.log("User found:", user);
-
-        // Get current time
-        const now = new Date();
-        const currentHours = now.getHours();
-        const currentMinutes = now.getMinutes();
-
-        // Use aggregation to filter active payment methods within time range
-        const paymentMethods = await PaymentGateWayTable.aggregate([
-            {
-                $match: {
-                    is_active: true,
-                    referredbyCode: user.referredbyCode
-                }
-            },
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $lte: ["$startTotalMinutes", "$currentTotalMinutes"] },
-                            { $gte: ["$endTotalMinutes", "$currentTotalMinutes"] }
-                        ]
-                    }
-                }
-            },
-            {
-                $project: {
-                    _id: 1,
-                    gateway_name: 1,
-                    gateway_Number: 1,
-                    payment_type: 1,
-                    image_url: 1,
-                    start_time: 1,
-                    end_time: 1,
-                    is_active: 1
-                }
-            }
-        ]);
-
-        console.log("Available Payment Methods:", paymentMethods);
-
-        return res.status(200).json({ paymentMethods });
-    } catch (error) {
-        console.error("Error retrieving payment methods:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
 
 
 
 
 
-
-exports.subAdminGetWayList = async (req, res) => {
-    console.log(req.body);
-    try {
-        const { user_role, email, referralCode } = req.body;
-        console.log(user_role, email, referralCode);
-
-        // Find the user based on the referredCode
-        const Getway = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode });
-        const Getwaycount = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode }).countDocuments();;
-
-        res.status(200).json({ Getwaycount, Getway });
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
-
-
-
-
-
-///////////////////////////////////////
-
-exports.AdminDepositsList = async (req, res) => {
-    try {
-
-
-        // Find the user based on the referredCode
-        const users = await User.findOne({});
-
-        // If user not found, return 404
-        if (!users) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Find transactions for the user
-
-
-        const transactions = await Transaction.find({});
-
-        // If no transactions are found, return an empty array
-        if (transactions.length === 0) {
-            return res.status(404).json({ message: 'No transactions found for this user' });
-        }
-
-        // Return the found transactions
-        res.json(transactions);
-
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
-
-
-exports.WithdrawalsList = async (req, res) => {
-    try {
-        const users = await User.find({ "withdrawRequest": { $exists: true } }, 'userId name balance withdrawRequest');
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ message: "Internal server error" });
-    }
-}
 
 
 
@@ -1371,49 +1833,14 @@ exports.WithdrawalsList = async (req, res) => {
 
 
 
-// router.post('/update-bonus',
-//     exports.updateBonus = async (req, res) => {
-//   try {
-//       const { userId, bonusAmount, wageringRequirement } = req.body;
-//       const user = await User.findOne({ userId });
-
-//       if (!user) return res.status(404).json({ message: "User not found" });
-
-//       user.bonus.bonusAmount = bonusAmount;
-//       user.bonus.wageringRequirement = wageringRequirement;
-//       await user.save();
-
-//       res.json({ message: "Bonus updated", bonus: user.bonus });
-//   } catch (error) {
-//       res.status(500).json({ message: "Internal server error" });
-//   }
-// }
+///////////////////////////////////////
 
 
-// const express = require('express');
-// const User = require('../models/User');
 
-// const router = express.Router();
 
-// নির্দিষ্ট ইউজারের টার্নওভার স্ট্যাটাস দেখার API
-// router.get('/turnover-status/:userId',
-//     exports.getTurnoverStatus = async (req, res) => {
-//     try {
-//         const { userId } = req.params;
-//         const user = await User.findOne({ userId });
 
-//         if (!user) return res.status(404).json({ message: "User not found" });
 
-//         res.json({
-//             userId: user.userId,
-//             balance: user.balance,
-//             bonusAmount: user.bonus.bonusAmount,
-//             wageringRequirement: user.bonus.wageringRequirement,
-//             turnoverCompleted: user.bonus.bonusAmount * user.bonus.wageringRequirement,
-//         });
 
-//     } catch (error) {
-//         res.status(500).json({ message: "Internal server error" });
-//     }
-// }
+
+
 

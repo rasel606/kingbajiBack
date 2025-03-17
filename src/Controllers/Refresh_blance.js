@@ -374,7 +374,7 @@ exports.launchGamePlayer = async (req, res) => {
       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
     }
     const user = await User.findOne({ userId });
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     let amount = await refreshBalancebefore(user.userId);
     const last_game_id = user.last_game_id;
     console.log("amount", amount)
@@ -483,7 +483,7 @@ exports.launchGamePlayer = async (req, res) => {
 
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 800));
       // console.log("signature blance", signature);
       // Make transfer API call
       const transferResponse = await fetchApi("makeTransfer.aspx", {

@@ -135,13 +135,21 @@ router.post("/submitTransaction", TransactionController.submitTransaction);
 router.post('/deposits_list', TransactionController.DepositsList);
 // router.post('/deposits_list', TransactionController.DepositsList);
 
-router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
+// router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
 router.post('/deposit_with_bonus', TransactionController.addTransaction)
-// router.post('/widthdraw_with_transaction', TransactionController.WidthdrawTransaction)
+router.post('/widthdraw_with_transaction', TransactionController.WithdrawTransaction)
 router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
-router.post('/deposit_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
 router.post('/searchDepositTransactions', TransactionController.searchDepositTransactions)
-router.post('/widthdraw_with_transaction', TransactionController.searchWidthdrawTransactions)
+router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
+router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
+
+
+router.post('/widthraw_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
+router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
+router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.approveTransfarWithDepositbySubAdmin)
+router.post('/searchWidthdrawTransactionsReportAprove', TransactionController.searchWidthdrawTransactionsReportAprove)
+router.post('/searchWidthdrawTransactionsReportReject', TransactionController.searchWidthdrawTransactionsReportReject)
+
 router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
 router.post('/get_all_user_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
 router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
