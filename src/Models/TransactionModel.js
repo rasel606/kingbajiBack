@@ -15,7 +15,7 @@ const transactionSchema = new mongoose.Schema({
     type: { type: Number, enum: [0,1], required: true }, // 0 = Deposit, 1 = Withdrawal,2 = Transfer,
     status: { type: Number, enum: [0, 1, 2], required: true }, // 0 = Hold, 1 = Accept, 2 = Reject
     details: { type: String },
-    payment_type: { type: String, enum: ["sendMoney", "cashout", "payment", "transfer"], required: true },
+    payment_type: { type: String, enum: ["sendMoney", "cashout", "payment", "transfer"], },
     datetime: { type: Date, default: Date.now },
     is_commission: { type: Boolean, default: false },
     referredbyCode: { type: String },
