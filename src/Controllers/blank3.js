@@ -904,38 +904,77 @@ exports.getEventOddsById = async (req, res) => {
 
 // app.post("/api/apiWallet/:website/queryBetHistoryForAllStatus",
     
-    const queryBetHistoryForAllStatus = async () => {
-    try {
-    //   const { cert, userId, startDate, endDate, betStatus, pageNumber, reportType, agent } = req.body;
-      
-      let query = { startDate: { $gte: startDate }, endDate: { $lte: endDate } };
-      if (userId) query.userId = userId;
-      if (betStatus !== -1) query.betStatus = betStatus;
-      if (agent) query.agent = agent;
-      const aiUrl = "https://www.fwick7ets.xyz/apiWallet/queryBetHistoryForAllStatus";
-      const params = {
-          cert:"GZG8Z0CPgh50aOq6",
-          userId: "samit4545",
-          key:"4i7EplNRkTLCD6G%2bpCA67IwFz%2frUBMDPHrYuxTQBu%2b5ZZNMleJvM5ZIeEEYnVQOP",
-          startDate: "",
-          endDate: "",
-          betStatus: "",
-          pageNumber: "",
-          reportType: "0",
-          agent: "",
-          returnUrl: returnUrl || ""
-      };
-      const response = await axios.post(aiUrl, params);
-      const results = await Bet.find(query).skip((pageNumber - 1) * 2000).limit(2000);
-      console.log(results);
-      console.log( response.data);
-    //   res.json({ status: "1", totalCount: results.length, resultList: results });
-    } catch (error) {
-    //   res.status(500).json({ error: error.message });
-    }
-  }
-  queryBetHistoryForAllStatus()
+// const queryBetHistoryForAllStatus = async () => {
+//     try {
+//         const apiServerHost = "www.fwick7ets.xyz"; // Update with correct API host
+//         const website = "apiWallet"; // Update with your website ID if needed
+//         const aiUrl = `https://${apiServerHost}/api/${website}/queryBetHistoryForAllStatus`;
 
+//         // Define query parameters
+//         const startDate = "2025-06-19 01:00"; // Ensure valid date format
+//         const endDate = "2025-06-19 22:00";
+//         const userId = "samit4545";
+//         const betStatus = -1;
+//         const isTxnDetail = 0; // Default to no transaction details
+//         const timeZone = 0; // Default IST timezone
+//         const pageNumber = 1;
+//         const reportType = 0;
+//         const agent = "rcdi";
+//         const returnUrl = "";
+
+//         // Ensure the date range does not exceed 35 days for a user & 24 hours for all users
+//         const startDateObj = new Date(startDate);
+//         const endDateObj = new Date(endDate);
+//         const diffDays = (endDateObj - startDateObj) / (1000 * 60 * 60 * 24);
+
+//         if (userId && diffDays > 35) {
+//             throw new Error("User query date range cannot exceed 35 days.");
+//         } else if (!userId && diffDays > 1) {
+//             throw new Error("Query for all users cannot exceed 24 hours.");
+//         }
+
+//         // Define API request parameters
+//         const params = {
+//             cert: "GZG8Z0CPgh50aOq6",
+//             userId,
+//             startDate,
+//             endDate,
+//             betStatus,
+//             isTxnDetail,
+//             timeZone,
+//             pageNumber,
+//             reportType,
+//             agent,
+//             returnUrl
+//         };
+
+//         // Send API request with correct headers & format
+//         const response = await axios.post(aiUrl, qs.stringify(params), {
+//             headers: { "Content-Type": "application/x-www-form-urlencoded" }
+//         });
+
+//         // Query database (MongoDB) with pagination
+//         const query = {
+//             startDate: { $gte: startDate },
+//             endDate: { $lte: endDate }
+//         };
+
+//         if (userId) query.userId = userId;
+//         if (betStatus !== -1) query.betStatus = betStatus;
+//         if (agent) query.agent = agent;
+
+//         const results = await Bet.find(query)
+//             .skip((pageNumber - 1) * 2000)
+//             .limit(2000);
+
+//         console.log("DB Results:", results);
+//         console.log("API Response:", response.data);
+
+//     } catch (error) {
+//         console.error("Error fetching bet history:", error.message);
+//     }
+// };
+// queryBetHistoryForAllStatus()
 
 //   app.post("/api/apiWallet/:website/queryBetHistoryForAllStatus", 
     
