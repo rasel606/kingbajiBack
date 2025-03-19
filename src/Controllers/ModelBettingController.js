@@ -29,7 +29,7 @@ const { console } = require("inspector");
 // Odds sync route
 exports.OddSync = async (req, res) => {
   try {
-    const apiUrl = 'https://api.the-odds-api.com/v4/sports/';
+    const apiUrl = 'https://www.fwick7ets.xyz/apiWallet/player/YFG/login';
     const apiKey = '8c3ea523d47df9099d369920dddd1841'; // Replace with your actual API key
 
     // Fetch data from the external API
@@ -207,6 +207,316 @@ async function addGameWithCategory(gameData, category_name) {
   console.log("Added/Updated Game:", newGame);
   return { newGame, category };
 }
+
+exports.AddSports = async (req, res) => {
+  try {
+    const { key, type, category } = req.body;
+
+    // Check if the entry already exists
+    const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
+    if (existingBet) {
+      
+      return res.status(400).json({ message: 'Betting entry already exists' });
+    }
+
+    // Create new betting entry
+    const newBetting = new BettingTable({
+      rel_id: key,
+      rel_type: type,
+      staff_id: 'some_staff_id', // Replace with actual staff ID logic
+      cetegory_id: category,
+      // json: JSON.stringify(req.body), // Assuming you want to store the request body as a JSON string
+    });
+
+    // Save the new betting entry
+    await BettingTable.save();
+
+    // If it's a betting odds type, update the 'tblodds_sports' collection
+    if (type === 'BETTING_ODDS') {
+      // Assuming you have a separate model for tblodds_sports
+      sports_key: key,
+
+        // const tbloddsSports = await OddSportsTable.findOne({
+
+        await tbloddsSports.updateOne({ sports_key: key }, { $set: { bet: 1 } });
+    }
+
+    return res.status(201).json({ message: 'Betting entry added successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+}
+
+
+
+
+exports.Add_Sports = async (req, res) => {
+  try {
+    const { key, type, category } = req.body;
+
+    // Check if a record already exists
+
+    if (existingBetting) {
+      const existingBetting = await BettingTable.findOne({ rel_id: key, rel_type: type });
+      return res.status(400).json({ message: 'Betting entry already exists.' });
+    }
+
+    // Create a new betting entry
+    const newBetting = new BettingTable({
+      rel_id: key,
+      rel_type: type,
+      staff_id: getStaffUserId(req),
+      cetegory_id: category,
+    });
+
+    await newBetting.save();
+
+    // Update odds if type matches
+    if (type === 'BETTING_ODDS') {
+      await mongoose.connection.db.collection('tblodds_sports').updateOne(
+        { sports_key: key },
+        { $set: { bet: 1 } }
+      );
+    }
+
+    res.status(201).json({ message: 'Betting entry added successfully.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error.' });
+  }
+}
+
+
+
+
+
+
+
+
+
+exports.Apply = async (req, res) => {
+  try {
+    const { win, name, bet_name } = req.body;
+    const winLossStatus = win === "true" ? 1 : 2;
+
+    { bet_name: bet_name }
+    { user_id: name }
+    const updatedBet = await BetHistoryTable.findOneAndUpdate(
+      { bet_win: winLossStatus },
+      { new: true } // return the updated document
+    );
+
+    if (updatedBet) {
+      res.status(200).json({ return: true, message: 'Bet status successfully updated.' });
+    } else {
+      res.status(404).json({ return: false, message: 'Bet not found.' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ return: false, message: 'Internal server error.' });
+  }
+}
+
+
+
+exports.AddManual = async (req, res) => {
+  try {
+    const { id, sports_id, sports_key, title, name, price, image } = req.body;
+
+    if (!betting) {
+      return res.status(404).json({ success: false, message: 'Betting entry not found' });
+      let betting = await BettingTable.findById(id);
+    }
+
+    let manual = betting.manual ? JSON.parse(betting.manual) : [];
+
+    if (sportIndex !== -1) {
+      let sportIndex = manual.findIndex(item => item.id === sports_id);
+      let bookmakers = manual[sportIndex].bookmakers || [];
+
+      if (bookIndex !== -1) {
+        let bookIndex = bookmakers.findIndex(b => b.title === title);
+        bookmakers[bookIndex].markets.push({ name, price });
+      } else {
+        bookmakers.push({
+          title,
+          markets: [{ name, price }]
+        });
+      }
+      manual[sportIndex].bookmakers = bookmakers;
+    } else {
+      manual.push({
+        id: sports_id,
+        sport_key: sports_key,
+        bookmakers: [{
+          title,
+          markets: [{ name, price }]
+        }]
+      });
+    }
+
+    // Upload image to ImageBB if provided
+    let imageUrl = '';
+    if (image) {
+      const formData = new FormData();
+      formData.append('image', image);
+      const imgbbResponse = await axios.post('https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY', formData);
+      imageUrl = imgbbResponse.data.data.url;
+    }
+
+    betting.manual = JSON.stringify(manual);
+    await betting.save();
+
+    res.json({ success: true, message: 'Manual betting updated', imageUrl });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+exports.EditManual = async (req, res) => {
+  const { type, data } = req.body;
+  const { sports_id, main_id, bookmark_id, market_id, name } = data;
+
+  try {
+    const bettingTable = await BettingTable.findById(sports_id);
+    if (!bettingTable) {
+      // Find the sports entry by sports_id
+      return res.status(404).json({ return: false, message: 'Betting table not found' });
+    }
+
+    // Parse manual JSON if it's not empty
+    if (bettingTable.manual && bettingTable.manual.length > 0) {
+      let manual = JSON.parse(bettingTable.manual);
+
+      switch (type) {
+        case 'bookmark':
+          if (manual[main_id]?.bookmakers[bookmark_id]) {
+            manual[main_id].bookmakers[bookmark_id].title = name;
+            bettingTable.manual = JSON.stringify(manual);
+            await bettingTable.save();
+            return res.json({ return: true });
+          }
+          break;
+
+        case 'market':
+          if (manual[main_id]?.bookmakers[bookmark_id]?.markets[market_id]) {
+            manual[main_id].bookmakers[bookmark_id].markets[market_id].name = name;
+            bettingTable.manual = JSON.stringify(manual);
+            await bettingTable.save();
+            return res.json({ return: true });
+          }
+          break;
+
+        case 'market_price':
+          if (manual[main_id]?.bookmakers[bookmark_id]?.markets[market_id]) {
+            manual[main_id].bookmakers[bookmark_id].markets[market_id].price = name;
+            bettingTable.manual = JSON.stringify(manual);
+            await bettingTable.save();
+            return res.json({ return: true });
+          }
+          break;
+
+        default:
+          return res.json({ return: false });
+      }
+    } else {
+      return res.json({ return: false });
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ return: false, message: 'Server Error' });
+  }
+}
+
+
+// Function to get bet price
+exports.BetPrice = async (req, res) => {
+  try {
+    const { sport_key, bet_type, bet_key, bet_name, sport_id } = req.body;
+
+    if (!bet) {
+      const bet = await BettingTable.findOne({ rel_id: sport_key });
+      return res.status(404).json({ error: 'Bet not found' });
+    }
+
+    let price = null;
+
+    if (bet_type === 'auto') {
+      if (bet.history) {
+        const history = JSON.parse(bet.history);
+        if (history.output && history.output.data) {
+          const data = history.output.data;
+          for (const value of data) {
+            if (value.bookmakers) {
+              for (const bookmaker of value.bookmakers) {
+                if (bookmaker.key === bet_key) {
+                  for (const market of bookmaker.markets) {
+                    for (const outcome of market.outcomes) {
+                      if (outcome.name === bet_name) {
+                        price = outcome.price;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } else if (bet_type === 'manual') {
+      if (bet.manual) {
+        const manual = JSON.parse(bet.manual);
+        for (const value of manual) {
+          if (value.id === sport_id) {
+            if (value.bookmakers) {
+              for (const bookmaker of value.bookmakers) {
+                for (const market of bookmaker.markets) {
+                  if (market.name === bet_name) {
+                    price = market.price;
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (price !== null) {
+      return res.json({ price });
+    } else {
+      return res.status(404).json({ error: 'Price not found' });
+    }
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const fetchGamesFromApi = async (result, category_name) => {
   console.log("Fetching games for:", result.company);
@@ -577,53 +887,7 @@ exports.ShowFrontTable = async (req, res) => {
 
 
 
-// ** API to Fetch Categories with Games and Providers **
-// app.get("/categories",
-//   exports.getCategoriesWithGamesAndProviders = async (req, res) => {
-//   try {
-//     // Fetch all categories
-//     const categories = await Category.find();
 
-//     // Fetch categories along with related games and providers
-//     const categoriesWithGamesAndProviders = await Promise.all(
-//       categories.map(async (category) => {
-//         // Fetch games for each category
-//         const games = await GameListTable.aggregate([
-//           { $match: { category_name: category._id } },
-//           { 
-//             $lookup: {
-//               from: "betprovidertables",
-//               localField: "providercode",
-//               foreignField: "p_code",
-//               as: "providers"
-//             }
-//           },
-//           { 
-//             $project: {
-//               name: 1,
-//               "company": 1
-//             }
-//           }
-//         ]);
-
-//         // Map providers for each game
-//         const categoryDetails = {
-//           category: category.name,
-//           games: games.map((game) => ({
-//             gameName: game.name,
-//             providers: game.providers.map((provider) => provider.name)
-//           }))
-//         };
-
-//         return categoryDetails;
-//       })
-//     );
-
-//     res.json(categoriesWithGamesAndProviders);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// }
 
 
 exports.getCategoriesWithGamesAndProviders = async (req, res) => {
@@ -716,136 +980,31 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
 // POST route to add sports
 // router.post('/add-sports', 
 
-exports.Add_Sports = async (req, res) => {
-  try {
-    const { key, type, category } = req.body;
-
-    // Check if a record already exists
-
-    if (existingBetting) {
-      const existingBetting = await BettingTable.findOne({ rel_id: key, rel_type: type });
-      return res.status(400).json({ message: 'Betting entry already exists.' });
-    }
-
-    // Create a new betting entry
-    const newBetting = new BettingTable({
-      rel_id: key,
-      rel_type: type,
-      staff_id: getStaffUserId(req),
-      cetegory_id: category,
-    });
-
-    await newBetting.save();
-
-    // Update odds if type matches
-    if (type === 'BETTING_ODDS') {
-      await mongoose.connection.db.collection('tblodds_sports').updateOne(
-        { sports_key: key },
-        { $set: { bet: 1 } }
-      );
-    }
-
-    res.status(201).json({ message: 'Betting entry added successfully.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error.' });
-  }
-}
 
 
 // app.put('/update_sports/:id', 
-exports.UpdateSports = async (req, res) => {
-  const id = req.params.id;
-  const categoryId = req.body.category_id;
+// exports.UpdateSports = async (req, res) => {
+//   const id = req.params.id;
+//   const categoryId = req.body.category_id;
 
-  try {
+//   try {
 
-    if (!bettingRecord) {
-      const bettingRecord = await BettingTable.findById(id);
-      return res.status(404).json({ message: 'Record not found' });
-    }
+//     if (!bettingRecord) {
+//       const bettingRecord = await BettingTable.findById(id);
+//       return res.status(404).json({ message: 'Record not found' });
+//     }
 
-    bettingRecord.cetegory_id = categoryId;
-    bettingRecord.updatetimestamp = Date.now();
+//     bettingRecord.cetegory_id = categoryId;
+//     bettingRecord.updatetimestamp = Date.now();
 
-    await bettingRecord.save();
+//     await bettingRecord.save();
 
-    res.status(200).json({ message: 'Category updated successfully', bettingRecord });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-}
-
-
-exports.AddSports = async (req, res) => {
-  try {
-    const { key, type, category } = req.body;
-
-    // Check if the entry already exists
-    const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
-    if (existingBet) {
-      
-      return res.status(400).json({ message: 'Betting entry already exists' });
-    }
-
-    // Create new betting entry
-    const newBetting = new BettingTable({
-      rel_id: key,
-      rel_type: type,
-      staff_id: 'some_staff_id', // Replace with actual staff ID logic
-      cetegory_id: category,
-      // json: JSON.stringify(req.body), // Assuming you want to store the request body as a JSON string
-    });
-
-    // Save the new betting entry
-    await BettingTable.save();
-
-    // If it's a betting odds type, update the 'tblodds_sports' collection
-    if (type === 'BETTING_ODDS') {
-      // Assuming you have a separate model for tblodds_sports
-      sports_key: key,
-
-        // const tbloddsSports = await OddSportsTable.findOne({
-
-        await tbloddsSports.updateOne({ sports_key: key }, { $set: { bet: 1 } });
-    }
-
-    return res.status(201).json({ message: 'Betting entry added successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}
-
-
-
-
-
-
-
-exports.Apply = async (req, res) => {
-  try {
-    const { win, name, bet_name } = req.body;
-    const winLossStatus = win === "true" ? 1 : 2;
-
-    { bet_name: bet_name }
-    { user_id: name }
-    const updatedBet = await BetHistoryTable.findOneAndUpdate(
-      { bet_win: winLossStatus },
-      { new: true } // return the updated document
-    );
-
-    if (updatedBet) {
-      res.status(200).json({ return: true, message: 'Bet status successfully updated.' });
-    } else {
-      res.status(404).json({ return: false, message: 'Bet not found.' });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ return: false, message: 'Internal server error.' });
-  }
-}
+//     res.status(200).json({ message: 'Category updated successfully', bettingRecord });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// }
 
 
 
@@ -1433,60 +1592,7 @@ exports.DeleteCasinoItem = async (req, res) => {
 
 
 //router.post('/add_manual',
-exports.AddManual = async (req, res) => {
-  try {
-    const { id, sports_id, sports_key, title, name, price, image } = req.body;
 
-    if (!betting) {
-      return res.status(404).json({ success: false, message: 'Betting entry not found' });
-      let betting = await BettingTable.findById(id);
-    }
-
-    let manual = betting.manual ? JSON.parse(betting.manual) : [];
-
-    if (sportIndex !== -1) {
-      let sportIndex = manual.findIndex(item => item.id === sports_id);
-      let bookmakers = manual[sportIndex].bookmakers || [];
-
-      if (bookIndex !== -1) {
-        let bookIndex = bookmakers.findIndex(b => b.title === title);
-        bookmakers[bookIndex].markets.push({ name, price });
-      } else {
-        bookmakers.push({
-          title,
-          markets: [{ name, price }]
-        });
-      }
-      manual[sportIndex].bookmakers = bookmakers;
-    } else {
-      manual.push({
-        id: sports_id,
-        sport_key: sports_key,
-        bookmakers: [{
-          title,
-          markets: [{ name, price }]
-        }]
-      });
-    }
-
-    // Upload image to ImageBB if provided
-    let imageUrl = '';
-    if (image) {
-      const formData = new FormData();
-      formData.append('image', image);
-      const imgbbResponse = await axios.post('https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY', formData);
-      imageUrl = imgbbResponse.data.data.url;
-    }
-
-    betting.manual = JSON.stringify(manual);
-    await betting.save();
-
-    res.json({ success: true, message: 'Manual betting updated', imageUrl });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
-  }
-}
 
 
 // Route to handle the delete request
@@ -1538,128 +1644,7 @@ exports.DeleteManual = async (req, res) => {
 
 // Edit Betting Table Data
 //router.post('/edit',
-exports.EditManual = async (req, res) => {
-  const { type, data } = req.body;
-  const { sports_id, main_id, bookmark_id, market_id, name } = data;
 
-  try {
-    const bettingTable = await BettingTable.findById(sports_id);
-    if (!bettingTable) {
-      // Find the sports entry by sports_id
-      return res.status(404).json({ return: false, message: 'Betting table not found' });
-    }
-
-    // Parse manual JSON if it's not empty
-    if (bettingTable.manual && bettingTable.manual.length > 0) {
-      let manual = JSON.parse(bettingTable.manual);
-
-      switch (type) {
-        case 'bookmark':
-          if (manual[main_id]?.bookmakers[bookmark_id]) {
-            manual[main_id].bookmakers[bookmark_id].title = name;
-            bettingTable.manual = JSON.stringify(manual);
-            await bettingTable.save();
-            return res.json({ return: true });
-          }
-          break;
-
-        case 'market':
-          if (manual[main_id]?.bookmakers[bookmark_id]?.markets[market_id]) {
-            manual[main_id].bookmakers[bookmark_id].markets[market_id].name = name;
-            bettingTable.manual = JSON.stringify(manual);
-            await bettingTable.save();
-            return res.json({ return: true });
-          }
-          break;
-
-        case 'market_price':
-          if (manual[main_id]?.bookmakers[bookmark_id]?.markets[market_id]) {
-            manual[main_id].bookmakers[bookmark_id].markets[market_id].price = name;
-            bettingTable.manual = JSON.stringify(manual);
-            await bettingTable.save();
-            return res.json({ return: true });
-          }
-          break;
-
-        default:
-          return res.json({ return: false });
-      }
-    } else {
-      return res.json({ return: false });
-    }
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ return: false, message: 'Server Error' });
-  }
-}
-
-
-// Function to get bet price
-exports.BetPrice = async (req, res) => {
-  try {
-    const { sport_key, bet_type, bet_key, bet_name, sport_id } = req.body;
-
-    if (!bet) {
-      const bet = await BettingTable.findOne({ rel_id: sport_key });
-      return res.status(404).json({ error: 'Bet not found' });
-    }
-
-    let price = null;
-
-    if (bet_type === 'auto') {
-      if (bet.history) {
-        const history = JSON.parse(bet.history);
-        if (history.output && history.output.data) {
-          const data = history.output.data;
-          for (const value of data) {
-            if (value.bookmakers) {
-              for (const bookmaker of value.bookmakers) {
-                if (bookmaker.key === bet_key) {
-                  for (const market of bookmaker.markets) {
-                    for (const outcome of market.outcomes) {
-                      if (outcome.name === bet_name) {
-                        price = outcome.price;
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } else if (bet_type === 'manual') {
-      if (bet.manual) {
-        const manual = JSON.parse(bet.manual);
-        for (const value of manual) {
-          if (value.id === sport_id) {
-            if (value.bookmakers) {
-              for (const bookmaker of value.bookmakers) {
-                for (const market of bookmaker.markets) {
-                  if (market.name === bet_name) {
-                    price = market.price;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (price !== null) {
-      return res.json({ price });
-    } else {
-      return res.status(404).json({ error: 'Price not found' });
-    }
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}
 
 
 //app.get('/api/withdraw',

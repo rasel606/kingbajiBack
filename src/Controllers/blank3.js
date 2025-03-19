@@ -13,7 +13,7 @@
 //         const secretKey = "9332fd9144a3a1a8bd3ab7afac3100b0";
 //         const signature = crypto.createHash("md5").update(operatorCode + secretKey).digest("hex").toUpperCase();
 
-//         const API_URL = `http://fetch.336699bet.com/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=0&signature=${signature}`;
+//         const API_URL = `http://gsmd.336699bet.com/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=0&signature=${signature}`;
 //         const response = await axios.get(API_URL);
 //         console.log("API Response:", API_URL);
 //         if (response.data.errCode === "0") {
@@ -105,32 +105,32 @@
 
 
 
-// exports.launchApp = async (req, res) => {
-//     try {
-//         const operatorCode = "rbdb";
-//         const secretKey = "9332fd9144a3a1a8bd3ab7afac3100b0";
-//         const providerCode = "PR";
-//         const username = "samit1234";
-//         const password = "ASDFqwer1234";
+// // exports.launchApp = async (req, res) => {
+// //     try {
+// //         const operatorCode = "rbdb";
+// //         const secretKey = "9332fd9144a3a1a8bd3ab7afac3100b0";
+// //         const providerCode = "PR";
+// //         const username = "samit1234";
+// //         const password = "ASDFqwer1234";
 
-//         // Generate signature
-//         const signature = crypto
-//             .createHash("md5")
-//             .update(operatorCode + providerCode + secretKey)
-//             .digest("hex")
-//             .toUpperCase();
+// //         // Generate signature
+// //         const signature = crypto
+// //             .createHash("md5")
+// //             .update(operatorCode + providerCode + secretKey)
+// //             .digest("hex")
+// //             .toUpperCase();
 
-//         // Construct API URL
-//         const requestUrl = `http://gsmd.336699bet.com/launchAPP.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
+// //         // Construct API URL
+// //         const requestUrl = `http://gsmd.336699bet.com/launchAPP.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
 
-//         console.log(requestUrl);
-//         // Make the GET request
-//         const response = await axios.get(requestUrl);
-//         res.json(response.data);
-//     } catch (error) {
-//         res.status(500).json({ error: "Failed to launch app", details: error.message });
-//     }
-// }
+// //         console.log(requestUrl);
+// //         // Make the GET request
+// //         const response = await axios.get(requestUrl);
+// //         res.json(response.data);
+// //     } catch (error) {
+// //         res.status(500).json({ error: "Failed to launch app", details: error.message });
+// //     }
+// // }
 
 
 
@@ -139,46 +139,46 @@
 
 
 
-// exports.getDailyWager = async (dateF, dateT, providerCode) => {
-//     try {
-//         const API_URL = "http://fetch.336699bet.com/getDailyWager.ashx";
-// const OPERATOR_CODE = "rbdb";
-// const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
-//         // Validate date range (max 7 days)
-//         const fromDate = new Date(dateF);
-//         const toDate = new Date(dateT);
-//         const diffDays = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+// // exports.getDailyWager = async (dateF, dateT, providerCode) => {
+// //     try {
+// //         const API_URL = "http://fetch.336699bet.com/getDailyWager.ashx";
+// // const OPERATOR_CODE = "rbdb";
+// // const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
+// //         // Validate date range (max 7 days)
+// //         const fromDate = new Date(dateF);
+// //         const toDate = new Date(dateT);
+// //         const diffDays = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
 
-//         if (diffDays > 7 || diffDays < 0) {
-//             throw new Error("Date range exceeds the maximum allowed 7 days or is invalid.");
-//         }
+// //         if (diffDays > 7 || diffDays < 0) {
+// //             throw new Error("Date range exceeds the maximum allowed 7 days or is invalid.");
+// //         }
 
-//         // Generate MD5 signature
-//         const signature = crypto
-//             .createHash("md5")
-//             .update(OPERATOR_CODE + SECRET_KEY)
-//             .digest("hex")
-//             .toUpperCase();
+// //         // Generate MD5 signature
+// //         const signature = crypto
+// //             .createHash("md5")
+// //             .update(OPERATOR_CODE + SECRET_KEY)
+// //             .digest("hex")
+// //             .toUpperCase();
 
-//         // Construct API request URL
-//         const url = `${API_URL}?operatorcode=${OPERATOR_CODE}&dateF=${dateF}&dateT=${dateT}&providercode=${providerCode}&signature=${signature}`;
-//         console.log(url)
-//         // Fetch data from API
-//         const response = await axios.get(url, {
-//             headers: { "Content-Type": "application/json" },
-//         });
-// console.log(response.data)
-//         return response.data;
-//     } catch (error) {
-//         console.error("Error fetching daily wager history:", error.message);
-//         return { errCode: "500", errMsg: error.message };
-//     }
-// };
+// //         // Construct API request URL
+// //         const url = `${API_URL}?operatorcode=${OPERATOR_CODE}&dateF=${dateF}&dateT=${dateT}&providercode=${providerCode}&signature=${signature}`;
+// //         console.log(url)
+// //         // Fetch data from API
+// //         const response = await axios.get(url, {
+// //             headers: { "Content-Type": "application/json" },
+// //         });
+// // console.log(response.data)
+// //         return response.data;
+// //     } catch (error) {
+// //         console.error("Error fetching daily wager history:", error.message);
+// //         return { errCode: "500", errMsg: error.message };
+// //     }
+// // };
 
-// // Example usage:
-// exports.getDailyWager("2025-03-08", "2025-03-14", "JD")
-//     .then((data) => console.log(data))
-//     .catch((err) => console.error(err));
+// // // Example usage:
+// // exports.getDailyWager("2025-03-08", "2025-03-14", "JD")
+// //     .then((data) => console.log(data))
+// //     .catch((err) => console.error(err));
 
 
 
@@ -196,47 +196,47 @@
 
 
 
-// exports.fetchArchivedBettingHistory = async () => {
+// // exports.fetchArchivedBettingHistory = async () => {
 
 
-//     try {
-//         const OPERATOR_CODE = "rbdb";
-// const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
-//         const API_URL = "http://gsmd.336699bet.com";
+// //     try {
+// //         const OPERATOR_CODE = "rbdb";
+// // const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+// //         const API_URL = "http://gsmd.336699bet.com";
 
-//         // Generate the signature
-//         const signature = crypto.createHash('md5')
-//             .update(OPERATOR_CODE + SECRET_KEY)
-//             .digest('hex')
-//             .toUpperCase();
+// //         // Generate the signature
+// //         const signature = crypto.createHash('md5')
+// //             .update(OPERATOR_CODE + SECRET_KEY)
+// //             .digest('hex')
+// //             .toUpperCase();
 
-//         // API Endpoint
-//         const url = `${API_URL}/fetchArchieve.aspx?operatorcode=${OPERATOR_CODE}&versionkey=243093279155&signature=${signature}`;
-//         console.log("Request URL:", url);
+// //         // API Endpoint
+// //         const url = `${API_URL}/fetchArchieve.aspx?operatorcode=${OPERATOR_CODE}&versionkey=243093279155&signature=${signature}`;
+// //         console.log("Request URL:", url);
 
-//         // Make GET request
-//         const response = await axios.get(url, {
-//             headers: { 'Accept': 'application/json' }
-//         });
+// //         // Make GET request
+// //         const response = await axios.get(url, {
+// //             headers: { 'Accept': 'application/json' }
+// //         });
 
-//         // Parse response
-//         if (response.data.errCode === "0") {
-//             console.log("Betting History Archive:", JSON.parse(response.data.result));
-//         } else {
-//             console.error("Error:", response.data.errMsg);
-//         }
-//     } catch (error) {
-//         console.error("Request failed:", error.message);
-//     }
-// };
+// //         // Parse response
+// //         if (response.data.errCode === "0") {
+// //             console.log("Betting History Archive:", JSON.parse(response.data.result));
+// //         } else {
+// //             console.error("Error:", response.data.errMsg);
+// //         }
+// //     } catch (error) {
+// //         console.error("Request failed:", error.message);
+// //     }
+// // };
 
-// // Example Usage
-// const OPERATOR_COD = "rbdb";
-// const SECRET_KE = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
+// // // Example Usage
+// // const OPERATOR_COD = "rbdb";
+// // const SECRET_KE = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
 
-// (async () => {
-//     await exports.fetchArchivedBettingHistory(OPERATOR_COD, SECRET_KE);
-// })();
+// // (async () => {
+// //     await exports.fetchArchivedBettingHistory(OPERATOR_COD, SECRET_KE);
+// // })();
 
 
 
@@ -248,35 +248,35 @@
 
 
 
-// exports.getGameList = async (providerCode, lang, html5, reformatJson) => {
-//     try {
-//         if (!providerCode) {
-//             throw new Error("Provider code is required.");
-//         }
-//         const OPERATOR_CODE = "rbdb";
-//         const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
-//         // Generate MD5 signature
-//         const signature = crypto
-//             .createHash("md5")
-//             .update(OPERATOR_CODE.toLowerCase() + providerCode.toUpperCase() + SECRET_KEY)
-//             .digest("hex")
-//             .toUpperCase();
+// // exports.getGameList = async (providerCode, lang, html5, reformatJson) => {
+// //     try {
+// //         if (!providerCode) {
+// //             throw new Error("Provider code is required.");
+// //         }
+// //         const OPERATOR_CODE = "rbdb";
+// //         const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+// //         // Generate MD5 signature
+// //         const signature = crypto
+// //             .createHash("md5")
+// //             .update(OPERATOR_CODE.toLowerCase() + providerCode.toUpperCase() + SECRET_KEY)
+// //             .digest("hex")
+// //             .toUpperCase();
 
-//         // Construct API request URL
-//         const url = `http://fetch.336699bet.com/getGameList.ashx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&lang=${lang}&html5=${html5}&reformatjson=${reformatJson}&signature=${signature}`;
-//         console.log(url)
+// //         // Construct API request URL
+// //         const url = `http://fetch.336699bet.com/getGameList.ashx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&lang=${lang}&html5=${html5}&reformatjson=${reformatJson}&signature=${signature}`;
+// //         console.log(url)
 
-//         // Fetch data from API
-//         const response = await axios.get(url, {
-//             headers: { "Content-Type": "application/json" },
-//         });
+// //         // Fetch data from API
+// //         const response = await axios.get(url, {
+// //             headers: { "Content-Type": "application/json" },
+// //         });
 
-//         return response.data;
-//     } catch (error) {
-//         console.error("Error fetching game list:", error.message);
-//         return { errCode: "500", errMsg: error.message };
-//     }
-// };
+// //         return response.data;
+// //     } catch (error) {
+// //         console.error("Error fetching game list:", error.message);
+// //         return { errCode: "500", errMsg: error.message };
+// //     }
+// // };
 
 
 
@@ -296,18 +296,18 @@
 
 
 
-// function generateSignaturet(operatorcode,password, providercode, type , username , secret_key) {
-//     const hash = crypto
-//     .createHash("md5")
-//     .update(operatorcode + password + providercode + type + username + secret_key)
-//     .digest("hex")
-//     .toUpperCase();
-//     return hash.toUpperCase();  // Convert to uppercase
-//   }
-// // Example usage:
-// exports.getGameList("GE", "en", "1", "yes")
-//     .then((data) => "console.log(data)")
-//     .catch((err) => console.error(err));
+// // function generateSignaturet(operatorcode,password, providercode, type , username , secret_key) {
+// //     const hash = crypto
+// //     .createHash("md5")
+// //     .update(operatorcode + password + providercode + type + username + secret_key)
+// //     .digest("hex")
+// //     .toUpperCase();
+// //     return hash.toUpperCase();  // Convert to uppercase
+// //   }
+// // // Example usage:
+// // exports.getGameList("GE", "en", "1", "yes")
+// //     .then((data) => "console.log(data)")
+// //     .catch((err) => console.error(err));
 
 
 
@@ -318,124 +318,124 @@
 
 
 
-//     function generateSignature(operatorCode, password, providerCode, type, username, secretKey) {
-//         return crypto
-//             .createHash("md5")
-//             .update(operatorCode + password + providerCode + type + username + secretKey)
-//             .digest("hex")
-//             .toUpperCase();
-//     }
+//     // function generateSignature(operatorCode, password, providerCode, type, username, secretKey) {
+//     //     return crypto
+//     //         .createHash("md5")
+//     //         .update(operatorCode + password + providerCode + type + username + secretKey)
+//     //         .digest("hex")
+//     //         .toUpperCase();
+//     // }
     
 //     // Game providers configuration
-//     const providers = {
-//         IG: { types: ["LK"], games: { "1": "HK", "2": "SSC" } },
-//         S6: {
-//             types: ["SL", "LC", "FH", "OT"],
-//             games: {
-//                 SL: ["S6_FC"],
-//                 LC: ["S6_VENUS", "0"],
-//                 FH: ["S6_FC"],
-//                 OT: ["0"]
-//             }
-//         },
-//         P3: {
-//             types: ["SL", "LC"],
-//             games: {
-//                 SL: ["0"],
-//                 LC: ["1_0"]
-//             }
-//         },
-//         BD: {
-//             types: ["SL", "CB"],
-//             games: {
-//                 SL: ["bpgsltgmtab"],
-//                 CB: ["bpgbrtctab", "bpgbrtsstab", "bpgbrtptab", "bpgdrtgrtab", "bpgblkjktab", "bpgrlttab", "bpgcslgmtab"]
-//             }
-//         }
-//     };
+//     // const providers = {
+//     //     IG: { types: ["LK"], games: { "1": "HK", "2": "SSC" } },
+//     //     S6: {
+//     //         types: ["SL", "LC", "FH", "OT"],
+//     //         games: {
+//     //             SL: ["S6_FC"],
+//     //             LC: ["S6_VENUS", "0"],
+//     //             FH: ["S6_FC"],
+//     //             OT: ["0"]
+//     //         }
+//     //     },
+//     //     P3: {
+//     //         types: ["SL", "LC"],
+//     //         games: {
+//     //             SL: ["0"],
+//     //             LC: ["1_0"]
+//     //         }
+//     //     },
+//     //     BD: {
+//     //         types: ["SL", "CB"],
+//     //         games: {
+//     //             SL: ["bpgsltgmtab"],
+//     //             CB: ["bpgbrtctab", "bpgbrtsstab", "bpgbrtptab", "bpgdrtgrtab", "bpgblkjktab", "bpgrlttab", "bpgcslgmtab"]
+//     //         }
+//     //     }
+//     // };
     
-//     // Function to generate game launch URL
-//     function generateGameLaunchUrl(providerCode, type, gameId, username, lang) {
-//         const OPERATOR_CODE = "rbdb";
-//         const PASSWORD = "Asdf1234";
-//         const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+//     // // Function to generate game launch URL
+//     // function generateGameLaunchUrl(providerCode, type, gameId, username, lang) {
+//     //     const OPERATOR_CODE = "rbdb";
+//     //     const PASSWORD = "Asdf1234";
+//     //     const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
     
-//         // Validate provider
-//         // if (!providers[providerCode]) {
-//         //     return { error: "Invalid provider code" };
-//         // }
+//     //     // Validate provider
+//     //     // if (!providers[providerCode]) {
+//     //     //     return { error: "Invalid provider code" };
+//     //     // }
     
-//         // // Validate type
-//         // if (!providers[providerCode].types.includes(type)) {
-//         //     return { error: "Invalid game type for this provider" };
-//         // }
+//     //     // // Validate type
+//     //     // if (!providers[providerCode].types.includes(type)) {
+//     //     //     return { error: "Invalid game type for this provider" };
+//     //     // }
     
-//         // // Validate gameId
-//         // if (!providers[providerCode].games[type].includes(gameId)) {
-//         //     return { error: "Invalid game ID for this type" };
-//         // }
+//     //     // // Validate gameId
+//     //     // if (!providers[providerCode].games[type].includes(gameId)) {
+//     //     //     return { error: "Invalid game ID for this type" };
+//     //     // }
     
-//         // Generate signature
-//         const signature = generateSignature(OPERATOR_CODE, PASSWORD, providerCode, type, username, SECRET_KEY);
+//     //     // Generate signature
+//     //     const signature = generateSignature(OPERATOR_CODE, PASSWORD, providerCode, type, username, SECRET_KEY);
     
-//         // Construct game launch URL
-//         const gameUrl = `http://gsmd.336699bet.com/launchGames.aspx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&username=${username}&password=${PASSWORD}&type=${type}&lang=${lang}&gameid=${gameId}&signature=${signature}`;
-//         console.log("launchUrl--------2",gameUrl);
-//         return { launchUrl: gameUrl };
-//     }
+//     //     // Construct game launch URL
+//     //     const gameUrl = `http://gsmd.336699bet.com/launchGames.aspx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&username=${username}&password=${PASSWORD}&type=${type}&lang=${lang}&gameid=${gameId}&signature=${signature}`;
+//     //     console.log("launchUrl--------2",gameUrl);
+//     //     return { launchUrl: gameUrl };
+//     // }
     
-//     // Example usage
-//     const result = generateGameLaunchUrl("DG", "LC", "0", "samit1234", "en-US");
-//     console.log(result);
+//     // // Example usage
+//     // const result = generateGameLaunchUrl("DG", "LC", "0", "samit1234", "en-US");
+//     // console.log(result);
 
 
 
 
 
-//     function generateSignature(operatorCode, providerCode, username, secretKey) {
-//         return crypto
-//             .createHash("md5")
-//             .update(operatorCode + providerCode + username + secretKey)
-//             .digest("hex")
-//             .toUpperCase();
-//     }
+//     // function generateSignature(operatorCode, providerCode, username, secretKey) {
+//     //     return crypto
+//     //         .createHash("md5")
+//     //         .update(operatorCode + providerCode + username + secretKey)
+//     //         .digest("hex")
+//     //         .toUpperCase();
+//     // }
     
 //     // Function to check Member Product Username
-//     async function checkMemberProductUsername( operatorCode, providerCode, username, secretKey) {
-//         try {
-//             // Validate username length
-//             if (username.length < 3 || username.length > 12) {
-//                 return { error: "Username must be between 3 and 12 characters." };
-//             }
+//   //   async function checkMemberProductUsername( operatorCode, providerCode, username, secretKey) {
+//   //       try {
+//   //           // Validate username length
+//   //           if (username.length < 3 || username.length > 12) {
+//   //               return { error: "Username must be between 3 and 12 characters." };
+//   //           }
     
-//             // Generate signature
-//             const signature = generateSignature(operatorCode, providerCode, username, secretKey);
+//   //           // Generate signature
+//   //           const signature = generateSignature(operatorCode, providerCode, username, secretKey);
     
-//             // Construct API request URL
-//             const requestUrl = `http://gsmd.336699bet.com/checkMemberProductUsername.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&signature=${signature}`;
+//   //           // Construct API request URL
+//   //           const requestUrl = `http://gsmd.336699bet.com/checkMemberProductUsername.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&signature=${signature}`;
             
-//             console.log("Request URL:", requestUrl);
+//   //           console.log("Request URL:", requestUrl);
     
-//             // Make GET request to API
-//             const response = await axios.get(requestUrl, { headers: { Accept: "application/json" } });
+//   //           // Make GET request to API
+//   //           const response = await axios.get(requestUrl, { headers: { Accept: "application/json" } });
     
-//             // Return API response
-//             return response.data;
-//         } catch (error) {
-//             return { error: error.message };
-//         }
-//     }
+//   //           // Return API response
+//   //           return response.data;
+//   //       } catch (error) {
+//   //           return { error: error.message };
+//   //       }
+//   //   }
     
-//     // Example usage
-//    // const API_URL = "http://fetch.336699bet.com";  // Replace with actual API URL
-//     const OPERATOR_CODE = "rbdb";
-//     // const PROVIDER_CODE = "P3";
-//     // const USERNAME = "samit57";
-//     const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+//   //   // Example usage
+//   //  // const API_URL = "http://fetch.336699bet.com";  // Replace with actual API URL
+//   //   const OPERATOR_CODE = "rbdb";
+//   //   // const PROVIDER_CODE = "P3";
+//   //   // const USERNAME = "samit57";
+//   //   const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
     
-//     checkMemberProductUsername( OPERATOR_CODE, "S3", "samit1234", SECRET_KEY)
-//         .then((data) => console.log("Response:", data))
-//         .catch((err) => console.error("Error:", err));
+//   //   checkMemberProductUsername( OPERATOR_CODE, "S3", "samit1234", SECRET_KEY)
+//   //       .then((data) => console.log("Response:", data))
+//   //       .catch((err) => console.error("Error:", err));
 
 
 
@@ -444,74 +444,74 @@
 
 
 
-// exports.kickPlayer = async ( req,res) => {
-//     try {
-//         const{ username } = req.body;
-//         // Validate inputs
-//         const OPERATOR_CODE = "rbdb";
-//         const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; 
-//         const password = "rbdbrbdb!"; 
-//         const providerCode = "JD"; 
-//         // const username = "samit57"; 
-//         if (!providerCode || providerCode !== "JD") {
-//             throw new Error("Currently, only provider code 'JD' is supported.");
-//         }
-//         if (!username || username.length < 3 || username.length > 12) {
-//             throw new Error("Username must be between 3 and 12 characters.");
-//         }
-//         if (!password || password.length > 12) {
-//             throw new Error("Password must be at most 12 characters.");
-//         }
+// // exports.kickPlayer = async ( req,res) => {
+// //     try {
+// //         const{ username } = req.body;
+// //         // Validate inputs
+// //         const OPERATOR_CODE = "rbdb";
+// //         const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; 
+// //         const password = "rbdbrbdb!"; 
+// //         const providerCode = "JD"; 
+// //         // const username = "samit57"; 
+// //         if (!providerCode || providerCode !== "JD") {
+// //             throw new Error("Currently, only provider code 'JD' is supported.");
+// //         }
+// //         if (!username || username.length < 3 || username.length > 12) {
+// //             throw new Error("Username must be between 3 and 12 characters.");
+// //         }
+// //         if (!password || password.length > 12) {
+// //             throw new Error("Password must be at most 12 characters.");
+// //         }
 
-//         // Generate MD5 signature
-//         const signature = crypto
-//             .createHash("md5")
-//             .update(OPERATOR_CODE + password + providerCode + username + SECRET_KEY)
-//             .digest("hex")
-//             .toUpperCase();
+// //         // Generate MD5 signature
+// //         const signature = crypto
+// //             .createHash("md5")
+// //             .update(OPERATOR_CODE + password + providerCode + username + SECRET_KEY)
+// //             .digest("hex")
+// //             .toUpperCase();
 
-//         // Construct API request URL
-//         const url = `http://fetch.336699bet.com/kickPlayer.ashx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
+// //         // Construct API request URL
+// //         const url = `http://fetch.336699bet.com/kickPlayer.ashx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
 
-//         // Fetch data from API
-//         const response = await axios.get(url, {
-//             headers: { "Content-Type": "application/json" },
-//         });
-// console.log(response.data)
-//         return response.data;
-//     } catch (error) {
-//         console.error("Error kicking player:", error.message);
-//         return { errCode: "500", errMsg: error.message };
-//     }
-// };
-
-
+// //         // Fetch data from API
+// //         const response = await axios.get(url, {
+// //             headers: { "Content-Type": "application/json" },
+// //         });
+// // console.log(response.data)
+// //         return response.data;
+// //     } catch (error) {
+// //         console.error("Error kicking player:", error.message);
+// //         return { errCode: "500", errMsg: error.message };
+// //     }
+// // };
 
 
-// exports.createMember = async (req, res) => {
-//     try {
-//         // console.log(req.body);
-//         const { username } = req.body;
+
+
+// // exports.createMember = async (req, res) => {
+// //     try {
+// //         // console.log(req.body);
+// //         const { username } = req.body;
         
-//         const operatorCode = "rcdi";
-//         const secretKey = "ce624ff66a45d7557128c228fa51b396";
-//         const apiUrl = `http://fetch.336699bet.com/createMember.aspx`;
+// //         const operatorCode = "rcdi";
+// //         const secretKey = "ce624ff66a45d7557128c228fa51b396";
+// //         const apiUrl = `http://fetch.336699bet.com/createMember.aspx`;
         
-//         const signature = crypto.createHash('md5').update(`${operatorCode}${username}${secretKey}`).digest('hex').toUpperCase();
+// //         const signature = crypto.createHash('md5').update(`${operatorCode}${username}${secretKey}`).digest('hex').toUpperCase();
         
-//         const response = await axios.get(apiUrl, {
-//             params: {
-//                 operatorcode: operatorCode,
-//                 username:username,
-//                 signature: signature,
-//             },
-//         });
+// //         const response = await axios.get(apiUrl, {
+// //             params: {
+// //                 operatorcode: operatorCode,
+// //                 username:username,
+// //                 signature: signature,
+// //             },
+// //         });
         
-//         res.json(response.data);
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// }
+// //         res.json(response.data);
+// //     } catch (error) {
+// //         res.status(500).json({ error: error.message });
+// //     }
+// // }
 
 // require("dotenv").config();
 // const fs = require("fs");
@@ -743,7 +743,7 @@
 // const PASSWORD="Asdf1234"
 // const SECRET="ce624ff66a45d7557128c228fa51b396"
 // const API_URL="https://your-api-url.com"
-// const USERNAME="samit12"
+// const USERNAME="sami4545"
 // // const  API Configuration
 // const BETTING_ODDS_API_KEY="your_odds_api_key"
 // const BETTING_ODDS_REGION=["us","uk"]
@@ -792,41 +792,41 @@
 //     }
 // };
 
-// // Function to get odds for an event by ID
-// const getEventOddsById = async (key, userId, cert) => {
-//     try {
-//         const apiUrl = `https://www.fwick7ets.xyz/apiWallet/player/YFG/login`;
-//         const params = {
-//             cert,
-//             userId,
-//             key,
-//             extension1: "",
-//             extension2: "",
-//             extension3: "",
-//             extensionJson: "",
-//             eventType: "odds",
-//             returnUrl: "",
-//             timestamp: new Date().toISOString(), // Dynamically generate timestamp
-//             apiKey: process.env.BETTING_ODDS_API_KEY,
-//             regions: process.env.BETTING_ODDS_REGION,
-//             markets: "h2h,spreads",
-//             oddsFormat: process.env.BETTING_ODDS_FORMAT,
-//         };
+// Function to get odds for an event by ID
+const getEventOddsById = async (key, userId, cert) => {
+    try {
+        const apiUrl = `https://www.fwick7ets.xyz/apiWallet/player/YFG/login`;
+        const params = {
+            cert,
+            userId,
+            key,
+            extension1: "",
+            extension2: "",
+            extension3: "",
+            extensionJson: "",
+            eventType: "odds",
+            returnUrl: "",
+            timestamp: new Date().toISOString(), // Dynamically generate timestamp
+            apiKey: process.env.BETTING_ODDS_API_KEY,
+            regions: process.env.BETTING_ODDS_REGION,
+            markets: "h2h,spreads",
+            oddsFormat: process.env.BETTING_ODDS_FORMAT,
+        };
 
-//         const response = await axios.get(apiUrl, { params });
+        const response = await axios.get(apiUrl, { params });
 
-//         return { return: true, message: "Sync Done", output: response.data };
-//     } catch (error) {
-//         return { return: false, message: error.response?.data?.message || "Error", output: [] };
-//     }
-// };
+        return { return: true, message: "Sync Done", output: response.data };
+    } catch (error) {
+        return { return: false, message: error.response?.data?.message || "Error", output: [] };
+    }
+};
 
 
-// exports.getEventOddsById = async (req, res) => {
-//     const { key, userId,cert } = req.params;
-//     const odds = await getEventOddsById(key, userId, cert);
-//     res.json(odds);
-// }
+exports.getEventOddsById = async (req, res) => {
+    const { key, userId,cert } = req.params;
+    const odds = await getEventOddsById(key, userId, cert);
+    res.json(odds);
+}
 
 // // API Route for updating betting events
 // exports.updateBettingEvents = async (req, res) => {
@@ -841,12 +841,12 @@
 //     await logGameSession(cert, userId, key, returnUrl);
 //     res.json({ message: 'Game session logged successfully' });
 // }
-
+// const OPERATOR_CODE="rcdi"
 
 // exports.placeBet = async (req, res) => {
 //     try {
 //       const { userId, amount, gameId } = req.body;
-  
+//   const SECRET_KEY="ce624ff66a45d7557128c228fa51b396"
 //       const response = await axios.post(`${API_URL}/place_bet`, {
 //         operatorcode: OPERATOR_CODE,
 //         secret_key: SECRET_KEY,
@@ -862,164 +862,219 @@
 //     }
 //   }
   
-//   // 🔹 2️⃣ Deposit Funds
-//   exports.depositFunds = async (req, res) => {
-//     try {
-//       const { userId, amount } = req.body;
+// //   // 🔹 2️⃣ Deposit Funds
+// //   exports.depositFunds = async (req, res) => {
+// //     try {
+// //       const { userId, amount } = req.body;
   
-//       const response = await axios.post(`${API_URL}/deposit`, {
-//         operatorcode: OPERATOR_CODE,
-//         secret_key: SECRET_KEY,
-//         user_id: userId,
-//         amount,
-//       });
+// //       const response = await axios.post(`${API_URL}/deposit`, {
+// //         operatorcode: OPERATOR_CODE,
+// //         secret_key: SECRET_KEY,
+// //         user_id: userId,
+// //         amount,
+// //       });
   
-//       res.json(response.data);
-//     } catch (error) {
-//       console.error("Error in deposit:", error.message);
-//       res.status(500).json({ error: "Deposit failed" });
-//     }
-//   }
+// //       res.json(response.data);
+// //     } catch (error) {
+// //       console.error("Error in deposit:", error.message);
+// //       res.status(500).json({ error: "Deposit failed" });
+// //     }
+// //   }
   
-//   // 🔹 3️⃣ Withdraw Funds
-//  exports.withdrawFunds = async (req, res) => {
-//     try {
-//       const { userId, amount } = req.body;
+// //   // 🔹 3️⃣ Withdraw Funds
+// //  exports.withdrawFunds = async (req, res) => {
+// //     try {
+// //       const { userId, amount } = req.body;
   
-//       const response = await axios.post(`${API_URL}/withdraw`, {
-//         operatorcode: OPERATOR_CODE,
-//         secret_key: SECRET_KEY,
-//         user_id: userId,
-//         amount,
-//       });
+// //       const response = await axios.post(`${API_URL}/withdraw`, {
+// //         operatorcode: OPERATOR_CODE,
+// //         secret_key: SECRET_KEY,
+// //         user_id: userId,
+// //         amount,
+// //       });
   
-//       res.json(response.data);
-//     } catch (error) {
-//       console.error("Error in withdrawal:", error.message);
-//       res.status(500).json({ error: "Withdrawal failed" });
-//     }
-//   }
-  
+// //       res.json(response.data);
+// //     } catch (error) {
+// //       console.error("Error in withdrawal:", error.message);
+// //       res.status(500).json({ error: "Withdrawal failed" });
+// //     }
+// //   }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const fetchGamesFromApi = async () => {
-//   console.log("Fetching games for:", result.company);
-const operatorcode="rbdb"
-const providercode="S6"
-const PASSWORD="Asdf1234"
-const secret_key="9332fd9144a3a1a8bd3ab7afac3100b0"
-  try {
-    // const { operatorcode, providercode, key: secret_key } = result;
-
-    const signature = crypto
-      .createHash("md5")
-      .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
-      .digest("hex")
-      .toUpperCase();
-
-    const response = await axios.get("https://gsmd.336699bet.com/getGameList.ashx", {
-      params: {
-        operatorcode,
-        providercode,
-        lang: "en",
-        html: "0",
-        reformatjson: "yes",
-        signature,
-      },
-    });
-
-    console.log(`Fetched ${response} games from API`);
-
-    const gameData = JSON.parse(response.data?.gamelist || "[]");
-
-    console.log(`Fetched ${gameData} games from API`);
-
-    // const gameResults = await Promise.all(
-    //   gameData.map((game) => addGameWithCategory(game, category_name))
-    // );
-
-    res.json({ success: true, data: gameResults });
-  } catch (error) {
-    console.error("Error fetching games:", error.message);
-    return [];
-  }
-};
-
-
-exports.getCategoriesWithGamesAndProvidersnew = async (req, res) => {
-  try {
-    // Fetch all categories
-    const categories = await Category.find({});
-console.log(categories)
-
-    const categoriesWithGamesAndProviders = await Promise.all(
-      categories.map(async (category) => {
-        // Fetch games for each category
-        const games = await GameListTable.aggregate([
-          { $match: { category_name: categories.category_name,p_type:categori.p_type } },
-          {
-            $lookup: {
-              from: "betprovidertables",
-              localField: "p_code",
-              foreignField: "providercode",
-              as: "providers"
-            }
-          },
-          {
-            $project: {
-              name: 1,
-              "providers.providercode": 1
-            }
-          }
-        ]);
-        console.log(games)
-        const providerSet = new Set();
-        games.forEach(game => {
-          game.providers.forEach(provider => providerSet.add(provider.providercode));
-        });
-        console.log(providerSet)
-        const uniqueProviders = await BetProviderTable.find(
-          { providercode: { $in: Array.from(providerSet) } },
-          { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0, p_type: 1 }
-        );
-        console.log(uniqueProviders)
-        // Format the result
-        return {
-          category: {
-            name: category.category_name,
-            image: category.image,
-            id_active: category.id_active, // Check if category is active or inactive
-            uniqueProviders: uniqueProviders
-          },
-
-          // uniqueProviders: uniqueProviders
-
-        };
-      })
-    );
+// app.post("/api/apiWallet/:website/queryBetHistoryForAllStatus",
     
-console.log(games)
-    res.json(categoriesWithGamesAndProviders);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const queryBetHistoryForAllStatus = async () => {
+    try {
+      const { cert, userId, startDate, endDate, betStatus, pageNumber, reportType, agent } = req.body;
+      
+      let query = { startDate: { $gte: startDate }, endDate: { $lte: endDate } };
+      if (userId) query.userId = userId;
+      if (betStatus !== -1) query.betStatus = betStatus;
+      if (agent) query.agent = agent;
+      const aiUrl = "https://www.fwick7ets.xyz/apiWallet/queryBetHistoryForAllStatus";
+      const params = {
+          cert:"GZG8Z0CPgh50aOq6",
+          userId: "samit4545",
+          key:"4i7EplNRkTLCD6G%2bpCA67IwFz%2frUBMDPHrYuxTQBu%2b5ZZNMleJvM5ZIeEEYnVQOP",
+          startDate: "",
+          endDate: "",
+          betStatus: "",
+          pageNumber: "",
+          reportType: "0",
+          agent: "",
+          returnUrl: returnUrl || ""
+      };
+      const response = await axios.post(aiUrl, params);
+      const results = await Bet.find(query).skip((pageNumber - 1) * 2000).limit(2000);
+      console.log(results);
+      console.log( response.data);
+    //   res.json({ status: "1", totalCount: results.length, resultList: results });
+    } catch (error) {
+    //   res.status(500).json({ error: error.message });
+    }
   }
-}
+  queryBetHistoryForAllStatus()
+
+
+//   app.post("/api/apiWallet/:website/queryBetHistoryForAllStatus", 
+    
+    exports.queryBetHistoryForAllStatus = async (req, res) => {
+    try {
+      const { cert, userId, startDate, endDate, betStatus, pageNumber, reportType, agent } = req.body;
+      
+      let query = { startDate: { $gte: startDate }, endDate: { $lte: endDate } };
+      if (userId) query.userId = userId;
+      if (betStatus !== -1) query.betStatus = betStatus;
+      if (agent) query.agent = agent;
+  
+      const results = await Bet.find(query).skip((pageNumber - 1) * 2000).limit(2000);
+    //   res.json({ status: "1", totalCount: results.length, resultList: results });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// const fetchGamesFromApi = async () => {
+// //   console.log("Fetching games for:", result.company);
+// const operatorcode="rbdb"
+// const providercode="S6"
+// const PASSWORD="Asdf1234"
+// const secret_key="9332fd9144a3a1a8bd3ab7afac3100b0"
+//   try {
+//     // const { operatorcode, providercode, key: secret_key } = result;
+
+//     const signature = crypto
+//       .createHash("md5")
+//       .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
+//       .digest("hex")
+//       .toUpperCase();
+
+//     const response = await axios.get("https://gsmd.336699bet.com/getGameList.ashx", {
+//       params: {
+//         operatorcode,
+//         providercode,
+//         lang: "en",
+//         html: "0",
+//         reformatjson: "yes",
+//         signature,
+//       },
+//     });
+
+//     console.log(`Fetched ${response} games from API`);
+
+//     const gameData = JSON.parse(response.data?.gamelist || "[]");
+
+//     console.log(`Fetched ${gameData} games from API`);
+
+//     // const gameResults = await Promise.all(
+//     //   gameData.map((game) => addGameWithCategory(game, category_name))
+//     // );
+
+//     res.json({ success: true, data: gameResults });
+//   } catch (error) {
+//     console.error("Error fetching games:", error.message);
+//     return [];
+//   }
+// };
+
+
+// exports.getCategoriesWithGamesAndProvidersnew = async (req, res) => {
+//   try {
+//     // Fetch all categories
+//     const categories = await Category.find({});
+// console.log(categories)
+
+//     const categoriesWithGamesAndProviders = await Promise.all(
+//       categories.map(async (category) => {
+//         // Fetch games for each category
+//         const games = await GameListTable.aggregate([
+//           { $match: { category_name: categories.category_name,p_type:categori.p_type } },
+//           {
+//             $lookup: {
+//               from: "betprovidertables",
+//               localField: "p_code",
+//               foreignField: "providercode",
+//               as: "providers"
+//             }
+//           },
+//           {
+//             $project: {
+//               name: 1,
+//               "providers.providercode": 1
+//             }
+//           }
+//         ]);
+//         console.log(games)
+//         const providerSet = new Set();
+//         games.forEach(game => {
+//           game.providers.forEach(provider => providerSet.add(provider.providercode));
+//         });
+//         console.log(providerSet)
+//         const uniqueProviders = await BetProviderTable.find(
+//           { providercode: { $in: Array.from(providerSet) } },
+//           { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0, p_type: 1 }
+//         );
+//         console.log(uniqueProviders)
+//         // Format the result
+//         return {
+//           category: {
+//             name: category.category_name,
+//             image: category.image,
+//             id_active: category.id_active, // Check if category is active or inactive
+//             uniqueProviders: uniqueProviders
+//           },
+
+//           // uniqueProviders: uniqueProviders
+
+//         };
+//       })
+//     );
+    
+// console.log(games)
+//     res.json(categoriesWithGamesAndProviders);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// }

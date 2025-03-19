@@ -28,13 +28,15 @@ exports.registerSubAdmin = async (req, res) => {
     const SubAdminId = Math.random().toString(36).substring(2, 11);
    const hashedPassword = await bcrypt.hash(password, saltRounds);
     const referredCode = Math.random().toString(36).substring(2, 10);
+    const referredAgentCode = Math.random().toString(36).substring(2, 10);
+    const referredAffiliateCode = Math.random().toString(36).substring(2, 10);
 
     const baseUrl = "https://kingbaji365.live/?ref=";
-    // const agentbaseUrl = "http://co.king5623agent.live.kingbaji365.live/?ref=";
-    // const affiliatebaseUrl = "http://co.king5623affiliate.live.kingbaji365.live/?ref=";
+    const agentbaseUrl = "http://co.king5623agent.live.kingbaji365.live/?ref=";
+    const affiliatebaseUrl = "http://co.king5623affiliate.live.kingbaji365.live/?ref=";
 const user_referredLink = baseUrl + referredCode;
-// const agent_referred_Link = agentbaseUrl + referredCode;
-// const affiliate_referredsLink = affiliatebaseUrl + referredCode;
+const agent_referred_Link = agentbaseUrl + referredAgentCode;
+const affiliate_referredsLink = affiliatebaseUrl + referredAffiliateCode;
 if (!referredCode) {
   return res.status(500).json({ success: false, message: "Failed to generate referral code" });
 }
@@ -54,12 +56,14 @@ if (!referredCode) {
       SubAdminId: SubAdminId,
       isActive: true,
       user_referredLink,
-      // agent_referred_Link,
-      // affiliate_referredsLink,
+      agent_referredcode : referredAgentCode,
+          affiliate_referredcode: referredAffiliateCode,
+             agent_referredLink: agent_referred_Link,
+          affiliate_referredLink: agent_referred_Link,
     });
 
     newUser.save();
-    
+  
     // Fetch user details using aggregation
     const response = await SubAdmin.aggregate([
       { $match: { email: newUser.email } },

@@ -222,17 +222,17 @@ const refreshBalancebefore = async (userId) => {
 
 
 
-  const params = {
-    operatorcode: agent.operatorcode,
-    providercode: agent.providercode,
-    username: user.userId,
-    password: agent.auth_pass,
-    signature: Kicksignature
-  };
+  // const params = {
+  //   operatorcode: agent.operatorcode,
+  //   providercode: agent.providercode,
+  //   username: user.userId,
+  //   password: agent.auth_pass,
+  //   signature: Kicksignature
+  // };
 
-  const kick = await axios.get('http://fetch.336699bet.com/kickPlayer.ashx', { params });
-  console.log("Kick Response:", kick.data);
-  console.log("Fetched Balance:", amount);
+  // const kick = await axios.get('http://fetch.336699bet.com/kickPlayer.ashx', { params });
+  // console.log("Kick Response:", kick.data);
+  // console.log("Fetched Balance:", amount);
 
   if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
     setTimeout(async () => {
