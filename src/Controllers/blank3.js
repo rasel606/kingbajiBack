@@ -906,7 +906,7 @@ exports.getEventOddsById = async (req, res) => {
     
     const queryBetHistoryForAllStatus = async () => {
     try {
-      const { cert, userId, startDate, endDate, betStatus, pageNumber, reportType, agent } = req.body;
+    //   const { cert, userId, startDate, endDate, betStatus, pageNumber, reportType, agent } = req.body;
       
       let query = { startDate: { $gte: startDate }, endDate: { $lte: endDate } };
       if (userId) query.userId = userId;
