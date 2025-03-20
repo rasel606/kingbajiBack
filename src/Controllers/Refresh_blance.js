@@ -5,7 +5,7 @@ const BetProviderTable = require('../Models/BetProviderTable');
 const { default: axios } = require('axios');
 const GameListTable = require('../Models/GameListTable');
 const Category = require('../Models/Category');
-const proxyAgent = require('./proxyConfig');
+
 const fetchBalance = async (agent, username) => {
   try {
     const signature = crypto.createHash('md5').update(
@@ -564,13 +564,7 @@ exports.launchGamePlayer = async (req, res) => {
         };
 
         // Make the API request
-        const respo = await axios.get(aiUrl, {
-          params,
-          httpsAgent: proxyAgent, // Use httpsAgent instead of proxyAgent
-          headers: { "User-Agent": "Mozilla/5.0" } // Optional: Add headers
-      });
-
-        console.log("AI Wallet Response:", respo.data);
+        const respo = await axios.get(aiUrl, { params });
         console.log("Game API Response:", respo);
 
         // Send the response back
