@@ -1,42 +1,50 @@
-
-// const axios = require("axios");
-// const crypto = require("crypto");
+/* 
+const axios = require("axios");
+const crypto = require("crypto");
 
 
 // require("dotenv").config();
 
 
 
-// exports.fetchBettingHistory = async (req,res) => {
-//     try {
-//         const operatorCode = "rbdb";
-//         const secretKey = "9332fd9144a3a1a8bd3ab7afac3100b0";
-//         const signature = crypto.createHash("md5").update(operatorCode + secretKey).digest("hex").toUpperCase();
+const fetchBettingHistory = async (req,res) => {
+    try {
+        const operatorCode = "rbdb";
+        const secretKey = "9332fd9144a3a1a8bd3ab7afac3100b0";
+        const signature = crypto.createHash("md5").update(operatorCode + secretKey).digest("hex").toUpperCase();
 
-//         const API_URL = `http://gsmd.336699bet.com/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=0&signature=${signature}`;
-//         const response = await axios.get(API_URL);
-//         console.log("API Response:", API_URL);
-//         if (response.data.errCode === "0") {
-//             const bettingRecords = JSON.parse(response.data.result);
-//             console.log("Fetched Betting History:", bettingRecords);
-//             //   for (const record of bettingRecords) {
-//             //     await BettingHistory.findOneAndUpdate(
-//             //       { betId: record.betId },
-//             //       { $set: record },
-//             //       { upsert: true }
-//             //     );
-//             //   }
-//             res.json(bettingRecords);
-//             console.log("Betting history updated successfully");
-//         } else {
-//             console.error("Error fetching data:", bettingRecords);
-//         }
-//         setInterval(fetchBettingHistory, 60000);
+        const API_URL = `http://gsmd.336699bet.com/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=${"0"}&signature=${signature}`;
+        const response = await axios.get(API_URL);
+        console.log("API Response:", API_URL);
 
-//     } catch (error) {
-//         console.error("Failed to fetch betting history:", error.message);
-//     }
-// };
+        const bettingRecords = JSON.parse(response.data.result);
+        console.log("Fetched Betting History:", bettingRecords);
+        if (response.data.errCode === "0") {
+            const bettingRecords = JSON.parse(response.data.result);
+            console.log("Fetched Betting History:", bettingRecords);
+            //   for (const record of bettingRecords) {
+            //     await BettingHistory.findOneAndUpdate(
+            //       { betId: record.betId },
+            //       { $set: record },
+            //       { upsert: true }
+            //     );
+            //   }
+
+            // console.log("Updated Betting History:", bettingRecords);
+            res.json(bettingRecords);
+            console.log("Betting history updated successfully");
+        } else {
+            console.error("Error fetching data:", bettingRecords);
+        }
+        setInterval(fetchBettingHistory, 60000);
+
+    } catch (error) {
+        console.error("Failed to fetch betting history:", error.message);
+    }
+};
+
+
+fetchBettingHistory()
 
 // // Run the fetch function every minute
 
@@ -52,258 +60,232 @@
 
 
 
-// // const crypto = require('crypto-js');
-// function generateSignaturen(operatorcode, secretKey) {
+// const crypto = require('crypto-js');
+function generateSignaturen(operatorcode, secretKey) {
+    const hash = crypto
+    .createHash("md5")
+    .update(operatorcode + secretKey)
+    .digest("hex")
+    .toUpperCase();
+    return hash.toUpperCase();  // Convert to uppercase
+  }
+  
+//   // Function to mark betting history
+  async function markBettingHistory(operatorcode, secretKey, ticketIds) {
+    const signature = generateSignaturen(operatorcode, secretKey);
+    const logUrl = 'http://fetch.336699bet.com/';  // Replace with actual API base URL
+    const url = `${logUrl}/markbyjson.aspx`;
+  
+    const body = {
+      ticket: ticketIds.join(','),  // Convert array to comma-separated string
+      operatorcode: operatorcode,
+      signature: signature
+    };
+  
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+      console.log('Mark Betting Response:----------------', response);
+      if (!response.ok) {
+        throw new Error(`Failed to mark betting history. Status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      console.log('Mark Betting Response:', data);
+      return data;
+    } catch (error) {
+      console.error('Error marking betting history:', error);
+    }
+  }
+  
+//   // Example Usage:
+  const operatorcode = 'rcdi';  // Replace with actual operator code
+  const secretKey = 'ce624ff66a45d7557128c228fa51b396';  // Replace with actual secret key
+  const ticketIds = [6,8,8,2,0,8,5,4,2,1,4,6,1,9,5,4,5,7];  // Replace with actual ticket IDs
+  
+  markBettingHistory(operatorcode, secretKey, ticketIds);
+
+
+
+
+
+
+
+
+
+
+
+
+const getDailyWager = async (dateF, dateT, providerCode) => {
+    try {
+        const API_URL = "http://fetch.336699bet.com/getDailyWager.ashx";
+const OPERATOR_CODE = "rbdb";
+const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
+        // Validate date range (max 7 days)
+        const fromDate = new Date(dateF);
+        const toDate = new Date(dateT);
+        const diffDays = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays > 7 || diffDays < 0) {
+            throw new Error("Date range exceeds the maximum allowed 7 days or is invalid.");
+        }
+
+        // Generate MD5 signature
+        const signature = crypto
+            .createHash("md5")
+            .update(OPERATOR_CODE + SECRET_KEY)
+            .digest("hex")
+            .toUpperCase();
+
+        // Construct API request URL
+        const url = `${API_URL}?operatorcode=${OPERATOR_CODE}&dateF=${dateF}&dateT=${dateT}&providercode=${providerCode}&signature=${signature}`;
+        console.log(url)
+        // Fetch data from API
+        const response = await axios.get(url, {
+            headers: { "Content-Type": "application/json" },
+        });
+console.log(response.data)
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching daily wager history:", error.message);
+        return { errCode: "500", errMsg: error.message };
+    }
+};
+
+// // // Example usage:
+getDailyWager("2025-03-15", "2025-03-20", "JD")
+    .then((data) => console.log(data))
+    .catch((err) => console.error(err));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+exports.fetchArchivedBettingHistory = async () => {
+
+
+    try {
+        const OPERATOR_CODE = "rbdb";
+const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+        const API_URL = "http://gsmd.336699bet.com";
+
+        // Generate the signature
+        const signature = crypto.createHash('md5')
+            .update(OPERATOR_CODE + SECRET_KEY)
+            .digest('hex')
+            .toUpperCase();
+
+        // API Endpoint
+        const url = `${API_URL}/fetchArchieve.aspx?operatorcode=${OPERATOR_CODE}&versionkey=243093279155&signature=${signature}`;
+        console.log("Request URL:", url);
+
+        // Make GET request
+        const response = await axios.get(url, {
+            headers: { 'Accept': 'application/json' }
+        });
+
+        // Parse response
+        if (response.data.errCode === "0") {
+            console.log("Betting History Archive:", JSON.parse(response.data.result));
+        } else {
+            console.error("Error:", response.data.errMsg);
+        }
+    } catch (error) {
+        console.error("Request failed:", error.message);
+    }
+};
+
+// Example Usage
+const OPERATOR_COD = "rbdb";
+const SECRET_KE = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
+
+(async () => {
+    await exports.fetchArchivedBettingHistory(OPERATOR_COD, SECRET_KE);
+})();
+
+
+
+
+
+
+
+
+
+
+
+exports.getGameList = async (providerCode, lang, html5, reformatJson) => {
+    try {
+        if (!providerCode) {
+            throw new Error("Provider code is required.");
+        }
+        const OPERATOR_CODE = "rbdb";
+        const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+        // Generate MD5 signature
+        const signature = crypto
+            .createHash("md5")
+            .update(OPERATOR_CODE.toLowerCase() + providerCode.toUpperCase() + SECRET_KEY)
+            .digest("hex")
+            .toUpperCase();
+
+        // Construct API request URL
+        const url = `http://fetch.336699bet.com/getGameList.ashx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&lang=${lang}&html5=${html5}&reformatjson=${reformatJson}&signature=${signature}`;
+        console.log(url)
+
+        // Fetch data from API
+        const response = await axios.get(url, {
+            headers: { "Content-Type": "application/json" },
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error("Error fetching game list:", error.message);
+        return { errCode: "500", errMsg: error.message };
+    }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function generateSignaturet(operatorcode,password, providercode, type , username , secret_key) {
 //     const hash = crypto
 //     .createHash("md5")
-//     .update(operatorcode + secretKey)
+//     .update(operatorcode + password + providercode + type + username + secret_key)
 //     .digest("hex")
 //     .toUpperCase();
 //     return hash.toUpperCase();  // Convert to uppercase
 //   }
-  
-//   // Function to mark betting history
-//   async function markBettingHistory(operatorcode, secretKey, ticketIds) {
-//     const signature = generateSignaturen(operatorcode, secretKey);
-//     const logUrl = 'http://fetch.336699bet.com/';  // Replace with actual API base URL
-//     const url = `${logUrl}/markbyjson.aspx`;
-  
-//     const body = {
-//       ticket: ticketIds.join(','),  // Convert array to comma-separated string
-//       operatorcode: operatorcode,
-//       signature: signature
-//     };
-  
-//     try {
-//       const response = await fetch(url, {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify(body)
-//       });
-//       console.log('Mark Betting Response:----------------', response);
-//       if (!response.ok) {
-//         throw new Error(`Failed to mark betting history. Status: ${response.status}`);
-//       }
-  
-//       const data = await response.json();
-//       console.log('Mark Betting Response:', data);
-//       return data;
-//     } catch (error) {
-//       console.error('Error marking betting history:', error);
-//     }
-//   }
-  
-//   // Example Usage:
-//   const operatorcode = 'rcdi';  // Replace with actual operator code
-//   const secretKey = 'ce624ff66a45d7557128c228fa51b396';  // Replace with actual secret key
-//   const ticketIds = [6,8,8,2,0,8,5,4,2,1,4,6,1,9,5,4,5,7];  // Replace with actual ticket IDs
-  
-//   markBettingHistory(operatorcode, secretKey, ticketIds);
-
-
-
-
-// // exports.launchApp = async (req, res) => {
-// //     try {
-// //         const operatorCode = "rbdb";
-// //         const secretKey = "9332fd9144a3a1a8bd3ab7afac3100b0";
-// //         const providerCode = "PR";
-// //         const username = "samit1234";
-// //         const password = "ASDFqwer1234";
-
-// //         // Generate signature
-// //         const signature = crypto
-// //             .createHash("md5")
-// //             .update(operatorCode + providerCode + secretKey)
-// //             .digest("hex")
-// //             .toUpperCase();
-
-// //         // Construct API URL
-// //         const requestUrl = `http://gsmd.336699bet.com/launchAPP.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
-
-// //         console.log(requestUrl);
-// //         // Make the GET request
-// //         const response = await axios.get(requestUrl);
-// //         res.json(response.data);
-// //     } catch (error) {
-// //         res.status(500).json({ error: "Failed to launch app", details: error.message });
-// //     }
-// // }
-
-
-
-
-
-
-
-
-// // exports.getDailyWager = async (dateF, dateT, providerCode) => {
-// //     try {
-// //         const API_URL = "http://fetch.336699bet.com/getDailyWager.ashx";
-// // const OPERATOR_CODE = "rbdb";
-// // const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
-// //         // Validate date range (max 7 days)
-// //         const fromDate = new Date(dateF);
-// //         const toDate = new Date(dateT);
-// //         const diffDays = Math.ceil((toDate - fromDate) / (1000 * 60 * 60 * 24));
-
-// //         if (diffDays > 7 || diffDays < 0) {
-// //             throw new Error("Date range exceeds the maximum allowed 7 days or is invalid.");
-// //         }
-
-// //         // Generate MD5 signature
-// //         const signature = crypto
-// //             .createHash("md5")
-// //             .update(OPERATOR_CODE + SECRET_KEY)
-// //             .digest("hex")
-// //             .toUpperCase();
-
-// //         // Construct API request URL
-// //         const url = `${API_URL}?operatorcode=${OPERATOR_CODE}&dateF=${dateF}&dateT=${dateT}&providercode=${providerCode}&signature=${signature}`;
-// //         console.log(url)
-// //         // Fetch data from API
-// //         const response = await axios.get(url, {
-// //             headers: { "Content-Type": "application/json" },
-// //         });
-// // console.log(response.data)
-// //         return response.data;
-// //     } catch (error) {
-// //         console.error("Error fetching daily wager history:", error.message);
-// //         return { errCode: "500", errMsg: error.message };
-// //     }
-// // };
-
-// // // Example usage:
-// // exports.getDailyWager("2025-03-08", "2025-03-14", "JD")
-// //     .then((data) => console.log(data))
-// //     .catch((err) => console.error(err));
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // exports.fetchArchivedBettingHistory = async () => {
-
-
-// //     try {
-// //         const OPERATOR_CODE = "rbdb";
-// // const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
-// //         const API_URL = "http://gsmd.336699bet.com";
-
-// //         // Generate the signature
-// //         const signature = crypto.createHash('md5')
-// //             .update(OPERATOR_CODE + SECRET_KEY)
-// //             .digest('hex')
-// //             .toUpperCase();
-
-// //         // API Endpoint
-// //         const url = `${API_URL}/fetchArchieve.aspx?operatorcode=${OPERATOR_CODE}&versionkey=243093279155&signature=${signature}`;
-// //         console.log("Request URL:", url);
-
-// //         // Make GET request
-// //         const response = await axios.get(url, {
-// //             headers: { 'Accept': 'application/json' }
-// //         });
-
-// //         // Parse response
-// //         if (response.data.errCode === "0") {
-// //             console.log("Betting History Archive:", JSON.parse(response.data.result));
-// //         } else {
-// //             console.error("Error:", response.data.errMsg);
-// //         }
-// //     } catch (error) {
-// //         console.error("Request failed:", error.message);
-// //     }
-// // };
-
-// // // Example Usage
-// // const OPERATOR_COD = "rbdb";
-// // const SECRET_KE = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with actual secret key
-
-// // (async () => {
-// //     await exports.fetchArchivedBettingHistory(OPERATOR_COD, SECRET_KE);
-// // })();
-
-
-
-
-
-
-
-
-
-
-
-// // exports.getGameList = async (providerCode, lang, html5, reformatJson) => {
-// //     try {
-// //         if (!providerCode) {
-// //             throw new Error("Provider code is required.");
-// //         }
-// //         const OPERATOR_CODE = "rbdb";
-// //         const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
-// //         // Generate MD5 signature
-// //         const signature = crypto
-// //             .createHash("md5")
-// //             .update(OPERATOR_CODE.toLowerCase() + providerCode.toUpperCase() + SECRET_KEY)
-// //             .digest("hex")
-// //             .toUpperCase();
-
-// //         // Construct API request URL
-// //         const url = `http://fetch.336699bet.com/getGameList.ashx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&lang=${lang}&html5=${html5}&reformatjson=${reformatJson}&signature=${signature}`;
-// //         console.log(url)
-
-// //         // Fetch data from API
-// //         const response = await axios.get(url, {
-// //             headers: { "Content-Type": "application/json" },
-// //         });
-
-// //         return response.data;
-// //     } catch (error) {
-// //         console.error("Error fetching game list:", error.message);
-// //         return { errCode: "500", errMsg: error.message };
-// //     }
-// // };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // function generateSignaturet(operatorcode,password, providercode, type , username , secret_key) {
-// //     const hash = crypto
-// //     .createHash("md5")
-// //     .update(operatorcode + password + providercode + type + username + secret_key)
-// //     .digest("hex")
-// //     .toUpperCase();
-// //     return hash.toUpperCase();  // Convert to uppercase
-// //   }
 // // // Example usage:
 // // exports.getGameList("GE", "en", "1", "yes")
 // //     .then((data) => "console.log(data)")
@@ -488,30 +470,30 @@
 
 
 
-// // exports.createMember = async (req, res) => {
-// //     try {
-// //         // console.log(req.body);
-// //         const { username } = req.body;
+// exports.createMember = async (req, res) => {
+//     try {
+//         // console.log(req.body);
+//         const { username } = req.body;
         
-// //         const operatorCode = "rcdi";
-// //         const secretKey = "ce624ff66a45d7557128c228fa51b396";
-// //         const apiUrl = `http://fetch.336699bet.com/createMember.aspx`;
+//         const operatorCode = "rcdi";
+//         const secretKey = "ce624ff66a45d7557128c228fa51b396";
+//         const apiUrl = `http://fetch.336699bet.com/createMember.aspx`;
         
-// //         const signature = crypto.createHash('md5').update(`${operatorCode}${username}${secretKey}`).digest('hex').toUpperCase();
+//         const signature = crypto.createHash('md5').update(`${operatorCode}${username}${secretKey}`).digest('hex').toUpperCase();
         
-// //         const response = await axios.get(apiUrl, {
-// //             params: {
-// //                 operatorcode: operatorCode,
-// //                 username:username,
-// //                 signature: signature,
-// //             },
-// //         });
+//         const response = await axios.get(apiUrl, {
+//             params: {
+//                 operatorcode: operatorCode,
+//                 username:username,
+//                 signature: signature,
+//             },
+//         });
         
-// //         res.json(response.data);
-// //     } catch (error) {
-// //         res.status(500).json({ error: error.message });
-// //     }
-// // }
+//         res.json(response.data);
+//     } catch (error) {
+//         res.status(500).json({ error: error.message });
+//     }
+// }
 
 // require("dotenv").config();
 // const fs = require("fs");
@@ -828,153 +810,153 @@ exports.getEventOddsById = async (req, res) => {
     res.json(odds);
 }
 
-// // API Route for updating betting events
-// exports.updateBettingEvents = async (req, res) => {
-//     const { key, id } = req.body;
-//     await updateBettingEvents(key, id);
-//     res.json({ message: 'Betting events updated' });
-// }
+// API Route for updating betting events
+exports.updateBettingEvents = async (req, res) => {
+    const { key, id } = req.body;
+    await updateBettingEvents(key, id);
+    res.json({ message: 'Betting events updated' });
+}
 
-// // API Route for logging game session
-// exports.logGameSessionone = async (req, res) => {
-//     const { cert, userId, key, returnUrl } = req.body;
-//     await logGameSession(cert, userId, key, returnUrl);
-//     res.json({ message: 'Game session logged successfully' });
-// }
-// const OPERATOR_CODE="rcdi"
+// API Route for logging game session
+exports.logGameSessionone = async (req, res) => {
+    const { cert, userId, key, returnUrl } = req.body;
+    await logGameSession(cert, userId, key, returnUrl);
+    res.json({ message: 'Game session logged successfully' });
+}
+const OPERATOR_CODE="rcdi"
 
-// exports.placeBet = async (req, res) => {
-//     try {
-//       const { userId, amount, gameId } = req.body;
-//   const SECRET_KEY="ce624ff66a45d7557128c228fa51b396"
-//       const response = await axios.post(`${API_URL}/place_bet`, {
-//         operatorcode: OPERATOR_CODE,
-//         secret_key: SECRET_KEY,
-//         user_id: userId,
-//         amount,
-//         game_id: gameId,
-//       });
+exports.placeBet = async (req, res) => {
+    try {
+      const { userId, amount, gameId } = req.body;
+  const SECRET_KEY="ce624ff66a45d7557128c228fa51b396"
+      const response = await axios.post(`${API_URL}/place_bet`, {
+        operatorcode: OPERATOR_CODE,
+        secret_key: SECRET_KEY,
+        user_id: userId,
+        amount,
+        game_id: gameId,
+      });
   
-//       res.json(response.data);
-//     } catch (error) {
-//       console.error("Error placing bet:", error.message);
-//       res.status(500).json({ error: "Bet placement failed" });
-//     }
-//   }
+      res.json(response.data);
+    } catch (error) {
+      console.error("Error placing bet:", error.message);
+      res.status(500).json({ error: "Bet placement failed" });
+    }
+  }
   
-// //   // 🔹 2️⃣ Deposit Funds
-// //   exports.depositFunds = async (req, res) => {
-// //     try {
-// //       const { userId, amount } = req.body;
+  // 🔹 2️⃣ Deposit Funds
+  exports.depositFunds = async (req, res) => {
+    try {
+      const { userId, amount } = req.body;
   
-// //       const response = await axios.post(`${API_URL}/deposit`, {
-// //         operatorcode: OPERATOR_CODE,
-// //         secret_key: SECRET_KEY,
-// //         user_id: userId,
-// //         amount,
-// //       });
+      const response = await axios.post(`${API_URL}/deposit`, {
+        operatorcode: OPERATOR_CODE,
+        secret_key: SECRET_KEY,
+        user_id: userId,
+        amount,
+      });
   
-// //       res.json(response.data);
-// //     } catch (error) {
-// //       console.error("Error in deposit:", error.message);
-// //       res.status(500).json({ error: "Deposit failed" });
-// //     }
-// //   }
+      res.json(response.data);
+    } catch (error) {
+      console.error("Error in deposit:", error.message);
+      res.status(500).json({ error: "Deposit failed" });
+    }
+  }
   
-// //   // 🔹 3️⃣ Withdraw Funds
-// //  exports.withdrawFunds = async (req, res) => {
-// //     try {
-// //       const { userId, amount } = req.body;
+  // 🔹 3️⃣ Withdraw Funds
+ exports.withdrawFunds = async (req, res) => {
+    try {
+      const { userId, amount } = req.body;
   
-// //       const response = await axios.post(`${API_URL}/withdraw`, {
-// //         operatorcode: OPERATOR_CODE,
-// //         secret_key: SECRET_KEY,
-// //         user_id: userId,
-// //         amount,
-// //       });
+      const response = await axios.post(`${API_URL}/withdraw`, {
+        operatorcode: OPERATOR_CODE,
+        secret_key: SECRET_KEY,
+        user_id: userId,
+        amount,
+      });
   
-// //       res.json(response.data);
-// //     } catch (error) {
-// //       console.error("Error in withdrawal:", error.message);
-// //       res.status(500).json({ error: "Withdrawal failed" });
-// //     }
-// //   }
+      res.json(response.data);
+    } catch (error) {
+      console.error("Error in withdrawal:", error.message);
+      res.status(500).json({ error: "Withdrawal failed" });
+    }
+  }
 
 
 
 // app.post("/api/apiWallet/:website/queryBetHistoryForAllStatus",
     
-// const queryBetHistoryForAllStatus = async () => {
-//     try {
-//         const apiServerHost = "www.fwick7ets.xyz"; // Update with correct API host
-//         const website = "apiWallet"; // Update with your website ID if needed
-//         const aiUrl = `https://${apiServerHost}/api/${website}/queryBetHistoryForAllStatus`;
+const queryBetHistoryForAllStatus = async () => {
+    try {
+        const apiServerHost = "www.fwick7ets.xyz"; // Update with correct API host
+        const website = "apiWallet"; // Update with your website ID if needed
+        const aiUrl = `https://${apiServerHost}/api/${website}/queryBetHistoryForAllStatus`;
 
-//         // Define query parameters
-//         const startDate = "2025-06-19 01:00"; // Ensure valid date format
-//         const endDate = "2025-06-19 22:00";
-//         const userId = "samit4545";
-//         const betStatus = -1;
-//         const isTxnDetail = 0; // Default to no transaction details
-//         const timeZone = 0; // Default IST timezone
-//         const pageNumber = 1;
-//         const reportType = 0;
-//         const agent = "rcdi";
-//         const returnUrl = "";
+        // Define query parameters
+        const startDate = "2025-06-19 01:00"; // Ensure valid date format
+        const endDate = "2025-06-19 22:00";
+        const userId = "samit4545";
+        const betStatus = -1;
+        const isTxnDetail = 0; // Default to no transaction details
+        const timeZone = 0; // Default IST timezone
+        const pageNumber = 1;
+        const reportType = 0;
+        const agent = "rcdi";
+        const returnUrl = "";
 
-//         // Ensure the date range does not exceed 35 days for a user & 24 hours for all users
-//         const startDateObj = new Date(startDate);
-//         const endDateObj = new Date(endDate);
-//         const diffDays = (endDateObj - startDateObj) / (1000 * 60 * 60 * 24);
+        // Ensure the date range does not exceed 35 days for a user & 24 hours for all users
+        const startDateObj = new Date(startDate);
+        const endDateObj = new Date(endDate);
+        const diffDays = (endDateObj - startDateObj) / (1000 * 60 * 60 * 24);
 
-//         if (userId && diffDays > 35) {
-//             throw new Error("User query date range cannot exceed 35 days.");
-//         } else if (!userId && diffDays > 1) {
-//             throw new Error("Query for all users cannot exceed 24 hours.");
-//         }
+        if (userId && diffDays > 35) {
+            throw new Error("User query date range cannot exceed 35 days.");
+        } else if (!userId && diffDays > 1) {
+            throw new Error("Query for all users cannot exceed 24 hours.");
+        }
 
-//         // Define API request parameters
-//         const params = {
-//             cert: "GZG8Z0CPgh50aOq6",
-//             userId,
-//             startDate,
-//             endDate,
-//             betStatus,
-//             isTxnDetail,
-//             timeZone,
-//             pageNumber,
-//             reportType,
-//             agent,
-//             returnUrl
-//         };
+        // Define API request parameters
+        const params = {
+            cert: "GZG8Z0CPgh50aOq6",
+            userId,
+            startDate,
+            endDate,
+            betStatus,
+            isTxnDetail,
+            timeZone,
+            pageNumber,
+            reportType,
+            agent,
+            returnUrl
+        };
 
-//         // Send API request with correct headers & format
-//         const response = await axios.post(aiUrl, qs.stringify(params), {
-//             headers: { "Content-Type": "application/x-www-form-urlencoded" }
-//         });
+        // Send API request with correct headers & format
+        const response = await axios.post(aiUrl, qs.stringify(params), {
+            headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        });
 
-//         // Query database (MongoDB) with pagination
-//         const query = {
-//             startDate: { $gte: startDate },
-//             endDate: { $lte: endDate }
-//         };
+        // Query database (MongoDB) with pagination
+        const query = {
+            startDate: { $gte: startDate },
+            endDate: { $lte: endDate }
+        };
 
-//         if (userId) query.userId = userId;
-//         if (betStatus !== -1) query.betStatus = betStatus;
-//         if (agent) query.agent = agent;
+        if (userId) query.userId = userId;
+        if (betStatus !== -1) query.betStatus = betStatus;
+        if (agent) query.agent = agent;
 
-//         const results = await Bet.find(query)
-//             .skip((pageNumber - 1) * 2000)
-//             .limit(2000);
+        const results = await Bet.find(query)
+            .skip((pageNumber - 1) * 2000)
+            .limit(2000);
 
-//         console.log("DB Results:", results);
-//         console.log("API Response:", response.data);
+        console.log("DB Results:", results);
+        console.log("API Response:", response.data);
 
-//     } catch (error) {
-//         console.error("Error fetching bet history:", error.message);
-//     }
-// };
-// queryBetHistoryForAllStatus()
+    } catch (error) {
+        console.error("Error fetching bet history:", error.message);
+    }
+};
+queryBetHistoryForAllStatus()
 
 //   app.post("/api/apiWallet/:website/queryBetHistoryForAllStatus", 
     
@@ -1014,106 +996,4 @@ exports.getEventOddsById = async (req, res) => {
 
 
 
-
-// const fetchGamesFromApi = async () => {
-// //   console.log("Fetching games for:", result.company);
-// const operatorcode="rbdb"
-// const providercode="S6"
-// const PASSWORD="Asdf1234"
-// const secret_key="9332fd9144a3a1a8bd3ab7afac3100b0"
-//   try {
-//     // const { operatorcode, providercode, key: secret_key } = result;
-
-//     const signature = crypto
-//       .createHash("md5")
-//       .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
-//       .digest("hex")
-//       .toUpperCase();
-
-//     const response = await axios.get("https://gsmd.336699bet.com/getGameList.ashx", {
-//       params: {
-//         operatorcode,
-//         providercode,
-//         lang: "en",
-//         html: "0",
-//         reformatjson: "yes",
-//         signature,
-//       },
-//     });
-
-//     console.log(`Fetched ${response} games from API`);
-
-//     const gameData = JSON.parse(response.data?.gamelist || "[]");
-
-//     console.log(`Fetched ${gameData} games from API`);
-
-//     // const gameResults = await Promise.all(
-//     //   gameData.map((game) => addGameWithCategory(game, category_name))
-//     // );
-
-//     res.json({ success: true, data: gameResults });
-//   } catch (error) {
-//     console.error("Error fetching games:", error.message);
-//     return [];
-//   }
-// };
-
-
-// exports.getCategoriesWithGamesAndProvidersnew = async (req, res) => {
-//   try {
-//     // Fetch all categories
-//     const categories = await Category.find({});
-// console.log(categories)
-
-//     const categoriesWithGamesAndProviders = await Promise.all(
-//       categories.map(async (category) => {
-//         // Fetch games for each category
-//         const games = await GameListTable.aggregate([
-//           { $match: { category_name: categories.category_name,p_type:categori.p_type } },
-//           {
-//             $lookup: {
-//               from: "betprovidertables",
-//               localField: "p_code",
-//               foreignField: "providercode",
-//               as: "providers"
-//             }
-//           },
-//           {
-//             $project: {
-//               name: 1,
-//               "providers.providercode": 1
-//             }
-//           }
-//         ]);
-//         console.log(games)
-//         const providerSet = new Set();
-//         games.forEach(game => {
-//           game.providers.forEach(provider => providerSet.add(provider.providercode));
-//         });
-//         console.log(providerSet)
-//         const uniqueProviders = await BetProviderTable.find(
-//           { providercode: { $in: Array.from(providerSet) } },
-//           { company: 1, providercode: 1, url: 1, image_url: 1, _id: 0, p_type: 1 }
-//         );
-//         console.log(uniqueProviders)
-//         // Format the result
-//         return {
-//           category: {
-//             name: category.category_name,
-//             image: category.image,
-//             id_active: category.id_active, // Check if category is active or inactive
-//             uniqueProviders: uniqueProviders
-//           },
-
-//           // uniqueProviders: uniqueProviders
-
-//         };
-//       })
-//     );
-    
-// console.log(games)
-//     res.json(categoriesWithGamesAndProviders);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// }
+ */

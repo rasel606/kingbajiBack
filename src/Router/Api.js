@@ -176,7 +176,7 @@ router.post('/getUser_Transaction_History', TransactionController.getUserTransac
 // router.post('/add-sports',AdminController.AddSportsBetting);
 router.get('/search',ModelBettingController.searchGames)
 router.post('/casino_item_add', ModelBettingController.CasinoItemAdd)
-router.post('/casino_item_add_new', blank2.CasinoItemAddNEWs )
+// router.post('/casino_item_add_new', blank2.CasinoItemAddNEWs )
 router.post('/create-category', ModelBettingController.CreateCategory)
 router.post('/casino_item_update', ModelBettingController.CasinoItemSingleUpdate)
 router.get('/get-all-category', ModelBettingController.GetAllCategory)

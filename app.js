@@ -3,7 +3,7 @@ const router = require('./src/Router/Api');
 const axios = require("axios");
 const path = require("path");
 const app = new express()
-
+// const httpsProxyAgent = require('https-proxy-agent');
 
 
 //middleware
@@ -22,7 +22,7 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:["https://kingbaji365.live","https://www.fwick7ets.xyz","http://co.king5623.live.kingbaji365.live"], // Allow only your frontend origin
+    origin:["https://kingbaji365.live","https://www.fwick7ets.xyz","http://localhost:3000"], // Allow only your frontend origin
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: 'Content-Type, Authorization'
@@ -32,7 +32,7 @@ app.get('/', function (req, res) {
     console.log('index.html');
     res.json('index.html');
   });
-  
+
 
 
 // ✅ Proxy Route (Forwards Requests via Indian Proxy)

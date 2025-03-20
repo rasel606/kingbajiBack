@@ -5,7 +5,7 @@ const BetProviderTable = require('../Models/BetProviderTable');
 const { default: axios } = require('axios');
 const GameListTable = require('../Models/GameListTable');
 const Category = require('../Models/Category');
-
+const proxyAgent = require('./proxyConfig');
 const fetchBalance = async (agent, username) => {
   try {
     const signature = crypto.createHash('md5').update(
@@ -525,7 +525,57 @@ exports.launchGamePlayer = async (req, res) => {
         await new Promise((resolve) => setTimeout(resolve, 2000));
         game_url = await fetchApi("launchGames.aspx", field);
         console.log("game_url:", game_url);
+
+        if (game_url.errCode !== "0") {
+          return res.status(400).json({ errCode: game_url.errCode, errMsg: game_url.errMsg });
+        }
+
+        const gameUrl = game_url.gameUrl;
+        console.log("gameUrl", gameUrl);
+
+        // Extract cert and key from the URL using regex
+        const certMatch = gameUrl.match(/cert=([^&]+)/);
+        const keyMatch = gameUrl.match(/key=([^&]+)/);
+
+        if (!certMatch && !keyMatch && game_id !== 0) {
+          return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+        }
+
+        // Assign extracted values correctly
+        const cert = certMatch[1];
+        const key = keyMatch[1];
+
+        console.log("Extracted cert:", cert);
+        console.log("Extracted key:", key);
+
+        // Define the AI wallet API URL
+        const aiUrl = "https://www.fwick7ets.xyz/apiWallet/player/YFG/login";
+
+        const params = {
+          cert,
+          userId: userId, // Ensure this is defined
+          key,
+          extension1: "",
+          extension2: "",
+          extension3: "",
+          extensionJson: "",
+          eventType: "",
+          returnUrl: "http://localhost:3000/"
+        };
+
+        // Make the API request
+        const respo = await axios.get(aiUrl, {
+          params,
+          httpsAgent: proxyAgent, // Use httpsAgent instead of proxyAgent
+          headers: { "User-Agent": "Mozilla/5.0" } // Optional: Add headers
+      });
+
+        console.log("AI Wallet Response:", respo.data);
+        console.log("Game API Response:", respo);
+
+        // Send the response back
         return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+        // return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
 
       }
 
