@@ -22,7 +22,7 @@ app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin:"*", // Allow only your frontend origin
+    origin:"kingbaji.live", // Allow only your frontend origin
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: 'Content-Type, Authorization'
