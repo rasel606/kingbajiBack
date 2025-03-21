@@ -315,7 +315,7 @@ const refreshBalancebefore = async (userId) => {
 
 
 
-    }, 800);
+    }, 300);
   }
 
 
@@ -374,13 +374,13 @@ exports.launchGamePlayer = async (req, res) => {
       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
     }
     const user = await User.findOne({ userId });
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    let amount = await refreshBalancebefore(user.userId);
+
+    let amount = user.balance;
     const last_game_id = user.last_game_id;
     console.log("amount", amount)
 
     const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
-    console.log("Newgame", Newgame.p_type);
+    console.log("Newgame", Newgame);
     // Refresh balance if last game exists
 
     const agent = await GameListTable.aggregate([
@@ -408,17 +408,46 @@ exports.launchGamePlayer = async (req, res) => {
       }
     ]);
 
-    // console.log("agent", agent)
-
-
-    console.log("agent", agent[0])
 
 
 
+    console.log("agent", agent)
 
 
 
 
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    if (last_game_id) {
+
+
+      const resBalance = await refreshBalancebefore(user.userId, agent);
+      console.log("resBalance", resBalance)
+      // if (!resBalance || resBalance.errCode !== 0) {
+      //   return res.json(resBalance);
+      // }
+      // amount += resBalance.balance || 0;
+
+      // console.log("amount-3", amount)
+    }
 
     // Insufficient balance check
     if (amount < 1) {
@@ -427,7 +456,21 @@ exports.launchGamePlayer = async (req, res) => {
 
     // Fetch game and provider details using aggregation
 
+    await gameTable.create({
+      userId: user.userId,
+      agentId: provider.providercode,
+      gameId: Newgame.g_code,
+      currencyId: user.currencyId,
+      betAmount: amount,
+      transactionId: transId
+    });
 
+    // Update user balance
+    await User.updateOne(
+      { userId: user.userId },
+      { balance: 0, last_game_id: game_id, agentId: provider.providercode }
+      // {upsert: true}
+    );
 
 
     if (!agent || agent.length === 0) {
@@ -437,7 +480,7 @@ exports.launchGamePlayer = async (req, res) => {
     const provider = agent[0]
 
 
-    // console.log("provider", provider);
+    console.log("provider", provider);
     let game_url;
 
 
@@ -462,11 +505,11 @@ exports.launchGamePlayer = async (req, res) => {
       signature: signature
     };
 
-    // console.log("field - All", field);
+    console.log("field - All", field);
 
 
 
-    if (user.balance > 0 && amount > 0) {
+    if (user.balance > 0) {
       // Generate transaction ID
       const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
 
@@ -482,9 +525,7 @@ exports.launchGamePlayer = async (req, res) => {
         provider.key
 
       )
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      // console.log("signature blance", signature);
+      console.log("signature blance", signature);
       // Make transfer API call
       const transferResponse = await fetchApi("makeTransfer.aspx", {
         operatorcode: provider.operatorcode,
@@ -499,79 +540,88 @@ exports.launchGamePlayer = async (req, res) => {
 
 
 
-      console.log("transferResponse -------------w", transferResponse);
+      console.log("transferResponse", transferResponse);
 
-      if (transferResponse.errCode === "0" && transferResponse.errMsg === 'SUCCESS') {
-        console.log("amount-4", amount)
-        await GameTable.create({
-          userId: user.userId,
-          agentId: provider.providercode,
-          gameId: Newgame.g_code,
-          currencyId: user.currencyId,
-          betAmount: amount,
-          transactionId: transId
-        });
+      if (!transferResponse || transferResponse.errCode !== "0") {
 
-        // Update user balance
-        await User.updateOne(
-          { userId: user.userId },
-          { balance: 0, last_game_id: Newgame.g_code, agentId: provider.providercode }
-          // {upsert: true}
-        );
-
-
-
-
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        game_url = await fetchApi("launchGames.aspx", field);
-        console.log("game_url:", game_url);
-
-        if (game_url.errCode !== "0") {
-          return res.status(400).json({ errCode: game_url.errCode, errMsg: game_url.errMsg });
-        }
-
-        const gameUrl = game_url.gameUrl;
-        console.log("gameUrl", gameUrl);
-
-        // Extract cert and key from the URL using regex
-        const certMatch = gameUrl.match(/cert=([^&]+)/);
-        const keyMatch = gameUrl.match(/key=([^&]+)/);
-
-        if (!certMatch && !keyMatch && game_id !== 0) {
-          return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
-        }
-
-        // Assign extracted values correctly
-        const cert = certMatch[1];
-        const key = keyMatch[1];
-
-        console.log("Extracted cert:", cert);
-        console.log("Extracted key:", key);
-
-        // Define the AI wallet API URL
-        const aiUrl = "https://www.fwick7ets.xyz/apiWallet/player/YFG/login";
-
-        const params = {
-          cert,
-          userId: userId, // Ensure this is defined
-          key,
-          extension1: "",
-          extension2: "",
-          extension3: "",
-          extensionJson: "",
-          eventType: "",
-          returnUrl: "http://localhost:3000/"
-        };
-
-        // Make the API request
-        const respo = await axios.get(aiUrl, { params });
-        console.log("Game API Response:", respo);
-
-        // Send the response back
-        return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
-        // return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
-
+        return res.json({ errCode: 2, errMsg: "Failed to load balance." });
       }
+
+
+     
+
+      const signatureLunchGame = generateSignature(
+        provider.operatorcode,
+        provider.auth_pass,
+        provider.providercode,
+        provider.game_type,
+        user.userId,
+        provider.key
+
+      )
+      const field = {
+        operatorcode: provider.operatorcode,
+        providercode: provider.providercode,
+        username: user.userId,
+        password: provider.auth_pass,
+        type: Newgame.p_type,
+        gameid: game_id,
+        lang: "en-US",
+        html5: 1,
+        signature: signatureLunchGame
+      };
+      console.log("field:", field);
+
+
+
+      game_url = await fetchApi("launchGames.aspx", field);
+
+      if (game_url.errCode !== "0") {
+        return res.status(400).json({ errCode: game_url.errCode, errMsg: game_url.errMsg });
+      }
+
+      const gameUrl = game_url.gameUrl;
+      console.log("gameUrl", gameUrl);
+
+      // Extract cert and key from the URL using regex
+      const certMatch = gameUrl.match(/cert=([^&]+)/);
+      const keyMatch = gameUrl.match(/key=([^&]+)/);
+
+      if (!certMatch && !keyMatch && game_id !== 0) {
+        return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+      }
+
+      // Assign extracted values correctly
+      const cert = certMatch[1];
+      const key = keyMatch[1];
+
+      console.log("Extracted cert:", cert);
+      console.log("Extracted key:", key);
+
+      // Define the AI wallet API URL
+      const aiUrl = "https://www.fwick7ets.xyz/apiWallet/player/YFG/login";
+
+      const params = {
+        cert,
+        userId: userId, // Ensure this is defined
+        key,
+        extension1: "",
+        extension2: "",
+        extension3: "",
+        extensionJson: "",
+        eventType: "",
+        returnUrl: "http://localhost:3000/"
+      };
+
+      // Make the API request
+      const respo = await axios.get(aiUrl, { params });
+      console.log("Game API Response:", respo);
+
+      // Send the response back
+      return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+      // return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+
+
 
 
 

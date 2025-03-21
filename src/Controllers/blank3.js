@@ -1,10 +1,151 @@
-/* 
-const axios = require("axios");
-const crypto = require("crypto");
+
+// const axios = require("axios");
+// const crypto = require("crypto");
 
 
 // require("dotenv").config();
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const crypto = require('crypto');
+const axios = require('axios');
+
+const operatorCode = "rbdb";
+const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
+const providerCode = "JD";
+const username = "samit1234";
+const password = "asdf1234";
+// const crypto = require("crypto");
+const API_URL = "http://fetch.336699bet.com"; // Replace with actual log URL
+const OPERATOR_CODE = "rcdi"; // Replace with your operator code
+//const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with your secret key
+
+// Generate MD5 Signature
+
+
+
+// async function markBettingHistory(tickets) {
+//     try {
+//         // Validate tickets format (ensure it's a comma-separated string)
+//         if (!Array.isArray(tickets) || tickets.length === 0) {
+//             throw new Error("Invalid ticket format. Provide an array of ticket IDs.");
+//         }
+//         const ticketString = tickets.join(",");
+
+//         // Generate MD5 signature
+//         const signature = crypto.createHash("md5")
+//             .update(OPERATOR_CODE + SECRET_KEY)
+//             .digest("hex")
+//             .toUpperCase();
+
+//         // Construct request body
+//         const requestBody = {
+//             ticket: ticketString,
+//             operatorcode: OPERATOR_CODE,
+//             signature: signature
+//         };
+
+//         console.log("Request Body:", requestBody); // Debugging log
+
+//         // Send POST request
+//         const response = await axios.post(`http://fetch.336699bet.com/markbyjson.ashx`, requestBody, {
+//             headers: {
+//                 "Content-Type": "application/json",
+//                 "Accept": "application/json"
+//             }
+//         });
+
+//         console.log("Raw Response:", response.data); // Debugging log
+
+//         // Handle API response
+//         if (response.data.errCode !== "0") {
+//             throw new Error(`API Error: ${response.data.errMsg}`);
+//         }
+
+//         return response.data; // Success response
+//     } catch (error) {
+//         console.error("Error marking betting history:", error.message);
+//         return null;
+//     }
+// }
+
+// // Example Usage
+// markBettingHistory(["1", "2", "3", "4", "5", "6", "7", "8"]).then(data => console.log(data));
+
+// // Example Usage
+
+
+// // const crypto = require('crypto');
+// // const axios = require('axios');
+
+// // const operatorCode = "rbdb";
+
+// const LOG_URL = "http://fetch.336699bet.com";
+
+// const generateSignature = () => {
+//     const signatureString = `${operatorCode}${SECRET_KEY}`;
+//     return crypto.createHash("md5").update(signatureString).digest("hex").toUpperCase();
+// };
+
+// // Route to fetch betting history
+// exports.getBettingHistory = async (req, res) => {
+//     try {
+//         const signature = generateSignature(operatorCode, SECRET_KEY);
+//         const requestUrl = `${LOG_URL}/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=0&signature=${signature}`;
+
+//         const response = await axios.get(requestUrl, { headers: { 'Accept': 'application/json' } });
+
+//         if (response.data.errCode === "0") {
+//             res.json({
+//                 success: true,
+//                 bettingHistory: JSON.parse(response.data.result),
+//                 lastVersionKey: response.data.lastversionkey,
+//             });
+//         } else {
+//             res.status(400).json({ success: false, message: response.data.errMsg });
+//         }
+//     } catch (error) {
+//         console.error("Error fetching betting history:", error.message);
+//         res.status(500).json({ success: false, message: "Internal Server Error" });
+//     }
+// }
+
+
+// Example Usage
+// getBettingHistory(operatorCode)
+//     .then(response => console.log(response))
+//     .catch(error => console.error(error.message));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* 
 
 
 const fetchBettingHistory = async (req,res) => {
