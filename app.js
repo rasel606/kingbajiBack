@@ -101,7 +101,7 @@ mongoose.connect(URI,)
 
 
 app.use("/api/v1", router);
-app.use("/api/v1", function (req, res) {
+app.get("/api/v2", function (req, res) {
     console.log('api new running');
     res.json('api new running');
   })
