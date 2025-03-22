@@ -421,7 +421,7 @@ exports.launchGamePlayer = async (req, res) => {
 
 
 
- 
+    const provider = agent[0]
 
 
 
@@ -455,8 +455,8 @@ exports.launchGamePlayer = async (req, res) => {
     }
 
     // Fetch game and provider details using aggregation
-
-    await gameTable.create({
+    const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
+    await GameTable.create({
       userId: user.userId,
       agentId: provider.providercode,
       gameId: Newgame.g_code,
@@ -477,7 +477,7 @@ exports.launchGamePlayer = async (req, res) => {
       return res.json({ errCode: 1, errMsg: "Agent not found." });
     }
 
-    const provider = agent[0]
+   
 
 
     console.log("provider", provider);
@@ -511,7 +511,7 @@ exports.launchGamePlayer = async (req, res) => {
 
     if (user.balance > 0) {
       // Generate transaction ID
-      const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
+      
 
 
       const signature = generateSignature(
@@ -592,9 +592,11 @@ exports.launchGamePlayer = async (req, res) => {
       }
 
       // Assign extracted values correctly
-      const cert = certMatch[1];
-      const key = keyMatch[1];
-
+     // Extract cert and key without re-encoding
+const cert = certMatch[1];
+const key = keyMatch[1]; // No encodeURIComponent() here
+const newuser = provider.operatorcode + userId
+      console.log("newuser:", newuser);
       console.log("Extracted cert:", cert);
       console.log("Extracted key:", key);
 
@@ -602,9 +604,9 @@ exports.launchGamePlayer = async (req, res) => {
       const aiUrl = "https://www.fwick7ets.xyz/apiWallet/player/YFG/login";
 
       const params = {
-        cert,
-        userId: userId, // Ensure this is defined
-        key,
+        cert: cert,
+        userId: newuser, // Ensure this is defined
+        key: key,
         extension1: "",
         extension2: "",
         extension3: "",
@@ -614,7 +616,12 @@ exports.launchGamePlayer = async (req, res) => {
       };
 
       // Make the API request
-      const respo = await axios.get(aiUrl, { params });
+      const respo = await axios.get(aiUrl, { params,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        }
+        
+       });
       console.log("Game API Response:", respo);
 
       // Send the response back
