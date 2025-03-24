@@ -28,7 +28,7 @@ const axios = require('axios');
 
 const operatorCode = "rbdb";
 const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0";
-const providerCode = "JD";
+const providerCode = "JA";
 const username = "samit1234";
 const password = "asdf1234";
 // const crypto = require("crypto");
@@ -37,6 +37,70 @@ const OPERATOR_CODE = "rcdi"; // Replace with your operator code
 //const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"; // Replace with your secret key
 
 // Generate MD5 Signature
+
+
+
+
+
+// Function to generate MD5 signature
+function generateSignature(operatorCode, password, providerCode, type, username, secretKey) {
+  const rawString = operatorCode + password + providerCode + type + username + secretKey;
+  return crypto.createHash("md5").update(rawString).digest("hex").toUpperCase();
+}
+
+
+
+const gameIdplay = async () => {
+
+
+
+  const OPERATOR_CODE = "rbdb"
+  const username = "samit1234"
+  const password = "asdf1234"
+  const type = "SL"
+  const providerCode = "PR"
+  const gameId = "vswaysstrwild"
+  const lang = "en-US"
+  const html5 = "1"
+  const blimit = ""
+  const SECRET_KEY = "9332fd9144a3a1a8bd3ab7afac3100b0"
+
+  if (!providerCode || !username || !password || !type) {
+    return res.status(400).json({ error: "Missing required parameters." });
+  }
+
+  // Generate the signature
+  const signature = generateSignature(OPERATOR_CODE, password, providerCode, type, username, SECRET_KEY);
+
+  // Construct API request URL
+  const requestUrl = `http://fetch.336699bet.com/launchGames.aspx?operatorcode=${OPERATOR_CODE}&providercode=${providerCode}&username=${username}&password=${password}&type=${type}&gameid=${gameId}&lang=${lang}&html5=${html5}&signature=${signature}&blimit=${blimit}`;
+
+  // Send request to external API
+  const response = await axios.get(requestUrl);
+  console.log(response.data);
+
+}
+
+
+
+gameIdplay()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

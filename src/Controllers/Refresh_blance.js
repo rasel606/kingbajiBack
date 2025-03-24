@@ -456,21 +456,7 @@ exports.launchGamePlayer = async (req, res) => {
 
     // Fetch game and provider details using aggregation
     const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
-    await GameTable.create({
-      userId: user.userId,
-      agentId: provider.providercode,
-      gameId: Newgame.g_code,
-      currencyId: user.currencyId,
-      betAmount: amount,
-      transactionId: transId
-    });
-
-    // Update user balance
-    await User.updateOne(
-      { userId: user.userId },
-      { balance: 0, last_game_id: game_id, agentId: provider.providercode }
-      // {upsert: true}
-    );
+   
 
 
     if (!agent || agent.length === 0) {
@@ -541,6 +527,21 @@ exports.launchGamePlayer = async (req, res) => {
 
 
       console.log("transferResponse", transferResponse);
+      await GameTable.create({
+        userId: user.userId,
+        agentId: provider.providercode,
+        gameId: Newgame.g_code,
+        currencyId: user.currencyId,
+        betAmount: amount,
+        transactionId: transId
+      });
+  
+      // Update user balance
+      await User.updateOne(
+        { userId: user.userId },
+        { balance: 0, last_game_id: game_id, agentId: provider.providercode }
+        // {upsert: true}
+      );
 
       if (!transferResponse || transferResponse.errCode !== "0") {
 

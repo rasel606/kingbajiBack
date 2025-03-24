@@ -516,19 +516,56 @@ exports.BetPrice = async (req, res) => {
 
 
 
+async function addGameWithCategory(gameData, category_name) {
 
+
+  
+  // if (!category_name) {
+    let category = await Casino_category_table.findOne({ category_name });
+  //   category = new Casino_category_table.create({ category_name });
+
+  // }
+
+  let newGame;
+  if (!category) {
+    newGame = await GameListTable.create(
+      // Assuming `game_id` is unique
+      { ...gameData, category_name },
+
+    );
+  } else {
+    // Assuming `game_id` is unique
+    
+    newGame = await GameListTable.findOneAndUpdate(
+      { g_code: gameData.g_code },
+      { ...gameData, category_name: category_name },
+      { upsert: true, new: true }
+    );
+  }
+
+
+  console.log("Added :", newGame);
+
+
+  return { newGame, category };
+}
 
 const fetchGamesFromApi = async (result, category_name) => {
-  console.log("Fetching games for:", result.company);
-
+  console.log("Signature:", result.operatorcode, result.providercode, result.key);
   try {
-    const { operatorcode, providercode, key: secret_key } = result;
+    const operatorcode = result.operatorcode;
+    const providercode = result.providercode;
+    const secret_key = result.key; // Replace with actual secret key
 
+    console.log("Signature:", operatorcode, providercode, secret_key);
     const signature = crypto
       .createHash("md5")
       .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
       .digest("hex")
       .toUpperCase();
+
+
+    console.log("Signature:", signature);
 
     const response = await axios.get("https://gsmd.336699bet.com/getGameList.ashx", {
       params: {
@@ -540,22 +577,34 @@ const fetchGamesFromApi = async (result, category_name) => {
         signature,
       },
     });
-    console.log(`Fetched ${response.data} games from API`);
-    const gameData = response.data?.gamelist ? JSON.parse(response.data.gamelist) : [];
 
-    console.log(`Fetched ${gameData.length} games from API`);
-    console.log(`Fetched ${gameData} games from API`);
+    // console.log("Fetched Games:", response);
 
-    return await Promise.all(gameData.map((game) => addGameWithCategory(game, category_name)));
+    const gameData = JSON.parse(response.data?.gamelist);
+    // console.log("Fetched Games:", gameData.length);
+
+    let gameResults = [];
+
+    for (let game of gameData) {
+      const addedGame = await addGameWithCategory(game, category_name);
+      gameResults.push(addedGame);
+    }
+    // await addGameWithCategory(gameData, category_name);
+    // console.log("Added Games:", gameResults.length);
+    return gameResults;
   } catch (error) {
     console.error("Error fetching games:", error.message);
-    throw new Error("Failed to fetch games from API");
+    return [];
   }
 };
 
-exports.CasinoItemAdd = async (req, res) => {
-  console.log("Received request:", req.body);
 
+
+
+
+exports.CasinoItemAdd = async (req, res) => {
+
+  console.log(req.body);
   try {
     const {
       company,
@@ -569,9 +618,18 @@ exports.CasinoItemAdd = async (req, res) => {
       key,
       auth_pass,
       currency_id,
-      category_name,
-      image_url,
+      category_name
     } = req.body;
+    let image_url = req.body.image_url;
+
+    // Upload image to ImageBB if provided
+    // if (req.file) {
+    //   const imageData = req.file.buffer.toString("base64");
+    //   const response = await axios.post("https://api.imgbb.com/1/upload", null, {
+    //     params: { key: IMAGEBB_API_KEY, image: imageData },
+    //   });
+    //   image_url = response.data.data.url;
+    // }
 
     const updateData = {
       company,
@@ -587,28 +645,33 @@ exports.CasinoItemAdd = async (req, res) => {
       currency_id,
       image_url,
       updatetimestamp: Date.now(),
+
     };
+    console.log("Update Data:",updateData);
 
-    console.log("Updating provider data:", updateData);
-
-    let result = await BetProviderTable.findOneAndUpdate(
-      { company },
+    let result;
+    if (company) {
+      
+      result = await BetProviderTable.findOneAndUpdate(
+        { company },
       updateData,
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    console.log("Provider updated:", result);
-
+        { new: true, upsert: true }
+      );
+      console.log("meet:",result)
+    } else {
+      result = await BetProviderTable.create(updateData);
+      console.log("meet: 1",result)
+    }
     const NewResult = await fetchGamesFromApi(result, category_name);
+    console.log(NewResult);
 
-    console.log(`Successfully processed ${NewResult.length} games.`);
 
     res.json({ success: true, data: NewResult });
   } catch (error) {
     console.error("Error adding casino item:", error);
     res.status(500).json({ success: false, error: error.message });
   }
-};
+}
 
 
 exports.CasinoItemSingleUpdate = async (req, res) => {
