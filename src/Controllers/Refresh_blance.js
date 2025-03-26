@@ -6,6 +6,13 @@ const { default: axios } = require('axios');
 const GameListTable = require('../Models/GameListTable');
 const Category = require('../Models/Category');
 
+
+
+const { HttpsProxyAgent } = require("https-proxy-agent");
+
+// Proxy Configuration
+const proxyAgent = new HttpsProxyAgent(`http://root:0000@147.93.108.184:3128`);
+
 const fetchBalance = async (agent, username) => {
   try {
     const signature = crypto.createHash('md5').update(
@@ -42,7 +49,9 @@ function randomStr() {
 
 
 
-
+function generateSignature(...args) {
+  return crypto.createHash('md5').update(args.join('')).digest('hex').toUpperCase();
+}
 
 
 
@@ -594,36 +603,53 @@ exports.launchGamePlayer = async (req, res) => {
 
       // Assign extracted values correctly
      // Extract cert and key without re-encoding
-const cert = certMatch[1];
-const key = keyMatch[1]; // No encodeURIComponent() here
+     const cert = decodeURIComponent(certMatch[1]);
+     const key = decodeURIComponent(keyMatch[1]);
 const newuser = provider.operatorcode + userId
       console.log("newuser:", newuser);
       console.log("Extracted cert:", cert);
       console.log("Extracted key:", key);
 
       // Define the AI wallet API URL
-      const aiUrl = "https://www.fwick7ets.xyz/apiWallet/player/YFG/login";
+      
 
-      const params = {
-        cert: cert,
-        userId: newuser, // Ensure this is defined
-        key: key,
-        extension1: "",
-        extension2: "",
-        extension3: "",
-        extensionJson: "",
-        eventType: "",
-        returnUrl: "http://localhost:3000/"
-      };
+       const aiUrl = "https://www.fwick7ets.xyz/apiWallet/player/YFG/login";
+    
+            const params = {
+                cert,
+                userId: newuser,
+                key: encodeURIComponent(key).replace(/%20/g, "+"),
+                extension1: "",
+                extension2: "",
+                extension3: "",
+                extensionJson: "",
+                eventType: "",
+                returnUrl: "http://localhost:3000/"
+            };
+    
+            // Store user session in cookies
+            
+    
 
       // Make the API request
-      const respo = await axios.get(aiUrl, { params,
+      // const queryParams = new URLSearchParams(params);
+      // // Make the request with the fully constructed URL
+      // const formData = new URLSearchParams(params).toString();
+      
+ 
+      
+      // Make the API request with corrected headers and params
+      const respo = await axios({
+        method: 'GET', // or 'POST' based on API requirements
+        url: aiUrl,
+        params,
+        httpsAgent: proxyAgent, // ✅ Ensure agent is an object, not an array
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'Content-Type': 'application/json'
         }
-        
-       });
-      console.log("Game API Response:", respo);
+        ,credentials: 'include' 
+      })
+      console.log(respo)
 
       // Send the response back
       return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
@@ -654,6 +680,35 @@ function generateSignature(...args) {
   return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
 }
 
+
+
+
+// Helper function to set login cookies
+const setLoginCookies = (res, user) => {
+  const cookiesOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Set to true in production
+    maxAge: 60 * 60 * 1000, // 1 hour expiration
+  };
+
+  res.cookie('userId', user.userId, cookiesOptions);
+  res.cookie('userKey', user.key, cookiesOptions);
+
+  // Set any other necessary cookies here
+};
+
+// Helper function to send webhook notifications
+const sendWebhook = async (data) => {
+  try {
+    const webhookUrl = 'http://localhost:5000/webhook'; // Replace with actual webhook URL
+    // const response = await axios.post(webhookUrl, data);
+    console.log('Webhook sent successfully:');
+  } catch (error) {
+    console.error('Error sending webhook:', error.message);
+  }
+};
+
+// Helper function to generate signature
 
 
 

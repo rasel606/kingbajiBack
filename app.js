@@ -1,115 +1,92 @@
 const express = require('express');
 const router = require('./src/Router/Api');
 const axios = require("axios");
-const path = require("path");
-const app = new express()
-// const httpsProxyAgent = require('https-proxy-agent');
-
-
-//middleware
-//middleware
-// Middleware
-// const rateLimit = require('express-rate-limit');
-// const helmet = require('helmet');
 const mongoose = require('mongoose');
-
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const mongoSanitize = require('express-mongo-sanitize');
 const cors = require('cors');
+const dotenv = require("dotenv");
 
+dotenv.config();
+const app = express();
 
-// Middleware setup
+// ✅ Middleware Setup
 app.use(express.static("public"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ✅ CORS Configuration
 app.use(cors({
-    origin:"*", // Allow only your frontend origin
+    origin: "*", // Change to your frontend URL in production
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: 'Content-Type, Authorization'
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.get('/', function (req, res) {
-    console.log('index.html');
-    res.json('index.html');
-  });
+// Handle Preflight Requests
+app.options('*', cors());
 
+// ✅ MongoDB Setup
+const URI = process.env.MONGODB_URI || `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
+mongoose.connect(URI)
+    .then(() => console.log("✅ Connected to MongoDB"))
+    .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
-// ✅ Proxy Route (Forwards Requests via Indian Proxy)
+// ✅ Security Middleware
+app.use(mongoSanitize());
+
+// ✅ Basic Route for Testing
+app.get('/', (req, res) => {
+    console.log('✔️ API Running');
+    res.json({ message: "API is working!" });
+});
+
+// ✅ Proxy Setup (For Third-Party API Requests)
+app.use('/proxy', createProxyMiddleware({
+    target: 'http://147.93.108.184:3128', // Proxy Server
+    changeOrigin: true,
+    secure: false,
+    auth: 'root:0000', // Proxy authentication
+    pathRewrite: { '^/proxy': '' },
+    logLevel: 'debug',
+    onProxyRes: (proxyRes) => {
+        proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+    }
+}));
+
+// Function to handle the proxy requests
 // app.use('/proxy', async (req, res) => {
-//     const targetUrl = req.query.url;
-
-//     if (!targetUrl) {
-//         return res.status(400).json({ error: "Missing target URL" });
-//     }
-
 //     try {
-//         const response = await axios({
+//         // Anonymize the proxy URL
+//         const anonymizedProxy = await anonymizeProxy(proxyUrl);
+
+//         // Set up the proxied request
+//         const proxiedRequest = await fetch(anonymizedProxy, {
 //             method: req.method,
-//             url: targetUrl,
-//             headers: { ...req.headers },
-//             data: req.body,
-//             proxy: PROXY_CONFIG, // 🔥 Uses Indian Proxy
-//             timeout: 10000 // 10s timeout
+//             headers: req.headers,
+//             body: req.body
 //         });
 
-//         res.json(response.data);
+//         proxiedRequest.pipe(res);
 //     } catch (error) {
-//         console.error("Proxy Error:", error.message);
-//         res.status(500).json({ error: "Proxy request failed" });
+//         console.error('Proxy Error:', error);
+//         res.status(500).json({ error: 'Error with proxy service' });
 //     }
 // });
 
-const connectedUsers = {};
+// Route Handlers
+app.use("/api/v1", router);
 
-// router.use((req, res, next) => {
-//     res.setHeader("Access-Control-Allow-Origin", "https://kingbaji365.live");
-//     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-//     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-//     res.setHeader("Access-Control-Allow-Credentials", "true");
-//     next();
-// });
+app.get("/api/v2", (req, res) => {
+    console.log('API v2 is running');
+    res.json('API v2 is running');
+});
 
+// Handle 404 for unknown routes
+app.use("*", (req, res) => {
+    res.status(404).json({ status: "Fail", data: "Data not found" });
+});
 
-
-app.use(mongoSanitize());
-// app.use(helmet());
-
-app.set('trust proxy', true);
-
-
-
-// app.use(express.static(path.join(__dirname, 'build')));
-
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'build', 'index.html'));
-// });
-
-let URI = `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`
-
-// Route
-
-
-mongoose.connect(URI,)
-    .then(() => { console.log("connect") })
-    .catch((error) => {
-
-
-    })
-
-
-
-app.use("/v1", router);
-app.get("/api/v2", function (req, res) {
-    console.log('api new running');
-    res.json('api new running');
-  })
-
-
-// app.use("*", (req, res) => {
-//     res.status(404).json({ status: "Fail", data: "Data not found" })
-// });
-
-
-
-module.exports = app
+// Export the Express app
+module.exports = app;
