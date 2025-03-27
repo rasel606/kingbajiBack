@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ✅ CORS Configuration
 app.use(cors({
-    origin: "*", // Change to your frontend URL in production
+    origin: "http://kingbaji.live", // Change to your frontend URL in production
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
