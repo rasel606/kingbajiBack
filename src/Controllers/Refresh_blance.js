@@ -645,14 +645,36 @@ const newuser = provider.operatorcode + userId
         params,
         httpsAgent: proxyAgent, // ✅ Ensure agent is an object, not an array
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+          "Referer": "https://kingbaji.live/",
+          "Origin": "https://kingbaji.live/",
+          "Cookie": req.headers.cookie // Forward client's cookies
+      }
         ,credentials: 'include' 
       })
+
+      const cookies = respo.headers["set-cookie"];
+        if (cookies) {
+            // Send cookies to the client
+            cookies.forEach(cookie => {
+                res.setHeader("Set-Cookie", cookie);
+            });
+        }
+
       console.log(respo)
 
       // Send the response back
-      return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+      return res.json({
+        errCode: 0,
+        errMsg: "Success",
+        gameUrl, // The game URL
+        sessionData: {
+          userId: newuser,
+          cert,
+          key: encodeURIComponent(key).replace(/%20/g, "+"),
+          returnUrl: "http://localhost:3000/"
+        }
+      });
       // return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
 
 
