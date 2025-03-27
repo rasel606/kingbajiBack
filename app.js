@@ -76,7 +76,7 @@ app.use('/proxy', createProxyMiddleware({
 // });
 
 // Route Handlers
-app.use("/v1", router);
+app.use("/api/v1", router);
 
 app.get("/api/v2", (req, res) => {
     console.log('API v2 is running');
