@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ✅ CORS Configuration
 app.use(cors({
-    origin: "http://kingbaji.live", // Change to your frontend URL in production
+    origin: "*", // Change to your frontend URL in production
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -27,7 +27,7 @@ app.use(cors({
 app.options('*', cors());
 
 // ✅ MongoDB Setup
-const URI = process.env.MONGODB_URI || `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
+const URI =  `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 mongoose.connect(URI)
     .then(() => console.log("✅ Connected to MongoDB"))
