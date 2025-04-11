@@ -112,50 +112,57 @@ app.use(cookieParser());
 app.use(cookieHandler);
 
 
-const allowedOrigins = 'https://kingbaji.live';
+// const allowedOrigins = 'https://kingbaji.live';
+
+// app.use(cors({
+//     origin: function (origin, callback) {
+//         // Allow requests with no origin (like mobile apps or curl requests)
+//         if (!origin) return callback(null, true);
+        
+//         if (allowedOrigins.includes(origin)) {
+//             callback(null, origin);
+//         } else {
+//             callback(new Error('Not allowed by CORS'));
+//         }
+//     },
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization'],
+//     exposedHeaders: ['Set-Cookie']
+// }));
+
+// // Enhanced proxy middleware
+// app.use('/apiWallet', createProxyMiddleware({
+//     target: 'https://www.fwick7ets.xyz',
+//     changeOrigin: true,
+//     pathRewrite: { '^/apiWallet': '/apiWallet' },
+//     secure: false,
+//     onProxyRes: (proxyRes, req, res) => {
+//         // Remove duplicate CORS headers
+//         delete proxyRes.headers['access-control-allow-origin'];
+//         delete proxyRes.headers['Access-Control-Allow-Origin'];
+//     },
+//     cookieDomainRewrite: {
+//         "www.fwick7ets.xyz": "localhost" // For development
+//     },
+//     onProxyRes: (proxyRes, req, res) => {
+//         // Ensure only one Access-Control-Allow-Origin header is set
+//         if (proxyRes.headers['access-control-allow-origin']) {
+//             delete proxyRes.headers['access-control-allow-origin'];
+//         }
+//         if (proxyRes.headers['Access-Control-Allow-Origin']) {
+//             delete proxyRes.headers['Access-Control-Allow-Origin'];
+//         }
+//     }
+// }));
+
 
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            callback(null, origin);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: "*", // Change to your frontend URL in production
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: ['Set-Cookie']
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-// Enhanced proxy middleware
-app.use('/apiWallet', createProxyMiddleware({
-    target: 'https://www.fwick7ets.xyz',
-    changeOrigin: true,
-    pathRewrite: { '^/apiWallet': '/apiWallet' },
-    secure: false,
-    onProxyRes: (proxyRes, req, res) => {
-        // Remove duplicate CORS headers
-        delete proxyRes.headers['access-control-allow-origin'];
-        delete proxyRes.headers['Access-Control-Allow-Origin'];
-    },
-    cookieDomainRewrite: {
-        "www.fwick7ets.xyz": "localhost" // For development
-    },
-    onProxyRes: (proxyRes, req, res) => {
-        // Ensure only one Access-Control-Allow-Origin header is set
-        if (proxyRes.headers['access-control-allow-origin']) {
-            delete proxyRes.headers['access-control-allow-origin'];
-        }
-        if (proxyRes.headers['Access-Control-Allow-Origin']) {
-            delete proxyRes.headers['Access-Control-Allow-Origin'];
-        }
-    }
-}));
-
 
 app.use((err, req, res, next) => {
     console.error('[Global Error]', err);
