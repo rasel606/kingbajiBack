@@ -115,27 +115,27 @@ app.use(cookieHandler);
 // const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live', 'https://www.fwick7ets.xyz'];
 
 
-// app.use(cors({
-//     origin: ['http://localhost:3000', 'https://kingbaji.live', 'https://www.fwick7ets.xyz'], // Change to your frontend URL in production
-//     credentials: true,
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization']
-// }));
-
-
-const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live'];
-
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // allow requests with no origin (like mobile apps, curl, etc.)
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
+    origin: "*", // Change to your frontend URL in production
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+
+// const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live'];
+
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true); // allow requests with no origin (like mobile apps, curl, etc.)
+//     if (allowedOrigins.includes(origin)) {
+//       return callback(null, true);
+//     } else {
+//       return callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true
+// }));
 
 // Enhanced proxy middleware
 app.use('/apiWallet', createProxyMiddleware({
