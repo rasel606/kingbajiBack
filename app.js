@@ -137,10 +137,10 @@ app.use('/apiWallet', createProxyMiddleware({
     changeOrigin: true,
     pathRewrite: { '^/apiWallet': '/apiWallet' },
     secure: false,
-    onProxyReq: (proxyReq, req, res) => {
-        // Add required headers for the external API
-        proxyReq.setHeader('Origin', 'https://www.fwick7ets.xyz');
-        proxyReq.setHeader('Referer', 'https://www.fwick7ets.xyz');
+    onProxyRes: (proxyRes, req, res) => {
+        // Remove duplicate CORS headers
+        delete proxyRes.headers['access-control-allow-origin'];
+        delete proxyRes.headers['Access-Control-Allow-Origin'];
     },
     cookieDomainRewrite: {
         "www.fwick7ets.xyz": "localhost" // For development
