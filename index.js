@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // index.js
 const https = require('https');
 const http = require('http');
@@ -33,3 +34,18 @@ app.use((req, res, next) => {
 httpServer.listen(5000, () => {
     console.log('HTTP server running on http://localhost:5000');
 });
+=======
+
+const app = require('./app'); // Import the main application
+
+
+
+
+const PORT = process.env.PORT || 5000;
+
+
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+>>>>>>> d51a1af (Resolved merge conflicts)
