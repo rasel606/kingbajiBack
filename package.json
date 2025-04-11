@@ -11,13 +11,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-<<<<<<< HEAD
+
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
-=======
+
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
->>>>>>> d51a1af (Resolved merge conflicts)
+
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -28,21 +28,20 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
-<<<<<<< HEAD
-=======
+
     "http-proxy-middleware": "^3.0.3",
     "https-proxy-agent": "^7.0.6",
->>>>>>> d51a1af (Resolved merge conflicts)
+
     "js-md5": "^0.8.3",
     "jsonwebtoken": "^9.0.2",
     "md5": "^2.3.0",
     "mongodb": "^6.12.0",
-<<<<<<< HEAD
+
     "mongoose": "^8.9.0",
     "multer": "^1.4.5-lts.1",
     "nodemon": "^3.1.9",
     "upgrade-node-modules": "^1.5.1",
-=======
+
     "mongoose": "^8.13.0",
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^3.3.2",
@@ -52,7 +51,6 @@
     "tough-cookie": "^5.1.2",
     "upgrade-node-modules": "^1.5.1",
     "winston": "^3.17.0",
->>>>>>> d51a1af (Resolved merge conflicts)
     "xss-clean": "^0.1.4"
   }
 }
