@@ -749,14 +749,14 @@ function extractQueryParam(url, param) {
 
 
 
-const proxyHandler = async (req, res) => {
-  try {
-    const response = await axios.post('https://www.fwick7ets.xyz/apiWallet/player/YFG/login', req.body);
-    res.json(response.data);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch data' });
-  }
-};
+// const proxyHandler = async (req, res) => {
+//   try {
+//     const response = await axios.post('https://www.fwick7ets.xyz/apiWallet/player/YFG/login', req.body);
+//     res.json(response.data);
+//   } catch (error) {
+//     res.status(500).json({ error: 'Failed to fetch data' });
+//   }
+// };
 
 // // Helper function to set login cookies
 // const setLoginCookies = (res, user) => {
