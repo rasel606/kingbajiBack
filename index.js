@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-// index.js
+
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
@@ -48,4 +47,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
->>>>>>> d51a1af (Resolved merge conflicts)
