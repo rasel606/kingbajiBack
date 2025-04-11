@@ -110,16 +110,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cookieHandler);
-// ✅ CORS Configuration
-// app.use(cors({
-//     origin: "*", // Change to your frontend URL in production
-//     credentials: true,
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization']
-// }));
 
-// Remove any duplicate CORS middleware calls
-// Keep only this one:
 
 const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live', 'https://www.fwick7ets.xyz'];
 
@@ -153,9 +144,17 @@ app.use('/apiWallet', createProxyMiddleware({
     },
     cookieDomainRewrite: {
         "www.fwick7ets.xyz": "localhost" // For development
+    },
+    onProxyRes: (proxyRes, req, res) => {
+        // Ensure only one Access-Control-Allow-Origin header is set
+        if (proxyRes.headers['access-control-allow-origin']) {
+            delete proxyRes.headers['access-control-allow-origin'];
+        }
+        if (proxyRes.headers['Access-Control-Allow-Origin']) {
+            delete proxyRes.headers['Access-Control-Allow-Origin'];
+        }
     }
 }));
-
 
 
 app.use((err, req, res, next) => {
