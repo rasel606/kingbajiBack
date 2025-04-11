@@ -111,16 +111,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cookieHandler);
 // ✅ CORS Configuration
-app.use(cors({
-    origin: "*", // Change to your frontend URL in production
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// app.use(cors({
+//     origin: "*", // Change to your frontend URL in production
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 
 
 
-const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live','https://www.fwick7ets.xyz'];
+const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live', 'https://www.fwick7ets.xyz'];
 
 app.use(cors({
     origin: function (origin, callback) {
@@ -132,18 +132,26 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie']
 }));
 
+// Enhanced proxy middleware
+app.use('/apiWallet', createProxyMiddleware({
+    target: 'https://www.fwick7ets.xyz',
+    changeOrigin: true,
+    pathRewrite: { '^/apiWallet': '/apiWallet' },
+    secure: false,
+    onProxyReq: (proxyReq, req, res) => {
+        // Add required headers for the external API
+        proxyReq.setHeader('Origin', 'https://www.fwick7ets.xyz');
+        proxyReq.setHeader('Referer', 'https://www.fwick7ets.xyz');
+    },
+    cookieDomainRewrite: {
+        "www.fwick7ets.xyz": "localhost" // For development
+    }
+}));
 
-
-// app.use((req, res, next) => {
-//     res.header('Access-Control-Allow-Origin', '*');
-//     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-//     res.header('Access-Control-Allow-Headers', 'Content-Type');
-//     if (req.method === 'OPTIONS') return res.sendStatus(200);
-//     next();
-//   });
 
 
 app.use((err, req, res, next) => {

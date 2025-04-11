@@ -675,10 +675,25 @@ exports.launchGamePlayer = async (req, res) => {
 
 
     if (cert&& key && game_id == 0) {
-      res.cookie('cert', extractQueryParam(gameUrl, 'cert'), { httpOnly: true, secure: true });
-      res.cookie('key', extractQueryParam(gameUrl, 'key'), { httpOnly: true, secure: true });
+      res.cookie('cert', cert, { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
+    });
+    res.cookie('key', key, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'none',
+        domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
+    });
 
-      return res.redirect(gameUrl);
+    return res.json({
+        errCode: 0,
+        errMsg: "Success",
+        gameUrl,
+        session: { cert, key, userId: newUserId }
+    });
     } else {
       return res.json({
         errCode: 0,
