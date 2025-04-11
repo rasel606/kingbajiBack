@@ -3,7 +3,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const app = require('./app'); // Import the main application
-
+const PORT = process.env.PORT || 5000;
 // HTTPS server options
 const httpsOptions = {
     key: fs.readFileSync('./security/cert.key'),
@@ -30,20 +30,17 @@ app.use((req, res, next) => {
 });
 
 // HTTP server listens on port 5000
-httpServer.listen(5000, () => {
-    console.log('HTTP server running on http://localhost:5000');
+httpServer.listen(PORT , () => {
+    console.log(`Server is running on port ${PORT}`);
 });
 
 
-const app = require('./app'); // Import the main application
 
 
 
 
-const PORT = process.env.PORT || 5000;
 
 
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// app.listen(PORT , () => {
+//   console.log(`Server is running on port ${PORT}`);
+// });
