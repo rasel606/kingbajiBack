@@ -116,7 +116,7 @@ app.use(cookieHandler);
 
 
 app.use(cors({
-    origin: "*", // Change to your frontend URL in production
+    origin: "http://localhost:3000", // Change to your frontend URL in production
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
