@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 const express = require('express');
 const router = require('./src/Router/Api');
 
@@ -172,4 +172,3 @@ app.use("*", (req, res) => {
 
 // Export the Express app
 module.exports = app;
->>>>>>> d51a1af (Resolved merge conflicts)
