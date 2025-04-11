@@ -112,58 +112,63 @@ app.use(cookieParser());
 app.use(cookieHandler);
 
 
-// const allowedOrigins = 'https://kingbaji.live';
-
-// app.use(cors({
-//     origin: function (origin, callback) {
-//         // Allow requests with no origin (like mobile apps or curl requests)
-//         if (!origin) return callback(null, true);
-        
-//         if (allowedOrigins.includes(origin)) {
-//             callback(null, origin);
-//         } else {
-//             callback(new Error('Not allowed by CORS'));
-//         }
-//     },
-//     credentials: true,
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization'],
-//     exposedHeaders: ['Set-Cookie']
-// }));
-
-// // Enhanced proxy middleware
-// app.use('/apiWallet', createProxyMiddleware({
-//     target: 'https://www.fwick7ets.xyz',
-//     changeOrigin: true,
-//     pathRewrite: { '^/apiWallet': '/apiWallet' },
-//     secure: false,
-//     onProxyRes: (proxyRes, req, res) => {
-//         // Remove duplicate CORS headers
-//         delete proxyRes.headers['access-control-allow-origin'];
-//         delete proxyRes.headers['Access-Control-Allow-Origin'];
-//     },
-//     cookieDomainRewrite: {
-//         "www.fwick7ets.xyz": "localhost" // For development
-//     },
-//     onProxyRes: (proxyRes, req, res) => {
-//         // Ensure only one Access-Control-Allow-Origin header is set
-//         if (proxyRes.headers['access-control-allow-origin']) {
-//             delete proxyRes.headers['access-control-allow-origin'];
-//         }
-//         if (proxyRes.headers['Access-Control-Allow-Origin']) {
-//             delete proxyRes.headers['Access-Control-Allow-Origin'];
-//         }
-//     }
-// }));
-
+const allowedOrigins = ['https://kingbaji.live', 'https://www.kingbaji.live'];
 
 app.use(cors({
-    origin: "https://kingbaji.live", // Change to your frontend URL in production
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie']
 }));
 
+// Fix for preflight OPTIONS requests
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Enhanced proxy middleware
+app.use('/apiWallet', createProxyMiddleware({
+    target: 'https://www.fwick7ets.xyz',
+    changeOrigin: true,
+    pathRewrite: { '^/apiWallet': '/apiWallet' },
+    secure: false,
+    onProxyRes: (proxyRes, req, res) => {
+        // Remove duplicate CORS headers
+        delete proxyRes.headers['access-control-allow-origin'];
+        delete proxyRes.headers['Access-Control-Allow-Origin'];
+    },
+    cookieDomainRewrite: {
+        "www.fwick7ets.xyz": "localhost" // For development
+    },
+    onProxyRes: (proxyRes, req, res) => {
+        // Ensure only one Access-Control-Allow-Origin header is set
+        if (proxyRes.headers['access-control-allow-origin']) {
+            delete proxyRes.headers['access-control-allow-origin'];
+        }
+        if (proxyRes.headers['Access-Control-Allow-Origin']) {
+            delete proxyRes.headers['Access-Control-Allow-Origin'];
+        }
+    }
+}));
+
+
+// app.use(cors({
+//     origin: "https://kingbaji.live", // Change to your frontend URL in production
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+// app.options('*', cors());
 app.use((err, req, res, next) => {
     console.error('[Global Error]', err);
     res.status(500).json({ 
@@ -173,7 +178,7 @@ app.use((err, req, res, next) => {
   });
 
 // Handle Preflight Requests
-app.options('*', cors());
+
 
 // ✅ MongoDB Setup
 const URI =  `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
