@@ -345,19 +345,19 @@ const SECURE_TLS_VERSION = 'TLSv1_2_method';
 const PROXY_URL = process.env.HTTPS_PROXY || null; // Optional proxy
 
 // Configure secure TLS agent
-const secureAgent = new https.Agent({
-  rejectUnauthorized: true,
-  secureProtocol: SECURE_TLS_VERSION,
-  ciphers: 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256'
-});
+// const secureAgent = new https.Agent({
+//   rejectUnauthorized: true,
+//   secureProtocol: SECURE_TLS_VERSION,
+//   ciphers: 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256'
+// });
 
-// Configure headers
+// // Configure headers
 const COMMON_HEADERS = {
   'Content-Type': 'application/json',
   'Accept': 'application/json',
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
   'Accept-Language': 'en-US,en;q=0.9',
-  // 'Origin': process.env.CLIENT_URL || 'http://localhost:3000' || 'https://www.fwick7ets.xyz',
+  'Origin': process.env.CLIENT_URL || 'http://localhost:3000' || 'https://www.fwick7ets.xyz',
   'Cookie': cookieJar.getCookieStringSync('http://localhost:3000' || 'https://www.fwick7ets.xyz')
 };
 
@@ -383,7 +383,7 @@ const fetchApi = async (endpoint, data = {}) => {
       method: "GET", // Default: POST
       url,
       headers: COMMON_HEADERS,
-      httpsAgent: PROXY_URL ? new HttpsProxyAgent(PROXY_URL) : secureAgent,
+      // httpsAgent: PROXY_URL ? new HttpsProxyAgent(PROXY_URL) : secureAgent,
     };
 
     if (config.method === "POST") {
@@ -629,87 +629,101 @@ exports.launchGamePlayer = async (req, res) => {
       // Extract cert and key from the URL using regex
       const certMatch = gameUrl.match(/cert=([^&]+)/);
       const keyMatch = gameUrl.match(/key=([^&]+)/);
+      const userIdMatch = gameUrl.match(/userId=([^&]+)/);
 
       if (!certMatch && !keyMatch && game_id !== 0) {
         return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
       }
 
-      // Assign extracted values correctly
-      // Extract cert and key without re-encoding
-      //  const gameUrl = new URL(gameLaunch.gameUrl);
+      
       const finalGameUrl = new URL(gameUrl);
-      const cert = finalGameUrl.searchParams.get("cert");
-      const key = finalGameUrl.searchParams.get("key");
-      const newUserId = `${provider.operatorcode}${user.userId}`;
+      
+
+      
+
+      // console.log("cert", cert);
+      // console.log("key", key);
 
       // Final login to game platform
       const params = new URLSearchParams({
-        cert,
-        userId: newUserId,
-        key,
+        cert:certMatch,
+        userId: userIdMatch,
+        key:keyMatch,
         extension1: "",
         extension2: "",
         extension3: "",
         extensionJson: "",
         eventType: "",
-        returnUrl: process.env.CLIENT_URL || "http://localhost:3000"
+        returnUrl: "https://kingbaji.live"
       });
 
       const finalUrl = `https://www.fwick7ets.xyz/apiWallet/player/YFG/login?${params}`;
 
-      // Set cookies in response
-      const cookies = cookieJar.getCookiesSync(finalUrl);
-      cookies.forEach(cookie => {
-        res.cookie(cookie.key, cookie.value, {
-          domain: cookie.domain,
-          path: cookie.path,
-          secure: cookie.secure,
-          httpOnly: true,
-          expires: cookie.expires
-        });
+      const newGame = await axios.post(finalUrl, {
+        headers: {
+          'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        } 
       });
 
-      // Send the response back
+console.log("newGame", newGame);
+
+      // Set cookies in response
+      // const cookies = cookieJar.getCookiesSync(newGame);
+      // cookies.forEach(cookie => {
+      //   res.cookie(cookie.key, cookie.value, {
+      //     domain: cookie.domain,
+      //     path: cookie.path,
+      //     secure: cookie.secure,
+      //     httpOnly: true,
+      //     expires: cookie.expires
+      //   });
+      // });
+
+      
 
       
 
 
-    if (cert&& key && game_id == 0) {
-      res.cookie('cert', cert, { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
-        domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
-    });
-    res.cookie('key', key, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'none',
-        domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
-    });
+    // if (cert&& key && game_id == 0) {
+    //   res.cookie('cert', cert, { 
+    //     httpOnly: true, 
+    //     secure: process.env.NODE_ENV === 'production',
+    //     sameSite: 'none',
+    //     domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
+    // });
+    // res.cookie('key', key, {
+    //     httpOnly: true,
+    //     secure: process.env.NODE_ENV === 'production',
+    //     sameSite: 'none',
+    //     domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
+    // });
 
-    return res.json({
-        errCode: 0,
-        errMsg: "Success",
-        gameUrl,
-        session: { cert, key, userId: newUserId }
-    });
-    } else {
+
+    // return res.json({
+    //   errCode: 0,
+    //   errMsg: "Success",
+    //   gameUrl, // The game URL
+    //   session: { cert, key, userId: newUserId },
+    //   cookies: cookieJar.getCookiesSync(gameData.gameUrl || finalUrl).map(c => ({
+    //     name: c.key,
+    //     value: c.value,
+    //     domain: c.domain,
+    //     path: c.path,
+    //     secure: c.secure,
+    //     httpOnly: c.httpOnly
+    //   }))
+    // });
+    
+    // } else {
       return res.json({
         errCode: 0,
         errMsg: "Success",
-        gameUrl, // The game URL
-        session: { cert, key, userId: newUserId },
-        cookies: cookieJar.getCookiesSync(gameData.gameUrl || finalUrl).map(c => ({
-          name: c.key,
-          value: c.value,
-          domain: c.domain,
-          path: c.path,
-          secure: c.secure,
-          httpOnly: c.httpOnly
-        }))
-      });
-    }
+        gameUrl,
+        session: { certMatch, keyMatch, userId: userIdMatch }
+    });
+    // }
 
 
        
