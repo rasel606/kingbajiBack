@@ -21,7 +21,7 @@ app.use(cookieParser());
 app.use(cookieHandler);
 
 
-const allowedOrigins = [ 'https://www.kingbaji.live'];
+const allowedOrigins = ['http://localhost:3000'];
 
 app.use(cors({
   origin: function (origin, callback) {
