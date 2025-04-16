@@ -638,7 +638,9 @@ exports.launchGamePlayer = async (req, res) => {
       
       const finalGameUrl = new URL(gameUrl);
       
-
+      const cert = certMatch ? certMatch[1] : "";
+      const key = keyMatch ? keyMatch[1] : "";
+      const userIdParam = userIdMatch ? userIdMatch[1] : "";
       
 
       // console.log("cert", cert);
@@ -646,9 +648,9 @@ exports.launchGamePlayer = async (req, res) => {
 
       // Final login to game platform
       const params = new URLSearchParams({
-        cert:certMatch,
-        userId: userIdMatch,
-        key:keyMatch,
+        cert,
+        userId: userIdParam,
+        key:key,
         extension1: "",
         extension2: "",
         extension3: "",
@@ -662,7 +664,7 @@ exports.launchGamePlayer = async (req, res) => {
       const newGame = await axios.post(finalUrl, {
         headers: {
           'Content-Type': 'application/json',
-  'Accept': 'application/json',
+    'Accept': 'application/json',
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         } 
       });
