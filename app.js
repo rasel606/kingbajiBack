@@ -20,26 +20,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cookieHandler);
 
-
-// const cors = require('cors');
-// const app = express();
-
-// Define allowed origins
-
+app.use(cors());
+app.use(mongoSanitize());
 const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live'];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true
-}));
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
+// ✅ API Routes
 
 // Enhanced proxy middleware
 app.use('/apiWallet', createProxyMiddleware({
