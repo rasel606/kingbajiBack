@@ -26,9 +26,12 @@ app.use(mongoSanitize());
 
 // Only allow specific origin (localhost for development)
 
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+  ? ['https://kingbaji.live'] 
+  : ['http://localhost:3000', 'https://kingbaji.live'];
 
 const corsOptions = {
-  origin: ['http://localhost:3000/','https://kingbaji.live'],
+  origin: allowedOrigins,
   credentials: true,
   exposedHeaders: ['Content-Length', 'Content-Range'],
 };
