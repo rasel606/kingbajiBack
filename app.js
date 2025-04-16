@@ -21,17 +21,25 @@ app.use(cookieParser());
 app.use(cookieHandler);
 
 
+// const cors = require('cors');
+// const app = express();
+
+// Define allowed origins
 const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live'];
 
 app.use(cors({
   origin: function(origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+      // Allow requests from these origins
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
-  }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // specify the allowed methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // specify the allowed headers
 }));
+
 
 // Fix for preflight OPTIONS requests
 app.options('*', cors({
