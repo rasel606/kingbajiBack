@@ -26,18 +26,24 @@ app.use(mongoSanitize());
 
 // Only allow specific origin (localhost for development)
 
-const allowedOrigins = process.env.NODE_ENV === 'production' 
-  ? ['https://kingbaji.live'] 
-  : ['http://localhost:3000', 'https://kingbaji.live'];
+// const allowedOrigins = process.env.NODE_ENV === 'production' 
+//   ? ['https://kingbaji.live'] 
+//   : ['http://localhost:3000', 'https://kingbaji.live'];
 
-const corsOptions = {
-  origin: allowedOrigins,
+// const corsOptions = {
+//   origin: allowedOrigins,
+//   credentials: true,
+//   exposedHeaders: ['Content-Length', 'Content-Range'],
+// };
+
+// app.use(cors(corsOptions));
+
+app.use(cors({
+  origin: ['https://kingbaji.live', 'https://www.fwick7ets.xyz'],
   credentials: true,
-  exposedHeaders: ['Content-Length', 'Content-Range'],
-};
-
-app.use(cors(corsOptions));
-
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 
 // ✅ API Routes
 

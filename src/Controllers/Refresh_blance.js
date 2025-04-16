@@ -661,69 +661,27 @@ exports.launchGamePlayer = async (req, res) => {
 
       const finalUrl = `https://www.fwick7ets.xyz/apiWallet/player/YFG/login?${params}`;
 
-      const newGame = await axios.post(finalUrl, {
+      const newGame = await axios.post(finalUrl, {}, {  // Add empty body and config
         headers: {
           'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        } 
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0...',
+          'Origin': 'https://kingbaji.live'  // Add Origin header
+        },
+        withCredentials: true  // Important for cookies
       });
 
 console.log("newGame", newGame);
 
-      // Set cookies in response
-      // const cookies = cookieJar.getCookiesSync(newGame);
-      // cookies.forEach(cookie => {
-      //   res.cookie(cookie.key, cookie.value, {
-      //     domain: cookie.domain,
-      //     path: cookie.path,
-      //     secure: cookie.secure,
-      //     httpOnly: true,
-      //     expires: cookie.expires
-      //   });
-      // });
-
-      
-
-      
 
 
-    // if (cert&& key && game_id == 0) {
-    //   res.cookie('cert', cert, { 
-    //     httpOnly: true, 
-    //     secure: process.env.NODE_ENV === 'production',
-    //     sameSite: 'none',
-    //     domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
-    // });
-    // res.cookie('key', key, {
-    //     httpOnly: true,
-    //     secure: process.env.NODE_ENV === 'production',
-    //     sameSite: 'none',
-    //     domain: process.env.NODE_ENV === 'production' ? '.kingbaji.live' : 'localhost'
-    // });
 
 
-    // return res.json({
-    //   errCode: 0,
-    //   errMsg: "Success",
-    //   gameUrl, // The game URL
-    //   session: { cert, key, userId: newUserId },
-    //   cookies: cookieJar.getCookiesSync(gameData.gameUrl || finalUrl).map(c => ({
-    //     name: c.key,
-    //     value: c.value,
-    //     domain: c.domain,
-    //     path: c.path,
-    //     secure: c.secure,
-    //     httpOnly: c.httpOnly
-    //   }))
-    // });
-    
-    // } else {
       return res.json({
         errCode: 0,
         errMsg: "Success",
         gameUrl,
-        session: { certMatch, keyMatch, userId: userIdMatch }
+        session: { cert, key, userId: userIdParam  }
     });
     // }
 
