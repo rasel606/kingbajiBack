@@ -25,28 +25,20 @@ app.use(cookieHandler);
 // const app = express();
 
 // Define allowed origins
+
 const allowedOrigins = ['http://localhost:3000', 'https://kingbaji.live'];
 
 app.use(cors({
-  origin: function(origin, callback) {
-    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
-      // Allow requests from these origins
-      callback(null, true);
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      return callback(new Error('Not allowed by CORS'));
     }
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // specify the allowed methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // specify the allowed headers
-}));
-
-
-// Fix for preflight OPTIONS requests
-app.options('*', cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  credentials: true
 }));
 
 // Enhanced proxy middleware
@@ -75,13 +67,6 @@ app.use('/apiWallet', createProxyMiddleware({
 }));
 
 
-// app.use(cors({
-//     origin: "https://kingbaji.live", // Change to your frontend URL in production
-//     credentials: true,
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//     allowedHeaders: ['Content-Type', 'Authorization']
-// }));
-// app.options('*', cors());
 app.use((err, req, res, next) => {
     console.error('[Global Error]', err);
     res.status(500).json({ 
