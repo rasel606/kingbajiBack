@@ -49,7 +49,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 // router.post("/deposit", 
 exports.addTransaction = async (req, res) => {
-    const { userId, amount, gateway_name, gateway_Number, payment_type, referredbyCode } = req.body;
+    const { userId, amount, gateway_name, gateway_Number, payment_type, referredBy } = req.body;
     console.log(req.body);
     console.log(payment_type);
     try {
@@ -60,11 +60,11 @@ exports.addTransaction = async (req, res) => {
         }
 
         // Check for referredCode and find the referral
-        let referralCode = null;  // Renamed to avoid overwriting `referredbyCode`
-        if (referredbyCode) {
-            const referredUser = await User.findOne({ referredbyCode });
+        let referralCode = null;  // Renamed to avoid overwriting `referredBy`
+        if (referredBy) {
+            const referredUser = await User.findOne({ referredBy });
             if (referredUser) {
-                referralCode = referredUser.referredbyCode; // Assign the actual referred user's code
+                referralCode = referredUser.referredBy; // Assign the actual referred user's code
             }
         }
 
@@ -72,7 +72,7 @@ exports.addTransaction = async (req, res) => {
 
         const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
 
-        let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredbyCode=${encodeURIComponent(referredbyCode || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
+        let redirectUrl = `http://localhost:3001/${encodeURIComponent(gateway_name)}?userId=${encodeURIComponent(user.userId)}&name=${encodeURIComponent(user.name)}&amount=${encodeURIComponent(amount)}&referredBy=${encodeURIComponent(referredBy || '')}&payment_type=${encodeURIComponent(payment_type)}&gateway_Number=${encodeURIComponent(gateway_Number)}&token=${encodeURIComponent(token)}&type=${encodeURIComponent(0)}`;
         res.json(redirectUrl);
 
     } catch (err) {
@@ -105,7 +105,7 @@ exports.submitTransaction = async (req, res) => {
             userId,
             gateway_name,
             amount,
-            referredbyCode,
+            referredBy,
             payment_type,
             gateway_Number,
             transactionID,
@@ -120,19 +120,19 @@ exports.submitTransaction = async (req, res) => {
         //     return res.status(400).json({ error: "Invalid transaction ID format." });
         //   }
 
-        const user = await User.findOne({ userId, referredbyCode });
+        const user = await User.findOne({ userId, referredBy });
         console.log("user", user)
         if (!user) {
             res.status(404).json({ message: 'User not found' });
         }
 
-        const transaction = await TransactionModel.findOne({ userId, referredbyCode: user.referredbyCode, transactionID, payment_type });
+        const transaction = await TransactionModel.findOne({ userId, referredBy: user.referredBy, transactionID, payment_type });
         console.log("req.body ------------------ 3", transaction);
         if (transaction) {
             res.status(404).json({ message: 'User transaction already used' });
         } else {
 
-            const bonus = (parseFloat(amount) * 0.03);
+            const bonus = (parseFloat(amount) * 0.04).toFixed(2);
             const type = 0;
 
 
@@ -142,6 +142,7 @@ exports.submitTransaction = async (req, res) => {
                 userId: user.userId,
                 transactionID,
                 base_amount: amount,
+                bonus_amount: bonus,
                 amount: amount + bonus,
                 currency_id: user.currency_id,  // Assuming this is set in User model
                 gateway_name: gateway_name,
@@ -150,7 +151,7 @@ exports.submitTransaction = async (req, res) => {
                 mobile: user.phone,
                 type: type,
                 status: 0,  // 0 = pending
-                referredbyCode: user.referredbyCode, // Assign the referral code to the transaction
+                referredBy: user.referredBy, // Assign the referral code to the transaction
                 is_commission: false,
             });
 
@@ -197,8 +198,8 @@ exports.approveDepositbySubAdmin = async (req, res) => {
         const transactionID = req.params.transactionID;
         console.log(userId, referralCode, status, transactionID);
         // Find the user
-        const user = await User.findOne({ userId, referredbyCode: referralCode });
-        if (user.referredbyCode !== referralCode) return res.status(404).json({ message: 'User not found' });
+        const user = await User.findOne({ userId, referredBy: referralCode });
+        if (user.referredBy !== referralCode) return res.status(404).json({ message: 'User not found' });
 
         // Find the sub-admin
         const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
@@ -207,33 +208,38 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             return res.status(400).json({ message: 'Invalid Match' });
         }
         // Find the transaction
-        const transaction = await TransactionModel.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode, type: 0 });
+        const transaction = await TransactionModel.findOne({ userId, transactionID, referredBy: subAdmin.referralCode, type: 0 });
 
 
         // Ensure transaction is not already processed
-        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.referredbyCode === user.referredbyCode) {
+        if (transaction.referredBy !== subAdmin.referralCode && transaction.referredBy === user.referredBy) {
 
             return res.status(400).json({ message: "Transaction already processed" });
         }
 
 
-        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredbyCode !== user.referredbyCode) {
+        if (transaction.referredBy !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredBy !== user.referredBy) {
             res.status(400).json({ message: "Transaction not found" });
         }
 
-        console.log(subAdmin.balance >= transaction.amount && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode);
-        if (subAdmin.balance >= transaction.amount && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode) {
+        console.log(subAdmin.balance >= transaction.amount && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy);
+        if (subAdmin.balance >= transaction.amount && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy) {
 
 
             console.log(transaction);
 
             if (parseInt(req.body.status) === parseInt(1)) {
 
+                
                 subAdmin.balance -= transaction.amount;
 
 
                 const bonusAmount = (transaction.amount * 0.03)
-                user.balance += transaction.amount + bonusAmount;
+                user.balance += transaction.base_amount ;
+
+
+                // const totalAmount = transaction.amount + bonusAmount;
+                subAdmin.balance -= transaction.amount;
                 if (user.bonus) {
                     user.bonus.bonusAmount += bonusAmount;
                     user.bonus.isActive = true;
@@ -269,14 +275,14 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 
 
 
-exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
+exports.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin = async (req, res) => {
     try {
         const { userId, referralCode, email, mobile, amount, type } = req.body;
         console.log(userId, referralCode, email, amount, type);
         
         // Find the user
-        const user = await User.findOne({ userId, referredbyCode: referralCode });
-        if (!user || user.referredbyCode !== referralCode) {
+        const user = await User.findOne({ userId, referredBy: referralCode });
+        if (!user || user.referredBy !== referralCode) {
             return res.status(404).json({ message: 'User not found or referral code mismatch' });
         }
         
@@ -302,9 +308,10 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
         }
         console.log("user ----- 1",user);
         console.log("subAdmin ----- 1",subAdmin);
-        const transactionID = `waiting-${Date.now()}`;
+        
+        const transactionID = generateReferralCode();
         const isValidTransaction = subAdmin.balance >= amount && 
-                                   user.referredbyCode === subAdmin.referralCode && 
+                                   user.referredBy === subAdmin.referralCode && 
                                    user.userId === userId && 
                                    type === 1 && 
                                    user.balance >= 0 && 
@@ -316,18 +323,19 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
             const newTransaction = new Transaction({
                 userId: user.userId,
                 transactionID,
-                base_amount: amount,
+                base_amount: base_amount,
+                amount: amount,
                 gateway_name: "transfer",
                 payment_type: "transfer",
                 mobile: mobile,
                 type: 1,  // Withdrawal type
                 status: 1,  // 0 = pending
-                referredbyCode: referralCode || null,
+                referredBy: referralCode || null,
                 is_commission: false,
             });
 
             // Deduct balance and save transaction
-            user.balance -= parseInt(amount);
+            user.balance -= parseInt(base_amount);
             subAdmin.balance += parseInt(amount);
 
             await newTransaction.save();
@@ -336,7 +344,7 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
 
             console.log("New Transaction:", newTransaction);
             console.log("Updated User:", user);
-            res.status(200).json({ message: "Transaction successfully completed" });
+            res.status(200).json({ message: "Transaction WIdthrawal successfully completed" });
         } else {
             // Calculate bonus and create transaction
             const bonus = (parseFloat(amount) * 0.03);
@@ -344,6 +352,7 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
                 userId: user.userId,
                 transactionID,
                 base_amount: amount,
+                bonus_amount: bonus,
                 amount: amount + bonus,
                 currency_id: user.currency_id,  // Assuming this is set in User model
                 gateway_name: "transfer",
@@ -351,7 +360,7 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
                 mobile: user.phone,
                 type: 0,  // Deposit type
                 status: 1,  // 0 = pending
-                referredbyCode: user.referredbyCode,
+                referredBy: user.referredBy,
                 is_commission: false,
             });
 
@@ -364,7 +373,7 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
 
             console.log("New Transaction:", newTransaction);
             console.log("Updated User:", user);
-            res.status(200).json({ message: "Transaction completed with bonus", Admin_Balance: subAdmin.balance });
+            res.status(200).json({ message: "Transaction Deposit  completed with bonus", Admin_Balance: subAdmin.balance });
         }
 
     } catch (error) {
@@ -374,11 +383,8 @@ exports.approveTransfarWithDepositbySubAdmin = async (req, res) => {
 };
 
 
-
-
-
 exports.WithdrawTransaction = async (req, res) => {
-    const { userId, amount, gateway_name, mobile, referredbyCode } = req.body;
+    const { userId, base_amount, gateway_name, mobile, referredBy } = req.body;
     console.log(req.body);
 
     try {
@@ -391,34 +397,34 @@ exports.WithdrawTransaction = async (req, res) => {
         console.log("User Balance Before Withdrawal:", user.balance);
 
         // Check if the user has enough balance
-        if (user.balance < amount) {
+        if (user.balance < base_amount) {
             return res.status(400).json({ message: 'Insufficient balance' });
         }
 
         // Validate referral code (if provided)
-        if (referredbyCode) {
-            const referredUser = await User.findOne({ referredbyCode });
+        if (referredBy) {
+            const referredUser = await User.findOne({ referredBy });
 
             if (!referredUser) {
                 return res.status(404).json({ message: 'Invalid referral code' });
             }
         }
 
-        const transactionID = `waiting-${Date.now()}`;
+        const transactionID = generateReferralCode();
         const newTransaction = new Transaction({
             userId: user.userId,
             transactionID,
-            base_amount: amount,
+            base_amount: base_amount,
             gateway_name: gateway_name,
             mobile: mobile,
             type: 1,  // Withdrawal type
             status: 0,  // 0 = pending
-            referredbyCode: referredbyCode || null,
-            is_commission: false,
+            referredBy: referredBy || null,
+            // is_commission: false,
         });
 
         // Deduct balance
-        user.balance -= parseInt(amount);
+        user.balance -= parseInt(base_amount);
 
         // Save transaction and user balance update
         await newTransaction.save();
@@ -439,6 +445,9 @@ exports.WithdrawTransaction = async (req, res) => {
 };
 
 
+
+
+
 // exports.approveDepositbySubAdmin = async (req, res) => {
 
 //     try {
@@ -447,8 +456,8 @@ exports.WithdrawTransaction = async (req, res) => {
 //         console.log(userId, referralCode, status, transactionID);
 
 //         // Find the user
-//         const user = await User.findOne({ userId, referredbyCode: referralCode });
-//         if (!user || user.referredbyCode !== referralCode) return res.status(404).json({ message: 'User not found' });
+//         const user = await User.findOne({ userId, referredBy: referralCode });
+//         if (!user || user.referredBy !== referralCode) return res.status(404).json({ message: 'User not found' });
 
 //         const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
 //         if (!subAdmin || subAdmin.referralCode !== referralCode) {
@@ -456,7 +465,7 @@ exports.WithdrawTransaction = async (req, res) => {
 //         }
 
 //         // Find the transaction
-//         const transaction = await Transaction.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode });
+//         const transaction = await Transaction.findOne({ userId, transactionID, referredBy: subAdmin.referralCode });
 //         if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
 
 //         // Ensure transaction is not already processed
@@ -465,7 +474,7 @@ exports.WithdrawTransaction = async (req, res) => {
 //         }
 
 //         // Process deposit approval
-//         if (subAdmin.balance >= transaction.amount && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode && parseInt(status) === 1) {
+//         if (subAdmin.balance >= transaction.amount && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy && parseInt(status) === 1) {
 // console.log("user.amount", user.balance);
 //             subAdmin.balance -= transaction.amount;
 //             await subAdmin.save();
@@ -558,8 +567,8 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
         const transactionID = req.params.transactionID;
         console.log(userId, referralCode, status, transactionID);
         // Find the user
-        const user = await User.findOne({ userId, referredbyCode: referralCode });
-        if (user.referredbyCode !== referralCode) return res.status(404).json({ message: 'User not found' });
+        const user = await User.findOne({ userId, referredBy: referralCode });
+        if (user.referredBy !== referralCode) return res.status(404).json({ message: 'User not found' });
 
         // Find the sub-admin
         const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
@@ -568,23 +577,23 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
             return res.status(400).json({ message: 'Invalid Match' });
         }
         // Find the transaction
-        const transaction = await TransactionModel.findOne({ userId, transactionID, referredbyCode: subAdmin.referralCode, type: 1 });
+        const transaction = await TransactionModel.findOne({ userId, transactionID, referredBy: subAdmin.referralCode, type: 1 });
 
 
         // Ensure transaction is not already processed
-        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.referredbyCode === user.referredbyCode) {
+        if (transaction.referredBy !== subAdmin.referralCode && transaction.referredBy === user.referredBy) {
 
             return res.status(400).json({ message: "Transaction already processed" });
         }
 
 
-        console.log("all-----1", transaction.referredbyCode !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredbyCode !== user.referredbyCode);
-        if (transaction.referredbyCode !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredbyCode !== user.referredbyCode) {
+        console.log("all-----1", transaction.referredBy !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredBy !== user.referredBy);
+        if (transaction.referredBy !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredBy !== user.referredBy) {
             res.status(400).json({ message: "Transaction not found" });
         }
 
-        console.log("all", transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode);
-        if (user.balance > 0 && transaction.referredbyCode === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredbyCode === user.referredbyCode) {
+        console.log("all", transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy);
+        if (user.balance > 0 && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy) {
             if (user.balance < transaction.base_amount) {
                 return res.status(400).json({ message: "Insufficient user balance" });
             }
@@ -606,9 +615,11 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
                 return res.status(200).json({ message: "Withdrawal approved successfully", userBalance: user.balance, subAdminBalance: subAdmin.balance });
             } else {
                 // Reject the withdrawal
+                user.balance += transaction.base_amount;
                 transaction.status = 2; // Rejected
                 transaction.updatetime = new Date();
                 await transaction.save();
+                await user.save();
 
                 return res.status(200).json({ message: "Withdrawal rejected successfully" });
             }
@@ -650,7 +661,7 @@ exports.AddPaymentMethodNumber = async (req, res) => {
             type: parseInt(type),
             payment_type,
             image_url,
-            referredbyCode: user.referralCode,  // Using correct field name
+            referredBy: user.referralCode,  // Using correct field name
             start_time: { hours: new Date().getHours(), minutes: new Date().getMinutes() },
             end_time: {
                 hours: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).getHours(),
@@ -678,15 +689,15 @@ exports.subAdminGetWayList = async (req, res) => {
         const { referralCode } = req.body;
 
     // Tier 1
-    const tier1Users = await User.find({ referredbyCode: referralCode });
+    const tier1Users = await User.find({ referredBy: referralCode });
     const tier1Emails = tier1Users.map(u => u.email);
 
     // Tier 2
-    const tier2Users = await User.find({ referredbyCode: { $in: tier1Users.map(u => u.myReferralCode) } });
+    const tier2Users = await User.find({ referredBy: { $in: tier1Users.map(u => u.myReferralCode) } });
     const tier2Emails = tier2Users.map(u => u.email);
 
     // Tier 3
-    const tier3Users = await User.find({ referredbyCode: { $in: tier2Users.map(u => u.myReferralCode) } });
+    const tier3Users = await User.find({ referredBy: { $in: tier2Users.map(u => u.myReferralCode) } });
     const tier3Emails = tier3Users.map(u => u.email);
 
     const allEmails = [...tier1Emails, ...tier2Emails, ...tier3Emails];
@@ -734,7 +745,7 @@ exports.GetPaymentMethodsUser = async (req, res) => {
             {
                 $match: {
                     is_active: true,
-                    referredbyCode: user.referredbyCode
+                    referredBy: user.referredBy
                 }
             },
             {
@@ -848,21 +859,21 @@ exports.GetPaymentMethodsUser = async (req, res) => {
 
 exports.searchWidthdrawTransactions = async (req, res) => {
     try {
-        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
-        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredBy, startDate, endDate);
         // console.log(req.body);
 
 
 
-        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
         console.log(SubAdminuser);
         // Find the transaction
-        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode: SubAdminuser.referralCode, type: 1, status: parseInt(0) });
+        const transactionExists = await TransactionModel.findOne({ referredBy: SubAdminuser.referralCode, type: 1, status: parseInt(0) });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -892,10 +903,10 @@ exports.searchWidthdrawTransactions = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(1), status: parseInt(0) }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: parseInt(1), status: parseInt(0) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: parseInt(1), status: parseInt(0) } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: referredBy, type: parseInt(1), status: parseInt(0) } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
@@ -912,21 +923,21 @@ exports.searchWidthdrawTransactions = async (req, res) => {
 
 exports.searchWidthdrawTransactionsReportAprove = async (req, res) => {
     try {
-        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
-        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredBy, startDate, endDate);
         // console.log(req.body);
 
 
 
-        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
         console.log(SubAdminuser);
         // Find the transaction
-        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode: SubAdminuser.referralCode, type: 1, });
+        const transactionExists = await TransactionModel.findOne({ referredBy: SubAdminuser.referralCode, type: 1, });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -956,10 +967,10 @@ exports.searchWidthdrawTransactionsReportAprove = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 0, status: 1 }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: 0, status: 1 }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: SubAdminuser.referralCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
@@ -974,21 +985,21 @@ exports.searchWidthdrawTransactionsReportAprove = async (req, res) => {
 };
 exports.searchWidthdrawTransactionsReportReject = async (req, res) => {
     try {
-        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
-        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredBy, startDate, endDate);
         // console.log(req.body);
 
 
 
-        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
         console.log(SubAdminuser);
         // Find the transaction
-        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode: SubAdminuser.referralCode, type: 1, });
+        const transactionExists = await TransactionModel.findOne({ referredBy: SubAdminuser.referralCode, type: 1, });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -1018,10 +1029,10 @@ exports.searchWidthdrawTransactionsReportReject = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 1, status: 2 }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: 1, status: 2 }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: SubAdminuser.referralCode, type: 1, status: 2 } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: SubAdminuser.referralCode, type: 1, status: 2 } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$base_amount" } } }
         ]);
@@ -1061,23 +1072,23 @@ exports.searchWidthdrawTransactionsReportReject = async (req, res) => {
 /////////////////////////////////////////////////////// search Transaction deposit request////////////////////////////////
 
 
-exports.searchDepositTransactions = async (req, res) => {
+exports.Search_Deposit_Transactions_Pending = async (req, res) => {
     try {
-        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
-        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredBy, startDate, endDate);
         // console.log(req.body);
 
 
 
-        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
         console.log(SubAdminuser);
         // Find the transaction
-        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
+        const transactionExists = await TransactionModel.findOne({ referredBy, type: 0 });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -1107,10 +1118,10 @@ exports.searchDepositTransactions = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: parseInt(0), status: parseInt(0) }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: parseInt(0), status: parseInt(0) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: 0 } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: SubAdminuser.referralCode, type: 0, status: 0 } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
@@ -1130,21 +1141,21 @@ exports.searchDepositTransactions = async (req, res) => {
 
 exports.searchDepositTransactionsReportAprove = async (req, res) => {
     try {
-        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
-        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredBy, startDate, endDate);
         // console.log(req.body);
 
 
 
-        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
         console.log(SubAdminuser);
         // Find the transaction
-        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
+        const transactionExists = await TransactionModel.findOne({ referredBy, type: 0 });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -1174,10 +1185,10 @@ exports.searchDepositTransactionsReportAprove = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 0, status: parseInt(1) }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: 0, status: parseInt(1) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: parseInt(1) } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: SubAdminuser.referralCode, type: 0, status: parseInt(1) } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$base_amount" } } }
         ]);
@@ -1192,21 +1203,21 @@ exports.searchDepositTransactionsReportAprove = async (req, res) => {
 };
 exports.searchDepositTransactionsReportreject = async (req, res) => {
     try {
-        const { userId, amount, gateway_name, status, referredbyCode, startDate, endDate } = req.body;
-        console.log(userId, amount, gateway_name, status, referredbyCode, startDate, endDate);
+        const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
+        console.log(userId, amount, gateway_name, status, referredBy, startDate, endDate);
         // console.log(req.body);
 
 
 
-        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
+        const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
         console.log(SubAdminuser);
         // Find the transaction
-        // const user = await User.findOne({ referredbyCode: SubAdminuser.referralCode });
+        // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
         // console.log(user);
 
-        const transactionExists = await TransactionModel.findOne({ referredbyCode, type: 0 });
+        const transactionExists = await TransactionModel.findOne({ referredBy, type: 0 });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
         console.log(transactionExists);
 
@@ -1236,10 +1247,10 @@ exports.searchDepositTransactionsReportreject = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredbyCode: SubAdminuser.referralCode, type: 0, status: parseInt(2) }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: 0, status: parseInt(2) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: parseInt(2) } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: SubAdminuser.referralCode, type: 0, status: parseInt(2) } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$base_amount" } } }
         ]);
@@ -1257,19 +1268,19 @@ exports.searchDepositTransactionsReportreject = async (req, res) => {
 exports.DepositsList = async (req, res) => {
     // console.log(req.body);
     try {
-        const { referredbyCode } = req.body;
-        console.log(referredbyCode);
+        const { referralCode} = req.body;
+        console.log(referralCode);
 
         // Find the user based on the referredCode
-        const users = await User.find({ referredbyCode: referredbyCode });
+        const users = await User.find({ referredBy: referralCode });
         console.log(users);
         // If user not found, return 404
         if (!users) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const transactions = await Transaction.find({ referredbyCode: referredbyCode, status: 0 });
+        const transactions = await Transaction.find({ referredBy: referralCode, status: 0 });
 
-        const transactionscount = await Transaction.find({ referredbyCode }).countDocuments();
+        const transactionscount = await Transaction.find({ referredBy: referralCode }).countDocuments();
         res.status(200).json({ transactionscount, transactions });
 
     } catch (error) {
@@ -1280,7 +1291,7 @@ exports.DepositsList = async (req, res) => {
 
 exports.getTransactionDepositTotals = async (req, res) => {
     try {
-        const { referredbyCode } = req.body;
+        const { referralCode } = req.body;
 
         // Get date ranges
         const now = new Date();
@@ -1299,7 +1310,7 @@ exports.getTransactionDepositTotals = async (req, res) => {
         const results = await Transaction.aggregate([
             {
                 $match: {
-                    referredbyCode: referredbyCode,
+                    referredBy: referralCode,
                     type: 0, // Only deposits
                     status: 0, // Accepted transactions only
                     datetime: { $gte: last30Days }, // Only fetch last 30 days' data
@@ -1362,80 +1373,197 @@ exports.getTransactionDepositTotals = async (req, res) => {
 
 
 
-
-
-
-
-
 exports.searchTransactionsbyUserId = async (req, res) => {
     try {
-        const { userId, type } = req.query;
-    
-        const match = {};
+        const { userId, type, dateFilter } = req.query;
+        
+        // Set up date ranges based on the filter
+        let dateRange = {};
+        const currentDate = new Date();
+        
+        if (dateFilter === 'today') {
+            const startOfDay = new Date(currentDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            dateRange = { 
+                datetime: { 
+                    $gte: startOfDay, 
+                    $lte: currentDate 
+                } 
+            };
+        } else if (dateFilter === 'yesterday') {
+            const yesterday = new Date(currentDate);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const startOfYesterday = new Date(yesterday);
+            startOfYesterday.setHours(0, 0, 0, 0);
+            const endOfYesterday = new Date(yesterday);
+            endOfYesterday.setHours(23, 59, 59, 999);
+            dateRange = { 
+                datetime: { 
+                    $gte: startOfYesterday, 
+                    $lte: endOfYesterday 
+                } 
+            };
+        } else if (dateFilter === 'last7days') {
+            const sevenDaysAgo = new Date(currentDate);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            dateRange = { 
+                datetime: { 
+                    $gte: sevenDaysAgo, 
+                    $lte: currentDate 
+                } 
+            };
+        } else if (!dateFilter) {
+            // Default to today if no filter is provided
+            const startOfDay = new Date(currentDate);
+            startOfDay.setHours(0, 0, 0, 0);
+            dateRange = { 
+                datetime: { 
+                    $gte: startOfDay, 
+                    $lte: currentDate 
+                } 
+            };
+        }
+        // You could add more date filters here as needed
+
+        const match = {referredBy: referralCode};
         if (userId) match.userId = userId;
         if (type) match.type = parseInt(type);
-    
+        if (Object.keys(dateRange).length > 0) {
+            match.datetime = dateRange.datetime;
+        }
+
         const result = await Transaction.aggregate([
-          { $match: match },
-          {
-            $addFields: {
-              date: {
-                $dateToString: {
-                  format: "%Y-%m-%d",
-                  date: "$datetime"
+            { $match: match },
+            {
+                $addFields: {
+                    date: {
+                        $dateToString: {
+                            format: "%Y-%m-%d",
+                            date: "$datetime"
+                        }
+                    }
                 }
-              }
-            }
-          },
-          {
-            $group: {
-              _id: {
-                date: "$date",
-                type: "$type"
-              },
-              transactions: {
-                $push: {
-                  transactionID: "$transactionID",
-                  _id: "$_id",
-                  amount: "$amount",
-                  base_amount: "$base_amount",
-                  mobile: "$mobile",
-                  type: "$type",
-                  status: "$status",
-                  details: "$details",
-                  payment_type: "$payment_type",
-                  gateway_name: "$gateway_name",
-                  datetime: "$datetime",
-                  updatetime: "$updatetime"
+            },
+            {
+                $group: {
+                    _id: {
+                        date: "$date",
+                        type: "$type"
+                    },
+                    transactions: {
+                        $push: {
+                            transactionID: "$transactionID",
+                            _id: "$_id",
+                            amount: "$amount",
+                            base_amount: "$base_amount",
+                            mobile: "$mobile",
+                            type: "$type",
+                            status: "$status",
+                            details: "$details",
+                            payment_type: "$payment_type",
+                            gateway_name: "$gateway_name",
+                            datetime: "$datetime",
+                            updatetime: "$updatetime"
+                        }
+                    },
                 }
-              },
-            
+            },
+            {
+                $project: {
+                    _id: 0,
+                    date: "$_id.date",
+                    type: "$_id.type",
+                    transactions: 1,
+                }
+            },
+            {
+                $sort: { date: -1 }
             }
-          },
-          {
-            $project: {
-              _id: 0,
-              date: "$_id.date",
-              type: "$_id.type",
-              transactions: 1,
-            
-            }
-          },
-          {
-            $sort: { date: -1 }
-          }
         ]);
-    
+
         res.json({ success: true, data: result });
-      } catch (error) {
+    } catch (error) {
         console.error("Error getting transaction history:", error);
         res.status(500).json({
-          success: false,
-          message: "Failed to get transaction history",
-          error: error.message
+            success: false,
+            message: "Failed to get transaction history",
+            error: error.message
         });
-      }
+    }
 };
+
+
+
+
+// exports.searchTransactionsbyUserId = async (req, res) => {
+//     try {
+//         const { userId, type } = req.query;
+    
+//         const match = {};
+//         if (userId) match.userId = userId;
+//         if (type) match.type = parseInt(type);
+    
+//         const result = await Transaction.aggregate([
+//           { $match: match },
+//           {
+//             $addFields: {
+//               date: {
+//                 $dateToString: {
+//                   format: "%Y-%m-%d",
+//                   date: "$datetime"
+//                 }
+//               }
+//             }
+//           },
+//           {
+//             $group: {
+//               _id: {
+//                 date: "$date",
+//                 type: "$type"
+//               },
+//               transactions: {
+//                 $push: {
+//                   transactionID: "$transactionID",
+//                   _id: "$_id",
+//                   amount: "$amount",
+//                   base_amount: "$base_amount",
+//                   mobile: "$mobile",
+//                   type: "$type",
+//                   status: "$status",
+//                   details: "$details",
+//                   payment_type: "$payment_type",
+//                   gateway_name: "$gateway_name",
+//                   datetime: "$datetime",
+//                   updatetime: "$updatetime"
+//                 }
+//               },
+            
+//             }
+//           },
+//           {
+//             $project: {
+//               _id: 0,
+//               date: "$_id.date",
+//               type: "$_id.type",
+//               transactions: 1,
+            
+//             }
+//           },
+//           {
+//             $sort: { date: -1 }
+//           }
+//         ]);
+    
+//         res.json({ success: true, data: result });
+//       } catch (error) {
+//         console.error("Error getting transaction history:", error);
+//         res.status(500).json({
+//           success: false,
+//           message: "Failed to get transaction history",
+//           error: error.message
+//         });
+//       }
+// };
 
 
 
@@ -1453,7 +1581,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
 
 exports.getTransactionDepositTotals = async (req, res) => {
     try {
-        const { referredbyCode } = req.body;
+        const { referralCode } = req.body;
 
         // Get date ranges
         const now = new Date();
@@ -1472,7 +1600,7 @@ exports.getTransactionDepositTotals = async (req, res) => {
         const results = await Transaction.aggregate([
             {
                 $match: {
-                    referredbyCode: referredbyCode,
+                    referredBy: referralCode,
                     type: 0, // Only deposits
                     status: 0, // Accepted transactions only
                     datetime: { $gte: last30Days }, // Only fetch last 30 days' data
@@ -1527,10 +1655,10 @@ exports.getTransactionDepositTotals = async (req, res) => {
 
 exports.chatsSummary = async (req, res) => {
     try {
-        const { referredbyCode, startDate, endDate } = req.body;
+        const { referralCode, startDate, endDate } = req.body;
 
-        if (!referredbyCode) {
-            return res.status(400).json({ message: "referredbyCode is required" });
+        if (!referralCode) {
+            return res.status(400).json({ message: "referralCode is required" });
         }
 
         // Convert startDate and endDate to Date objects
@@ -1550,8 +1678,8 @@ exports.chatsSummary = async (req, res) => {
         last30Days.setDate(last30Days.getDate() - 30);
         last30Days.setHours(0, 0, 0, 0);
 
-        // Filter for accepted transactions with the referredbyCode
-        const filter = { referredbyCode, status: 0, type: 0 };
+        // Filter for accepted transactions with the referredBy
+        const filter = { referredBy:referralCode, status: 0, type: 0 };
 
         const totals = await Promise.all([
             // Last day total
@@ -1592,7 +1720,7 @@ exports.chatsSummary = async (req, res) => {
 
 exports.getTransactionWidthrawTotals = async (req, res) => {
     try {
-        const { referredbyCode } = req.body;
+        const { referralCode } = req.body;
 
         // Get date ranges
         const now = new Date();
@@ -1605,13 +1733,13 @@ exports.getTransactionWidthrawTotals = async (req, res) => {
         const last30Days = new Date();
         last30Days.setDate(now.getDate() - 30);
 
-        console.log("Referred by Code:", referredbyCode);
+        console.log("Referred by Code:", referralCode);
 
         // Aggregate query
         const results = await Transaction.aggregate([
             {
                 $match: {
-                    referredbyCode: referredbyCode,
+                    referredBy: referralCode,
                     type: 1, // Only deposits
                     status: 1, // Accepted transactions only
                     datetime: { $gte: last30Days }, // Only fetch last 30 days' data
@@ -1670,13 +1798,13 @@ exports.getTransactionWidthrawTotals = async (req, res) => {
 
 exports.totalWidthraw = async (req, res) => {
     try {
-        const { referredbyCode } = req.body;
-        if (!referredbyCode) {
-            return res.status(400).json({ error: "referredbyCode is required" });
+        const { referralCode } = req.body;
+        if (!referralCode) {
+            return res.status(400).json({ error: "referredBy is required" });
         }
-
+        const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 1, status: 1 } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: subAdmin.referralCode, type: 1, status: 1 } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
@@ -1692,13 +1820,13 @@ exports.totalWidthraw = async (req, res) => {
 
 exports.totalDeposit = async (req, res) => {
     try {
-        const { referredbyCode } = req.body;
-        if (!referredbyCode) {
-            return res.status(400).json({ error: "referredbyCode is required" });
+        const { referralCode } = req.body;
+        if (!referralCode) {
+            return res.status(400).json({ error: "referredBy is required" });
         }
-
+        const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredbyCode: referredbyCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: subAdmin.referralCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
 
@@ -1753,7 +1881,7 @@ exports.totalDeposit = async (req, res) => {
 exports.getUserTransactionHistory = async (req, res) => {
     try {
         const { userId, referralCode } = req.body;
-        const transactions = await Transaction.find({ userId: userId, referredByCode: referralCode });
+        const transactions = await Transaction.find({ userId: userId, referredBy: referralCode });
         res.json({ transactions });
     } catch (error) {
         console.error("Error searching transactions:", error);
@@ -1775,13 +1903,13 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
         }
         console.log(req.body.referralCode);
         // Check if SubAdmin exists
-        const subAdminExists = await SubAdmin.findOne({ referralCode });
+        const subAdminExists = await SubAdmin.findOne({ referralCode:referralCode });
         console.log(subAdminExists)
         if (!subAdminExists) {
             return res.status(404).json({ message: 'SubAdmin not found' });
         }
 
-        let query = {};
+        let query = {referredBy: subAdminExists.referralCode};
 
         // Only apply filters if provided
         if (userId) {
@@ -1798,19 +1926,19 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
         const users = await User.aggregate([
             // First, match the referralByCode
             {
-                $match: { referredbyCode: subAdminExists.referralCode }
+                $match: { referredBy: subAdminExists.referralCode }
             },
 
-            {
-                $match: query
-            },
+            // {
+            //     $match: query
+            // },
             {
                 $project: {
                     userId: 1,
                     name: 1,
                     phone: 1,
                     balance: 1,
-                    referredbyCode: 1,
+                    referredBy: 1,
                     referredCode: 1,
                     email: 1,
                     country: 1,
@@ -1847,19 +1975,19 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
 exports.WidthdrawListByUser = async (req, res) => {
     // console.log(req.body);
     try {
-        const { referredbyCode } = req.body;
-        console.log(referredbyCode);
+        const { referralCode } = req.body;
+        console.log(referralCode);
 
         // Find the user based on the referredCode
-        const users = await User.find({ referredbyCode: referredbyCode });
+        const users = await User.find({ referredBy: referralCode });
         console.log(users);
         // If user not found, return 404
         if (!users) {
             return res.status(404).json({ message: 'User not found' });
         }
-        const transactions = await Transaction.find({ referredbyCode: referredbyCode, status: 0 });
+        const transactions = await Transaction.find({ referredBy: users.referredBy, status: 0 });
 
-        const transactionscount = await Transaction.find({ referredbyCode }).countDocuments();
+        const transactionscount = await Transaction.find({ referredBy: users.referredBy,status: 0 }).countDocuments();
         res.status(200).json({ transactionscount, transactions });
 
     } catch (error) {

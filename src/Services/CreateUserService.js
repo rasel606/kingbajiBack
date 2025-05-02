@@ -11,17 +11,21 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 exports.register = async (req, res) => {
   try {
-    const {referredbyCode} = req.params
-    console.log(referredbyCode)
+    const {referredBy} = req.params
+    console.log(referredBy)
     const { userId, phone, password, countryCode } = req.body;
 
     if (!userId || !phone || !password || !countryCode) {
       return res.status(400).json({ success: false, message: "Please enter all fields" });
     }
+    const existingUser = await User.findOne({ $or: [{ userId }, { phone }] });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists with this email or phone' });
+    }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const referredCode = Math.random().toString(36).substring(2, 8);
+    // const referredCode = Math.random().toString(36).substring(2, 8);
 
     // ✅ Step 1: Create User Immediately
    
@@ -29,18 +33,15 @@ exports.register = async (req, res) => {
 
 
      // ✅ Step 3: Call External API Asynchronously
-     const operatorcodeIND = "rcdi";
+   
      const operatorcode = "rbdb";
      const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
-     const secretIND = "ce624ff66a45d7557128c228fa51b396";
+     
      const newUserCreate = userId.toLowerCase();
      const signature = crypto.createHash("md5").update(operatorcode + newUserCreate + secret).digest("hex").toUpperCase();
  
      const apiUrl = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcode}&username=${newUserCreate}&signature=${signature}`;
-     const signatureIND = crypto.createHash("md5").update(operatorcodeIND + newUserCreate + secretIND).digest("hex").toUpperCase();
- 
-     const apiUrlIND = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcodeIND}&username=${newUserCreate}&signature=${signatureIND}`;
-
+     
     // ✅ Step 2: Generate JWT Token (Send Response Immediately)
 
 
@@ -50,28 +51,98 @@ exports.register = async (req, res) => {
 
     try {
       const apiResponse = await axios.get(apiUrl);
-      const apiResponseIND = await axios.get(apiUrlIND);
+      
 
-      console.log("API Response Data:", apiResponse,apiResponseIND);
+      console.log("API Response Data:", apiResponse);
 
       // ✅ Step 4: If API response is successful, update user in DB
-      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS" && apiResponseIND.data ) {
+      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS" ) {
         await User.updateOne({ userId }, { $set: { apiVerified: true } });
 
-
-        const newUser = await User.create({
+        let referralCode;
+        let isUnique = false;
+        while (!isUnique) {
+          referralCode = generateReferralCode();
+          const existingCode = await User.findOne({ referralCode });
+          if (!existingCode) isUnique = true;
+        }
+    
+        // Create new user
+        const newUser = new User({
           userId,
+          email,
           phone,
           countryCode,
-          password: hashedPassword, // Store hashed password
-          referredbyCode: referredbyCode ,
-          referredCode,
-          apiVerified: false, // Add a field to check API success later
+          password: hashedPassword,
+          referralCode
         });
-
-
-
-
+    
+        // Handle referral if exists
+        if (referredBy) {
+          const referrer = await User.findOne({ referralCode: referredBy });
+          if (referrer) {
+            newUser.referredBy = referredBy;
+            
+            // Add to referrer's level 1 referrals
+            referrer.levelOneReferrals.push(newUser._id);
+            await referrer.save();
+            
+            // Create level 1 bonus record
+            const level1Bonus = new ReferralBonus({
+              user: referrer._id,
+              referredUser: newUser.userId,
+              level: 1,
+              amount: 0 // Will be calculated later based on turnover
+            });
+            await level1Bonus.save();
+    
+            // Check for level 2 referrer
+            if (referrer.referredBy) {
+              const level2Referrer = await User.findOne({ referralCode: referrer.referredBy });
+              if (level2Referrer) {
+                level2Referrer.levelTwoReferrals.push(newUser.userId);
+                await level2Referrer.save();
+                
+                // Create level 2 bonus record
+                const level2Bonus = new ReferralBonus({
+                  user: level2Referrer.userId,
+                  referredUser: newUser.userId,
+                  level: 2,
+                  amount: 0
+                });
+                await level2Bonus.save();
+    
+                // Check for level 3 referrer
+                if (level2Referrer.referredBy) {
+                  const level3Referrer = await User.findOne({ referralCode: level2Referrer.referredBy });
+                  if (level3Referrer) {
+                    level3Referrer.levelThreeReferrals.push(newUser.userId);
+                    await level3Referrer.save();
+                    
+                    // Create level 3 bonus record
+                    const level3Bonus = new ReferralBonus({
+                      user: level3Referrer.userId,
+                      referredUser: newUser.userId,
+                      level: 3,
+                      amount: 0
+                    });
+                    await level3Bonus.save();
+                  }
+                }
+              }
+            }
+          }
+        }
+    
+        await newUser.save();
+    
+        // Generate JWT token
+        // const token = jwt.sign(
+        //   { userId: newUser._id, email: newUser.email },
+        //   process.env.JWT_SECRET,
+        //   { expiresIn: '7d' }
+        // );
+    
 
         const token = jwt.sign({ id: newUser.userId }, JWT_SECRET, { expiresIn: "2h" });
 
@@ -85,8 +156,8 @@ exports.register = async (req, res) => {
             phone: newUser.phone,
             countryCode: newUser.countryCode,
             balance: newUser.balance || 0,
-            referredbyCode: newUser.referredbyCode,
-            referredCode: newUser.referredCode,
+            referredBy: newUser.referredBy,
+            referralCode: newUser.referralCode,
             apiVerified: false,
           },
         });
@@ -123,7 +194,7 @@ exports.loginUser = async (req, res) => {
           name: 1,
           phone: 1,
           balance: 1,
-          referredbyCode: 1,
+          referredBy: 1,
           referredLink: 1,
           referredCode: 1,
           timestamp:1,
@@ -238,21 +309,43 @@ exports.verifyPhone = async (req, res) => {
   }
 }
 
-exports.sendVerificationCode = async (req, res) => {
-  try {
-    const code = Math.floor(1000 + Math.random() * 9000).toString();
-    req.user.verificationCode = code;
-    req.user.verificationExpires = new Date(Date.now() + 3600000); // 1 hour
-    await req.user.save();
-    
-    // In a real app, you would send this code via SMS
-    console.log(`Verification code for ${req.user.username}: ${code}`);
-    
-    res.send({ message: 'Verification code sent' });
-  } catch (e) {
-    res.status(500).send();
+// const nodemailer = require("nodemailer");
+const { OTP } = require('../Models/Opt');
+const generateReferralCode = require('./generateReferralCode');
+
+const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
+
+// const transporter = nodemailer.createTransport({
+//   host: process.env.SMTP_HOST,
+//   port: parseInt(process.env.SMTP_PORT),
+//   auth: {
+//     user: process.env.SMTP_USER,
+//     pass: process.env.SMTP_PASS,
+//   },
+// });
+
+
+
+
+exports.verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" });
+
+  const record = await OTP.findOne({ email, otp });
+  if (!record || record.expiresAt < new Date()) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
   }
-}
+
+  let user = await User.findOne({ email });
+  if (!user) user = await User.create({ email });
+
+  user.verified.email = true;
+  await user.save();
+
+  await OTP.deleteMany({ email });
+
+  return res.json({ message: "Email verified successfully", user });
+};
 
 
 

@@ -51,11 +51,11 @@ router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
 router.post('/verify/confirm', CreateUserService.verifyPhone);
-router.post('/verify/send', CreateUserService.sendVerificationCode);
+// router.post('/verify/send', CreateUserService.sendotp);
 router.patch('/profile/personal', CreateUserService.updateUser);
-router.get('/send-otp', UpdateProfile.VerifyOpt);
-router.get('/verify-email', UpdateProfile.SandOpt);
-router.get('/user_betting_history', UpdateProfile.SandOpt);
+// router.get('/verify/otp', UpdateProfile.verifyOTP);
+router.get('/verify-email', UpdateProfile.verifyOTP);
+// router.get('/user_betting_history', UpdateProfile.sendotp);
 
 
 router.post('/searchTransactionsbyUserId', TransactionController.searchTransactionsbyUserId)
@@ -142,14 +142,14 @@ router.post('/deposits_list', TransactionController.DepositsList);
 router.post('/deposit_with_bonus', TransactionController.addTransaction)
 router.post('/widthdraw_with_transaction', TransactionController.WithdrawTransaction)
 router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
-router.post('/searchDepositTransactions', TransactionController.searchDepositTransactions)
+router.post('/searchDepositTransactions', TransactionController.Search_Deposit_Transactions_Pending)
 router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
 router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
 
 
 router.post('/widthraw_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
 router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
-router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.approveTransfarWithDepositbySubAdmin)
+router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin)
 router.post('/searchWidthdrawTransactionsReportAprove', TransactionController.searchWidthdrawTransactionsReportAprove)
 router.post('/searchWidthdrawTransactionsReportReject', TransactionController.searchWidthdrawTransactionsReportReject)
 

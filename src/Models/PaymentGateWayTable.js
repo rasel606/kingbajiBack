@@ -7,7 +7,7 @@ const PaymentGateWayTableSchema = new mongoose.Schema({
     gateway_name: { type: String, required: true },
     type: { type: String, required: true },
     payment_type: { type: String, enum: ["Send Money", "Cashout", "Payment"], required: true },
-    referredbyCode: { type: String , required: true }, // Ensure this matches the controller field name
+    referredBy: { type: String , required: true }, // Ensure this matches the controller field name
     image_url: { type: String , required: true },
     start_time: { 
         hours: { type: Number, min: 0, max: 23, required: true }, 
@@ -21,5 +21,7 @@ const PaymentGateWayTableSchema = new mongoose.Schema({
     timestamp: { type: Date, default: Date.now },
     updatetime: { type: Date, default: Date.now }
 });
+
+
 
 module.exports = mongoose.model("PaymentGateWayTable", PaymentGateWayTableSchema);

@@ -1,3 +1,4 @@
+const OTP = require('../Models/Opt');
 const User = require('../Models/User');
 
 
@@ -46,55 +47,55 @@ exports.updateName = async (req, res) => {
     }
   };
 
-  exports.SandOpt = async (req, res) => {
-    const { userId,email } = req.body;
-    console.log(userId,email );
-    if (!userId) return res.status(400).json({ message: 'Email is required.' });
 
-    try {
-        const otp = generateOTP();
-        const otpExpiration = new Date(Date.now() + 5 * 60 * 1000); // OTP valid for 5 minutes
 
-        let user = await User.findOne({ userId });
+  const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
-        if (!user) {
-            user = new User({ email, otp, otpExpiration });
-        } else {
-            user.otp = otp;
-            user.otpExpiration = otpExpiration;
-        }
+// const transporter = nodemailer.createTransport({
+//   host: process.env.SMTP_HOST,
+//   port: parseInt(process.env.SMTP_PORT),
+//   auth: {
+//     user: process.env.SMTP_USER,
+//     pass: process.env.SMTP_PASS,
+//   },
+// });
 
-        await user.save();
+  exports.sendotp = async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email is required" });
+  
+    const otp = generateOTP();
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 min
+  
+    await OTP.deleteMany({ email }); // Clear existing OTPs
+    await OTP.create({ email, otp, expiresAt });
+  
+    // await transporter.sendMail({
+    //   from: process.env.EMAIL_FROM,
+    //   to: email,
+    //   subject: "Your Verification Code",
+    //   html: `<h2>Your OTP is: ${otp}</h2><p>This code will expire in 1 minutes.</p>`,
+    // });
+  
+    return res.json({ message: "OTP sent successfully" });
+  };
 
-        await transporter.sendMail({
-            from: 'verifyemail@kingbaji.com',
-            to: email,
-            subject: 'Your OTP Code',
-            text: `Your OTP code is ${otp}. It is valid for 5 minutes.`
-        });
-        console.log(user);
-        res.status(200).json({ message: 'OTP sent successfully.' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error sending OTP.', error });
+  exports.verifyOTP = async (req, res) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" });
+  
+    const record = await OTP.findOne({ email, otp });
+    if (!record || record.expiresAt < new Date()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
-};
-
-exports.VerifyOpt = async (req, res) => {
-  const { email, otp } = req.body;
-
-  if (!email || !otp) return res.status(400).json({ message: 'Email and OTP are required.' });
-
-  try {
-      const user = await User.findOne({ email });
-
-      if (!user) return res.status(404).json({ message: 'User not found.' });
-
-      if (user.otp !== otp) return res.status(400).json({ message: 'Invalid OTP.' });
-
-      if (user.otpExpiration < new Date()) return res.status(400).json({ message: 'OTP expired.' });
-
-      res.status(200).json({ message: 'OTP verified successfully.' });
-  } catch (error) {
-      res.status(500).json({ message: 'Error verifying OTP.', error });
-  }
-};
+  
+    let user = await User.findOne({ email });
+    if (!user) user = await User.create({ email });
+  
+    user.verified.email = true;
+    await user.save();
+  
+    await OTP.deleteMany({ email });
+  
+    return res.json({ message: "Email verified successfully", user });
+  };
