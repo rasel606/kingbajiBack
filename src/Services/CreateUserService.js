@@ -215,3 +215,61 @@ exports.userDetails =async (req, res) => {
   }
 };
 
+exports.verifyPhone = async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (req.user.verificationCode !== code) {
+      return res.status(400).send({ error: 'Invalid verification code' });
+    }
+    
+    if (new Date() > req.user.verificationExpires) {
+      return res.status(400).send({ error: 'Verification code expired' });
+    }
+    
+    req.user.phoneVerified = true;
+    req.user.verificationCode = '';
+    req.user.verificationExpires = null;
+    await req.user.save();
+    
+    res.send({ message: 'Phone number verified successfully' });
+  } catch (e) {
+    res.status(500).send();
+  }
+}
+
+exports.sendVerificationCode = async (req, res) => {
+  try {
+    const code = Math.floor(1000 + Math.random() * 9000).toString();
+    req.user.verificationCode = code;
+    req.user.verificationExpires = new Date(Date.now() + 3600000); // 1 hour
+    await req.user.save();
+    
+    // In a real app, you would send this code via SMS
+    console.log(`Verification code for ${req.user.username}: ${code}`);
+    
+    res.send({ message: 'Verification code sent' });
+  } catch (e) {
+    res.status(500).send();
+  }
+}
+
+
+
+exports.updateUser = async (req, res) => {
+  const updates = Object.keys(req.body);
+  const allowedUpdates = ['fullName', 'birthday', 'email'];
+  const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+
+  if (!isValidOperation) {
+    return res.status(400).send({ error: 'Invalid updates!' });
+  }
+
+  try {
+    updates.forEach(update => req.user[update] = req.body[update]);
+    await req.user.save();
+    res.send(req.user);
+  } catch (e) {
+    res.status(400).send(e);
+  }
+}

@@ -675,19 +675,30 @@ exports.AddPaymentMethodNumber = async (req, res) => {
 exports.subAdminGetWayList = async (req, res) => {
     console.log(req.body);
     try {
-        const { user_role, email, referralCode } = req.body;
-        console.log(user_role, email, referralCode);
+        const { referralCode } = req.body;
 
-        // Find the user based on the referredCode
-        const Getway = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode });
-        const Getwaycount = await PaymentGateWayTable.find({ user_role, email, referredbyCode: referralCode }).countDocuments();;
+    // Tier 1
+    const tier1Users = await User.find({ referredbyCode: referralCode });
+    const tier1Emails = tier1Users.map(u => u.email);
 
-        res.status(200).json({ Getwaycount, Getway });
+    // Tier 2
+    const tier2Users = await User.find({ referredbyCode: { $in: tier1Users.map(u => u.myReferralCode) } });
+    const tier2Emails = tier2Users.map(u => u.email);
 
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
-    }
+    // Tier 3
+    const tier3Users = await User.find({ referredbyCode: { $in: tier2Users.map(u => u.myReferralCode) } });
+    const tier3Emails = tier3Users.map(u => u.email);
+
+    const allEmails = [...tier1Emails, ...tier2Emails, ...tier3Emails];
+
+    const gateways = await PaymentGateWayTable.find({ email: { $in: allEmails } });
+    const gatewayCount = await PaymentGateWayTable.countDocuments({ email: { $in: allEmails } });
+
+    res.status(200).json({ gatewayCount, gateways });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 }
 
 
@@ -1358,31 +1369,72 @@ exports.getTransactionDepositTotals = async (req, res) => {
 
 exports.searchTransactionsbyUserId = async (req, res) => {
     try {
-
-        const { userId, status, startDate, endDate } = req.body;
-        console.log("u", userId, status, startDate, endDate);
-        // console.log(req.body);
-
-
-
-        // const SubAdminuser = await SubAdmin.findOne({ referralCode: referredbyCode })
-        // if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
-        // console.log(SubAdminuser);
-        // Find the transaction
-        const user = await User.findOne({ userId: userId });
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        console.log(user);
-
-        const transactionExists = await TransactionModel.find({ userId: user.userId, referredbyCode: user.referredbyCode }).sort({ datetime: -1 });
-        if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
-
-
-
-        res.json({ transactionExists });
-    } catch (error) {
-        console.error("Error searching transactions:", error);
-        res.status(500).json({ message: "Server error" });
-    }
+        const { userId, type } = req.query;
+    
+        const match = {};
+        if (userId) match.userId = userId;
+        if (type) match.type = parseInt(type);
+    
+        const result = await Transaction.aggregate([
+          { $match: match },
+          {
+            $addFields: {
+              date: {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$datetime"
+                }
+              }
+            }
+          },
+          {
+            $group: {
+              _id: {
+                date: "$date",
+                type: "$type"
+              },
+              transactions: {
+                $push: {
+                  transactionID: "$transactionID",
+                  _id: "$_id",
+                  amount: "$amount",
+                  base_amount: "$base_amount",
+                  mobile: "$mobile",
+                  type: "$type",
+                  status: "$status",
+                  details: "$details",
+                  payment_type: "$payment_type",
+                  gateway_name: "$gateway_name",
+                  datetime: "$datetime",
+                  updatetime: "$updatetime"
+                }
+              },
+            
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              date: "$_id.date",
+              type: "$_id.type",
+              transactions: 1,
+            
+            }
+          },
+          {
+            $sort: { date: -1 }
+          }
+        ]);
+    
+        res.json({ success: true, data: result });
+      } catch (error) {
+        console.error("Error getting transaction history:", error);
+        res.status(500).json({
+          success: false,
+          message: "Failed to get transaction history",
+          error: error.message
+        });
+      }
 };
 
 

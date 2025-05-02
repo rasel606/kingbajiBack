@@ -9,7 +9,7 @@ const BetProviderTable = require("../Models/BetProviderTable");
 const Casino_category_table = require("../Models/Casino_category_table");
 const GameTypeList = require("../Models/GameTypeTable");
 const GameListTable = require("../Models/GameListTable");
-const SportsCategoryTable = require("../Models/SportsCategoryTable");
+const SportsCategoryTable = require("../Models/Category");
 const AdminController = require("../Controllers/AdminController");
 const BettingTable = require("../Models/BettingTable");
 const { userbet } = require("./CornController");
@@ -208,45 +208,45 @@ async function addGameWithCategory(gameData, category_name) {
   return { newGame, category };
 }
 
-exports.AddSports = async (req, res) => {
-  try {
-    const { key, type, category } = req.body;
+// exports.AddSports = async (req, res) => {
+//   try {
+//     const { key, type, category } = req.body;
 
-    // Check if the entry already exists
-    const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
-    if (existingBet) {
+//     // Check if the entry already exists
+//     const existingBet = await BettingTable.findOne({ rel_id: key, rel_type: type });
+//     if (existingBet) {
       
-      return res.status(400).json({ message: 'Betting entry already exists' });
-    }
+//       return res.status(400).json({ message: 'Betting entry already exists' });
+//     }
 
-    // Create new betting entry
-    const newBetting = new BettingTable({
-      rel_id: key,
-      rel_type: type,
-      staff_id: 'some_staff_id', // Replace with actual staff ID logic
-      cetegory_id: category,
-      // json: JSON.stringify(req.body), // Assuming you want to store the request body as a JSON string
-    });
+//     // Create new betting entry
+//     const newBetting = new BettingTable({
+//       rel_id: key,
+//       rel_type: type,
+//       staff_id: 'some_staff_id', // Replace with actual staff ID logic
+//       cetegory_id: category,
+//       // json: JSON.stringify(req.body), // Assuming you want to store the request body as a JSON string
+//     });
 
-    // Save the new betting entry
-    await BettingTable.save();
+//     // Save the new betting entry
+//     await BettingTable.save();
 
-    // If it's a betting odds type, update the 'tblodds_sports' collection
-    if (type === 'BETTING_ODDS') {
-      // Assuming you have a separate model for tblodds_sports
-      sports_key: key,
+//     // If it's a betting odds type, update the 'tblodds_sports' collection
+//     if (type === 'BETTING_ODDS') {
+//       // Assuming you have a separate model for tblodds_sports
+//       sports_key: key,
 
-        // const tbloddsSports = await OddSportsTable.findOne({
+//         // const tbloddsSports = await OddSportsTable.findOne({
 
-        await tbloddsSports.updateOne({ sports_key: key }, { $set: { bet: 1 } });
-    }
+//         await tbloddsSports.updateOne({ sports_key: key }, { $set: { bet: 1 } });
+//     }
 
-    return res.status(201).json({ message: 'Betting entry added successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-}
+//     return res.status(201).json({ message: 'Betting entry added successfully' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// }
 
 
 
@@ -431,72 +431,75 @@ exports.EditManual = async (req, res) => {
 }
 
 
+
+
+
 // Function to get bet price
-exports.BetPrice = async (req, res) => {
-  try {
-    const { sport_key, bet_type, bet_key, bet_name, sport_id } = req.body;
+// exports.BetPrice = async (req, res) => {
+//   try {
+//     const { sport_key, bet_type, bet_key, bet_name, sport_id } = req.body;
 
-    if (!bet) {
-      const bet = await BettingTable.findOne({ rel_id: sport_key });
-      return res.status(404).json({ error: 'Bet not found' });
-    }
+//     if (!bet) {
+//       const bet = await BettingTable.findOne({ rel_id: sport_key });
+//       return res.status(404).json({ error: 'Bet not found' });
+//     }
 
-    let price = null;
+//     let price = null;
 
-    if (bet_type === 'auto') {
-      if (bet.history) {
-        const history = JSON.parse(bet.history);
-        if (history.output && history.output.data) {
-          const data = history.output.data;
-          for (const value of data) {
-            if (value.bookmakers) {
-              for (const bookmaker of value.bookmakers) {
-                if (bookmaker.key === bet_key) {
-                  for (const market of bookmaker.markets) {
-                    for (const outcome of market.outcomes) {
-                      if (outcome.name === bet_name) {
-                        price = outcome.price;
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    } else if (bet_type === 'manual') {
-      if (bet.manual) {
-        const manual = JSON.parse(bet.manual);
-        for (const value of manual) {
-          if (value.id === sport_id) {
-            if (value.bookmakers) {
-              for (const bookmaker of value.bookmakers) {
-                for (const market of bookmaker.markets) {
-                  if (market.name === bet_name) {
-                    price = market.price;
-                    break;
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+//     if (bet_type === 'auto') {
+//       if (bet.history) {
+//         const history = JSON.parse(bet.history);
+//         if (history.output && history.output.data) {
+//           const data = history.output.data;
+//           for (const value of data) {
+//             if (value.bookmakers) {
+//               for (const bookmaker of value.bookmakers) {
+//                 if (bookmaker.key === bet_key) {
+//                   for (const market of bookmaker.markets) {
+//                     for (const outcome of market.outcomes) {
+//                       if (outcome.name === bet_name) {
+//                         price = outcome.price;
+//                         break;
+//                       }
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     } else if (bet_type === 'manual') {
+//       if (bet.manual) {
+//         const manual = JSON.parse(bet.manual);
+//         for (const value of manual) {
+//           if (value.id === sport_id) {
+//             if (value.bookmakers) {
+//               for (const bookmaker of value.bookmakers) {
+//                 for (const market of bookmaker.markets) {
+//                   if (market.name === bet_name) {
+//                     price = market.price;
+//                     break;
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
 
-    if (price !== null) {
-      return res.json({ price });
-    } else {
-      return res.status(404).json({ error: 'Price not found' });
-    }
+//     if (price !== null) {
+//       return res.json({ price });
+//     } else {
+//       return res.status(404).json({ error: 'Price not found' });
+//     }
 
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-}
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// }
 
 
 
@@ -672,6 +675,12 @@ exports.CasinoItemAdd = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 }
+
+
+
+
+
+
 
 
 exports.CasinoItemSingleUpdate = async (req, res) => {
@@ -1077,23 +1086,23 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
 
 
 // ImgBB API configuration
-const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY';
-const IMGBB_URL = 'https://api.imgbb.com/1/upload';
+// const IMGBB_API_KEY = 'YOUR_IMGBB_API_KEY';
+// const IMGBB_URL = 'https://api.imgbb.com/1/upload';
 
 // Function to upload image to ImgBB
-async function uploadImageToImgBB(file) {
-  const formData = new FormData();
-  formData.append('image', file.buffer.toString('base64'));
+// async function uploadImageToImgBB(file) {
+//   const formData = new FormData();
+//   formData.append('image', file.buffer.toString('base64'));
 
-  try {
-    const response = await axios.post(IMGBB_URL, formData, {
-      params: { key: IMGBB_API_KEY },
-    });
-    return response.data.data.url; // Returns the URL of the uploaded image
-  } catch (error) {
-    throw new Error('Image upload failed');
-  }
-}
+//   try {
+//     const response = await axios.post(IMGBB_URL, formData, {
+//       params: { key: IMGBB_API_KEY },
+//     });
+//     return response.data.data.url; // Returns the URL of the uploaded image
+//   } catch (error) {
+//     throw new Error('Image upload failed');
+//   }
+// }
 
 
 // Route to add or update a category (similar to the PHP function)
@@ -1184,92 +1193,92 @@ exports.AddCetagory = async (req, res) => {
 // }
 
 
-exports.UpdateBetProvider = async (req, res) => {
-  const { id, ...data } = req.body;
+// exports.UpdateBetProvider = async (req, res) => {
+//   const { id, ...data } = req.body;
 
-  try {
-    if (req.file) {
-      // Upload image to ImgBB
-      const formData = new FormData();
-      formData.append('image', req.file.buffer, req.file.originalname);
+//   try {
+//     if (req.file) {
+//       // Upload image to ImgBB
+//       const formData = new FormData();
+//       formData.append('image', req.file.buffer, req.file.originalname);
 
-      const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        params: {
-          key: 'YOUR_IMGBB_API_KEY', // Replace with your ImgBB API key
-        },
-      });
+//       const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+//         headers: {
+//           'Content-Type': 'multipart/form-data',
+//         },
+//         params: {
+//           key: 'YOUR_IMGBB_API_KEY', // Replace with your ImgBB API key
+//         },
+//       });
 
-      // Get the URL of the uploaded image
-      data.image_url = response.data.data.url;
-    }
+//       // Get the URL of the uploaded image
+//       data.image_url = response.data.data.url;
+//     }
 
-    if (id) {
-      if (existingProvider && existingProvider.image_url) {
-        // Here we no longer need to delete old image from local storage
-        const existingProvider = await BetProvider.findById(id);
-        // ImgBB handles the image storage online
-        return res.json(updatedProvider);
-      }
-      const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
-      return res.json(updatedProvider);
-    } else {
-      const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
-      const newProvider = new BetProvider(data);
-      await newProvider.save();
-      res.status(201).json(newProvider);
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-
+//     if (id) {
+//       if (existingProvider && existingProvider.image_url) {
+//         // Here we no longer need to delete old image from local storage
+//         const existingProvider = await BetProvider.findById(id);
+//         // ImgBB handles the image storage online
+//         return res.json(updatedProvider);
+//       }
+//       const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
+//       return res.json(updatedProvider);
+//     } else {
+//       const updatedProvider = await BetProvider.findByIdAndUpdate(id, data, { new: true });
+//       const newProvider = new BetProvider(data);
+//       await newProvider.save();
+//       res.status(201).json(newProvider);
+//     }
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 
-const uploadToImageBB = async (filePath) => {
-  const apiKey = 'YOUR_IMAGEBB_API_KEY';
-  const formData = new FormData();
-  formData.append('image', fs.createReadStream(filePath));
 
-  const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    params: {
-      key: apiKey,
-    },
-  });
 
-  return response.data.data.url; // The URL of the uploaded image
-};
+// const uploadToImageBB = async (filePath) => {
+//   const apiKey = 'YOUR_IMAGEBB_API_KEY';
+//   const formData = new FormData();
+//   formData.append('image', fs.createReadStream(filePath));
+
+//   const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+//     headers: {
+//       'Content-Type': 'multipart/form-data',
+//     },
+//     params: {
+//       key: apiKey,
+//     },
+//   });
+
+//   return response.data.data.url; // The URL of the uploaded image
+// };
 
 
 //   router.get('/odds_betting/:id',
 
-exports.OddsBetting = async (req, res) => {
-  try {
-    const categoryId = req.params.id;
+// exports.OddsBetting = async (req, res) => {
+//   try {
+//     const categoryId = req.params.id;
 
-    let output = [];
-    const bets = await BettingTable.find({ cetegory_id: categoryId });
+//     let output = [];
+//     const bets = await BettingTable.find({ cetegory_id: categoryId });
 
-    for (const bet of bets) {
-      const dt = await OddsSportsTable(bet.rel_id);
-      if (dt.return) {
-        output.push({ sports, bet: dt.output });
-      }
-      const sports = await SportsTable.findOne({ sports_key: bet.rel_id });
-    }
+//     for (const bet of bets) {
+//       const dt = await OddsSportsTable(bet.rel_id);
+//       if (dt.return) {
+//         output.push({ sports, bet: dt.output });
+//       }
+//       const sports = await SportsTable.findOne({ sports_key: bet.rel_id });
+//     }
 
-    res.json(output);
-  } catch (error) {
-    console.error('Error fetching betting odds:', error);
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
-}
+//     res.json(output);
+//   } catch (error) {
+//     console.error('Error fetching betting odds:', error);
+//     res.status(500).json({ message: 'Internal Server Error' });
+//   }
+// }
 
 
 
@@ -1283,37 +1292,37 @@ exports.GetCasinoCategory = async (req, res) => {
   }
 }
 // Route to handle file upload and update
-exports.CasinoUpdate = async (req, res) => {
-  const { c_id, category_name, link, is_active } = req.body;
-  const images = ['casino_logo_1', 'casino_logo_2', 'casino_logo_3', 'casino_logo_4', 'casino_logo_5', 'casino_logo_6'];
+// exports.CasinoUpdate = async (req, res) => {
+//   const { c_id, category_name, link, is_active } = req.body;
+//   const images = ['casino_logo_1', 'casino_logo_2', 'casino_logo_3', 'casino_logo_4', 'casino_logo_5', 'casino_logo_6'];
 
-  let updateData = { c_id, category_name, link, is_active, updatetimestamp: new Date() };
+//   let updateData = { c_id, category_name, link, is_active, updatetimestamp: new Date() };
 
-  for (const imageField of images) {
-    if (req.files[imageField]) {
-      try {
-        const filePath = req.files[imageField][0].path;
-        const imageURL = await uploadToImageBB(filePath); // Upload to ImageBB
-        updateData[imageField] = imageURL; // Add image URL to update data
-        fs.unlinkSync(filePath); // Delete the temporary file
-      } catch (error) {
-        console.error('Error uploading image:', error);
-        return res.status(500).send({ error: 'Image upload failed' });
-      }
-    }
-  }
+//   for (const imageField of images) {
+//     if (req.files[imageField]) {
+//       try {
+//         const filePath = req.files[imageField][0].path;
+//         const imageURL = await uploadToImageBB(filePath); // Upload to ImageBB
+//         updateData[imageField] = imageURL; // Add image URL to update data
+//         fs.unlinkSync(filePath); // Delete the temporary file
+//       } catch (error) {
+//         console.error('Error uploading image:', error);
+//         return res.status(500).send({ error: 'Image upload failed' });
+//       }
+//     }
+//   }
 
-  try {
-    if (!updatedCategory) {
-      return res.status(404).send({ error: 'Casino category not found' });
-      const updatedCategory = await GameTypeList.findOneAndUpdate({ c_id }, updateData, { new: true });
-    }
-    return res.status(200).send(updatedCategory);
-  } catch (error) {
-    console.error('Error updating casino category:', error);
-    return res.status(500).send({ error: 'Update failed' });
-  }
-}
+//   try {
+//     if (!updatedCategory) {
+//       return res.status(404).send({ error: 'Casino category not found' });
+//       const updatedCategory = await GameTypeList.findOneAndUpdate({ c_id }, updateData, { new: true });
+//     }
+//     return res.status(200).send(updatedCategory);
+//   } catch (error) {
+//     console.error('Error updating casino category:', error);
+//     return res.status(500).send({ error: 'Update failed' });
+//   }
+// }
 
 
 //app.get('/api/games/:id',
@@ -1401,172 +1410,172 @@ exports.UpdateGameType = async (req, res) => {
 
 
 
-exports.Casino_Category = async (req, res) => {
-  const { category_id, category_name, category_code, order_by } = req.body;
-  const file = req.file;
+// exports.Casino_Category = async (req, res) => {
+//   const { category_id, category_name, category_code, order_by } = req.body;
+//   const file = req.file;
 
-  // Prepare the data object
-  const data = {
-    type_name: category_name,
-    type_code: category_code,
-    game_is_api: 'your_value', // Add your value here
-    is_active: true, // Set your condition for active status
-  };
+//   // Prepare the data object
+//   const data = {
+//     type_name: category_name,
+//     type_code: category_code,
+//     game_is_api: 'your_value', // Add your value here
+//     is_active: true, // Set your condition for active status
+//   };
 
-  if (file) {
-    try {
-      // Send file to ImageBB
-      const formData = new FormData();
-      formData.append('image', file.buffer, 'image.jpg');
+//   if (file) {
+//     try {
+//       // Send file to ImageBB
+//       const formData = new FormData();
+//       formData.append('image', file.buffer, 'image.jpg');
 
-      const response = await axios.post('https://api.imgbb.com/1/upload?key=' + imageBBApiKey, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+//       const response = await axios.post('https://api.imgbb.com/1/upload?key=' + imageBBApiKey, formData, {
+//         headers: {
+//           'Content-Type': 'multipart/form-data',
+//         },
+//       });
 
-      if (response.data.success) {
-        const imageURL = response.data.data.url;  // The image URL from ImageBB
-        data.type_image = imageURL;
+//       if (response.data.success) {
+//         const imageURL = response.data.data.url;  // The image URL from ImageBB
+//         data.type_image = imageURL;
 
-        // If updating, delete old image file (in MongoDB, you can store URL, no need for local file handling)
-        if (category_id) {
-          if (existingCategory && existingCategory.type_image) {
-            const existingImageUrl = existingCategory.type_image;
-            const existingCategory = await GameTypeList.findById(category_id);
-            // Optionally: Delete image from ImageBB if needed
-          }
-          return res.status(200).json({ message: 'Category updated successfully' });
-        }
-        await BetProviderTable.findByIdAndUpdate(category_id, data);
-      }
-    } catch (error) {
-      return res.status(500).json({ message: 'Error uploading image to ImageBB', error });
-    }
-  }
+//         // If updating, delete old image file (in MongoDB, you can store URL, no need for local file handling)
+//         if (category_id) {
+//           if (existingCategory && existingCategory.type_image) {
+//             const existingImageUrl = existingCategory.type_image;
+//             const existingCategory = await GameTypeList.findById(category_id);
+//             // Optionally: Delete image from ImageBB if needed
+//           }
+//           return res.status(200).json({ message: 'Category updated successfully' });
+//         }
+//         await BetProviderTable.findByIdAndUpdate(category_id, data);
+//       }
+//     } catch (error) {
+//       return res.status(500).json({ message: 'Error uploading image to ImageBB', error });
+//     }
+//   }
 
-  // If no file, simply update DB without the image
-  if (category_id === 0) {
-    const newCategory = new BetProviderTable(data);
-    await newCategory.save();
-    return res.status(200).json({ message: 'Category saved successfully' });
-  }
-}
-
-
+//   // If no file, simply update DB without the image
+//   if (category_id === 0) {
+//     const newCategory = new BetProviderTable(data);
+//     await newCategory.save();
+//     return res.status(200).json({ message: 'Category saved successfully' });
+//   }
+// }
 
 
 
 
 
 
-exports.GetCasinoCetegoryById = async (req, res) => {
-  try {
-    const result = await CasinoItem.aggregate([
-      {
-        $lookup: {
-          from: 'casinocategories', // MongoDB collection name (pluralized by Mongoose)
-          localField: 'category_id',
-          foreignField: 'c_id',
-          as: 'category_details',
-        },
-      },
-      { $unwind: '$category_details' },
-    ]);
-
-    res.json(result);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-}
 
 
-exports.UpdateBetProvider = async (req, res) => {
-  const { id, ...data } = req.body;
+// exports.GetCasinoCetegoryById = async (req, res) => {
+//   try {
+//     const result = await CasinoItem.aggregate([
+//       {
+//         $lookup: {
+//           from: 'casinocategories', // MongoDB collection name (pluralized by Mongoose)
+//           localField: 'category_id',
+//           foreignField: 'c_id',
+//           as: 'category_details',
+//         },
+//       },
+//       { $unwind: '$category_details' },
+//     ]);
 
-  try {
-    if (req.file) {
-      // Upload image to ImgBB
-      const formData = new FormData();
-      formData.append('image', req.file.buffer, req.file.originalname);
+//     res.json(result);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Internal Server Error' });
+//   }
+// }
 
-      const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        params: {
-          key: 'YOUR_IMGBB_API_KEY', // Replace with your ImgBB API key
-        },
-      });
 
-      // Get the URL of the uploaded image
-      data.image_url = response.data.data.url;
-    }
+// exports.UpdateBetProvider = async (req, res) => {
+//   const { id, ...data } = req.body;
 
-    if (id) {
-      if (existingProvider && existingProvider.image_url) {
-        // Here we no longer need to delete old image from local storage
-        const existingProvider = await BetProvider.findById(id);
-        // ImgBB handles the image storage online
-        return res.json(updatedProvider);
-      }
-      const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
-      return res.json(updatedProvider);
-    } else {
-      const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
-      const newProvider = new BetProvider(data);
-      await newProvider.save();
-      res.status(201).json(newProvider);
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+//   try {
+//     if (req.file) {
+//       // Upload image to ImgBB
+//       const formData = new FormData();
+//       formData.append('image', req.file.buffer, req.file.originalname);
+
+//       const response = await axios.post('https://api.imgbb.com/1/upload', formData, {
+//         headers: {
+//           'Content-Type': 'multipart/form-data',
+//         },
+//         params: {
+//           key: 'YOUR_IMGBB_API_KEY', // Replace with your ImgBB API key
+//         },
+//       });
+
+//       // Get the URL of the uploaded image
+//       data.image_url = response.data.data.url;
+//     }
+
+//     if (id) {
+//       if (existingProvider && existingProvider.image_url) {
+//         // Here we no longer need to delete old image from local storage
+//         const existingProvider = await BetProvider.findById(id);
+//         // ImgBB handles the image storage online
+//         return res.json(updatedProvider);
+//       }
+//       const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
+//       return res.json(updatedProvider);
+//     } else {
+//       const updatedProvider = await BetProviderTable.findByIdAndUpdate(id, data, { new: true });
+//       const newProvider = new BetProvider(data);
+//       await newProvider.save();
+//       res.status(201).json(newProvider);
+//     }
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
 
 
 //router.delete('/casino-category/:id',
 
-exports.Casino_Category_Delete = async (req, res) => {
-  try {
-    const { id } = req.params;
+// exports.Casino_Category_Delete = async (req, res) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!gameType) {
-      const gameType = await GameTypeList.findById(id);
-      return res.status(404).json({ message: 'Game type not found' });
-    }
+//     if (!gameType) {
+//       const gameType = await GameTypeList.findById(id);
+//       return res.status(404).json({ message: 'Game type not found' });
+//     }
 
-    // Define the path where images are stored
-    const imagePath = path.join(__dirname, '../uploads/game-type/', gameType.type_image);
+//     // Define the path where images are stored
+//     const imagePath = path.join(__dirname, '../uploads/game-type/', gameType.type_image);
 
-    // Delete the image file if it exists
-    if (gameType.type_image && fs.existsSync(imagePath)) {
-      fs.unlinkSync(imagePath);
-    }
+//     // Delete the image file if it exists
+//     if (gameType.type_image && fs.existsSync(imagePath)) {
+//       fs.unlinkSync(imagePath);
+//     }
 
-    // Delete the record from MongoDB
+//     // Delete the record from MongoDB
 
-    res.json({ message: 'Game type deleted successfully' });
-    await GameTypeList.findByIdAndDelete(id);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
-  }
-}
+//     res.json({ message: 'Game type deleted successfully' });
+//     await GameTypeList.findByIdAndDelete(id);
+//   } catch (error) {
+//     res.status(500).json({ message: 'Server error', error });
+//   }
+// }
 
 
 
-exports.BetProviderDelete = async (req, res) => {
-  const { id } = req.params;
+// exports.BetProviderDelete = async (req, res) => {
+//   const { id } = req.params;
 
-  try {
+//   try {
 
-    res.json({ message: 'Provider deleted successfully' });
-    const provider = await BetProviderTable.findById(id);
-  } catch (error) {
-    await BetProviderTable.findByIdAndDelete(id);
-    res.status(500).json({ error: error.message });
-  }
-}
+//     res.json({ message: 'Provider deleted successfully' });
+//     const provider = await BetProviderTable.findById(id);
+//   } catch (error) {
+//     await BetProviderTable.findByIdAndDelete(id);
+//     res.status(500).json({ error: error.message });
+//   }
+// }
 
 
 //router.post('/casino_item_add', upload.single('image'), 
@@ -1577,81 +1586,81 @@ exports.BetProviderDelete = async (req, res) => {
 
 // router.post('/game/update',
 
-exports.UpdateGame = async (req, res) => {
-  try {
-    const { id, game_name, game_Id, game_type, category_id, agent_Id, is_hot } = req.body;
-    let imageUrl = null;
+// exports.UpdateGame = async (req, res) => {
+//   try {
+//     const { id, game_name, game_Id, game_type, category_id, agent_Id, is_hot } = req.body;
+//     let imageUrl = null;
 
-    // Handle Image Upload to ImageBB
-    if (req.file) {
-      const imageData = req.file.buffer.toString('base64');
-      const response = await axios.post(`https://api.imgbb.com/1/upload?key=${IMAGEBB_API_KEY}`, {
-        image: imageData,
-      });
-      imageUrl = response.data.data.url;
-    }
+//     // Handle Image Upload to ImageBB
+//     if (req.file) {
+//       const imageData = req.file.buffer.toString('base64');
+//       const response = await axios.post(`https://api.imgbb.com/1/upload?key=${IMAGEBB_API_KEY}`, {
+//         image: imageData,
+//       });
+//       imageUrl = response.data.data.url;
+//     }
 
-    // Data Object for Update
-    const gameData = {
-      game_name,
-      game_Id,
-      game_type,
-      category_id,
-      agent_Id,
-      is_hot: is_hot ? true : false,
-    };
+//     // Data Object for Update
+//     const gameData = {
+//       game_name,
+//       game_Id,
+//       game_type,
+//       category_id,
+//       agent_Id,
+//       is_hot: is_hot ? true : false,
+//     };
 
-    // Add image_url if an image was uploaded
-    if (imageUrl) {
-      gameData.image_url = imageUrl;
-    }
+//     // Add image_url if an image was uploaded
+//     if (imageUrl) {
+//       gameData.image_url = imageUrl;
+//     }
 
-    let result;
-    if (id === '0') {
-      result = await GameListTable.create(gameData);
-    } else {
-    }
+//     let result;
+//     if (id === '0') {
+//       result = await GameListTable.create(gameData);
+//     } else {
+//     }
 
-    result = await GameListTable.findByIdAndUpdate(id, gameData, { new: true });
-    res.json({ return: true, message: 'Update Successful', data: result });
-  } catch (error) {
-    res.status(500).json({ return: false, message: 'Something went wrong', error: error.message });
-  }
-}
+//     result = await GameListTable.findByIdAndUpdate(id, gameData, { new: true });
+//     res.json({ return: true, message: 'Update Successful', data: result });
+//   } catch (error) {
+//     res.status(500).json({ return: false, message: 'Something went wrong', error: error.message });
+//   }
+// }
 
 // DELETE Casino Item
 // router.delete("/:id", 
-exports.DeleteCasinoItem = async (req, res) => {
-  try {
-    const { id } = req.params;
+// exports.DeleteCasinoItem = async (req, res) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!casinoItem) {
-      const casinoItem = await CasinoItemTable.findById(id);
-      return res.status(404).json({ error: "Casino item not found" });
-    }
+//     if (!casinoItem) {
+//       const casinoItem = await CasinoItemTable.findById(id);
+//       return res.status(404).json({ error: "Casino item not found" });
+//     }
 
-    // Extract ImageBB URL
-    const imageUrl = casinoItem.image;
+//     // Extract ImageBB URL
+//     const imageUrl = casinoItem.image;
 
-    // Delete image from ImageBB (if exists)
-    if (imageUrl) {
-      try {
-        await axios.delete(`https://api.imgbb.com/1/delete`, {
-          params: { key: IMAGEBB_API_KEY, image_url: imageUrl },
-        });
-      } catch (error) {
-        console.error("Error deleting image from ImageBB:", error);
-      }
-    }
+//     // Delete image from ImageBB (if exists)
+//     if (imageUrl) {
+//       try {
+//         await axios.delete(`https://api.imgbb.com/1/delete`, {
+//           params: { key: IMAGEBB_API_KEY, image_url: imageUrl },
+//         });
+//       } catch (error) {
+//         console.error("Error deleting image from ImageBB:", error);
+//       }
+//     }
 
-    // Delete item from database
-    res.json({ message: "Casino item deleted successfully" });
-  } catch (error) {
-    await CasinoItemTable.findByIdAndDelete(id);
-    console.error("Error deleting casino item:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-}
+//     // Delete item from database
+//     res.json({ message: "Casino item deleted successfully" });
+//   } catch (error) {
+//     await CasinoItemTable.findByIdAndDelete(id);
+//     console.error("Error deleting casino item:", error);
+//     res.status(500).json({ error: "Server error" });
+//   }
+// }
 
 
 //router.post('/add_manual',
@@ -1660,49 +1669,49 @@ exports.DeleteCasinoItem = async (req, res) => {
 
 // Route to handle the delete request
 //router.post('/delete', 
-exports.DeleteManual = async (req, res) => {
-  const { type, data } = req.body; // Get data from request body
+// exports.DeleteManual = async (req, res) => {
+//   const { type, data } = req.body; // Get data from request body
 
-  try {
+//   try {
 
-    if (!bettingEntry) {
-      const bettingEntry = await BettingTable.findOne({ _id: data.sports_id });
-      return res.status(404).json({ message: 'Betting entry not found' });
-    }
+//     if (!bettingEntry) {
+//       const bettingEntry = await BettingTable.findOne({ _id: data.sports_id });
+//       return res.status(404).json({ message: 'Betting entry not found' });
+//     }
 
-    // Parse the manual field (JSON string)
-    let manual = bettingEntry.manual ? JSON.parse(bettingEntry.manual) : null;
+//     // Parse the manual field (JSON string)
+//     let manual = bettingEntry.manual ? JSON.parse(bettingEntry.manual) : null;
 
-    if (manual && manual.length > 0) {
-      const { main_id, bookmark_id, market_id } = data;
+//     if (manual && manual.length > 0) {
+//       const { main_id, bookmark_id, market_id } = data;
 
-      if (type === 'bookmark') {
-        // Remove bookmark
-        if (manual[main_id] && manual[main_id].bookmakers[bookmark_id]) {
-          delete manual[main_id].bookmakers[bookmark_id];
-          bettingEntry.manual = JSON.stringify(manual);
-          await bettingEntry.save();
-          return res.json({ return: true });
-        }
-      } else if (type === 'market') {
-        // Remove market
-        if (manual[main_id] && manual[main_id].bookmakers[bookmark_id]) {
-          delete manual[main_id].bookmakers[bookmark_id].markets[market_id];
-          bettingEntry.manual = JSON.stringify(manual);
-          await bettingEntry.save();
-          return res.json({ return: true });
-        }
-      } else {
-        return res.status(400).json({ return: false });
-      }
-    } else {
-      return res.status(400).json({ return: false });
-    }
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: 'Server error' });
-  }
-}
+//       if (type === 'bookmark') {
+//         // Remove bookmark
+//         if (manual[main_id] && manual[main_id].bookmakers[bookmark_id]) {
+//           delete manual[main_id].bookmakers[bookmark_id];
+//           bettingEntry.manual = JSON.stringify(manual);
+//           await bettingEntry.save();
+//           return res.json({ return: true });
+//         }
+//       } else if (type === 'market') {
+//         // Remove market
+//         if (manual[main_id] && manual[main_id].bookmakers[bookmark_id]) {
+//           delete manual[main_id].bookmakers[bookmark_id].markets[market_id];
+//           bettingEntry.manual = JSON.stringify(manual);
+//           await bettingEntry.save();
+//           return res.json({ return: true });
+//         }
+//       } else {
+//         return res.status(400).json({ return: false });
+//       }
+//     } else {
+//       return res.status(400).json({ return: false });
+//     }
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: 'Server error' });
+//   }
+// }
 
 
 // Edit Betting Table Data
@@ -1711,14 +1720,14 @@ exports.DeleteManual = async (req, res) => {
 
 
 //app.get('/api/withdraw',
-exports.Users_withdraw = async (req, res) => {
-  try {
-    res.json(users);  // Send user data to frontend
-  } catch (error) {
-    const users = await User.find();
-    res.status(500).send('Error fetching users');
-  }
-}
+// exports.Users_withdraw = async (req, res) => {
+//   try {
+//     res.json(users);  // Send user data to frontend
+//   } catch (error) {
+//     const users = await User.find();
+//     res.status(500).send('Error fetching users');
+//   }
+// }
 
 
 
@@ -1727,55 +1736,55 @@ exports.Users_withdraw = async (req, res) => {
 
 // Withdraw Accept
 //router.post('/withdraw_accept', 
-exports.withdraw_accept = async (req, res) => {
-  const { id, trans_id } = req.body;
+// exports.withdraw_accept = async (req, res) => {
+//   const { id, trans_id } = req.body;
 
-  try {
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found' });
-      const transaction = await WidthrowTableHistory.findById(id);
-    }
+//   try {
+//     if (!transaction) {
+//       return res.status(404).json({ message: 'Transaction not found' });
+//       const transaction = await WidthrowTableHistory.findById(id);
+//     }
 
-    transaction.status = 1; // Accept
-    if (trans_id) transaction.transactionID = trans_id;
+//     transaction.status = 1; // Accept
+//     if (trans_id) transaction.transactionID = trans_id;
 
-    await transaction.save();
+//     await transaction.save();
 
-    res.json({ success: true, message: 'Update successful' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Something went wrong' });
-  }
-}
+//     res.json({ success: true, message: 'Update successful' });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: 'Something went wrong' });
+//   }
+// }
 
 // Withdraw Reject
 //router.post('/withdraw_reject', 
 
-exports.withdraw_reject = async (req, res) => {
-  const { id } = req.body;
+// exports.withdraw_reject = async (req, res) => {
+//   const { id } = req.body;
 
-  try {
-    if (!transaction) {
-      return res.status(404).json({ message: 'Transaction not found or already processed' });
-      const transaction = await WidthrowTableHistory.findOne({ _id: id, status: 0 });
-    }
+//   try {
+//     if (!transaction) {
+//       return res.status(404).json({ message: 'Transaction not found or already processed' });
+//       const transaction = await WidthrowTableHistory.findOne({ _id: id, status: 0 });
+//     }
 
-    // Assuming you have a User model to handle user balances
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-      const user = await User.findById(transaction.user_id);
-    }
+//     // Assuming you have a User model to handle user balances
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//       const user = await User.findById(transaction.user_id);
+//     }
 
-    user.balance += transaction.amount; // Revert balance
-    await user.save();
+//     user.balance += transaction.amount; // Revert balance
+//     await user.save();
 
-    transaction.status = 2; // Reject
-    await transaction.save();
+//     transaction.status = 2; // Reject
+//     await transaction.save();
 
-    res.json({ success: true, message: 'Withdrawal rejected and balance restored' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Something went wrong' });
-  }
-}
+//     res.json({ success: true, message: 'Withdrawal rejected and balance restored' });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: 'Something went wrong' });
+//   }
+// }
 
 
 // router.get("/sports-list",
@@ -1943,141 +1952,141 @@ exports.withdraw_reject = async (req, res) => {
 
 
 
-   const fetchBalance = async (agent, username) => {
-    try {
-      const signature = crypto.createHash('md5').update(
-        `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
-      ).digest('hex').toUpperCase();
+  //  const fetchBalance = async (agent, username) => {
+  //   try {
+  //     const signature = crypto.createHash('md5').update(
+  //       `${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${username}${agent.key}`
+  //     ).digest('hex').toUpperCase();
   
-      console.log("Generated Signature:", signature);
+  //     console.log("Generated Signature:", signature);
   
-      const params = {
-        operatorcode: agent.operatorcode,
-        providercode: agent.providercode,
-        username: username,
-        password: agent.auth_pass,
-        signature
-      };
+  //     const params = {
+  //       operatorcode: agent.operatorcode,
+  //       providercode: agent.providercode,
+  //       username: username,
+  //       password: agent.auth_pass,
+  //       signature
+  //     };
   
-      const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
+  //     const apiUrl = `http://fetch.336699bet.com/getBalance.aspx`;
   
-      const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
+  //     const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
   
-      let parsedData = response.data;
-  
-  
-      return parseFloat(parsedData.balance);
-    } catch (error) {
-      console.log("Error fetching balance:", error.message);
-      return null;
-    }
-  };
-  
-  function randomStr() {
-    return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-  }
-  
-  const refreshBalancebefore = async (userId, game_id) => {
+  //     let parsedData = response.data;
   
   
+  //     return parseFloat(parsedData.balance);
+  //   } catch (error) {
+  //     console.log("Error fetching balance:", error.message);
+  //     return null;
+  //   }
+  // };
   
-    if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
+  // function randomStr() {
+  //   return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+  // }
   
-    const user = await User.findOne({ userId: userId });
-    if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
-  
-    let balance = user.balance;
-    const game = await gameTable.findOne({ userId: user.userId, gameId: user.last_game_id});
-     console.log("game", game);
-  
-    if (!game) return balance
-  
-    const agent = await BetProviderTable.findOne({ providercode: game.agentId });
-    //  console.log("agent", agent);
-    if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
-  
-    const username = user.userId;
-    let amount = null;
-  
-    if (balance === 0) {
-      amount = await fetchBalance(agent, username);
-      if (amount === null) {
-        return balance
-      }
-    } else {
-      return balance
-    }
-  
-    console.log("Fetched Balance:", amount);
-    setTimeout(async () => {
-      if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
-        balance += amount;
-  
-        await User.findOneAndUpdate(
-          { userId: userId },
-          { $set: { balance: parseFloat(balance) } },
-          { new: true }
-        );
-  
-        console.log("Updated Balance:", balance);
-        console.log("Updated Balance:", balance);
+  // const refreshBalancebefore = async (userId, game_id) => {
   
   
-      } else {
-        return balance
-      }
+  
+  //   if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
+  
+  //   const user = await User.findOne({ userId: userId });
+  //   if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
+  
+  //   let balance = user.balance;
+  //   const game = await gameTable.findOne({ userId: user.userId, gameId: user.last_game_id});
+  //    console.log("game", game);
+  
+  //   if (!game) return balance
+  
+  //   const agent = await BetProviderTable.findOne({ providercode: game.agentId });
+  //   //  console.log("agent", agent);
+  //   if (!agent) return res.status(500).json({ errCode: 2, errMsg: 'Server error, try again.', balance });
+  
+  //   const username = user.userId;
+  //   let amount = null;
+  
+  //   if (balance === 0) {
+  //     amount = await fetchBalance(agent, username);
+  //     if (amount === null) {
+  //       return balance
+  //     }
+  //   } else {
+  //     return balance
+  //   }
+  
+  //   console.log("Fetched Balance:", amount);
+  //   setTimeout(async () => {
+  //     if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+  //       balance += amount;
+  
+  //       await User.findOneAndUpdate(
+  //         { userId: userId },
+  //         { $set: { balance: parseFloat(balance) } },
+  //         { new: true }
+  //       );
+  
+  //       console.log("Updated Balance:", balance);
+  //       console.log("Updated Balance:", balance);
   
   
-      const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
-      const signature = crypto.createHash('md5').update(
-        `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
-      ).digest('hex').toUpperCase();
-  
-      console.log("Transaction ID:", transId);
-      console.log("Signature:", signature);
-  
-      const params = {
-        operatorcode: agent.operatorcode,
-        providercode: agent.providercode,
-        username: user.userId,
-        password: agent.auth_pass,
-        referenceid: transId,
-        type: 1,
-        amount: amount,
-        signature
-      };
-  
-      try {
-        const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
-        console.log("Refund Response:", refund.data);
-        console.log("Updated Balance:", balance);
-        if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
-          return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
-        }
-  
-        if (refund.innerCode === null) {
-          return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
-        }
-      } catch (transferError) {
-        console.log("Transfer API Error:", transferError.message);
-        return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
-      }
-    }, 5000);
-    const win = amount - game.betAmount;
-    console.log("Win Amount:", win);
-  
-    if (!isNaN(win) && win !== 0 && win !== NaN) {
-      await gameTable.updateOne(
-        { gameId: game.gameId },
-        { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-        { upsert: true }
-      );
-    }
-    const updatedUser = await User.findOne({ userId: userId });
-    return updatedUser.balance
+  //     } else {
+  //       return balance
+  //     }
   
   
-  };
+  //     const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
+  //     const signature = crypto.createHash('md5').update(
+  //       `${amount}${agent.operatorcode.toLowerCase()}${agent.auth_pass}${agent.providercode.toUpperCase()}${transId}1${user.userId}${agent.key}`
+  //     ).digest('hex').toUpperCase();
+  
+  //     console.log("Transaction ID:", transId);
+  //     console.log("Signature:", signature);
+  
+  //     const params = {
+  //       operatorcode: agent.operatorcode,
+  //       providercode: agent.providercode,
+  //       username: user.userId,
+  //       password: agent.auth_pass,
+  //       referenceid: transId,
+  //       type: 1,
+  //       amount: amount,
+  //       signature
+  //     };
+  
+  //     try {
+  //       const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
+  //       console.log("Refund Response:", refund.data);
+  //       console.log("Updated Balance:", balance);
+  //       if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
+  //         return res.json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
+  //       }
+  
+  //       if (refund.innerCode === null) {
+  //         return res.status(500).json({ errCode: 2, errMsg: 'Server transaction error, try again.', balance });
+  //       }
+  //     } catch (transferError) {
+  //       console.log("Transfer API Error:", transferError.message);
+  //       return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
+  //     }
+  //   }, 5000);
+  //   const win = amount - game.betAmount;
+  //   console.log("Win Amount:", win);
+  
+  //   if (!isNaN(win) && win !== 0 && win !== NaN) {
+  //     await gameTable.updateOne(
+  //       { gameId: game.gameId },
+  //       { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+  //       { upsert: true }
+  //     );
+  //   }
+  //   const updatedUser = await User.findOne({ userId: userId });
+  //   return updatedUser.balance
+  
+  
+  // };
   
   
   
@@ -2097,40 +2106,38 @@ exports.withdraw_reject = async (req, res) => {
   
   // Launch game API
   // router.post("/launch_game",
-  const fetchApi = async (endpoint, data = {}) => {
-    try {
-      const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
-      const url = `${baseURL}${endpoint}`;
+  // const fetchApi = async (endpoint, data = {}) => {
+  //   try {
+  //     const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
+  //     const url = `${baseURL}${endpoint}`;
   
-      const config = {
-        method: "GET", // Default: POST
-        url,
-        timeout: 10000, // 10 seconds timeout
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+  //     const config = {
+  //       method: "GET", // Default: POST
+  //       url,
+  //       timeout: 10000, // 10 seconds timeout
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "Accept": "application/json",
   
-        },
-      };
+  //       },
+  //     };
   
-      if (config.method === "POST") {
-        config.data = data;
-      } else {
-        config.params = data;
-      }
+  //     if (config.method === "POST") {
+  //       config.data = data;
+  //     } else {
+  //       config.params = data;
+  //     }
   
-      const response = await axios(config);
-  
-  
-      return response.data
-      // 
-    } catch (error) {
-      console.error("API Request Failed:", error.message);
-      return { errCode: 3, errMsg: "Network or API Error" };
-    }
-  };
+  //     const response = await axios(config);
   
   
+  //     return response.data
+  //     // 
+  //   } catch (error) {
+  //     console.error("API Request Failed:", error.message);
+  //     return { errCode: 3, errMsg: "Network or API Error" };
+  //   }
+  // };
   
   
   
@@ -2138,252 +2145,254 @@ exports.withdraw_reject = async (req, res) => {
   
   
   
-  exports.launchGame = async (req, res) => {
   
-    console.log(
-      "req.body",
-      req.body
-    )
-    try {
-      // Check if user is logged in
   
-      const { userId, game_id, is_demo, p_code, p_type } = req.body;
-      console.log("userId", userId, game_id, is_demo,p_code, p_type);
-      if (!userId) {
+  // exports.launchGame = async (req, res) => {
   
-        return res.status(400).json({ errCode: 1, errMsg: "User not found." });
-      }
-      const user = await User.findOne({ userId });
+  //   console.log(
+  //     "req.body",
+  //     req.body
+  //   )
+  //   try {
+  //     // Check if user is logged in
   
-      let amount = user.balance;
-      const last_game_id = user.last_game_id;
-      console.log("amount", amount)
+  //     const { userId, game_id, is_demo, p_code, p_type } = req.body;
+  //     console.log("userId", userId, game_id, is_demo,p_code, p_type);
+  //     if (!userId) {
+  
+  //       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
+  //     }
+  //     const user = await User.findOne({ userId });
+  
+  //     let amount = user.balance;
+  //     const last_game_id = user.last_game_id;
+  //     console.log("amount", amount)
 
-      const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
-    console.log("Newgame",Newgame);
-      // Refresh balance if last game exists
+  //     const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
+  //   console.log("Newgame",Newgame);
+  //     // Refresh balance if last game exists
   
-      const agent = await GameListTable.aggregate([
-        {
-          $match: { g_code: game_id, p_code: p_code }
-        },
-        {
-          $lookup: {
-            from: "betprovidertables",
-            localField: "p_code",
-            foreignField: "providercode",
-            as: "provider"
-          }
-        },
-        { $unwind: "$provider" },
-        {
-          $project: {
-            // id: "$provider._id",
-            providercode: "$provider.providercode",
-            operatorcode: "$provider.operatorcode",
-            key: "$provider.key",
-            auth_pass: "$provider.auth_pass",
-            game_type: "$p_type"
-          }
-        }
-      ]);
-  
-  
-  
-  
-      console.log("agent", agent)
-  
-      if (last_game_id) {
-  
-  
-        const resBalance = await refreshBalancebefore(user.userId, agent);
-        console.log("resBalance", resBalance)
-        // if (!resBalance || resBalance.errCode !== 0) {
-        //   return res.json(resBalance);
-        // }
-        // amount += resBalance.balance || 0;
-  
-        // console.log("amount-3", amount)
-      }
-  
-      // Insufficient balance check
-      if (amount < 1) {
-        return res.json({ errCode: 2, errMsg: "Insufficient balance." });
-      }
-  
-      // Fetch game and provider details using aggregation
+  //     const agent = await GameListTable.aggregate([
+  //       {
+  //         $match: { g_code: game_id, p_code: p_code }
+  //       },
+  //       {
+  //         $lookup: {
+  //           from: "betprovidertables",
+  //           localField: "p_code",
+  //           foreignField: "providercode",
+  //           as: "provider"
+  //         }
+  //       },
+  //       { $unwind: "$provider" },
+  //       {
+  //         $project: {
+  //           // id: "$provider._id",
+  //           providercode: "$provider.providercode",
+  //           operatorcode: "$provider.operatorcode",
+  //           key: "$provider.key",
+  //           auth_pass: "$provider.auth_pass",
+  //           game_type: "$p_type"
+  //         }
+  //       }
+  //     ]);
   
   
   
   
-      if (!agent || agent.length === 0) {
-        return res.json({ errCode: 1, errMsg: "Agent not found." });
-      }
+  //     console.log("agent", agent)
   
-      const provider = agent[0]
+  //     if (last_game_id) {
+  
+  
+  //       const resBalance = await refreshBalancebefore(user.userId, agent);
+  //       console.log("resBalance", resBalance)
+  //       // if (!resBalance || resBalance.errCode !== 0) {
+  //       //   return res.json(resBalance);
+  //       // }
+  //       // amount += resBalance.balance || 0;
+  
+  //       // console.log("amount-3", amount)
+  //     }
+  
+  //     // Insufficient balance check
+  //     if (amount < 1) {
+  //       return res.json({ errCode: 2, errMsg: "Insufficient balance." });
+  //     }
+  
+  //     // Fetch game and provider details using aggregation
+  
+  
+  
+  
+  //     if (!agent || agent.length === 0) {
+  //       return res.json({ errCode: 1, errMsg: "Agent not found." });
+  //     }
+  
+  //     const provider = agent[0]
   
       
-      console.log("provider", provider);
-      let game_url;
+  //     console.log("provider", provider);
+  //     let game_url;
   
   
-      const signature = generateSignature(
-        provider.operatorcode,
-        provider.auth_pass,
-        provider.providercode,
-        provider.game_type,
-        user.userId,
-        provider.key
+  //     const signature = generateSignature(
+  //       provider.operatorcode,
+  //       provider.auth_pass,
+  //       provider.providercode,
+  //       provider.game_type,
+  //       user.userId,
+  //       provider.key
   
-      )
-      const field = {
-        operatorcode: provider.operatorcode,
-        providercode: provider.providercode,
-        username: user.userId,
-        password: provider.auth_pass,
-        type: Newgame.p_type,
-        gameid: game_id,
-        lang: "en-US",
-        html5: 1,
-        signature: signature
-      };
+  //     )
+  //     const field = {
+  //       operatorcode: provider.operatorcode,
+  //       providercode: provider.providercode,
+  //       username: user.userId,
+  //       password: provider.auth_pass,
+  //       type: Newgame.p_type,
+  //       gameid: game_id,
+  //       lang: "en-US",
+  //       html5: 1,
+  //       signature: signature
+  //     };
   
-      console.log("field - All", field);
-  
-  
-  
-      if (user.balance > 0) {
-        // Generate transaction ID
-        const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
-  
-  
-        const signature = generateSignature(
-          amount.toString(),
-          provider.operatorcode,
-          provider.auth_pass,
-          provider.providercode,
-          transId,
-          0,
-          user.userId,
-          provider.key
-  
-        )
-        console.log("signature blance", signature);
-        // Make transfer API call
-        const transferResponse = await fetchApi("makeTransfer.aspx", {
-          operatorcode: provider.operatorcode,
-          providercode: provider.providercode,
-          username: user.userId,
-          password: provider.auth_pass,
-          referenceid: transId,
-          type: 0,
-          amount: amount,
-          signature: signature
-        });
+  //     console.log("field - All", field);
   
   
   
-        console.log("transferResponse", transferResponse);
+  //     if (user.balance > 0) {
+  //       // Generate transaction ID
+  //       const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
   
-        if (!transferResponse || transferResponse.errCode !== "0") {
   
-          return res.json({ errCode: 2, errMsg: "Failed to load balance." });
-        }
+  //       const signature = generateSignature(
+  //         amount.toString(),
+  //         provider.operatorcode,
+  //         provider.auth_pass,
+  //         provider.providercode,
+  //         transId,
+  //         0,
+  //         user.userId,
+  //         provider.key
+  
+  //       )
+  //       console.log("signature blance", signature);
+  //       // Make transfer API call
+  //       const transferResponse = await fetchApi("makeTransfer.aspx", {
+  //         operatorcode: provider.operatorcode,
+  //         providercode: provider.providercode,
+  //         username: user.userId,
+  //         password: provider.auth_pass,
+  //         referenceid: transId,
+  //         type: 0,
+  //         amount: amount,
+  //         signature: signature
+  //       });
+  
+  
+  
+  //       console.log("transferResponse", transferResponse);
+  
+  //       if (!transferResponse || transferResponse.errCode !== "0") {
+  
+  //         return res.json({ errCode: 2, errMsg: "Failed to load balance." });
+  //       }
   
         
-        await gameTable.create({
-            userId: user.userId,
-            agentId: provider.providercode,
-            gameId: Newgame.g_code,
-            currencyId: user.currencyId,
-            betAmount: amount,
-            transactionId: transId
-          });
+  //       await gameTable.create({
+  //           userId: user.userId,
+  //           agentId: provider.providercode,
+  //           gameId: Newgame.g_code,
+  //           currencyId: user.currencyId,
+  //           betAmount: amount,
+  //           transactionId: transId
+  //         });
     
-        // Update user balance
-        await User.updateOne(
-          { userId: user.userId },
-          { balance: 0, last_game_id: game_id,agentId:provider.providercode }
-          // {upsert: true}
-        );
+  //       // Update user balance
+  //       await User.updateOne(
+  //         { userId: user.userId },
+  //         { balance: 0, last_game_id: game_id,agentId:provider.providercode }
+  //         // {upsert: true}
+  //       );
   
-        const signatureLunchGame = generateSignature(
-          provider.operatorcode,
-          provider.auth_pass,
-          provider.providercode,
-          provider.game_type,
-          user.userId,
-          provider.key
+  //       const signatureLunchGame = generateSignature(
+  //         provider.operatorcode,
+  //         provider.auth_pass,
+  //         provider.providercode,
+  //         provider.game_type,
+  //         user.userId,
+  //         provider.key
   
-        )
-        const field = {
-          operatorcode: provider.operatorcode,
-          providercode: provider.providercode,
-          username: user.userId,
-          password: provider.auth_pass,
-          type: Newgame.p_type,
-          gameid: game_id,
-          lang: "en-US",
-          html5: 1,
-          signature: signatureLunchGame
-        };
-        console.log("field:", field);
+  //       )
+  //       const field = {
+  //         operatorcode: provider.operatorcode,
+  //         providercode: provider.providercode,
+  //         username: user.userId,
+  //         password: provider.auth_pass,
+  //         type: Newgame.p_type,
+  //         gameid: game_id,
+  //         lang: "en-US",
+  //         html5: 1,
+  //         signature: signatureLunchGame
+  //       };
+  //       console.log("field:", field);
   
   
   
-        game_url = await fetchApi("launchGames.aspx", field);
-        console.log("game_url:", game_url);
-      } else {
-        game_url = await fetchApi("launchDGames.ashx", field);
-        console.log(game_url)
-      }
+  //       game_url = await fetchApi("launchGames.aspx", field);
+  //       console.log("game_url:", game_url);
+  //     } else {
+  //       game_url = await fetchApi("launchDGames.ashx", field);
+  //       console.log(game_url)
+  //     }
   
-      return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
-    } catch (error) {
-      console.error("Launch Game Error:", error);
-      console.log("Launch Game Error:", error);
-      res.status(500).json({ errCode: 500, errMsg: "Server error." });
-    }
+  //     return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
+  //   } catch (error) {
+  //     console.error("Launch Game Error:", error);
+  //     console.log("Launch Game Error:", error);
+  //     res.status(500).json({ errCode: 500, errMsg: "Server error." });
+  //   }
 
-  }
+  // }
   
   // Generate a random string for transaction ID
-  function randomStr() {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
+  // function randomStr() {
+  //   return Math.random().toString(36).substring(2, 10).toUpperCase();
+  // }
   
-  // Generate API signature
-  function generateSignature(...args) {
-    console.log("args:", args);
-    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-  }
-  
-  
+  // // Generate API signature
+  // function generateSignature(...args) {
+  //   console.log("args:", args);
+  //   return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  // }
   
   
   
-  // Generate a random string for transaction ID
-  function randomStr() {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
-  
-  // Generate API signature
-  function generateSignature(...args) {
-    console.log("args:", args);
-    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-  }
   
   
   // Generate a random string for transaction ID
-  function randomStr() {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
+  // function randomStr() {
+  //   return Math.random().toString(36).substring(2, 10).toUpperCase();
+  // }
   
-  // Generate API signature
-  function generateSignature(...args) {
-    console.log("args:", args);
-    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-  }
+  // // Generate API signature
+  // function generateSignature(...args) {
+  //   console.log("args:", args);
+  //   return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  // }
+  
+  
+  // // Generate a random string for transaction ID
+  // function randomStr() {
+  //   return Math.random().toString(36).substring(2, 10).toUpperCase();
+  // }
+  
+  // // Generate API signature
+  // function generateSignature(...args) {
+  //   console.log("args:", args);
+  //   return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  // }
   
   
   
@@ -2885,27 +2894,77 @@ exports.getCategoriesWithProviders = async (req, res) => {
 
 
 
+// exports.getCategoriesWithProvidersGameList = async (req, res) => {
+//   try {
+//     // const { provider, category } = req.body
+//     const { provider, category,p_type,page } = req.query;
+//     console.log("png",category,provider)
+//     const limit = 24;
+//     const skip = (page - 1) * limit;
+//     // Fetch all categories
+//     const categories = await Category.findOne({category_name: category });
+//     console.log("pg cat",categories.p_type)
+//     // const providerCode = await BetProviderTable.find({ providercode: provider });
+    
+//     // if (!provider || !category) {
+//     //   return res.status(404).json({ message: 'Provider and Category not found' });
+//     // }
+//     const game = await GameListTable.find({ p_code: provider,p_type:p_type,category_name:category,is_active: true }).sort({ serial_number: -1 }).skip(skip).limit(limit);;
+//     // console.log(game)
+
+//     res.json(game);
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// }
+
 exports.getCategoriesWithProvidersGameList = async (req, res) => {
   try {
-    // const { provider, category } = req.body
-    const { provider, category,p_type } = req.query;
-    console.log("png",category,provider)
-    // Fetch all categories
-    const categories = await Category.findOne({category_name: category });
-    console.log("pg cat",categories.p_type)
-    // const providerCode = await BetProviderTable.find({ providercode: provider });
-    
-    // if (!provider || !category) {
-    //   return res.status(404).json({ message: 'Provider and Category not found' });
-    // }
-    const game = await GameListTable.find({ p_code: provider,p_type:p_type,is_active: true }).sort({ serial_number: -1 });;
-    // console.log(game)
+    const { provider, category, p_type, page = 1 } = req.query;
 
-    res.json(game);
+    if (isNaN(page) || page < 1) {
+      return res.status(400).json({ message: "Invalid page number" });
+    }
+
+    const limit = 24;
+    const skip = (page - 1) * limit;
+
+    const categoryData = await Category.findOne({ category_name: category });
+    if (!categoryData) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    const query = {
+      p_code: provider,
+      p_type: p_type,
+      category_name: category,
+      is_active: true,
+    };
+
+    const games = await GameListTable.find(query)
+      .sort({ serial_number: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await GameListTable.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: games,
+      pagination: {
+        page: parseInt(page),
+        limit,
+        total,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching games:", error);
+    res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
   }
-}
+};
 
 
 

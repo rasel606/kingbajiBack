@@ -5,11 +5,12 @@ const BetProviderTable = require('../Models/BetProviderTable');
 const { default: axios } = require('axios');
 const GameListTable = require('../Models/GameListTable');
 const Category = require('../Models/Category');
-
+const moment = require('moment-timezone');
 const { CookieJar } = require('tough-cookie');
 const cookieJar = new CookieJar(); // <-- Add this line
 const https = require('https');
 const { HttpsProxyAgent } = require('https-proxy-agent');
+const BettingHistory = require('../Models/BettingHistory');
 // const { HttpsProxyAgent } = require("https-proxy-agent");
 
 // // Proxy Configuration
@@ -537,7 +538,7 @@ exports.launchGamePlayer = async (req, res) => {
 
 
 
-    if (user.balance > 0) {
+    if (user?.balance >= 0) {
       // Generate transaction ID
 
 
@@ -723,41 +724,597 @@ function extractQueryParam(url, param) {
 
 
 
-// const proxyHandler = async (req, res) => {
+
+
+exports.GetFeaturedGames = async (req, res) => {
+  try {
+    
+    const featuredGames = await GameListTable.find({ isFeatured: false });
+    console.log(featuredGames);
+    res.json(featuredGames);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+}
+
+
+
+
+const getDateRanges = () => {
+  const startOfToday = moment().startOf('day').toDate();
+  const endOfToday = moment().endOf('day').toDate();
+  const startOfYesterday = moment().subtract(1, 'days').startOf('day').toDate();
+  const endOfYesterday = moment().subtract(1, 'days').endOf('day').toDate();
+  const last7Days = moment().subtract(7, 'days').toDate();
+
+  return {
+    startOfToday,
+    endOfToday,
+    startOfYesterday,
+    endOfYesterday,
+    last7Days,
+  };
+};
+
+
+
+// exports.GetBettingHistoryByMember = async (req, res) => {
 //   try {
-//     const response = await axios.post('https://www.fwick7ets.xyz/apiWallet/player/YFG/login', req.body);
-//     res.json(response.data);
-//   } catch (error) {
-//     res.status(500).json({ error: 'Failed to fetch data' });
+//     const now = new Date();
+//     const startOfToday = new Date("2025-02-19T00:00:00Z");
+//     const endOfToday = new Date("2025-02-19T23:59:59.999Z");
+
+//     const startOfYesterday = new Date(startOfToday);
+//     startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+//     const endOfYesterday = new Date(startOfYesterday);
+//     endOfYesterday.setHours(23, 59, 59, 999);
+
+//     const last7Days = new Date();
+//     last7Days.setDate(last7Days.getDate() - 7);
+
+
+
+//     console.log({
+//       startOfToday,
+//       endOfToday,
+//       startOfYesterday,
+//       endOfYesterday,
+//       last7Days
+//     });
+
+
+    
+//     const result = await BettingHistory.aggregate([
+//       {
+//         $match: {
+//           start_time: {
+//             $gte: new Date('2025-02-18T00:00:00Z'),
+//             $lte: new Date('2025-02-21T00:00:00Z')
+//           }
+//         }
+//       },
+//       {
+//         $project: {
+//           site: 1,
+//           product: 1,
+//           member: 1,
+//           bet: 1,
+//           turnover: 1,
+//           start_time: 1,
+//           isToday: {
+//             $and: [
+//               { $gte: ["$start_time", startOfToday] },
+//               { $lte: ["$start_time", endOfToday] }
+//             ]
+//           },
+//           isYesterday: {
+//             $and: [
+//               { $gte: ["$start_time", startOfYesterday] },
+//               { $lte: ["$start_time", endOfYesterday] }
+//             ]
+//           }
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             site: "$site",
+//             product: "$product",
+//             member: "$member"
+//           },
+//           totalBet7Days: { $sum: "$bet" },
+//           totalTurnover7Days: { $sum: "$turnover" },
+//           totalBetToday: {
+//             $sum: {
+//               $cond: ["$isToday", "$bet", 0]
+//             }
+//           },
+//           totalTurnoverToday: {
+//             $sum: {
+//               $cond: ["$isToday", "$turnover", 0]
+//             }
+//           },
+//           totalBetYesterday: {
+//             $sum: {
+//               $cond: ["$isYesterday", "$bet", 0]
+//             }
+//           },
+//           totalTurnoverYesterday: {
+//             $sum: {
+//               $cond: ["$isYesterday", "$turnover", 0]
+//             }
+//           }
+//         }
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           site: "$_id.site",
+//           product: "$_id.product",
+//           member: "$_id.member",
+//           today: {
+//             totalBet: "$totalBetToday",
+//             totalTurnover: "$totalTurnoverToday"
+//           },
+//           yesterday: {
+//             totalBet: "$totalBetYesterday",
+//             totalTurnover: "$totalTurnoverYesterday"
+//           },
+//           last7Days: {
+//             totalBet: "$totalBet7Days",
+//             totalTurnover: "$totalTurnover7Days"
+//           }
+//         }
+//       }
+//     ]);
+
+//     res.json({ success: true, data: result });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ success: false, message: "Error", error: err.message });
+//   }
+// }
+
+
+
+
+// const getDateRange = (rangeType) => {
+//   const now = new Date();
+//   let start, end;
+// console.log("rangeType",rangeType);
+//   switch (rangeType) {
+//     case 'today':
+//       start = moment().tz('Asia/Dhaka').startOf('day').toDate();
+//       end =  moment().tz('Asia/Dhaka').endOf('day').toDate();;
+//       break;
+//     case 'yesterday':
+//       end = new Date(now.setHours(0, 0, 0, 0));
+//       start = new Date(end);
+//       start.setDate(start.getDate() - 1);
+//       break;
+//     case 'last7Days':
+//       end = new Date();
+//       start = new Date();
+//       start.setDate(start.getDate() - 7);
+//       break;
+//     default:
+//       return null;
+//   }
+
+//   return { start, end };
+// };
+
+const getDateRange = (range) => {
+  const now = new Date();
+  let start, end;
+
+  switch (range) {
+    case 'today':
+      start = new Date(now.setHours(0, 0, 0, 0));
+      end = new Date(now.setHours(23, 59, 59, 999));
+      break;
+    case 'yesterday':
+      start = new Date(now.setDate(now.getDate() - 1));
+      start.setHours(0, 0, 0, 0);
+      end = new Date(start);
+      end.setHours(23, 59, 59, 999);
+      break;
+    case 'last7days':
+      end = new Date();
+      start = new Date();
+      start.setDate(end.getDate() - 6);
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      break;
+    case 'thismonth':
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date();
+      break;
+    default:
+      return null;
+  }
+
+  return { start, end };
+};
+
+// exports.GetBettingHistoryByMember = async (req, res) => {
+//   try {
+//     const { member, product } = req.query;
+
+//     const now = new Date();
+//     const past7Days = new Date();
+//     past7Days.setDate(now.getDate() - 6); // Includes today
+
+//     const match = {
+//       // end_time: { $gte: past7Days }
+//     };
+
+//     if (member) match.member = member;
+//     // if (product) match.product = product;
+
+//     const summary = await BettingHistory.aggregate([
+//       { $match: match },
+//       {
+//         $addFields: {
+//           date: {
+//             $dateToString: {
+//               format: "%Y-%m-%d",
+//               date: "$end_time"
+//             }
+//           }
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             date: "$date",
+//             site: "$site",
+//             product: "$product",
+//             member: "$member"
+//           },
+//           totalBet: { $sum: "$bet" },
+//           totalTurnover: { $sum: "$turnover" },
+//           totalRecords: { $sum: 1 }
+//         }
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           date: "$_id.date",
+//           site: "$_id.site",
+//           product: "$_id.product",
+//           member: "$_id.member",
+//           totalBet: 1,
+//           totalTurnover: 1,
+//           totalRecords: 1
+//         }
+//       },
+//       { $sort: { date: 1, site: 1, product: 1, member: 1 } }
+//     ]);
+
+//     // Transform the data to group by date with nested list
+//     const groupedByDate = {};
+
+//     summary.forEach(item => {
+//       const { date, site, product, totalBet, totalTurnover, totalRecords } = item;
+
+//       if (!groupedByDate[date]) {
+//         groupedByDate[date] = [];
+//       }
+
+//       groupedByDate[date].push({
+//         site,
+//         product,
+//         totalBet,
+//         totalTurnover,
+//         totalRecords
+//       });
+//     });
+
+//     const transformed = Object.keys(groupedByDate).map(date => ({
+//       date,
+//       list: groupedByDate[date]
+//     }));
+// console.log("transformed",transformed);
+//     res.json({ success: true, data: transformed });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: 'Failed to get betting history summary', error: err.message });
+//   }
+// }
+
+
+
+
+exports.GetBettingHistoryALL = async (req, res) => {
+  const { member, site } = req.query;
+  const match = {
+    // end_time: { $gte: past7Days }
+  };
+
+  if (member) match.member = member;
+  if (site) match.site = site;
+  
+  try {
+    const data = await BettingHistory.aggregate([
+      { $match: match },
+      {
+        $addFields: {
+          dateOnly: {
+            $dateToString: { format: "%Y-%m-%d", date: "$start_time" }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            site: "$site",
+            // product: "$product",
+            date: "$dateOnly",
+            member: "$member"
+          },
+          totalBet: { $sum: "$bet" },
+          totalTurnover: { $sum: "$turnover" },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          site: "$_id.site",
+          // product: "$_id.product",
+          date: "$_id.date",
+          member: "$_id.member",
+          totalBet: 1,
+          totalTurnover: 1,
+          count: 1
+        }
+      },
+      {
+        $sort: { date: -1, site: 1 }
+      }
+    ]);
+
+    // const data = await BettingHistory.find({});
+
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to fetch grouped betting history", error: err.message });
+  }
+}
+
+// exports.getBettingHistoryDetailed = async (req, res) => {
+//   try {
+//     const { member, site } = req.query;
+
+//     const matchQuery = {};
+//     if (member) matchQuery.member = member;
+//     if (site) matchQuery.site = site;
+
+//     // Fetch betting history
+//     const bettingData = await BettingHistory.find(matchQuery).lean();
+
+//     if (!bettingData.length) {
+//       return res.json({ success: true, data: [] });
+//     }
+
+//     // Fetch all game data and map by g_code
+//     const gameList = await GameListTable.find({}, 'g_code gameName').lean();
+//     const gameMap = {};
+//     gameList.forEach(game => {
+//       gameMap[game.g_code] = game;
+//     });
+
+//     // Grouping by date + site + member
+//     const grouped = {};
+
+//     bettingData.forEach(entry => {
+//       const date = new Date(entry.end_time).toISOString().split('T')[0];
+//       const groupKey = `${date}|${entry.site}|${entry.member}`;
+
+//       if (!grouped[groupKey]) {
+//         grouped[groupKey] = {
+//           date,
+//           site: entry.site,
+//           member: entry.member,
+//           records: []
+//         };
+//       }
+
+//       // Add matched game details
+//       entry.game_details = gameMap[entry.game_id] || null;
+
+//       grouped[groupKey].records.push(entry);
+//     });
+
+//     const result = Object.values(grouped);
+
+//     res.json({ success: true, data: result });
+
+//   } catch (err) {
+//     console.error('Error fetching betting history:', err);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Internal server error',
+//       error: err.message
+//     });
 //   }
 // };
 
-// // Helper function to set login cookies
-// const setLoginCookies = (res, user) => {
-//   const cookiesOptions = {
-//     httpOnly: true,
-//     secure: process.env.NODE_ENV === 'production', // Set to true in production
-//     maxAge: 60 * 60 * 1000, // 1 hour expiration
-//   };
+exports.GetBettingHistoryByMember = async (req, res) =>{
+  try {
+    const { member, product, site } = req.query;
+console.log("req.query",req.query);
+    const match = {};
 
-//   res.cookie('userId', user.userId, cookiesOptions);
-//   res.cookie('userKey', user.key, cookiesOptions);
+    if (member) match.member = member;
+    if (product) match.product = product;
+    if (site) match.site = site;
+console.log("match",match);
+    const result = await BettingHistory.aggregate([
+      { $match: match },
+      {
+        $addFields: {
+          date: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$end_time"
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'gamelisttables', // collection name in MongoDB (usually lowercase + plural)
+          localField: 'game_id',
+          foreignField: 'g_code',
+          as: 'gameDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: "$gameDetails",
+          preserveNullAndEmptyArrays: true // In case game not found
+        }
+      },
+      {
+        $group: {
+          _id: {
+            date: "$date",
+            site: "$site",
+            member: "$member",
+            product: "$product"
+          },
+          records: {
+            $push: {
+              ref_no: "$ref_no",
+              game_id: "$game_id",
+              bet: "$bet",
+              turnover: "$turnover",
+              payout: "$payout",
+              commission: "$commission",
+              p_share: "$p_share",
+              p_win: "$p_win",
+              status: "$status",
+              start_time: "$start_time",
+              end_time: "$end_time",
+              match_time: "$match_time",
+              bet_detail: "$bet_detail",
+              gameName: "$gameDetails.gameName",
+              g_type: "$gameDetails.g_type",
+              category_name: "$gameDetails.category_name",
+              imgFileName: "$gameDetails.imgFileName"
+            }
+          },
+          totalBet: { $sum: "$bet" },
+          totalTurnover: { $sum: "$turnover" },
+          totalpayout: { $sum: "$payout" },
+          totalRecords: { $sum: 1 },
+          // totalpayout: { $sum: 1 }
+        }
+      },
+      
+      {
+        $project: {
+          _id: 0,
+          date: "$_id.date",
+          site: "$_id.site",
+          // member: "$_id.member",
+          product: "$_id.product",
+          records: 1,
+          totalBet: 1,
+          totalTurnover: 1,
+          totalRecords: 1,
+          totalpayout:1
+        }
+      },
+      {
+        $sort: { date: -1,  site: 1, member: 1 }
+      }
+    ]);
 
-//   // Set any other necessary cookies here
-// };
-
-// // Helper function to send webhook notifications
-// const sendWebhook = async (data) => {
-//   try {
-//     const webhookUrl = 'http://localhost:5000/webhook'; // Replace with actual webhook URL
-//     // const response = await axios.post(webhookUrl, data);
-//     console.log('Webhook sent successfully:');
-//   } catch (error) {
-//     console.error('Error sending webhook:', error.message);
-//   }
-// };
-
-// Helper function to generate signature
 
 
 
+
+console.log("result",result);
+
+    const groupedByDate = {};
+    result.forEach(item => {
+      const { date, site, product, totalBet, totalTurnover, totalRecords,records } = item;
+
+      if (!groupedByDate[date]) {
+        groupedByDate[date] = [];
+        
+
+      }
+
+      groupedByDate[date].push({
+        site,
+        product,
+        totalBet,
+        totalTurnover,
+        totalRecords,
+        records
+      });
+    });
+
+
+    // console.log("groupedByDate",groupedByDate);
+
+    const records = Object.keys(groupedByDate).map(date => ({
+      
+      list: groupedByDate[date]
+    }));
+
+
+    console.log("result",records);
+    res.json({ success: true, data: result });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get detailed betting history",
+      error: error.message
+    });
+  }
+};    
+
+
+function generateTimeline(tx) {
+  const dateStr = tx.datetime.toISOString().split('T')[0];
+  const timeStr = tx.datetime.toTimeString().split(' ')[0];
+  
+  const baseEvents = [
+    {
+      event: `${tx.type === 0 ? 'Deposit' : 'Withdrawal'} Initiated`,
+      time: timeStr
+    },
+    {
+      event: `${tx.type === 0 ? 'Deposit' : 'Withdrawal'} Information Received`,
+      time: timeStr
+    }
+  ];
+
+  if (tx.status === 1) { // Accepted
+    return [
+      {
+        event: `${tx.type === 0 ? 'Deposit' : 'Withdrawal'} Completed`,
+        time: timeStr
+      },
+      ...baseEvents
+    ];
+  } else if (tx.status === 2) { // Rejected
+    return [
+      {
+        event: `Your ${tx.type === 0 ? 'Deposit' : 'Withdrawal'} Has Failed`,
+        time: timeStr
+      },
+      ...baseEvents
+    ];
+  } else { // Pending
+    return baseEvents;
+  }
+}

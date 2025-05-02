@@ -50,6 +50,9 @@ router.post('/user_details', CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
+router.post('/verify/confirm', CreateUserService.verifyPhone);
+router.post('/verify/send', CreateUserService.sendVerificationCode);
+router.patch('/profile/personal', CreateUserService.updateUser);
 router.get('/send-otp', UpdateProfile.VerifyOpt);
 router.get('/verify-email', UpdateProfile.SandOpt);
 router.get('/user_betting_history', UpdateProfile.SandOpt);
@@ -183,8 +186,13 @@ router.get('/get-all-category', ModelBettingController.GetAllCategory)
 router.get('/games/:id', ModelBettingController.ShowGameListById)
 router.get('/get_all_provider', ModelBettingController.GetAllProvider)
 router.post('/user_balance',Refresh_blance.refreshBalance)
+router.get('/featured',Refresh_blance.GetFeaturedGames)
+
+router.get('/bettingHistory-member-summary',Refresh_blance.GetBettingHistoryByMember);
+router.get('/bettingHistory/grouped',Refresh_blance.GetBettingHistoryALL);
+// router.get('/get-betting-history-detailed',Refresh_blance.getBettingHistoryDetailed);
 router.get('/user-history',ModelBettingController.UserHistory)
-router.post("/launch_game", ModelBettingController.launchGame);
+// router.post("/launch_game", ModelBettingController.launchGame);
 router.post("/launch_gamePlayer", Refresh_blance.launchGamePlayer);
 router.post("/game-update-serial", ModelBettingController.updateSerialNumber);
 router.post("/game-update-category", ModelBettingController.updateCategoryGameByID);
@@ -224,10 +232,7 @@ router.put('/updat-status-type',AdminController.UpdateStatusType);
 // router.put('/updat-provider-status',AdminController.UpdateStatusProvider);
 // router.put('/updat-provider-status',AdminController.UpdateStatusProvider);
 router.post('/add-ports',AdminController.AddSports);
-// router.post('/modal_data',ModelBettingController.Modal);
-// router.get('/sync-casino-info',AdminController.syncCasinoInfo);
-// router.post('/update-game-type',AdminController.UpdateGameType);
-// router.post('/delete-game-type/:id',AdminController.DeleteGameType);
+
 router.get('/api/sports',AdminController.GetSportsCategories);
 
 router.get('/GateAllGames',AdminController.GateAllGames);
@@ -282,6 +287,7 @@ router.post('/casino/update/:id', BettingController.casino_update);
 
  router.get('/odds-sports/:key', ModelBettingController.getOddsSports);
  router.get('/OddSync', ModelBettingController.OddSync);
+ 
 router.post('/update-json', OddBettingController.updateJson);
 /////////////////////////////////////////////////////////test api//////////////////////////////////////////////////
 // router.get("/get-deeplink",blank2.getDeepLink)
@@ -292,11 +298,16 @@ router.post('/update-json', OddBettingController.updateJson);
 
 // router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
 // router.get("/kickPlayer",blank3.kickPlayer )
-// router.get("/api/games",blank3.getGames)
+router.get('/fetch-betting-history',blank3.BettingHistoryBet)
+router.get('/fetch-betti',blank3.fetchBets)
+router.get('/get-daily-history',blank3.GetDailyHistory)
+router.get('/fetch-archived-history', blank3.ArchivedHistory)
+router.get('/mark-betting-history', blank3.MarkBettingHistory)
+router.post('/mark-archived-history',blank3.MarkArchivedHistory)
 // router.get('/api/game/log',blank3.logGameSessionone) //app.post('/api/game/log',
 // router.get('/api/odds/:key/:id',blank3.getEventOddsById) //  app.post('/api/betting/update',
 // router.post('/api/betting/update',blank3.updateBettingEvents) 
-// router.get('/corn',blank3.BettingUpdate)
+// router.post('/launchGameapiorginal',blank3.launchGameapiorginal)
 // router.post("/api/gamesADD",blank3.CasinoItemAddNew)
 // router.post('/create-member',blank3.createMember)
 // router.post("/api/place-bet",blank3.placeBet)
