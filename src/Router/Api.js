@@ -50,6 +50,7 @@ router.post('/user_details', CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
+router.post('/sendphoneotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/verify/confirm', CreateUserService.verifyPhone);
 // router.post('/verify/send', CreateUserService.sendotp);
 router.patch('/profile/personal', CreateUserService.updateUser);

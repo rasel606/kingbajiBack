@@ -3,7 +3,8 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
 const User = require('../Models/User');
-
+const { OTP } = require('../Models/Opt');
+const { sendSms } = require('../Services/sendSms');
 
 
 const saltRounds = 10;
@@ -11,168 +12,144 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 exports.register = async (req, res) => {
   try {
-    const {referredBy} = req.params
-    console.log(referredBy)
-    const { userId, phone, password, countryCode } = req.body;
-
-    if (!userId || !phone || !password || !countryCode) {
-      return res.status(400).json({ success: false, message: "Please enter all fields" });
+    // const { referredBy } = req.params;
+    const { userId, phone, password, countryCode, email, referredBy } = req.body;
+    console.log(userId, phone, password, countryCode, email, referredBy)
+    // Validation
+    if (!userId || !phone || !password) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
-    const existingUser = await User.findOne({ $or: [{ userId }, { phone }] });
+    console.log(userId, phone, password, countryCode, email, referredBy)
+    // Check existing user
+    const existingUser = await User.findOne({ userId, $or: [{ 'phone.number': phone }] });
+    console.log(existingUser)
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists with this email or phone' });
+      return res.status(409).json({ message: 'User already exists' });
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    // const referredCode = Math.random().toString(36).substring(2, 8);
 
-    // ✅ Step 1: Create User Immediately
-   
+    // Generate unique referral code
+    let referralCode;
+    do {
+      referralCode = generateReferralCode();
+    } while (await User.findOne({ referralCode }));
 
+    // Create user
+    const newUser = new User({
+      userId: userId.toLowerCase(),
 
+      phone: [{
+        countryCode,
+        number: phone,
+        isDefault: true,
+        verified: false
+      }],
+      countryCode,
+      password: hashedPassword,
+      referralCode,
+      isVerified: {
 
-     // ✅ Step 3: Call External API Asynchronously
-   
-     const operatorcode = "rbdb";
-     const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
-     
-     const newUserCreate = userId.toLowerCase();
-     const signature = crypto.createHash("md5").update(operatorcode + newUserCreate + secret).digest("hex").toUpperCase();
- 
-     const apiUrl = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcode}&username=${newUserCreate}&signature=${signature}`;
-     
-    // ✅ Step 2: Generate JWT Token (Send Response Immediately)
+        phone: false
+      }
+    });
 
+    // Save user first
+    await newUser.save();
 
-   
-
-   
-
+    // Call external API
     try {
+      const operatorcode = "rbdb";
+      const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
+      const signature = crypto
+        .createHash("md5")
+        .update(operatorcode + newUser.userId + secret)
+        .digest("hex")
+        .toUpperCase();
+
+      const apiUrl = `http://fetch.336699bet.com/createMember.aspx?operatorcode=${operatorcode}&username=${newUser.userId}&signature=${signature}`;
+
       const apiResponse = await axios.get(apiUrl);
-      
+      if (apiResponse.data?.errMsg === "SUCCESS") {
+        newUser.apiVerified = true;
+        await newUser.save();
+      }
+    } catch (apiError) {
+      console.error('API Error:', apiError.message);
+    }
 
-      console.log("API Response Data:", apiResponse);
+    // Handle referrals
+    if (referredBy) {
+      const referrer = await User.findOne({ referralCode: referredBy });
+      if (referrer) {
+        // Level 1
+        referrer.levelOneReferrals.push(newUser.userId);
+        await referrer.save();
 
-      // ✅ Step 4: If API response is successful, update user in DB
-      if (apiResponse.data && apiResponse.data.errMsg === "SUCCESS" ) {
-        await User.updateOne({ userId }, { $set: { apiVerified: true } });
-
-        let referralCode;
-        let isUnique = false;
-        while (!isUnique) {
-          referralCode = generateReferralCode();
-          const existingCode = await User.findOne({ referralCode });
-          if (!existingCode) isUnique = true;
-        }
-    
-        // Create new user
-        const newUser = new User({
-          userId,
-          email,
-          phone,
-          countryCode,
-          password: hashedPassword,
-          referralCode
+        const level1Bonus = new ReferralBonus({
+          user: referrer.userId,
+          referredUser: newUser.userId,
+          level: 1
         });
-    
-        // Handle referral if exists
-        if (referredBy) {
-          const referrer = await User.findOne({ referralCode: referredBy });
-          if (referrer) {
-            newUser.referredBy = referredBy;
-            
-            // Add to referrer's level 1 referrals
-            referrer.levelOneReferrals.push(newUser._id);
-            await referrer.save();
-            
-            // Create level 1 bonus record
-            const level1Bonus = new ReferralBonus({
-              user: referrer._id,
+        await level1Bonus.save();
+
+        // Level 2
+        if (referrer.referredBy) {
+          const level2Referrer = await User.findOne({ referralCode: referrer.referredBy });
+          if (level2Referrer) {
+            level2Referrer.levelTwoReferrals.push(newUser.userId);
+            await level2Referrer.save();
+
+            const level2Bonus = new ReferralBonus({
+              user: level2Referrer.userId,
               referredUser: newUser.userId,
-              level: 1,
-              amount: 0 // Will be calculated later based on turnover
+              level: 2
             });
-            await level1Bonus.save();
-    
-            // Check for level 2 referrer
-            if (referrer.referredBy) {
-              const level2Referrer = await User.findOne({ referralCode: referrer.referredBy });
-              if (level2Referrer) {
-                level2Referrer.levelTwoReferrals.push(newUser.userId);
-                await level2Referrer.save();
-                
-                // Create level 2 bonus record
-                const level2Bonus = new ReferralBonus({
-                  user: level2Referrer.userId,
+            await level2Bonus.save();
+
+            // Level 3
+            if (level2Referrer.referredBy) {
+              const level3Referrer = await User.findOne({ referralCode: level2Referrer.referredBy });
+              if (level3Referrer) {
+                level3Referrer.levelThreeReferrals.push(newUser.userId);
+                await level3Referrer.save();
+
+                const level3Bonus = new ReferralBonus({
+                  user: level3Referrer.userId,
                   referredUser: newUser.userId,
-                  level: 2,
-                  amount: 0
+                  level: 3
                 });
-                await level2Bonus.save();
-    
-                // Check for level 3 referrer
-                if (level2Referrer.referredBy) {
-                  const level3Referrer = await User.findOne({ referralCode: level2Referrer.referredBy });
-                  if (level3Referrer) {
-                    level3Referrer.levelThreeReferrals.push(newUser.userId);
-                    await level3Referrer.save();
-                    
-                    // Create level 3 bonus record
-                    const level3Bonus = new ReferralBonus({
-                      user: level3Referrer.userId,
-                      referredUser: newUser.userId,
-                      level: 3,
-                      amount: 0
-                    });
-                    await level3Bonus.save();
-                  }
-                }
+                await level3Bonus.save();
               }
             }
           }
         }
-    
-        await newUser.save();
-    
-        // Generate JWT token
-        // const token = jwt.sign(
-        //   { userId: newUser._id, email: newUser.email },
-        //   process.env.JWT_SECRET,
-        //   { expiresIn: '7d' }
-        // );
-    
-
-        const token = jwt.sign({ id: newUser.userId }, JWT_SECRET, { expiresIn: "2h" });
-
-
-        res.status(201).json({
-          success: true,
-          message: "User created successfully. API verification pending...",
-          token,
-          user: {
-            userId: newUser.userId,
-            phone: newUser.phone,
-            countryCode: newUser.countryCode,
-            balance: newUser.balance || 0,
-            referredBy: newUser.referredBy,
-            referralCode: newUser.referralCode,
-            apiVerified: false,
-          },
-        });
-      } 
-    } catch (apiError) {
-      console.error(`❌ External API error for user ${userId}:`, apiError.message);
+      }
     }
+
+    // Generate JWT
+    const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2h' });
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      token,
+      user: {
+        userId: newUser.userId,
+        phone: newUser.phone,
+        referralCode: newUser.referralCode,
+        apiVerified: newUser.apiVerified
+      }
+    });
   } catch (error) {
-    console.error("❌ Error in register function:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Registration Error:', error);
+    res.status(500).json({ success: false, message: 'Server error during registration' });
   }
 };
 exports.loginUser = async (req, res) => {
   const { userId, password } = req.body;
-// console.log(req.body);
+  // console.log(req.body);
   try {
     if (!userId) {
       return res.status(400).json({ message: "User Not Found, Please Login Or Sign Up" });
@@ -192,17 +169,17 @@ exports.loginUser = async (req, res) => {
         $project: {
           userId: 1,
           name: 1,
-          phone: 1,
+          "phone.number": 1,
           balance: 1,
           referredBy: 1,
           referredLink: 1,
           referredCode: 1,
-          timestamp:1,
+          timestamp: 1,
         },
       },
     ]);
 
-    const token = jwt.sign({ id: user.userId }, JWT_SECRET, { expiresIn: "2h" });
+    const token = jwt.sign({ id: user.userId }, "Kingbaji", { expiresIn: "2h" });
 
     res.status(200).json({ token, user, response });
   } catch (error) {
@@ -210,33 +187,33 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.verify =async (req, res) => {
+exports.verify = async (req, res) => {
   const authHeader = req.header("Authorization");
   // console.log("userId",authHeader);
   const token = authHeader?.split(" ")[1];
-  if (!token) return res.status(401).json({ message: "Token missing!" }); 
+  if (!token) return res.status(401).json({ message: "Token missing!" });
   try {
     const decoded = jwt.verify(token, "Kingbaji");
 
     const decodedId = decoded?.id;
     const details = await User.aggregate([
-      { $match: { userId:decodedId } },
+      { $match: { userId: decodedId } },
       {
         $project: {
           userId: 1,
           name: 1,
-          phone: 1,
+          "phone.number": 1,
           balance: 1,
-          
+
           referredbyCode: 1,
           referredLink: 1,
           referredCode: 1,
-          timestamp:1,
+          timestamp: 1,
         },
       },
     ]);
     // console.log( "decoded",details );
-    res.status(200).json({ message: "User authenticated", userId: decoded.id,user:details[0]});
+    res.status(200).json({ message: "User authenticated", userId: decoded.id, user: details[0] });
   } catch (error) {
     res.status(400).json({ message: "Invalid token!" });
   }
@@ -245,7 +222,7 @@ exports.verify =async (req, res) => {
 
 
 
-exports.userDetails =async (req, res) => {
+exports.userDetails = async (req, res) => {
   const { userId } = req.body;
   // const authHeader = req.header("Authorization");
   // console.log("userId", req.body.userId);
@@ -254,66 +231,227 @@ exports.userDetails =async (req, res) => {
   // if (!token) return res.status(401).json({ message: "Token missing!" }); 
   try {
     // const decoded = jwt.verify(token, "Kingbaji");
-// console.log(userId)
+    // console.log(userId)
     // const decodedId = decoded?.id;
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).json({ message: "User not found" });
     // console.log(user.userId )
     if (user) {
-    const details = await User.aggregate([
-      { $match: { userId:user.userId } },
-      {
-        $project: {
-          userId: 1,
-          name: 1,
-          phone: 1,
-          balance: 1,
-          referredbyCode: 1,
-          referredLink: 1,
-          referredCode: 1,
-          timestamp:1,
+      const details = await User.aggregate([
+        { $match: { userId: user.userId } },
+        {
+          $project: {
+            userId: 1,
+            name: 1,
+            phone: 1,
+            balance: 1,
+            referredbyCode: 1,
+            referredLink: 1,
+            referredCode: 1,
+            timestamp: 1,
+          },
         },
-      },
-    ]);
-    // console.log( "decoded",details );
-    res.status(200).json({ message: "User balance",user:details[0]});
-  } else {
-    res.status(200).json({ message: "User game balance is 0",user:details[0]});
-  }
+      ]);
+      // console.log( "decoded",details );
+      res.status(200).json({ message: "User balance", user: details[0] });
+    } else {
+      res.status(200).json({ message: "User game balance is 0", user: details[0] });
+    }
   } catch (error) {
-    console.log( "error",error );
+    console.log("error", error);
     res.status(400).json({ message: "Invalid token!" });
   }
 };
 
 exports.verifyPhone = async (req, res) => {
   try {
-    const { code } = req.body;
-    
-    if (req.user.verificationCode !== code) {
-      return res.status(400).send({ error: 'Invalid verification code' });
+    const { phoneNumber, code } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const phone = user.phone.find(p => p.number === phoneNumber);
+    if (!phone) return res.status(404).json({ error: 'Phone number not found' });
+
+    if (phone.verificationCode !== code) {
+      return res.status(400).json({ error: 'Invalid OTP code' });
     }
-    
-    if (new Date() > req.user.verificationExpires) {
-      return res.status(400).send({ error: 'Verification code expired' });
+
+    if (new Date() > phone.verificationExpires) {
+      return res.status(400).json({ error: 'OTP has expired' });
     }
-    
-    req.user.phoneVerified = true;
-    req.user.verificationCode = '';
-    req.user.verificationExpires = null;
-    await req.user.save();
-    
-    res.send({ message: 'Phone number verified successfully' });
-  } catch (e) {
-    res.status(500).send();
+
+    phone.isVerified = true;
+    phone.verificationCode = undefined;
+    phone.verificationExpires = undefined;
+
+    await user.save();
+    res.json({ success: true, message: 'Phone number verified' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
   }
 }
 
-// const nodemailer = require("nodemailer");
-const { OTP } = require('../Models/Opt');
-const generateReferralCode = require('./generateReferralCode');
+exports.addPhoneNumber = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
-const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
+    const { number, isDefault = false } = req.body;
+    const phoneRegex = /^\+\d{1,3}\d{6,14}$/;
+
+    if (!phoneRegex.test(number)) {
+      return res.status(400).json({ error: 'Invalid phone number format' });
+    }
+
+    // Check if number exists in user's account
+    const exists = user.phoneNumbers.some(p => p.number === number);
+    if (exists) return res.status(400).json({ error: 'Number already exists in your account' });
+
+    const newPhone = {
+      number,
+      isDefault: user.phoneNumbers.length === 0 ? true : isDefault,
+      isVerified: false
+    };
+
+    // If setting as default, update existing defaults
+    if (newPhone.isDefault) {
+      user.phoneNumbers.forEach(phone => {
+        phone.isDefault = false;
+      });
+    }
+
+    user.phoneNumbers.push(newPhone);
+
+    await user.save();
+    res.status(201).json({ message: 'Phone number added', phone: newPhone });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(400).json({ error: 'Phone number already registered' });
+    }
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+};
+
+
+
+exports.SendPhoneVerificationCode = async (req, res) => {
+  try {
+    // Destructure required fields from request body
+    const { 
+      userId, 
+      phone: { 
+        countryCode='880', 
+        number, 
+        isDefault = false // Default to false if not provided
+      } 
+    } = req.body;
+
+    // Validate required fields
+    if (!countryCode || !number) {
+      return res.status(400).json({ error: 'Missing required phone fields' });
+    }
+
+    // Basic phone number validation
+    // if (!/^\d{10,15}$/.test(number)) {
+    //   return res.status(400).json({ error: 'Invalid phone number format' });
+    // }
+
+    // Find user with matching userId
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if phone number already exists in user's phones
+    const existingPhone = user.phone.find(p => p.number === number);
+    if (existingPhone) {
+      if (existingPhone.verified) {
+        return res.status(400).json({ error: 'Phone number already verified' });
+      }
+
+      // Generate new OTP and update existing record
+      const otp = GenerateOtpCode();
+      existingPhone.verificationCode = otp;
+      existingPhone.verificationExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+      await user.save();
+      
+      // Send SMS with verification code
+      try {
+
+        const fullPhoneNumber = "880" + existingPhone.number;
+        await sendSms(fullPhoneNumber, `From KingBaji UserId: ${user.userId} Your OTP is: ${otp}`);
+        return res.json({ success: true, message: 'OTP resent successfully' });
+      } catch (smsError) {
+        console.error('SMS sending failed:', smsError);
+        return res.status(500).json({ error: 'Failed to send SMS' });
+      }
+    }
+
+    // Validate phone number limit
+    if (user.phone.length >= 3) {
+      return res.status(400).json({ error: 'Maximum of 3 phone numbers allowed' });
+    }
+
+    // Determine if this should be the default phone
+    const isFirstPhone = user.phone.length === 0;
+    const actualIsDefault = isFirstPhone ? true : isDefault;
+
+    // Prepare new phone entry
+    const newPhone = {
+      countryCode,
+      number,
+      isDefault: actualIsDefault,
+      verified: false,
+      verificationCode: GenerateOtpCode(),
+      verificationExpiry: new Date(Date.now() + 15 * 60 * 1000)
+    };
+
+    // Update existing default phones if needed
+    if (actualIsDefault) {
+      user.phone.forEach(phone => phone.isDefault = false);
+    }
+
+    // Add new phone to user's phone list
+    user.phone.push(newPhone);
+
+    try {
+      await user.save();
+    } catch (error) {
+      // Handle duplicate phone number error
+      if (error.code === 11000) {
+        return res.status(400).json({ error: 'Phone number already registered' });
+      }
+      throw error;
+    }
+
+    // Send verification SMS
+    try {
+      const fullPhoneNumber = "880" + existingPhone.number;
+      await sendSms(fullPhoneNumber, 
+        `From KingBaji UserId: ${user.userId} Your OTP is: ${newPhone.verificationCode}`
+      );
+      return res.json({ success: true, message: 'OTP sent successfully' });
+    } catch (smsError) {
+      // Rollback phone number addition if SMS fails
+      user.phone = user.phone.filter(p => p.number !== number);
+      await user.save();
+      console.error('SMS sending failed:', smsError);
+      return res.status(500).json({ error: 'Failed to send SMS' });
+    }
+
+  } catch (error) {
+    console.error('Error in SendPhoneVerificationCode:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// const nodemailer = require("nodemailer");
+
+const generateReferralCode = require('./generateReferralCode');
+const GenerateOtpCode = require('./GenerateOtpCode');
+
+
 
 // const transporter = nodemailer.createTransport({
 //   host: process.env.SMTP_HOST,
@@ -327,25 +465,25 @@ const generateOTP = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 
 
-exports.verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" });
+// exports.verifyOTP = async (req, res) => {
+//   const { email, otp } = req.body;
+//   if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" });
 
-  const record = await OTP.findOne({ email, otp });
-  if (!record || record.expiresAt < new Date()) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
-  }
+//   const record = await OTP.findOne({ email, otp });
+//   if (!record || record.expiresAt < new Date()) {
+//     return res.status(400).json({ message: "Invalid or expired OTP" });
+//   }
 
-  let user = await User.findOne({ email });
-  if (!user) user = await User.create({ email });
+//   let user = await User.findOne({ email });
+//   if (!user) user = await User.create({ email });
 
-  user.verified.email = true;
-  await user.save();
+//   user.verified.email = true;
+//   await user.save();
 
-  await OTP.deleteMany({ email });
+//   await OTP.deleteMany({ email });
 
-  return res.json({ message: "Email verified successfully", user });
-};
+//   return res.json({ message: "Email verified successfully", user });
+// };
 
 
 
