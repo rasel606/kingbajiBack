@@ -13,13 +13,13 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 exports.register = async (req, res) => {
   try {
     // const { referredBy } = req.params;
-    const { userId, phone, password, countryCode, email, referredBy } = req.body;
-    console.log(userId, phone, password, countryCode, email, referredBy)
+    const { userId, phone, password, countryCode, referredBy } = req.body;
+    console.log(userId, phone, password, countryCode,referredBy)
     // Validation
     if (!userId || !phone || !password) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
-    console.log(userId, phone, password, countryCode, email, referredBy)
+    console.log(userId, phone, password, countryCode,  referredBy)
     // Check existing user
     const existingUser = await User.findOne({ userId, $or: [{ 'phone.number': phone }] });
     console.log(existingUser)
@@ -44,7 +44,9 @@ exports.register = async (req, res) => {
         countryCode,
         number: phone,
         isDefault: true,
-        verified: false
+        verified: false,
+        
+
       }],
       countryCode,
       password: hashedPassword,

@@ -97,7 +97,7 @@ exports.refreshBalance = async (req, res) => {
       console.log("Fetched Balance:", amount);
 
 
-      if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+      if (amount  && balance === 0 && amount !== balance && amount !== null) {
         console.log((amount > 0 && balance === 0 && amount !== null));
         balance += amount;
 
@@ -494,7 +494,7 @@ exports.launchGamePlayer = async (req, res) => {
     }
 
     // Insufficient balance check
-    if (amount < 1) {
+    if (amount) {
       return res.json({ errCode: 2, errMsg: "Insufficient balance." });
     }
 
