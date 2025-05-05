@@ -6,7 +6,7 @@ const subAdminSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     balance: { type: Number, default: 0 },
-    referralByCode: { type: String },
+    referralBy: { type: String },
     referralCode: { type: String, unique: true, minlength: 8, maxlength: 9 },
     SubAdminId: { type: String, unique: true, minlength: 9, maxlength: 10 },
     user_referredLink: { type: String, sparse: true }, 

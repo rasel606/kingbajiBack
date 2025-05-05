@@ -4,7 +4,7 @@ var fs = require('fs');
 
 
 const sendSms = (to, text) => {
-    console.log(to, text);
+    // console.log(to, text);
     return new Promise((resolve, reject) => {
       const postData = JSON.stringify({
         messages: [
@@ -46,6 +46,7 @@ var req = https.request(options, function (res) {
     });
 
     res.on("error", function (error) {
+        console.log("Error sending SMS:", error);
         console.error(error);
     });
 });

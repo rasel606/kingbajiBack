@@ -128,6 +128,25 @@ exports.register = async (req, res) => {
       }
     }
 
+    const response = await User.aggregate([
+      { $match: { userId } },
+      {
+        $project: {
+          userId: 1,
+          name: 1,
+          phone: 1,
+          balance: 1,
+          referredBy: 1,
+          referredLink: 1,
+          referralCode: 1,
+          timestamp: 1,
+        }
+      }
+    ]);
+
+    const user = response[0];
+    console.log(user);
+
     // Generate JWT
     const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2h' });
 
@@ -135,13 +154,8 @@ exports.register = async (req, res) => {
       success: true,
       message: 'User registered successfully',
       token,
-      user: {
-        userId: newUser.userId,
-        phone: newUser.phone,
-        referralCode: newUser.referralCode,
-        apiVerified: newUser.apiVerified
-      }
-    });
+      user
+    })
   } catch (error) {
     console.error('Registration Error:', error);
     res.status(500).json({ success: false, message: 'Server error during registration' });
@@ -169,14 +183,14 @@ exports.loginUser = async (req, res) => {
         $project: {
           userId: 1,
           name: 1,
-          "phone.number": 1,
+          phone: 1,
           balance: 1,
           referredBy: 1,
           referredLink: 1,
-          referredCode: 1,
+          referralCode: 1,
           timestamp: 1,
-        },
-      },
+        }
+      }
     ]);
 
     const token = jwt.sign({ id: user.userId }, "Kingbaji", { expiresIn: "2h" });
@@ -202,15 +216,15 @@ exports.verify = async (req, res) => {
         $project: {
           userId: 1,
           name: 1,
-          "phone.number": 1,
+          phone: 1,
           balance: 1,
-
-          referredbyCode: 1,
+          referredBy: 1,
           referredLink: 1,
-          referredCode: 1,
+          referralCode: 1,
           timestamp: 1,
-        },
+        }
       },
+      
     ]);
     // console.log( "decoded",details );
     res.status(200).json({ message: "User authenticated", userId: decoded.id, user: details[0] });
@@ -247,7 +261,7 @@ exports.userDetails = async (req, res) => {
             balance: 1,
             referredbyCode: 1,
             referredLink: 1,
-            referredCode: 1,
+            referralCode: 1,
             timestamp: 1,
           },
         },
@@ -265,25 +279,28 @@ exports.userDetails = async (req, res) => {
 
 exports.verifyPhone = async (req, res) => {
   try {
-    const { phoneNumber, code } = req.body;
-    const user = await User.findById(req.userId);
+    const { phone, code ,userId } = req.body;
+
+    console.log(phone, code ,userId);
+    const user = await User.findOne({userId:userId});
+    // const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
-
-    const phone = user.phone.find(p => p.number === phoneNumber);
+    console.log("1",phone, code ,userId);
+    const phones = user.phone.find(p => p.number === phone);
     if (!phone) return res.status(404).json({ error: 'Phone number not found' });
-
-    if (phone.verificationCode !== code) {
+    console.log("2",phone, code ,userId);
+    if (phones.verificationCode !== code) {
       return res.status(400).json({ error: 'Invalid OTP code' });
     }
 
-    if (new Date() > phone.verificationExpires) {
+    if (new Date() > phones.verificationExpiry) {
       return res.status(400).json({ error: 'OTP has expired' });
     }
 
-    phone.isVerified = true;
-    phone.verificationCode = undefined;
-    phone.verificationExpires = undefined;
-
+    phones.verified = true;
+    phones.verificationCode = undefined;
+    phones.verificationExpiry = undefined;
+    
     await user.save();
     res.json({ success: true, message: 'Phone number verified' });
   } catch (err) {
@@ -335,6 +352,7 @@ exports.addPhoneNumber = async (req, res) => {
 
 
 exports.SendPhoneVerificationCode = async (req, res) => {
+  console.log(req.body)
   try {
     // Destructure required fields from request body
     const { 

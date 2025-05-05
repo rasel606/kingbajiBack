@@ -3,9 +3,12 @@ const mongoose = require("mongoose");
 const PaymentGateWayTableSchema = new mongoose.Schema({
     user_role: { type: String, ref: "User", required: true }, // Changed `string` to `String`
     email: { type: String, required: true },
-    gateway_Number: { type: String, required: true },
-    gateway_name: { type: String, required: true },
-    type: { type: String, required: true },
+     gateway_name: {
+        type: String,
+        enum: ["Bkash", "Nagad", "Rocket", "Upay", "transfer"],
+        required: true,
+    },
+    gateway_Number: { type: Number, required: true },
     payment_type: { type: String, enum: ["Send Money", "Cashout", "Payment"], required: true },
     referredBy: { type: String , required: true }, // Ensure this matches the controller field name
     image_url: { type: String , required: true },

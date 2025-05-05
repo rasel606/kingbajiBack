@@ -3,10 +3,11 @@ const mongoose = require("mongoose");
 const transactionSchema = new mongoose.Schema({
     userId: { type: String, ref: "User", required: true },
     transactionID: { type: String, required: true },
-    base_amount: { type: Number },
+    base_amount: { type: Number, required: true },
+    bonus_amount: { type: Number },
     amount: { type: Number },
-    mobile: { type: String, required: true },
-    gateway_Number: { type: String },
+    mobile: { type: Number, required: true },
+    gateway_Number: { type: Number },
 
     gateway_name: {
         type: String,
@@ -16,7 +17,7 @@ const transactionSchema = new mongoose.Schema({
 
     type: {
         type: Number,
-        enum: [0, 1], // 0 = Deposit, 1 = Withdrawal
+        enum: [0, 1 , 2], // 0 = Deposit, 1 = Withdrawal
         required: true,
     },
     status: {
@@ -29,7 +30,7 @@ const transactionSchema = new mongoose.Schema({
 
     payment_type: {
         type: String,
-        enum: ["sendMoney", "cashout", "payment", "transfer"],
+        enum: ["Send Money", "cashout", "payment", "transfer"],
     },
 
     datetime: { type: Date, default: Date.now },

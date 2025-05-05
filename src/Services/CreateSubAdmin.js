@@ -11,9 +11,9 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 exports.registerSubAdmin = async (req, res) => {
   try {
-    const { email, phone, password, countryCode, referredbyCode } = req.body;
-
-    if (!email || !phone || !password || !countryCode) {
+    const { email, phone, password, countryCode, referredBy } = req.body;
+console.log(req.body);
+    if (!email || !password ) {
       return res.status(400).json({ success: false, message: "Please enter all fields" });
     }
 
@@ -49,7 +49,7 @@ if (!referredCode) {
       email,
       phone,
       countryCode,
-      referredbyCode,
+      referredBy,
       referralCode: referredCode,
       password: hashedPassword,
       balance: 0,
@@ -59,21 +59,21 @@ if (!referredCode) {
       agent_referredcode : referredAgentCode,
           affiliate_referredcode: referredAffiliateCode,
              agent_referredLink: agent_referred_Link,
-          affiliate_referredLink: agent_referred_Link,
+             affiliate_referredLink: affiliate_referredsLink,
     });
 
-    newUser.save();
-  
+    await newUser.save();
+  console.log("newUser",newUser);
     // Fetch user details using aggregation
     const response = await SubAdmin.aggregate([
-      { $match: { email: newUser.email } },
+      { $match: { email: newUser.email.toLowerCase() } },
       {
         $project: {
           email: 1,
           phone: 1,
           countryCode: 1,
           balance: 1,
-          referredbyCode: 1,
+          referredBy: 1,
           user_referredLink: 1,
           // agent_referredLink: 1,
           // affiliate_referredLink: 1,
@@ -82,13 +82,14 @@ if (!referredCode) {
         },
       },
     ]);
-
-    if (!response.length) {
+    console.log("userRespons",response);
+    if (!response) {
       return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
     }
-
+    
     // Generate JWT token
     const userDetails = response[0];
+    console.log("userDetails",userDetails);
     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
 
     res.status(201).json({
@@ -172,17 +173,19 @@ exports.loginSubAdmin = async (req, res) => {
 
 exports.verifySubAdmin = async (req, res) => {
   try {
+
+    console.log(req.body);
     const authHeader = req.header("Authorization");
     const token = authHeader?.split(" ")[1];
 
     if (!token) return res.status(401).json({ message: "Token missing!" });
 
     const decoded = jwt.verify(token, JWT_SECRET);
-
+console.log("Decoded Token:", decoded);
 
     const decodedEmail = decoded?.email;
     const decodedRole = decoded?.user_role; // Fix role field
-
+console.log("decodedEmail",decodedEmail);
     if (!decodedEmail || !decodedRole) {
       return res.status(400).json({ message: "Invalid token payload!" });
     }
