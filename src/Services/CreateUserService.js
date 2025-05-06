@@ -12,55 +12,40 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 exports.register = async (req, res) => {
   try {
-    // const { referredBy } = req.params;
     const { userId, phone, password, countryCode, referredBy } = req.body;
-    console.log(userId, phone, password, countryCode,referredBy)
-    // Validation
+
     if (!userId || !phone || !password) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
-    console.log(userId, phone, password, countryCode,  referredBy)
-    // Check existing user
-    const existingUser = await User.findOne({ userId, $or: [{ 'phone.number': phone }] });
-    console.log(existingUser)
+
+    const existingUser = await User.findOne({ userId, 'phone.number': phone });
     if (existingUser) {
       return res.status(409).json({ message: 'User already exists' });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Generate unique referral code
     let referralCode;
     do {
       referralCode = generateReferralCode();
     } while (await User.findOne({ referralCode }));
 
-    // Create user
     const newUser = new User({
       userId: userId.toLowerCase(),
-
       phone: [{
         countryCode,
         number: phone,
         isDefault: true,
-        verified: false,
-        
-
+        verified: false
       }],
       countryCode,
       password: hashedPassword,
       referralCode,
-      isVerified: {
-
-        phone: false
-      }
+      isVerified: { phone: false }
     });
 
-    // Save user first
     await newUser.save();
 
-    // Call external API
     try {
       const operatorcode = "rbdb";
       const secret = "9332fd9144a3a1a8bd3ab7afac3100b0";
@@ -81,48 +66,41 @@ exports.register = async (req, res) => {
       console.error('API Error:', apiError.message);
     }
 
-    // Handle referrals
     if (referredBy) {
       const referrer = await User.findOne({ referralCode: referredBy });
       if (referrer) {
-        // Level 1
         referrer.levelOneReferrals.push(newUser.userId);
         await referrer.save();
 
-        const level1Bonus = new ReferralBonus({
-          user: referrer.userId,
+        await new ReferralBonus({
+          userId: referrer.userId,
           referredUser: newUser.userId,
           level: 1
-        });
-        await level1Bonus.save();
+        }).save();
 
-        // Level 2
         if (referrer.referredBy) {
-          const level2Referrer = await User.findOne({ referralCode: referrer.referredBy });
-          if (level2Referrer) {
-            level2Referrer.levelTwoReferrals.push(newUser.userId);
-            await level2Referrer.save();
+          const level2Ref = await User.findOne({ referralCode: referrer.referredBy });
+          if (level2Ref) {
+            level2Ref.levelTwoReferrals.push(newUser.userId);
+            await level2Ref.save();
 
-            const level2Bonus = new ReferralBonus({
-              user: level2Referrer.userId,
+            await new ReferralBonus({
+              userId: level2Ref.userId,
               referredUser: newUser.userId,
               level: 2
-            });
-            await level2Bonus.save();
+            }).save();
 
-            // Level 3
-            if (level2Referrer.referredBy) {
-              const level3Referrer = await User.findOne({ referralCode: level2Referrer.referredBy });
-              if (level3Referrer) {
-                level3Referrer.levelThreeReferrals.push(newUser.userId);
-                await level3Referrer.save();
+            if (level2Ref.referredBy) {
+              const level3Ref = await User.findOne({ referralCode: level2Ref.referredBy });
+              if (level3Ref) {
+                level3Ref.levelThreeReferrals.push(newUser.userId);
+                await level3Ref.save();
 
-                const level3Bonus = new ReferralBonus({
-                  user: level3Referrer.userId,
+                await new ReferralBonus({
+                  userId: level3Ref.userId,
                   referredUser: newUser.userId,
                   level: 3
-                });
-                await level3Bonus.save();
+                }).save();
               }
             }
           }
@@ -130,7 +108,9 @@ exports.register = async (req, res) => {
       }
     }
 
-    const response = await User.aggregate([
+    const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2h' });
+
+    const newUserDetails = await User.aggregate([
       { $match: { userId } },
       {
         $project: {
@@ -142,22 +122,24 @@ exports.register = async (req, res) => {
           referredLink: 1,
           referralCode: 1,
           timestamp: 1,
+          birthday: 1
         }
       }
     ]);
-
-    const user = response[0];
-    console.log(user);
-
-    // Generate JWT
-    const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2h' });
 
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
       token,
-      user
-    })
+      user: {
+        userId: newUser.userId,
+        phone: newUser.phone,
+        referralCode: newUser.referralCode,
+        referredBy: newUser.referredBy,
+        timestamp: newUser.timestamp
+      },
+      userDetail: newUserDetails
+    });
   } catch (error) {
     console.error('Registration Error:', error);
     res.status(500).json({ success: false, message: 'Server error during registration' });
@@ -191,6 +173,7 @@ exports.loginUser = async (req, res) => {
           referredLink: 1,
           referralCode: 1,
           timestamp: 1,
+          birthday: 1
         }
       }
     ]);
@@ -224,6 +207,10 @@ exports.verify = async (req, res) => {
           referredLink: 1,
           referralCode: 1,
           timestamp: 1,
+          birthday: 1,
+          levelOneReferrals:1,
+          levelTwoReferrals: 1,
+          levelThreeReferrals:1
         }
       },
       
@@ -280,6 +267,7 @@ exports.userDetails = async (req, res) => {
 };
 
 exports.verifyPhone = async (req, res) => {
+  console.log(req.body);
   try {
     const { phone, code ,userId } = req.body;
 
@@ -470,6 +458,7 @@ exports.SendPhoneVerificationCode = async (req, res) => {
 
 const generateReferralCode = require('./generateReferralCode');
 const GenerateOtpCode = require('./GenerateOtpCode');
+const ReferralBonus = require('../Models/ReferralBonus');
 
 
 
