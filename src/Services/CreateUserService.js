@@ -19,11 +19,15 @@ exports.register = async (req, res) => {
     }
 
     const existingUser = await User.findOne({ userId, 'phone.number': phone });
+
     if (existingUser) {
       return res.status(409).json({ message: 'User already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+
+
 
     let referralCode;
     do {
@@ -33,7 +37,7 @@ exports.register = async (req, res) => {
     const newUser = new User({
       userId: userId.toLowerCase(),
       phone: [{
-        countryCode,
+        countryCode: countryCode,
         number: phone,
         isDefault: true,
         verified: false
@@ -41,7 +45,10 @@ exports.register = async (req, res) => {
       countryCode,
       password: hashedPassword,
       referralCode,
-      isVerified: { phone: false }
+      isVerified: { phone: false },
+      isEmailVerified: false,
+
+
     });
 
     await newUser.save();
@@ -67,7 +74,53 @@ exports.register = async (req, res) => {
     }
 
     if (referredBy) {
+
+
+      const referrerWithAffiliate = await Affiliate.findOne({ referralCode: referredBy });
+      const referrerWithNewuserSubadmin = await Affiliate.findOne({ referralCode: referredBy });
+
+      const referrerAffiliate = await Affiliate.findOne({ referralCode: referrerWithAffiliate.referredBy });
+      const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate.referredbyAffiliate });
+
+
+
+      if (referrerAffiliate) {
+        // Affiliate referral
+        newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+        referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
+        await referrerAffiliate.save();
+
+        // Find parent SubAdmin
+        const parentSubAdmin = await SubAdmin.findOne({ referralCode: referrerAffiliate.referredbysubAdmin });
+        if (parentSubAdmin) {
+          newUser.referredbysubAdmin = parentSubAdmin.referralCode;
+          parentSubAdmin.users.push(newUser.userId);
+          await parentSubAdmin.save();
+        }
+        // newUser.referredbyAffiliate = referrerAffiliate.referralCode,
+        //   newUser.referredbysubAdmin = referrerbysubAdmin.referralCode,
+
+        //   newUser.save();
+
+
+
+      } else if (referrerWithNewuserSubadmin) {
+        // Direct SubAdmin referral
+        newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referralCode;
+        const subAdmin = await SubAdmin.findOne({ referralCode: referrerWithNewuserSubadmin.referredbysubAdmin });
+        subAdmin.users.push(newUser.userId);
+        await subAdmin.save();
+      } else if (referrerAffiliate) {
+        // Direct SubAdmin referral
+        newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+        referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
+        await referrerAffiliate.save();
+      }
+
+
+
       const referrer = await User.findOne({ referralCode: referredBy });
+
       if (referrer) {
         referrer.levelOneReferrals.push(newUser.userId);
         await referrer.save();
@@ -75,6 +128,8 @@ exports.register = async (req, res) => {
         await new ReferralBonus({
           userId: referrer.userId,
           referredUser: newUser.userId,
+          referredbyAffiliate: referrerAffiliate.referralCode || null,
+          referredbysubAdmin: referrerbysubAdmin.referralCode || null,
           level: 1
         }).save();
 
@@ -87,6 +142,9 @@ exports.register = async (req, res) => {
             await new ReferralBonus({
               userId: level2Ref.userId,
               referredUser: newUser.userId,
+              referredbyAffiliate: referrerAffiliate.referralCode || null,
+              referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+              
               level: 2
             }).save();
 
@@ -99,14 +157,30 @@ exports.register = async (req, res) => {
                 await new ReferralBonus({
                   userId: level3Ref.userId,
                   referredUser: newUser.userId,
+                  referredbyAffiliate: referrerAffiliate.referralCode || null,
+                  referredbysubAdmin: referrerbysubAdmin.referralCode || null,
                   level: 3
                 }).save();
               }
             }
           }
         }
+        if (referrerAffiliate.referredbyAffiliate) {
+          newUser.referredbyAffiliate = referrerAffiliate.referredbyAffiliate;
+        }
+        if (referrerWithNewuserSubadmin.referredbysubAdmin) {
+          newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
+        }
+        if (referrerWithNewuserSubadmin.referredbysubAdmin && referrerWithNewuserSubadmin.referredbysubAdmin) {
+          newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
+        }
       }
     }
+
+    await newUser.save();
+
+
+
 
     const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2h' });
 
@@ -122,7 +196,8 @@ exports.register = async (req, res) => {
           referredLink: 1,
           referralCode: 1,
           timestamp: 1,
-          birthday: 1
+          birthday: 1,
+          countryCode: 1
         }
       }
     ]);
@@ -145,6 +220,9 @@ exports.register = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during registration' });
   }
 };
+
+
+
 exports.loginUser = async (req, res) => {
   const { userId, password } = req.body;
   // console.log(req.body);
@@ -173,7 +251,9 @@ exports.loginUser = async (req, res) => {
           referredLink: 1,
           referralCode: 1,
           timestamp: 1,
-          birthday: 1
+          birthday: 1,
+          username: 1,
+          countryCode: 1
         }
       }
     ]);
@@ -208,12 +288,13 @@ exports.verify = async (req, res) => {
           referralCode: 1,
           timestamp: 1,
           birthday: 1,
-          levelOneReferrals:1,
+          levelOneReferrals: 1,
           levelTwoReferrals: 1,
-          levelThreeReferrals:1
+          levelThreeReferrals: 1,
+          countryCode: 1
         }
       },
-      
+
     ]);
     // console.log( "decoded",details );
     res.status(200).json({ message: "User authenticated", userId: decoded.id, user: details[0] });
@@ -252,6 +333,8 @@ exports.userDetails = async (req, res) => {
             referredLink: 1,
             referralCode: 1,
             timestamp: 1,
+            username: 1,
+            birthday: 1
           },
         },
       ]);
@@ -269,16 +352,16 @@ exports.userDetails = async (req, res) => {
 exports.verifyPhone = async (req, res) => {
   console.log(req.body);
   try {
-    const { phone, code ,userId } = req.body;
+    const { phone, code, userId } = req.body;
 
-    console.log(phone, code ,userId);
-    const user = await User.findOne({userId:userId});
+    console.log(phone, code, userId);
+    const user = await User.findOne({ userId: userId });
     // const user = await User.findById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
-    console.log("1",phone, code ,userId);
+    console.log("1", phone, code, userId);
     const phones = user.phone.find(p => p.number === phone);
     if (!phone) return res.status(404).json({ error: 'Phone number not found' });
-    console.log("2",phone, code ,userId);
+    console.log("2", phone, code, userId);
     if (phones.verificationCode !== code) {
       return res.status(400).json({ error: 'Invalid OTP code' });
     }
@@ -290,7 +373,7 @@ exports.verifyPhone = async (req, res) => {
     phones.verified = true;
     phones.verificationCode = undefined;
     phones.verificationExpiry = undefined;
-    
+
     await user.save();
     res.json({ success: true, message: 'Phone number verified' });
   } catch (err) {
@@ -345,13 +428,13 @@ exports.SendPhoneVerificationCode = async (req, res) => {
   console.log(req.body)
   try {
     // Destructure required fields from request body
-    const { 
-      userId, 
-      phone: { 
-        countryCode='880', 
-        number, 
+    const {
+      userId,
+      phone: {
+        countryCode = '880',
+        number,
         isDefault = false // Default to false if not provided
-      } 
+      }
     } = req.body;
 
     // Validate required fields
@@ -383,7 +466,7 @@ exports.SendPhoneVerificationCode = async (req, res) => {
       existingPhone.verificationExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
       await user.save();
-      
+
       // Send SMS with verification code
       try {
 
@@ -436,7 +519,7 @@ exports.SendPhoneVerificationCode = async (req, res) => {
     // Send verification SMS
     try {
       const fullPhoneNumber = "880" + existingPhone.number;
-      await sendSms(fullPhoneNumber, 
+      await sendSms(fullPhoneNumber,
         `From KingBaji UserId: ${user.userId} Your OTP is: ${newPhone.verificationCode}`
       );
       return res.json({ success: true, message: 'OTP sent successfully' });
@@ -459,6 +542,8 @@ exports.SendPhoneVerificationCode = async (req, res) => {
 const generateReferralCode = require('./generateReferralCode');
 const GenerateOtpCode = require('./GenerateOtpCode');
 const ReferralBonus = require('../Models/ReferralBonus');
+const Affiliate = require('../Models/AffiliateModel');
+const SubAdmin = require('../Models/SubAdminModel');
 
 
 
@@ -473,8 +558,123 @@ const ReferralBonus = require('../Models/ReferralBonus');
 
 
 
+// exports.SendPhoneVerificationCode = async (req, res) => {
+//   console.log(req.body)
+//   try {
+//     // Destructure required fields from request body
+//     const { 
+//       userId, 
+//       phone: { 
+//         countryCode='880', 
+//         number, 
+//         isDefault = false // Default to false if not provided
+//       } 
+//     } = req.body;
 
-// exports.verifyOTP = async (req, res) => {
+//     // Validate required fields
+//     if (!countryCode || !number) {
+//       return res.status(400).json({ error: 'Missing required phone fields' });
+//     }
+
+//     // Basic phone number validation
+//     // if (!/^\d{10,15}$/.test(number)) {
+//     //   return res.status(400).json({ error: 'Invalid phone number format' });
+//     // }
+
+//     // Find user with matching userId
+//     const user = await User.findOne({ userId });
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
+
+//     // Check if phone number already exists in user's phones
+//     const existingemail = user.email.find({email:email});
+//     if (existingemail) {
+//       if (existingemail.verified) {
+//         return res.status(400).json({ error: 'Phone number already verified' });
+//       }
+
+//       // Generate new OTP and update existing record
+//       const otp = GenerateOtpCode();
+//       existingemail.verificationCode = otp;
+//       existingemail.verificationExpiry = new Date(Date.now() + 15 * 60 * 1000);
+
+//       await user.save();
+
+//       // Send SMS with verification code
+//       try {
+
+//         const fullPhoneNumber = "880" + existingPhone.number;
+//         await sendSms(fullPhoneNumber, `From KingBaji UserId: ${user.userId} Your OTP is: ${otp}`);
+//         return res.json({ success: true, message: 'OTP resent successfully' });
+//       } catch (smsError) {
+//         console.error('SMS sending failed:', smsError);
+//         return res.status(500).json({ error: 'Failed to send SMS' });
+//       }
+//     }
+
+//     // Validate phone number limit
+//     if (user.phone.length >= 3) {
+//       return res.status(400).json({ error: 'Maximum of 3 phone numbers allowed' });
+//     }
+
+//     // Determine if this should be the default phone
+//     const isFirstPhone = user.phone.length === 0;
+//     const actualIsDefault = isFirstPhone ? true : isDefault;
+
+//     // Prepare new phone entry
+//     const newPhone = {
+//       countryCode,
+//       number,
+//       isDefault: actualIsDefault,
+//       verified: false,
+//       verificationCode: GenerateOtpCode(),
+//       verificationExpiry: new Date(Date.now() + 15 * 60 * 1000)
+//     };
+
+//     // Update existing default phones if needed
+//     if (actualIsDefault) {
+//       user.phone.forEach(phone => phone.isDefault = false);
+//     }
+
+//     // Add new phone to user's phone list
+//     user.phone.push(newPhone);
+
+//     try {
+//       await user.save();
+//     } catch (error) {
+//       // Handle duplicate phone number error
+//       if (error.code === 11000) {
+//         return res.status(400).json({ error: 'Phone number already registered' });
+//       }
+//       throw error;
+//     }
+
+//     // Send verification SMS
+//     try {
+//       const fullPhoneNumber = "880" + existingPhone.number;
+//       await sendSms(fullPhoneNumber, 
+//         `From KingBaji UserId: ${user.userId} Your OTP is: ${newPhone.verificationCode}`
+//       );
+//       return res.json({ success: true, message: 'OTP sent successfully' });
+//     } catch (smsError) {
+//       // Rollback phone number addition if SMS fails
+//       user.phone = user.phone.filter(p => p.number !== number);
+//       await user.save();
+//       console.error('SMS sending failed:', smsError);
+//       return res.status(500).json({ error: 'Failed to send SMS' });
+//     }
+
+//   } catch (error) {
+//     console.error('Error in SendPhoneVerificationCode:', error);
+//     return res.status(500).json({ error: 'Internal server error' });
+//   }
+// };
+
+
+
+
+// exports.verifyEmailOTP = async (req, res) => {
 //   const { email, otp } = req.body;
 //   if (!email || !otp) return res.status(400).json({ message: "Email and OTP required" });
 

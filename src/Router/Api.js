@@ -14,7 +14,7 @@ const ModelBettingController = require('../Controllers/ModelBettingController');
 const TransactionController = require('../Controllers/TransactionController');
 const AffiliateController = require('../Controllers/AffiliateController');
 const AgentController = require('../Controllers/AgentController');
-const Controllers = require('../Controllers/CornController');
+// const Controllers = require('../Services/CornController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 const messageController = require('../Controllers/messageController');
 const CreateSubAdmin = require('../Services/CreateSubAdmin');
@@ -51,6 +51,7 @@ router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
 router.post('/sendphoneotp', CreateUserService.SendPhoneVerificationCode);
+router.post('/sendemailotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/verify_opt', CreateUserService.verifyPhone);
 // router.post('/verify/send', CreateUserService.sendotp);
 router.patch('/profile/personal', CreateUserService.updateUser);
@@ -188,9 +189,11 @@ router.get('/games/:id', ModelBettingController.ShowGameListById)
 router.get('/get_all_provider', ModelBettingController.GetAllProvider)
 router.post('/user_balance',Refresh_blance.refreshBalance)
 router.get('/featured',Refresh_blance.GetFeaturedGames)
+router.get('/get_all_providers',Refresh_blance.GetBettingProvider)
+router.get('/get_all_category',Refresh_blance.GetBettingCategory)
 
-router.get('/bettingHistory-member-summary',Refresh_blance.GetBettingHistoryByMember);
-router.get('/bettingHistory/grouped',Refresh_blance.GetBettingHistoryALL);
+router.post('/bettingHistory-member-summary',Refresh_blance.GetBettingHistoryByMember);
+// router.get('/bettingHistory/grouped',Refresh_blance.GetBettingHistoryALL);
 // router.get('/get-betting-history-detailed',Refresh_blance.getBettingHistoryDetailed);
 router.get('/user-history',ModelBettingController.UserHistory)
 // router.post("/launch_game", ModelBettingController.launchGame);
@@ -220,9 +223,9 @@ router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCa
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-router.post('/betting',Controllers.Betting);
+// router.post('/betting',Controllers.Betting);
 
-router.post('/odds_event',Controllers.OddEvents);
+// router.post('/odds_event',Controllers.OddEvents);
 // router.get('/category_sports',ModelBettingController.Category);
 router.put('/update-sports/:id', AdminController.UpdateSportsBettingCategory)
 // router.get('/sports',AdminController.GetSports);
@@ -254,9 +257,9 @@ router.delete('/delete-bank/:id',AdminController.DeleteBank)
 //bet
 
 // Get user bet and related bets
-router.get('/userbet/:id', BettingController.getUserBet);
-router.get('/user_bet/:id', Controllers.userbet);
-router.get('/bet_History/:id', Controllers.bet_history);
+// router.get('/userbet/:id', BettingController.getUserBet);
+// router.get('/user_bet/:id', Controllers.userbet);
+// router.get('/bet_History/:id', Controllers.bet_history);
 
 // Get bet history
 router.get('/bethistory/:id', BettingController.getBetHistory);
@@ -265,18 +268,18 @@ router.get('/bethistory/:id', BettingController.getBetHistory);
 router.put('/update-bet', BettingController.updateBet);
 router.put('/add_sports', ModelBettingController.Add_Sports);
 router.put('/betting_update', BettingController.BettingUpdate);
-router.put('/betting_update', BettingController.BettingUpdate);
-router.post('/apply', Controllers.Apply);
-router.post('/delete-betting/:id', Controllers.DeleteBettingType);
+// router.put('/betting_update', BettingController.BettingUpdate);
+// router.post('/apply', Controllers.Apply);
+// router.post('/delete-betting/:id', Controllers.DeleteBettingType);
 // router.get('/betting', BettingController.Betting);
 // router.post('/update_json/:id', BettingController.JsonUpdate);
-router.post('/bet_sync', Controllers.betSync);
+// router.post('/bet_sync', Controllers.betSync);
 router.get('/odds_sports/:key', AdminController.OddSportsByKey);
 // router.post('/odds_event', BettingController.OddEvents);
 // router.get('/odds-scores/:key', BettingController.OddSportsBykey);
 // router.get('/odds/active/:key', BettingController.OddsEventByKey);
 // router.get('/odds_betting/:id', oddsBetting);
-router.get('/odds-historical', Controllers.OddHistory);
+// router.get('/odds-historical', Controllers.OddHistory);
 // router.post('/edit', BettingController.EditBettingType);
 // router.delete('/deleteBetting/:type',  BettingController.OddHistory);
 router.get('/get_casino_cetagory', BettingController.getCasinoCategories);

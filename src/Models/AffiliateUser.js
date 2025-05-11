@@ -10,6 +10,8 @@ const AffiliateUserSchema = new mongoose.Schema({
   approvedDateTime: { type: Date, required: true },
   lastLoginTime: { type: Date, default: null },
   referralCode: { type: String, required: true, unique: true },
+  referredbysubAdmin: { type: String, ref: 'subAdmin' },
+  AffiliatereferralOfUser: [{ type: String, ref: 'User' }],
   contactInfo: {
     phoneNumber: { type: String, required: true },
     email: { type: String, required: true, unique: true },

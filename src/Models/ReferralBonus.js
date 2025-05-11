@@ -8,7 +8,10 @@ const referralBonusSchema = new mongoose.Schema({
   turnover: { type: Number, required: true,default:0 },
   isClaimed: { type: Boolean, default: false },
   earnedAt: { type: Date, default: Date.now },
-  claimedAt: { type: Date }
+  claimedAt: { type: Date },
+  referredbyAgent: { type: String, ref: 'Agent',default: null },
+  referredbyAffiliate: { type: String, ref: 'AffiliateUser',default: null  },
+  referredbysubAdmin: { type: String, ref: 'SubAdmin',default: null  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('ReferralBonus', referralBonusSchema);

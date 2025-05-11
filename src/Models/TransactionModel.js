@@ -22,7 +22,7 @@ const transactionSchema = new mongoose.Schema({
     },
     status: {
         type: Number,
-        enum: [0, 1, 2], // 0 = Hold, 1 = Accept, 2 = Reject
+        enum: [0, 1, 2 , 3], // 0 = Hold, 1 = Accept, 2 = Reject
         required: true,
     },
 
@@ -36,6 +36,8 @@ const transactionSchema = new mongoose.Schema({
     datetime: { type: Date, default: Date.now },
     is_commission: { type: Boolean, default: false },
     referredBy: { type: String },
+    referredbyAffiliate: { type: String, ref: 'AffiliateUser' },
+    referredbysubAdmin: { type: String, ref: 'SubAdmin' },
     updatetime: { type: Date, default: Date.now },
 });
 

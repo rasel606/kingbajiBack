@@ -1487,15 +1487,22 @@ exports.getTransactionDepositTotals = async (req, res) => {
 
 
 
-exports.searchTransactionsbyUserId = async (req, res) => {
-    try {
-        const { userId, type, dateFilter } = req.query;
 
+exports.searchTransactionsbyUserId = async (req, res) => {
+    
+    try {
+        const {  filters,userId } = req.body.params;
+        const { type, status, date } = filters;
+console.log(type, status, date);
         // Set up date ranges based on the filter
         let dateRange = {};
+        const match = {  };
+        if (userId) match.userId = userId;
+        if (type) match.type = parseInt(type);
+        if (status) match.status = parseInt(status);
         const currentDate = new Date();
 
-        if (dateFilter === 'today') {
+        if (date === 'today') {
             const startOfDay = new Date(currentDate);
             startOfDay.setHours(0, 0, 0, 0);
             dateRange = {
@@ -1504,7 +1511,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                     $lte: currentDate
                 }
             };
-        } else if (dateFilter === 'yesterday') {
+        } else if (date === 'yesterday') {
             const yesterday = new Date(currentDate);
             yesterday.setDate(yesterday.getDate() - 1);
             const startOfYesterday = new Date(yesterday);
@@ -1517,7 +1524,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                     $lte: endOfYesterday
                 }
             };
-        } else if (dateFilter === 'last7days') {
+        } else if (date === 'last7days') {
             const sevenDaysAgo = new Date(currentDate);
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             dateRange = {
@@ -1526,7 +1533,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                     $lte: currentDate
                 }
             };
-        } else if (!dateFilter) {
+        } else if (!date) {
             // Default to today if no filter is provided
             const startOfDay = new Date(currentDate);
             startOfDay.setHours(0, 0, 0, 0);
@@ -1539,13 +1546,11 @@ exports.searchTransactionsbyUserId = async (req, res) => {
         }
         // You could add more date filters here as needed
 
-        const match = {  };
-        if (userId) match.userId = userId;
-        if (type) match.type = parseInt(type);
+        
         if (Object.keys(dateRange).length > 0) {
             match.datetime = dateRange.datetime;
         }
-
+console.log(match);
         const result = await Transaction.aggregate([
             { $match: match },
             {
@@ -1594,6 +1599,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                 $sort: { date: -1 }
             }
         ]);
+        console.log("result", result);
 
         res.json({ success: true, data: result });
     } catch (error) {
@@ -1606,92 +1612,6 @@ exports.searchTransactionsbyUserId = async (req, res) => {
     }
 };
 
-
-
-
-// exports.searchTransactionsbyUserId = async (req, res) => {
-//     try {
-//         const { userId, type } = req.query;
-
-//         const match = {};
-//         if (userId) match.userId = userId;
-//         if (type) match.type = parseInt(type);
-
-//         const result = await Transaction.aggregate([
-//           { $match: match },
-//           {
-//             $addFields: {
-//               date: {
-//                 $dateToString: {
-//                   format: "%Y-%m-%d",
-//                   date: "$datetime"
-//                 }
-//               }
-//             }
-//           },
-//           {
-//             $group: {
-//               _id: {
-//                 date: "$date",
-//                 type: "$type"
-//               },
-//               transactions: {
-//                 $push: {
-//                   transactionID: "$transactionID",
-//                   _id: "$_id",
-//                   amount: "$amount",
-//                   base_amount: "$base_amount",
-//                   mobile: "$mobile",
-//                   type: "$type",
-//                   status: "$status",
-//                   details: "$details",
-//                   payment_type: "$payment_type",
-//                   gateway_name: "$gateway_name",
-//                   datetime: "$datetime",
-//                   updatetime: "$updatetime"
-//                 }
-//               },
-
-//             }
-//           },
-//           {
-//             $project: {
-//               _id: 0,
-//               date: "$_id.date",
-//               type: "$_id.type",
-//               transactions: 1,
-
-//             }
-//           },
-//           {
-//             $sort: { date: -1 }
-//           }
-//         ]);
-
-//         res.json({ success: true, data: result });
-//       } catch (error) {
-//         console.error("Error getting transaction history:", error);
-//         res.status(500).json({
-//           success: false,
-//           message: "Failed to get transaction history",
-//           error: error.message
-//         });
-//       }
-// };
-
-
-
-
-
-
-
-
-
-
-
-
-
-///////////////////////////////////////////////////////////////////////////
 
 exports.getTransactionDepositTotals = async (req, res) => {
     try {

@@ -26,7 +26,7 @@ exports.register = async (req, res) => {
       phone,
       countryCode,
       password: hashedPassword, // Store hashed password
-      referredbyCode: referredbyCode || null,
+      referredbysubAdmin: referredbyCode || null,
       referredCode,
       apiVerified: false, // Add a field to check API success later
     });
