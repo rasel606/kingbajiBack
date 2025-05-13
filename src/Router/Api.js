@@ -71,13 +71,21 @@ router.post('/searchTransactionsbyUserId', TransactionController.searchTransacti
 router.post('/register_sub_admin',CreateSubAdmin.registerSubAdmin) ;
 router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
 router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
-router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
+router.post('/admin_change_password_by_user',CreateSubAdmin.changePasswordUserByAdmin);
+router.post('/admin_change_email_by_user',CreateSubAdmin.changeEmailUserByAdmin);
+
+router.post('/admin_verify_phone', CreateSubAdmin.verifyPhoneManually);
+router.post('/admin_verify_email', CreateSubAdmin.verifyEmailManually);
 router.post('/sub_admin_User_details', CreateSubAdmin.SubAdminUserDetails);
+router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
 router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
 router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
 router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
 router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
 router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
+// router.post('/subadmin_forgot-password', CreateSubAdmin.forgotPassword);
+// router.post('/subadmin/reset-password', CreateSubAdmin.resetPassword);
+// router.post('/subadmin/update-password', CreateSubAdmin.updatePassword);
 ///////////////////////////////////////affiliate    ///////////////////////////////////////////////
 router.post('/register_affiliate',AffiliateController.registerAffiliate) ;
 router.post('/login_affiliate',AffiliateController.login) ;
@@ -171,14 +179,7 @@ router.post('/getUser_Transaction_History', TransactionController.getUserTransac
 
 
 //game font
-// router.post("/assign-category",FrontCetegoryController.assignCategory)
-// router.get("/categories",FrontCetegoryController.GetFontCategories) 
-// router.get("/games", FrontCetegoryController.GetFontGames)
 
-// Admin Game Page
-
-// router.get("/sports-list",ModelBettingController.Sports_list);
-// router.post('/add-sports',AdminController.AddSportsBetting);
 router.get('/search',ModelBettingController.searchGames)
 router.post('/casino_item_add', ModelBettingController.CasinoItemAdd)
 
@@ -303,7 +304,8 @@ router.post('/update-json', OddBettingController.updateJson);
 // router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
 // router.get("/kickPlayer",blank3.kickPlayer )
 router.get('/fetch-betting-history',blank3.BettingHistoryBet)
-router.get('/fetch-betti',blank3.fetchBets)
+router.get('/launch-app',blank3.launchApp)
+router.get('/fetch-betting',blank3.fetchBets)
 router.get('/get-daily-history',blank3.GetDailyHistory)
 router.get('/fetch-archived-history', blank3.ArchivedHistory)
 router.get('/mark-betting-history', blank3.MarkBettingHistory)

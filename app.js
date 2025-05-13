@@ -10,6 +10,9 @@ const cors = require('cors');
 const dotenv = require("dotenv");
 const  cookieHandler  = require('./src/MiddleWare/cookieMiddleware');
 const cookieParser = require( 'cookie-parser' );
+
+
+
 dotenv.config();
 const app = express();
 
@@ -86,12 +89,12 @@ app.use((err, req, res, next) => {
 const URI =  `mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 mongoose.connect(URI)
-    .then(() => console.log("✅ Connected to MongoDB"))
+    .then(() => {console.log("✅ Connected to MongoDB"); })
     .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
 // ✅ Security Middleware
 app.use(mongoSanitize());
-
+const bettingHistoryJob = require('./src/corn/BettingHistoryJob')
 // ✅ Basic Route for Testing
 app.get('/', (req, res) => {
     console.log('✔️ API Running');

@@ -1002,6 +1002,134 @@ exports.GetBettingCategory = async (req, res) => {
 };
 
 
+
+
+
+exports.GetBettingHistoryByMember = async (req, res) => {
+  console.log("product", req.body);
+  try {
+    const { filters, userId } = req.body;
+    const { product = [], site = [], date = 'today' } = filters;
+    const currentDate = new Date();
+    const match = {};
+    let dateRange = {};
+    // const member = userId;
+
+console.log("product", product,date,site);
+console.log("product", req.body);
+
+    // if (member) match.member = member;
+    if (Array.isArray(product) && product.length > 0) {
+      match.product = { $in: product }; 
+    }
+    if (Array.isArray(site) && site.length > 0) {
+      match.site = { $in: site };
+    }
+
+    if (date === 'today') {
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      dateRange = {
+        start_time: { $gte: startOfDay, $lte: currentDate }
+      };
+    } else if (date === 'yesterday') {
+      const yesterday = new Date(currentDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
+      const endOfYesterday = new Date(startOfYesterday);
+      endOfYesterday.setHours(23, 59, 59, 999);
+      dateRange = {
+        start_time: { $gte: startOfYesterday, $lte: endOfYesterday }
+      };
+    } else if (date === 'last7days') {
+      const sevenDaysAgo = new Date(currentDate);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 90); // includes today
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+      dateRange = {
+        start_time: { $gte: sevenDaysAgo, $lte: currentDate }
+      };
+    } else {
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      dateRange = {
+        start_time: { $gte: startOfDay, $lte: currentDate }
+      };
+    }
+
+    match.start_time = dateRange.start_time;
+console.log("match", match);
+    const result = await BettingHistory.aggregate([
+      { $match: match },
+      {
+        $addFields: {
+          date: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$start_time"
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            date: "$date",
+            site: "$site",
+            // member: "$member",
+            product: "$product"
+          },
+          records: {
+            $push: {
+              ref_no: "$ref_no",
+              game_id: "$game_id",
+              bet: "$bet",
+              turnover: "$turnover",
+              payout: "$payout",
+              commission: "$commission",
+              p_share: "$p_share",
+              p_win: "$p_win",
+              status: "$status",
+              start_time: "$start_time",
+              end_time: "$end_time",
+              match_time: "$match_time",
+              bet_detail: "$bet_detail"
+            }
+          },
+          totalBet: { $sum: "$bet" },
+          totalTurnover: { $sum: "$turnover" },
+          totalPayout: { $sum: "$payout" },
+          totalRecords: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id.date",
+          site: "$_id.site",
+          // member: "$_id.member",
+          product: "$_id.product",
+          records: 1,
+          totalBet: 1,
+          totalTurnover: 1,
+          totalPayout: 1,
+          totalRecords: 1
+        }
+      },
+      { $sort: { date: -1, site: 1, member: 1 } }
+    ]);
+console.log("result", result);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get detailed betting history",
+      error: error.message
+    });
+  }
+};
+
+
 // const getDateRange = (rangeType) => {
 //   const now = new Date();
 //   let start, end;
@@ -1328,128 +1456,6 @@ exports.GetBettingCategory = async (req, res) => {
 
 
 
-
-exports.GetBettingHistoryByMember = async (req, res) => {
-  try {
-    const { filters, userId } = req.body.params;
-    const { product, site, date } = filters;
-    const currentDate = new Date();
-    const match = {};
-    let dateRange = {};
-    const member = userId;
-
-console.log("product", product,date,site);
-
-    // if (member) match.member = member;
-    if (Array.isArray(product) && product.length > 0) {
-      match.product = { $in: product };
-    }
-    if (Array.isArray(site) && site.length > 0) {
-      match.site = { $in: site };
-    }
-
-    if (date === 'today') {
-      const startOfDay = new Date(currentDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      dateRange = {
-        start_time: { $gte: startOfDay, $lte: currentDate }
-      };
-    } else if (date === 'yesterday') {
-      const yesterday = new Date(currentDate);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
-      const endOfYesterday = new Date(startOfYesterday);
-      endOfYesterday.setHours(23, 59, 59, 999);
-      dateRange = {
-        start_time: { $gte: startOfYesterday, $lte: endOfYesterday }
-      };
-    } else if (date === 'last7days') {
-      const sevenDaysAgo = new Date(currentDate);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 90); // includes today
-      sevenDaysAgo.setHours(0, 0, 0, 0);
-      dateRange = {
-        start_time: { $gte: sevenDaysAgo, $lte: currentDate }
-      };
-    } else {
-      const startOfDay = new Date(currentDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      dateRange = {
-        start_time: { $gte: startOfDay, $lte: currentDate }
-      };
-    }
-
-    match.start_time = dateRange.start_time;
-console.log("match", match);
-    const result = await BettingHistory.aggregate([
-      { $match: match },
-      {
-        $addFields: {
-          date: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: "$start_time"
-            }
-          }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            date: "$date",
-            site: "$site",
-            // member: "$member",
-            product: "$product"
-          },
-          records: {
-            $push: {
-              ref_no: "$ref_no",
-              game_id: "$game_id",
-              bet: "$bet",
-              turnover: "$turnover",
-              payout: "$payout",
-              commission: "$commission",
-              p_share: "$p_share",
-              p_win: "$p_win",
-              status: "$status",
-              start_time: "$start_time",
-              end_time: "$end_time",
-              match_time: "$match_time",
-              bet_detail: "$bet_detail"
-            }
-          },
-          totalBet: { $sum: "$bet" },
-          totalTurnover: { $sum: "$turnover" },
-          totalPayout: { $sum: "$payout" },
-          totalRecords: { $sum: 1 }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          date: "$_id.date",
-          site: "$_id.site",
-          // member: "$_id.member",
-          product: "$_id.product",
-          records: 1,
-          totalBet: 1,
-          totalTurnover: 1,
-          totalPayout: 1,
-          totalRecords: 1
-        }
-      },
-      { $sort: { date: -1, site: 1, member: 1 } }
-    ]);
-console.log("result", result);
-    res.json({ success: true, data: result });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to get detailed betting history",
-      error: error.message
-    });
-  }
-};
 
 
 

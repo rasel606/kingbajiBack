@@ -43,11 +43,10 @@ const userSchema = new mongoose.Schema({
   balance: { type: Number, default: 0 },
   cashReward: { type: Number, default: 0 },
   totalBonus: { type: Number, default: 0 },
-  isPhoneVerified: { type: Boolean, default: false },
-  isEmailVerified: { type: Boolean, default: false },
   isBirthdayVerified: { type: Boolean, default: false },
   last_game_id: { type: String },
   agentId: { type: String },
+  isNameVerified: { type: Boolean, default: false },
   isVerified: {
     email: Boolean, 
     phone: Boolean

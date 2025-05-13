@@ -1491,7 +1491,8 @@ exports.getTransactionDepositTotals = async (req, res) => {
 exports.searchTransactionsbyUserId = async (req, res) => {
     
     try {
-        const {  filters,userId } = req.body.params;
+        console.log(req.body);
+        const {  filters,userId } = req.body;
         const { type, status, date } = filters;
 console.log(type, status, date);
         // Set up date ranges based on the filter
@@ -1956,7 +1957,7 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
             query.email = email;
         }
         if (phone) {
-            query.phone = phone;
+            query.phone[0].number = phone;
         }
 
         // Fetch users using aggregation
@@ -1966,9 +1967,9 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
                 $match: { referredBy: subAdminExists.referralCode }
             },
 
-            // {
-            //     $match: query
-            // },
+            {
+                $match: query
+            },
             {
                 $project: {
                     userId: 1,
@@ -1976,13 +1977,14 @@ exports.GetAllUser_For_Sub_Admin = async (req, res) => {
                     phone: 1,
                     balance: 1,
                     referredBy: 1,
-                    referredCode: 1,
+                    referralCode: 1,
                     email: 1,
                     country: 1,
                     countryCode: 1,
-                    isPhoneVerified: 1,
-                    isEmailVerified: 1,
+                    isVerified: 1,
                     timestamp: 1,
+                    isActive: 1,
+                    birthday: 1,
                     last_game_id: 1,
                 },
             },

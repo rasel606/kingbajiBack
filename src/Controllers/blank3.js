@@ -2,51 +2,120 @@
 const axios = require('axios');
 const md5 = require('md5');
 const BettingHistory = require('../Models/BettingHistory');
-
+const crypto = require('crypto');
 
 const LOG_URL = 'http://fetch.336699bet.com'; // Replace with your actual LOG_URL
 const SECRET_KEY = '9332fd9144a3a1a8bd3ab7afac3100b0'; // Replace with your secret key
-
+    const operatorcode = 'rbdb';
+    // const secretKey = '9332fd9144a3a1a8bd3ab7afac3100b0';
 // Function to generate signature
 const generateSignature = (operatorCode) => {
   return md5(operatorCode + SECRET_KEY).toUpperCase();
 };
 
-// Fetch betting history
-exports.BettingHistoryBet = async (req, res) => {
-  // const operatorcode = 'xxx'; // Your operator code
-  // const secretKey = 'your_secret_key'; // Your secret key
-  // const versionkey = '0'; // Always use 0 as per the documentation
 
-  // Generate signature
 
-  const { operatorCode} = req.query;
-  const signature = generateSignature(operatorCode);
+// function generateSignature(operatorCode, providerCode, secretKey) {
+//   const raw = operatorCode + providerCode + secretKey;
+//   return crypto.createHash('md5').update(raw).digest('hex').toUpperCase();
+// }
 
-  const url = `http://fetch.336699bet.com/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=0&signature=${signature}`;
-
+// Route to launch deep link app
+exports.launchApp = async (req, res) => {
   try {
-    // Send GET request to fetch betting history
-    const response = await axios.get(url);
-console.log(response.data);
-    if (response.data && response.data.result) {
-      const bettingRecords = JSON.parse(response.data.result);
+    const { providerCode, username, password } = req.query;
+console.log(providerCode, username, password);
 
-      // Loop through each record and store/update in MongoDB
-      for (const record of bettingRecords) {
-        await BettingHistory.findOneAndUpdate(
-          { ref_no: record.ref_no }, // Use ref_no as the unique identifier
-          { $set: record },
-          { upsert: true, new: true } // Insert if it doesn't exist, otherwise update
-        );
-      }
-      res.json({ message: 'Betting history fetched and stored successfully' });
-    } else {
-      res.status(500).json({ message: 'Error fetching betting history', err: response.data.errMsg });
+    // Validation
+    if (!providerCode || !username || !password) {
+      return res.status(400).json({ error: 'Missing required query parameters' });
     }
+
+    if (username.length < 3 || username.length > 12) {
+      return res.status(400).json({ error: 'Username must be between 3 and 12 characters' });
+    }
+const apiUrl = 'http://fetch.336699bet.com';
+    const signature = generateSignature(operatorCode, providerCode, secretKey);
+
+    const launchUrl = `${apiUrl}/launchAPP.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
+console.log(launchUrl);
+    const response = await axios.get(launchUrl, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    res.json(response.data);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error in fetching betting history', err: error.message });
+    console.error('Error launching app:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// Fetch betting history
+// function generateSignature(operatorCode, secretKey) {
+//   const raw = operatorCode + secretKey;
+//   return crypto.createHash('md5').update(raw).digest('hex').toUpperCase();
+// }
+const operatorCode = 'rbdb';
+    const secretKey = '9332fd9144a3a1a8bd3ab7afac3100b0';
+    const logUrl = 'http://fetch.336699bet.com';
+
+
+// function generateSignature( ) {
+//   const raw = operatorCode + secretKey;
+//   return crypto.createHash('md5').update(raw).digest('hex').toUpperCase();
+// }
+
+exports.BettingHistoryBet = async (req, res) => {
+  try {
+console.log("req");
+
+    const operatorcode = 'rbdb';
+    // const secretKey = '9332fd9144a3a1a8bd3ab7afac3100b0';
+    const logUrl = 'http://fetch.336699bet.com';
+
+    const versionkey = 0;
+    const signature = generateSignature(operatorcode, secretKey);
+
+    const apiUrl = `${logUrl}/fetchbykey.aspx?operatorcode=${operatorCode}&versionkey=${versionkey}&signature=${signature}`;
+console.log(apiUrl);
+    const response = await axios.get(apiUrl, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching betting history:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+
+exports.GetDailyHistory = async (req, res) => {
+  try {
+    const { dateF, dateT, providercode } = req.query;
+console.log(dateF,dateT,providercode);
+    const operatorcode = 'rbdb';
+    const secretKey = '9332fd9144a3a1a8bd3ab7afac3100b0';
+
+    if (!dateF || !dateT || !providercode) {
+      return res.status(400).json({ error: 'Missing required query parameters' });
+    }
+
+    // Generate signature
+    const signature = generateSignature(operatorcode, secretKey);
+
+    // Prepare full API URL
+    const apiUrl = `${LOG_URL}/getDailyWager.ashx?operatorcode=${operatorcode}&dateF=${dateF}&dateT=${dateT}&providercode=${providercode}&signature=${signature}`;
+console.log(apiUrl);
+    // Make API request
+    const response = await axios.get(apiUrl, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching daily wager:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
 
@@ -63,7 +132,8 @@ const qs = require('qs');
 // };
 
 // fetch bets by provider
-exports.fetchBets = async (provider) => {
+exports.fetchBets = async (req, res) => {
+  const provider = req.params.provider;
   let params = {};
 
   switch(provider) {
@@ -108,37 +178,37 @@ exports.fetchBets = async (provider) => {
 
 
 
-exports.GetDailyHistory = async (req, res) => {
-    const { operatorcode, dateF, dateT, providercode } = req.query;
+// exports.GetDailyHistory = async (req, res) => {
+//     const { operatorcode, dateF, dateT, providercode } = req.query;
   
-    if (!operatorcode || !dateF || !dateT || !providercode) {
-      return res.status(400).json({ errCode: '400', errMsg: 'Missing required parameters' });
-    }
+//     if (!operatorcode || !dateF || !dateT || !providercode) {
+//       return res.status(400).json({ errCode: '400', errMsg: 'Missing required parameters' });
+//     }
   
-    const signature = generateSignature(operatorcode);
+//     const signature = generateSignature(operatorcode);
   
-    try {
-      const response = await axios.get(`${LOG_URL}/getDailyWager.ashx`, {
-        params: {
-          operatorcode,
-          dateF,
-          dateT,
-          providercode,
-          signature,
-        },
-      });
+//     try {
+//       const response = await axios.get(`${LOG_URL}/getDailyWager.ashx`, {
+//         params: {
+//           operatorcode,
+//           dateF,
+//           dateT,
+//           providercode,
+//           signature,
+//         },
+//       });
   
-      const data = response.data;
+//       const data = response.data;
   
-      if (data.errCode === '0') {
-        return res.json(data);
-      }
+//       if (data.errCode === '0') {
+//         return res.json(data);
+//       }
   
-      return res.status(500).json({ errCode: data.errCode, errMsg: data.errMsg });
-    } catch (error) {
-      return res.status(500).json({ errCode: '500', errMsg: 'Internal server error' });
-    }
-  }
+//       return res.status(500).json({ errCode: data.errCode, errMsg: data.errMsg });
+//     } catch (error) {
+//       return res.status(500).json({ errCode: '500', errMsg: 'Internal server error' });
+//     }
+//   }
   
 
   

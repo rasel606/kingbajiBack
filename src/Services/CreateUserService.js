@@ -197,7 +197,8 @@ exports.register = async (req, res) => {
           referralCode: 1,
           timestamp: 1,
           birthday: 1,
-          countryCode: 1
+          countryCode: 1,
+          isVerified: 1
         }
       }
     ]);
@@ -211,7 +212,20 @@ exports.register = async (req, res) => {
         phone: newUser.phone,
         referralCode: newUser.referralCode,
         referredBy: newUser.referredBy,
-        timestamp: newUser.timestamp
+        timestamp: newUser.timestamp,
+        isVerified: newUser.isVerified,
+        birthday: newUser.birthday,
+        isNameVerified: newUser.isNameVerified,
+        countryCode: newUser.countryCode,
+        isVerified: newUser.isVerified,
+        referredLink: newUser.referredLink,
+        referredbyAffiliate: newUser.referredbyAffiliate,
+        referredbysubAdmin: newUser.referredbysubAdmin,
+        levelOneReferrals: newUser.levelOneReferrals,
+        levelTwoReferrals: newUser.levelTwoReferrals,
+        levelThreeReferrals: newUser.levelThreeReferrals
+
+
       },
       userDetail: newUserDetails
     });
@@ -253,7 +267,14 @@ exports.loginUser = async (req, res) => {
           timestamp: 1,
           birthday: 1,
           username: 1,
-          countryCode: 1
+          countryCode: 1,
+          isVerified: 1,
+          isNameVerified: 1,
+          referredbyAffiliate: 1,
+          referredbysubAdmin: 1,
+          levelOneReferrals: 1,
+          levelTwoReferrals: 1,
+          levelThreeReferrals: 1
         }
       }
     ]);
@@ -291,7 +312,9 @@ exports.verify = async (req, res) => {
           levelOneReferrals: 1,
           levelTwoReferrals: 1,
           levelThreeReferrals: 1,
-          countryCode: 1
+          countryCode: 1,
+          isVerified: 1,
+          isNameVerified: 1
         }
       },
 
@@ -329,12 +352,19 @@ exports.userDetails = async (req, res) => {
             name: 1,
             phone: 1,
             balance: 1,
-            referredbyCode: 1,
+            referredBy: 1,
             referredLink: 1,
             referralCode: 1,
             timestamp: 1,
             username: 1,
-            birthday: 1
+            birthday: 1,
+            isVerified: 1,
+isNameVerified: 1,
+ referredbyAffiliate: 1,
+          referredbysubAdmin: 1,
+          levelOneReferrals: 1,
+          levelTwoReferrals: 1,
+          levelThreeReferrals: 1
           },
         },
       ]);

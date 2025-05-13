@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
 const SubAdmin = require("../Models/SubAdminModel");
+const User = require('../Models/User');
 // const User = require("../Models/User");
 
 
@@ -276,5 +277,290 @@ exports.SubAdminUserDetails = async (req, res) => {
   } catch (error) {
     console.log("error", error);
     res.status(400).json({ message: "Invalid token!" });
+  }
+};
+
+
+/////////////////////////////////////////// Forgot Password ///////////////////////////////////////////////
+// exports.forgotPassword = async (req, res) => {
+//   const { email } = req.body;
+  
+//   try {
+//     const user = await SubAdmin.findOne({ email: email.toLowerCase() });
+    
+//     // Always return success to prevent email enumeration
+//     if (!user) {
+//       return res.status(200).json({
+//         success: true,
+//         message: "If this email exists, we'll send a password reset link",
+//       });
+//     }
+
+//     // Generate reset token with 1 hour expiration
+//     const resetToken = jwt.sign(
+//       { email: user.email, type: "password_reset" },
+//       JWT_SECRET,
+//       { expiresIn: "1h" }
+//     );
+
+//     // In production: Send email with reset link containing the token
+//     // Example: sendEmail(user.email, resetToken);
+    
+//     res.status(200).json({
+//       success: true,
+//       message: "Password reset token generated",
+//       resetToken, // Remove this in production and actually send via email
+//     });
+//   } catch (error) {
+//     console.error("Forgot password error:", error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+// /////////////////////////////////////////// Reset Password ///////////////////////////////////////////////
+// exports.resetPassword = async (req, res) => {
+//   const { token, newPassword } = req.body;
+
+//   try {
+//     // Verify token
+//     const decoded = jwt.verify(token, JWT_SECRET);
+    
+//     if (decoded.type !== "password_reset") { // Fix typo here: should be "password_reset"
+//       return res.status(400).json({ success: false, message: "Invalid token type" });
+//     }
+
+//     const user = await SubAdmin.findOne({ email: decoded.email });
+//     if (!user) {
+//       return res.status(404).json({ success: false, message: "User not found" });
+//     }
+
+//     // Hash new password
+//     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+//     user.password = hashedPassword;
+//     await user.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Password reset successfully",
+//     });
+//   } catch (error) {
+//     if (error.name === "TokenExpiredError") {
+//       return res.status(401).json({ success: false, message: "Reset token expired" });
+//     }
+//     if (error.name === "JsonWebTokenError") {
+//       return res.status(401).json({ success: false, message: "Invalid token" });
+//     }
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+// /////////////////////////////////////////// Update Password //////////////////////////////////////////////
+// exports.updatePassword = async (req, res) => {
+//   const { currentPassword, newPassword } = req.body;
+  
+//   try {
+//     // Get user from auth token
+//     const token = req.header("Authorization")?.split(" ")[1];
+//     const decoded = jwt.verify(token, JWT_SECRET);
+//     const user = await SubAdmin.findOne({ email: decoded.email });
+
+//     if (!user) {
+//       return res.status(404).json({ success: false, message: "User not found" });
+//     }
+
+//     // Verify current password
+//     const isMatch = await bcrypt.compare(currentPassword, user.password);
+//     if (!isMatch) {
+//       return res.status(401).json({ success: false, message: "Current password is incorrect" });
+//     }
+
+//     // Update to new password
+//     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+//     user.password = hashedPassword;
+//     await user.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Password updated successfully",
+//     });
+//   } catch (error) {
+//     console.error("Update password error:", error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+
+
+exports.verifyPhoneManually = async (req, res) => {
+  try {
+    const { userId, phoneNumber } = req.body;
+console.log(req.body);
+    // Validate input
+    if (!userId || !phoneNumber) {
+      return res.status(400).json({ error: 'Missing userId or phoneNumber' });
+    }
+
+    // Find user
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    console.log(req.body);
+    // Find phone entry
+    const phoneEntry = user.phone.find(p => p.number === phoneNumber);
+    // console.log("1 new",phoneEntry);
+    if (!phoneEntry) {
+      return res.status(404).json({ error: 'Phone number not found for user' });
+    }
+    console.log("1 new",phoneEntry);
+    // Check if already verified
+    if (!phoneEntry.verified) {
+      return res.status(400).json({ error: 'Phone number already verified' });
+    }
+console.log(phoneEntry.verified,"new", user.isVerified);
+    // Update verification status
+    phoneEntry.verified = true;
+    phoneEntry.verificationCode = undefined;
+    phoneEntry.verificationExpiry = undefined;
+    user.isVerified.phone= true;
+
+
+    // Save changes
+    await user.save();
+    console.log("new", user);
+    res.json({ success: true, message: 'Phone verified by admin' });
+
+  } catch (error) {
+    console.error('Admin verification error:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+
+
+exports.verifyEmailManually = async (req, res) => {
+  try {
+    const { userId } = req.body;
+console.log(req.body);
+    // Validate input
+    if (!userId ) {
+      return res.status(400).json({ error: 'Missing userId or phoneNumber' });
+    }
+
+    // Find user
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    console.log(req.body);
+    
+
+    // Update verification status
+    
+    user.isVerified.email= true;
+
+
+    // Save changes
+    await user.save();
+    console.log("new", user);
+    res.json({ success: true, message: 'Email verified by admin' });
+
+  } catch (error) {
+    console.error('Admin verification error:', error);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+
+
+
+exports.changePasswordUserByAdmin = async (req, res) => {
+  try {
+    const { userId, newPassword } = req.body;
+console.log(userId, newPassword);
+    // Validate input
+    if (!userId || !newPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User ID and new password are required" 
+      });
+    }
+    console.log(userId, newPassword);
+    // Find the user
+    const user = await User.findOne({ userId: userId.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+    console.log(user.userId, newPassword);
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    
+    // Update password and save
+    user.password = hashedPassword;
+    user.updatetimestamp = Date.now();
+    await user.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Password updated successfully" 
+    });
+
+  } catch (error) {
+    console.error('Admin password change error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error during password change" 
+    });
+  }
+};
+
+
+
+
+
+exports.changeEmailUserByAdmin = async (req, res) => {
+  try {
+    const { userId, newEmail } = req.body;
+console.log(userId, newEmail);
+    // Validate input
+    if (!userId || !newEmail) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User ID and new password are required" 
+      });
+    }
+    console.log(userId, newEmail);
+    // Find the user
+    const user = await User.findOne({ userId: userId.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+    console.log(user.userId, newEmail);
+    // Hash new password
+    
+    
+    // Update password and save
+    user.email = email;
+    user.isVerified.email = true;
+    user.updatetimestamp = Date.now();
+    await user.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: "Email updated successfully" 
+    });
+
+  } catch (error) {
+    console.error('Admin Email change error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error during Email change" 
+    });
   }
 };
