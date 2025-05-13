@@ -302,7 +302,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
     try {
         const { userId, referralCode, status } = req.body;
         const transactionID = req.params.transactionID;
-
+        console.log(userId, referralCode, status, transactionID);
         // Find the user
         const user = await User.findOne({ userId, referredBy: referralCode });
         if (!user || user.referredBy !== referralCode) {
@@ -332,13 +332,14 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             return res.status(400).json({ message: "Transaction already approved" });
         }
 
-        // Check SubAdmin balance
-        if (subAdmin.balance < transaction.amount) {
-            return res.status(400).json({ message: "SubAdmin balance is not enough" });
-        }
+
 
         // Process based on status
         if (parseInt(status) === 1) {
+            // Check SubAdmin balance
+            if (subAdmin.balance < transaction.amount) {
+                return res.status(400).json({ message: "SubAdmin balance is not enough" });
+            }
             subAdmin.balance -= transaction.amount;
             user.balance += transaction.amount;
 
@@ -351,6 +352,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 
             return res.status(200).json({ message: "Deposit approved successfully", user });
         } else if (parseInt(status) === 2) {
+            console.log(transaction);
             transaction.updatetime = new Date();
             transaction.status = 2;
 
@@ -368,114 +370,128 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 
 
 
-
-
 exports.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin = async (req, res) => {
     try {
         const { userId, referralCode, email, mobile, amount, type } = req.body;
-        console.log(userId, referralCode, email, amount, type);
 
-        // Find the user
+        const transactionType = parseInt(type);
+        const baseAmountInt = parseInt(amount);
+
+        if (!userId || !referralCode || !email || !mobile || isNaN(baseAmountInt) || isNaN(transactionType)) {
+            return res.status(400).json({ message: 'Missing or invalid required fields' });
+        }
+
         const user = await User.findOne({ userId, referredBy: referralCode });
-        if (!user || user.referredBy !== referralCode) {
+        if (!user) {
             return res.status(404).json({ message: 'User not found or referral code mismatch' });
         }
 
-        if (user.phone !== mobile) {
-            return res.status(404).json({ message: 'User phone number mismatch' });
+        if (!user.phone || String(user.phone[0].number) !== String(mobile)) {
+            return res.status(400).json({ message: 'User phone number mismatch' });
         }
 
-        // Find the sub-admin
-        const subAdmin = await SubAdmin.findOne({ email: email });
+        const subAdmin = await SubAdmin.findOne({ email });
         if (!subAdmin) {
             return res.status(404).json({ message: 'Sub-admin not found' });
         }
 
-
         if (subAdmin.referralCode !== referralCode) {
             return res.status(400).json({ message: 'Referral code mismatch with sub-admin' });
         }
-        console.log(subAdmin);
-        console.log("user", user);
-        // Validate amount and type
-        if (!amount || amount <= 0 || amount !== amount || !mobile || !user.phone || user.phone !== mobile) {
-            return res.status(400).json({ message: 'Invalid amount or mobile' });
+
+        if (baseAmountInt <= 0) {
+            return res.status(400).json({ message: 'Amount must be greater than 0' });
         }
-        console.log("user ----- 1", user);
-        console.log("subAdmin ----- 1", subAdmin);
 
         const transactionID = generateReferralCode();
-        const isValidTransaction = subAdmin.balance >= amount &&
+
+        const isValidTransaction =
             user.referredBy === subAdmin.referralCode &&
             user.userId === userId &&
-            type === 1 &&
-            user.balance >= 0 &&
-            subAdmin.balance >= 0 &&
-            amount > 0 &&
-            user.balance >= amount;
+            baseAmountInt > 0;
 
-        if (isValidTransaction) {
+        // ✅ Withdrawal
+        if (isValidTransaction && transactionType === 1) {
+            if (user.balance < baseAmountInt) {
+                return res.status(400).json({ message: 'User does not have sufficient balance for withdrawal' });
+            }
+
             const newTransaction = new Transaction({
                 userId: user.userId,
                 transactionID,
-                base_amount: base_amount,
-                amount: amount,
+                base_amount: baseAmountInt,
+                amount: baseAmountInt,
                 gateway_name: "transfer",
                 payment_type: "transfer",
-                mobile: mobile,
-                type: 1,  // Withdrawal type
-                status: 1,  // 0 = pending
-                referredBy: referralCode || null,
+                mobile,
+                type: 1,
+                status: 1,
+                referredBy: referralCode,
                 is_commission: false,
+                referredbysubAdmin: subAdmin._id
             });
 
-            // Deduct balance and save transaction
-            user.balance -= parseInt(base_amount);
-            subAdmin.balance += parseInt(amount);
+            user.balance -= baseAmountInt;
+            subAdmin.balance += baseAmountInt;
 
             await newTransaction.save();
             await user.save();
             await subAdmin.save();
 
-            console.log("New Transaction:", newTransaction);
-            console.log("Updated User:", user);
-            res.status(200).json({ message: "Transaction WIdthrawal successfully completed" });
-        } else {
-            // Calculate bonus and create transaction
-            const bonus = (parseFloat(amount) * 0.03);
-            const newTransaction = new Transaction({
-                userId: user.userId,
-                transactionID,
-                base_amount: amount,
-                bonus_amount: bonus,
-                amount: amount + bonus,
-                currency_id: user.currency_id,  // Assuming this is set in User model
-                gateway_name: "transfer",
-                payment_type: "transfer",
-                mobile: user.phone,
-                type: 0,  // Deposit type
-                status: 1,  // 0 = pending
-                referredBy: user.referredBy,
-                is_commission: false,
+            return res.status(200).json({
+                message: "Withdrawal transaction completed successfully",
+                userBalance: user.balance,
+                subAdminBalance: subAdmin.balance
             });
-
-            user.balance += parseInt(amount);
-            subAdmin.balance -= parseInt(amount);
-
-            await newTransaction.save();
-            await user.save();
-            await subAdmin.save();
-
-            console.log("New Transaction:", newTransaction);
-            console.log("Updated User:", user);
-            res.status(200).json({ message: "Transaction Deposit  completed with bonus", Admin_Balance: subAdmin.balance });
         }
 
+        // ✅ Deposit
+        else if (isValidTransaction && transactionType === 0) {
+            if (subAdmin.balance < baseAmountInt) {
+                return res.status(400).json({ message: 'Sub-admin does not have sufficient balance for deposit' });
+            }
+
+            const bonus = Math.floor((baseAmountInt * 4) / 100); // 4% bonus
+            const totalAmount = baseAmountInt + bonus;
+
+            const newTransaction = new Transaction({
+                userId: user.userId,
+                transactionID,
+                base_amount: baseAmountInt,
+                bonus_amount: bonus,
+                amount: totalAmount,
+                gateway_name: "transfer",
+                payment_type: "transfer",
+                mobile,
+                type: 0,
+                status: 1,
+                referredBy: referralCode,
+                is_commission: false,
+                referredbysubAdmin: subAdmin._id
+            });
+
+            user.balance += baseAmountInt;
+            subAdmin.balance -= baseAmountInt;
+
+            await newTransaction.save();
+            await user.save();
+            await subAdmin.save();
+
+            return res.status(200).json({
+                message: "Deposit transaction completed successfully with bonus",
+                userBalance: user.balance,
+                subAdminBalance: subAdmin.balance
+            });
+        }
+
+        return res.status(400).json({ message: 'Invalid transaction type or conditions not met' });
+
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ message: error.message });
+        console.error('Transaction Error:', error);
+        return res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
+
 
 
 exports.WithdrawTransaction = async (req, res) => {
@@ -701,7 +717,7 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
 
             if (parseInt(status) === 1) {
                 // Approve the withdrawal
-                
+
                 user.balance -= transaction.base_amount;
                 subAdmin.balance += transaction.base_amount;
 
@@ -881,7 +897,9 @@ exports.GetPaymentMethodsUser = async (req, res) => {
                     image_url: 1,
                     start_time: 1,
                     end_time: 1,
-                    is_active: 1
+                    is_active: 1,
+                    minimun_amount: 1,
+                    maximum_amount: 1,
                 }
             }
         ]);
@@ -1315,6 +1333,9 @@ exports.searchDepositTransactionsReportAprove = async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+
+
 exports.searchDepositTransactionsReportreject = async (req, res) => {
     try {
         const { userId, amount, gateway_name, status, referredBy, startDate, endDate } = req.body;
@@ -1379,10 +1400,12 @@ exports.searchDepositTransactionsReportreject = async (req, res) => {
 };
 
 
+
+
 exports.DepositsList = async (req, res) => {
     // console.log(req.body);
     try {
-        const { referralCode } = req.body;
+        const { referralCode, userId } = req.body;
         console.log(referralCode);
 
         // Find the user based on the referredCode
@@ -1489,18 +1512,24 @@ exports.getTransactionDepositTotals = async (req, res) => {
 
 
 exports.searchTransactionsbyUserId = async (req, res) => {
-    
+
     try {
         console.log(req.body);
-        const {  filters,userId } = req.body;
-        const { type, status, date } = filters;
-console.log(type, status, date);
+        const { filters, userId } = req.body;
+        const { type = [], status = [], date } = filters;
+        // console.log(type, status, date);
         // Set up date ranges based on the filter
         let dateRange = {};
-        const match = {  };
+        const match = {};
+        if (Array.isArray(type) && type.length > 0) {
+            match.type = { $in: type };
+        }
+        if (Array.isArray(status) && status.length > 0) {
+            match.status = { $in: status };
+        }
         if (userId) match.userId = userId;
-        if (type) match.type = parseInt(type);
-        if (status) match.status = parseInt(status);
+        // if (type) match.type = parseInt(type);
+        // if (status) match.status = parseInt(status);
         const currentDate = new Date();
 
         if (date === 'today') {
@@ -1547,11 +1576,11 @@ console.log(type, status, date);
         }
         // You could add more date filters here as needed
 
-        
+
         if (Object.keys(dateRange).length > 0) {
             match.datetime = dateRange.datetime;
         }
-console.log(match);
+        console.log(match);
         const result = await Transaction.aggregate([
             { $match: match },
             {

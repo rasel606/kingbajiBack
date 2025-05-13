@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
 const User = require('../Models/User');
+const AffiliateUser = require('../Models/AffiliateUser');
+const SubAdminModel = require('../Models/SubAdminModel');
+const ReferralBonus = require('../Models/ReferralBonus');
 const { OTP } = require('../Models/Opt');
 const { sendSms } = require('../Services/sendSms');
 
@@ -13,17 +16,17 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 exports.register = async (req, res) => {
   try {
     const { userId, phone, password, countryCode, referredBy } = req.body;
-
+console.log(req.body)
     if (!userId || !phone || !password) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
     const existingUser = await User.findOne({ userId, 'phone.number': phone });
-
+console.log(existingUser)
     if (existingUser) {
       return res.status(409).json({ message: 'User already exists' });
     }
-
+console.log("req.body",req.body)
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
 
@@ -34,6 +37,8 @@ exports.register = async (req, res) => {
       referralCode = generateReferralCode();
     } while (await User.findOne({ referralCode }));
 
+    console.log("referralCode", referralCode);
+    console.log("userId", userId);
     const newUser = new User({
       userId: userId.toLowerCase(),
       phone: [{
@@ -47,6 +52,7 @@ exports.register = async (req, res) => {
       referralCode,
       isVerified: { phone: false },
       isEmailVerified: false,
+      referredBy:referredBy
 
 
     });
@@ -76,46 +82,46 @@ exports.register = async (req, res) => {
     if (referredBy) {
 
 
-      const referrerWithAffiliate = await Affiliate.findOne({ referralCode: referredBy });
-      const referrerWithNewuserSubadmin = await Affiliate.findOne({ referralCode: referredBy });
+      // const referrerWithAffiliate = await AffiliateUser.findOne({ referralCode: referredBy });
+      // const referrerWithNewuserSubadmin = await SubAdminModel.findOne({ referralCode: referredBy });
 
-      const referrerAffiliate = await Affiliate.findOne({ referralCode: referrerWithAffiliate.referredBy });
-      const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate.referredbyAffiliate });
-
-
-
-      if (referrerAffiliate) {
-        // Affiliate referral
-        newUser.referredbyAffiliate = referrerAffiliate.referralCode;
-        referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
-        await referrerAffiliate.save();
-
-        // Find parent SubAdmin
-        const parentSubAdmin = await SubAdmin.findOne({ referralCode: referrerAffiliate.referredbysubAdmin });
-        if (parentSubAdmin) {
-          newUser.referredbysubAdmin = parentSubAdmin.referralCode;
-          parentSubAdmin.users.push(newUser.userId);
-          await parentSubAdmin.save();
-        }
-        // newUser.referredbyAffiliate = referrerAffiliate.referralCode,
-        //   newUser.referredbysubAdmin = referrerbysubAdmin.referralCode,
-
-        //   newUser.save();
+      // const referrerAffiliate = await AffiliateUser.findOne({ referralCode: referrerWithAffiliate.referredBy });
+      // const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate.referredbyAffiliate });
 
 
 
-      } else if (referrerWithNewuserSubadmin) {
-        // Direct SubAdmin referral
-        newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referralCode;
-        const subAdmin = await SubAdmin.findOne({ referralCode: referrerWithNewuserSubadmin.referredbysubAdmin });
-        subAdmin.users.push(newUser.userId);
-        await subAdmin.save();
-      } else if (referrerAffiliate) {
-        // Direct SubAdmin referral
-        newUser.referredbyAffiliate = referrerAffiliate.referralCode;
-        referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
-        await referrerAffiliate.save();
-      }
+      // if (referrerAffiliate) {
+      //   // Affiliate referral
+      //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+      //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
+      //   await referrerAffiliate.save();
+
+      //   // Find parent SubAdmin
+      //   const parentSubAdmin = await SubAdmin.findOne({ referralCode: referrerAffiliate.referredbysubAdmin });
+      //   if (parentSubAdmin) {
+      //     newUser.referredbysubAdmin = parentSubAdmin.referralCode;
+      //     parentSubAdmin.users.push(newUser.userId);
+      //     await parentSubAdmin.save();
+      //   }
+      //   // newUser.referredbyAffiliate = referrerAffiliate.referralCode,
+      //   //   newUser.referredbysubAdmin = referrerbysubAdmin.referralCode,
+
+      //   //   newUser.save();
+
+
+
+      // } else if (referrerWithNewuserSubadmin) {
+      //   // Direct SubAdmin referral
+      //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referralCode;
+      //   const subAdmin = await SubAdmin.findOne({ referralCode: referrerWithNewuserSubadmin.referredbysubAdmin });
+      //   subAdmin.users.push(newUser.userId);
+      //   await subAdmin.save();
+      // } else if (referrerAffiliate) {
+      //   // Direct SubAdmin referral
+      //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+      //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
+      //   await referrerAffiliate.save();
+      // }
 
 
 
@@ -128,8 +134,8 @@ exports.register = async (req, res) => {
         await new ReferralBonus({
           userId: referrer.userId,
           referredUser: newUser.userId,
-          referredbyAffiliate: referrerAffiliate.referralCode || null,
-          referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+          // referredbyAffiliate: referrerAffiliate.referralCode || null,
+          // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
           level: 1
         }).save();
 
@@ -142,8 +148,8 @@ exports.register = async (req, res) => {
             await new ReferralBonus({
               userId: level2Ref.userId,
               referredUser: newUser.userId,
-              referredbyAffiliate: referrerAffiliate.referralCode || null,
-              referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+              // referredbyAffiliate: referrerAffiliate.referralCode || null,
+              // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
               
               level: 2
             }).save();
@@ -157,23 +163,23 @@ exports.register = async (req, res) => {
                 await new ReferralBonus({
                   userId: level3Ref.userId,
                   referredUser: newUser.userId,
-                  referredbyAffiliate: referrerAffiliate.referralCode || null,
-                  referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+                  // referredbyAffiliate: referrerAffiliate.referralCode || null,
+                  // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
                   level: 3
                 }).save();
               }
             }
           }
         }
-        if (referrerAffiliate.referredbyAffiliate) {
-          newUser.referredbyAffiliate = referrerAffiliate.referredbyAffiliate;
-        }
-        if (referrerWithNewuserSubadmin.referredbysubAdmin) {
-          newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
-        }
-        if (referrerWithNewuserSubadmin.referredbysubAdmin && referrerWithNewuserSubadmin.referredbysubAdmin) {
-          newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
-        }
+        // if (referrerAffiliate.referredbyAffiliate) {
+        //   newUser.referredbyAffiliate = referrerAffiliate.referredbyAffiliate;
+        // }
+        // if (referrerWithNewuserSubadmin.referredbysubAdmin) {
+        //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
+        // }
+        // if (referrerWithNewuserSubadmin.referredbysubAdmin && referrerWithNewuserSubadmin.referredbysubAdmin) {
+        //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
+        // }
       }
     }
 
@@ -571,9 +577,10 @@ exports.SendPhoneVerificationCode = async (req, res) => {
 
 const generateReferralCode = require('./generateReferralCode');
 const GenerateOtpCode = require('./GenerateOtpCode');
-const ReferralBonus = require('../Models/ReferralBonus');
-const Affiliate = require('../Models/AffiliateModel');
-const SubAdmin = require('../Models/SubAdminModel');
+// const ReferralBonus = require('../Models/ReferralBonus');
+// const Affiliate = require('../Models/AffiliateModel');
+// const SubAdmin = require('../Models/SubAdminModel');
+// const AffiliateUser = require('../Models/AffiliateUser');
 
 
 

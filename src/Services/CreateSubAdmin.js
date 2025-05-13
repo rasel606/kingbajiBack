@@ -13,8 +13,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 exports.registerSubAdmin = async (req, res) => {
   try {
     const { email, phone, password, countryCode, referredBy } = req.body;
-console.log(req.body);
-    if (!email || !password ) {
+    console.log(req.body);
+    if (!email || !password) {
       return res.status(400).json({ success: false, message: "Please enter all fields" });
     }
 
@@ -27,24 +27,23 @@ console.log(req.body);
 
     // Generate required IDs
     const SubAdminId = Math.random().toString(36).substring(2, 11);
-   const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const referredCode = Math.random().toString(36).substring(2, 10);
-    const referredAgentCode = Math.random().toString(36).substring(2, 10);
-    const referredAffiliateCode = Math.random().toString(36).substring(2, 10);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const referredCode = Math.random().toString(36).substring(2, 8);
 
-    const baseUrl = "https://kingbaji365.live/?ref=";
-    const agentbaseUrl = "http://co.king5623agent.live.kingbaji365.live/?ref=";
-    const affiliatebaseUrl = "http://co.king5623affiliate.live.kingbaji365.live/?ref=";
-const user_referredLink = baseUrl + referredCode;
-const agent_referred_Link = agentbaseUrl + referredAgentCode;
-const affiliate_referredsLink = affiliatebaseUrl + referredAffiliateCode;
-if (!referredCode) {
-  return res.status(500).json({ success: false, message: "Failed to generate referral code" });
-}
 
-    console.log("SubAdminId",SubAdminId);
-    console.log("hashedPassword",hashedPassword);
-    console.log("referredCode",referredCode);
+    const baseUrl = "https://kingbaji.live/?ref=";
+    const agentbaseUrl = "http://coag.kingbaji.live/?ref=";
+    const affiliatebaseUrl = "http://co.kingbaji.live/?ref=";
+    const user_referredLink = baseUrl + referredCode;
+    const agent_referred_Link = agentbaseUrl + referredCode;
+    const affiliate_referredsLink = affiliatebaseUrl + referredCode;
+    if (!referredCode) {
+      return res.status(500).json({ success: false, message: "Failed to generate referral code" });
+    }
+
+    console.log("SubAdminId", SubAdminId);
+    console.log("hashedPassword", hashedPassword);
+    console.log("referredCode", referredCode);
     // Create new SubAdmin
     const newUser = await SubAdmin({
       email,
@@ -57,14 +56,12 @@ if (!referredCode) {
       SubAdminId: SubAdminId,
       isActive: true,
       user_referredLink,
-      agent_referredcode : referredAgentCode,
-          affiliate_referredcode: referredAffiliateCode,
-             agent_referredLink: agent_referred_Link,
-             affiliate_referredLink: affiliate_referredsLink,
+      agent_referredLink: agent_referred_Link,
+      affiliate_referredLink: affiliate_referredsLink,
     });
 
     await newUser.save();
-  console.log("newUser",newUser);
+    console.log("newUser", newUser);
     // Fetch user details using aggregation
     const response = await SubAdmin.aggregate([
       { $match: { email: newUser.email.toLowerCase() } },
@@ -83,14 +80,14 @@ if (!referredCode) {
         },
       },
     ]);
-    console.log("userRespons",response);
+    console.log("userRespons", response);
     if (!response) {
       return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
     }
-    
+
     // Generate JWT token
     const userDetails = response[0];
-    console.log("userDetails",userDetails);
+    console.log("userDetails", userDetails);
     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
 
     res.status(201).json({
@@ -182,11 +179,11 @@ exports.verifySubAdmin = async (req, res) => {
     if (!token) return res.status(401).json({ message: "Token missing!" });
 
     const decoded = jwt.verify(token, JWT_SECRET);
-console.log("Decoded Token:", decoded);
+    console.log("Decoded Token:", decoded);
 
     const decodedEmail = decoded?.email;
     const decodedRole = decoded?.user_role; // Fix role field
-console.log("decodedEmail",decodedEmail);
+    console.log("decodedEmail", decodedEmail);
     if (!decodedEmail || !decodedRole) {
       return res.status(400).json({ message: "Invalid token payload!" });
     }
@@ -284,10 +281,10 @@ exports.SubAdminUserDetails = async (req, res) => {
 /////////////////////////////////////////// Forgot Password ///////////////////////////////////////////////
 // exports.forgotPassword = async (req, res) => {
 //   const { email } = req.body;
-  
+
 //   try {
 //     const user = await SubAdmin.findOne({ email: email.toLowerCase() });
-    
+
 //     // Always return success to prevent email enumeration
 //     if (!user) {
 //       return res.status(200).json({
@@ -305,7 +302,7 @@ exports.SubAdminUserDetails = async (req, res) => {
 
 //     // In production: Send email with reset link containing the token
 //     // Example: sendEmail(user.email, resetToken);
-    
+
 //     res.status(200).json({
 //       success: true,
 //       message: "Password reset token generated",
@@ -324,7 +321,7 @@ exports.SubAdminUserDetails = async (req, res) => {
 //   try {
 //     // Verify token
 //     const decoded = jwt.verify(token, JWT_SECRET);
-    
+
 //     if (decoded.type !== "password_reset") { // Fix typo here: should be "password_reset"
 //       return res.status(400).json({ success: false, message: "Invalid token type" });
 //     }
@@ -357,7 +354,7 @@ exports.SubAdminUserDetails = async (req, res) => {
 // /////////////////////////////////////////// Update Password //////////////////////////////////////////////
 // exports.updatePassword = async (req, res) => {
 //   const { currentPassword, newPassword } = req.body;
-  
+
 //   try {
 //     // Get user from auth token
 //     const token = req.header("Authorization")?.split(" ")[1];
@@ -394,7 +391,7 @@ exports.SubAdminUserDetails = async (req, res) => {
 exports.verifyPhoneManually = async (req, res) => {
   try {
     const { userId, phoneNumber } = req.body;
-console.log(req.body);
+    console.log(req.body);
     // Validate input
     if (!userId || !phoneNumber) {
       return res.status(400).json({ error: 'Missing userId or phoneNumber' });
@@ -405,24 +402,23 @@ console.log(req.body);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    console.log(req.body);
-    // Find phone entry
+
     const phoneEntry = user.phone.find(p => p.number === phoneNumber);
     // console.log("1 new",phoneEntry);
     if (!phoneEntry) {
       return res.status(404).json({ error: 'Phone number not found for user' });
     }
-    console.log("1 new",phoneEntry);
+    console.log(!phoneEntry.verified,"1 new", phoneEntry);
     // Check if already verified
-    if (!phoneEntry.verified) {
+    if (!phoneEntry.number) {
       return res.status(400).json({ error: 'Phone number already verified' });
     }
-console.log(phoneEntry.verified,"new", user.isVerified);
+    console.log(phoneEntry.verified, "new", user.isVerified);
     // Update verification status
     phoneEntry.verified = true;
     phoneEntry.verificationCode = undefined;
     phoneEntry.verificationExpiry = undefined;
-    user.isVerified.phone= true;
+    user.isVerified.phone = true;
 
 
     // Save changes
@@ -441,9 +437,9 @@ console.log(phoneEntry.verified,"new", user.isVerified);
 exports.verifyEmailManually = async (req, res) => {
   try {
     const { userId } = req.body;
-console.log(req.body);
+    console.log(req.body);
     // Validate input
-    if (!userId ) {
+    if (!userId) {
       return res.status(400).json({ error: 'Missing userId or phoneNumber' });
     }
 
@@ -453,11 +449,11 @@ console.log(req.body);
       return res.status(404).json({ error: 'User not found' });
     }
     console.log(req.body);
-    
+
 
     // Update verification status
-    
-    user.isVerified.email= true;
+
+    user.isVerified.email = true;
 
 
     // Save changes
@@ -477,42 +473,42 @@ console.log(req.body);
 exports.changePasswordUserByAdmin = async (req, res) => {
   try {
     const { userId, newPassword } = req.body;
-console.log(userId, newPassword);
+    console.log(userId, newPassword);
     // Validate input
     if (!userId || !newPassword) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "User ID and new password are required" 
+      return res.status(400).json({
+        success: false,
+        message: "User ID and new password are required"
       });
     }
     console.log(userId, newPassword);
     // Find the user
     const user = await User.findOne({ userId: userId.toLowerCase() });
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
       });
     }
     console.log(user.userId, newPassword);
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-    
+
     // Update password and save
     user.password = hashedPassword;
     user.updatetimestamp = Date.now();
     await user.save();
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Password updated successfully" 
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully"
     });
 
   } catch (error) {
     console.error('Admin password change error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Server error during password change" 
+    res.status(500).json({
+      success: false,
+      message: "Server error during password change"
     });
   }
 };
@@ -524,43 +520,43 @@ console.log(userId, newPassword);
 exports.changeEmailUserByAdmin = async (req, res) => {
   try {
     const { userId, newEmail } = req.body;
-console.log(userId, newEmail);
+    console.log(userId, newEmail);
     // Validate input
     if (!userId || !newEmail) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "User ID and new password are required" 
+      return res.status(400).json({
+        success: false,
+        message: "User ID and new password are required"
       });
     }
     console.log(userId, newEmail);
     // Find the user
     const user = await User.findOne({ userId: userId.toLowerCase() });
     if (!user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "User not found" 
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
       });
     }
     console.log(user.userId, newEmail);
     // Hash new password
-    
-    
+
+
     // Update password and save
     user.email = email;
     user.isVerified.email = true;
     user.updatetimestamp = Date.now();
     await user.save();
 
-    res.status(200).json({ 
-      success: true, 
-      message: "Email updated successfully" 
+    res.status(200).json({
+      success: true,
+      message: "Email updated successfully"
     });
 
   } catch (error) {
     console.error('Admin Email change error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: "Server error during Email change" 
+    res.status(500).json({
+      success: false,
+      message: "Server error during Email change"
     });
   }
 };

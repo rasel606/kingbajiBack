@@ -5,7 +5,7 @@ const User = require('../Models/User');
 exports.updateName = async (req, res) => {
     const { userId, name } = req.body;
     try {
-      const user = await User.findOneAndUpdate({ userId }, { name }, { new: true });
+      const user = await User.findOneAndUpdate({ userId }, { name, updatetimestamp: Date.now(), isNameVerified: true }, { new: true });
       if (!user) return res.status(404).json({ message: 'User not found' });
       res.status(200).json({ message: 'Name updated successfully', user });
     } catch (error) {

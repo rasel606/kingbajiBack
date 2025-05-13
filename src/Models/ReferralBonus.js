@@ -14,4 +14,5 @@ const referralBonusSchema = new mongoose.Schema({
   referredbysubAdmin: { type: String, ref: 'SubAdmin',default: null  },
 }, { timestamps: true });
 
-module.exports = mongoose.model('ReferralBonus', referralBonusSchema);
+const ReferralBonus = mongoose.model('ReferralBonus', referralBonusSchema);
+module.exports = ReferralBonus;
