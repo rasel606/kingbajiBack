@@ -1075,7 +1075,7 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
         const currentMinutes = now.getMinutes();
 
         // Use aggregation to filter active payment methods within time range
-        const paymentMethods = await PaymentGateWayTable.aggregate([
+        const paymentMethods = await WidthralPaymentGateWayTable.aggregate([
             {
                 $match: {
                     is_active: true,
@@ -1116,6 +1116,62 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
+
+exports.updateWidthrawGatewayStatus = async (req, res) => {
+  try {
+    const { gateway_name, is_active } = req.body;
+
+    console.log("Updating:", gateway_name, is_active);
+
+    const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
+      { gateway_name },
+      { is_active },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Gateway not found" });
+    }
+
+    console.log("Updated Gateway:", updated);
+
+    res.json({ success: true, updated });
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+
+
+
+exports.updateWithdrawalGatewayType = async (req, res) => {
+  try {
+    const { gateway_name, payment_type, gateway_number, is_active } = req.body;
+
+    const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
+      { gateway_name },
+      {
+        payment_type,
+        gateway_number,
+        is_active,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Gateway not found" });
+    }
+
+    res.json({ success: true, updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 
 ////////////////////////////////////////////////Payment method//////////////////////////////////////

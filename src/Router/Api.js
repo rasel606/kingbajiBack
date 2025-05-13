@@ -144,6 +144,8 @@ router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
 router.post('/subadmin_getway_list_Widthraw', TransactionController.subAdminGetWayListWidthraw);
 router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
 router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
+router.post('/update_widthraw_gateway_status', TransactionController.updateWidthrawGatewayStatus);
+router.post('/update_withdrawal_gateway_type', TransactionController.updateWithdrawalGatewayType);
 
 // router.get("/api/v1/submitTransaction", (req,res)=>console.log(req));
 router.post("/submitTransaction", TransactionController.submitTransaction);
