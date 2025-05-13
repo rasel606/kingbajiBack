@@ -539,9 +539,9 @@ exports.launchGamePlayer = async (req, res) => {
 
 
 
-    if (user?.balance > 0) {
+   if (user.balance > 0 && amount > 0) {
       // Generate transaction ID
-
+      const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
 
 
       const signature = generateSignature(
@@ -555,7 +555,9 @@ exports.launchGamePlayer = async (req, res) => {
         provider.key
 
       )
-      console.log("signature blance", signature);
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      // console.log("signature blance", signature);
       // Make transfer API call
       const transferResponse = await fetchApi("makeTransfer.aspx", {
         operatorcode: provider.operatorcode,
@@ -570,84 +572,52 @@ exports.launchGamePlayer = async (req, res) => {
 
 
 
-      console.log("transferResponse", transferResponse);
-      await GameTable.create({
-        userId: user.userId,
-        agentId: provider.providercode,
-        gameId: Newgame.g_code,
-        currencyId: user.currencyId,
-        betAmount: amount,
-        transactionId: transId
-      });
+      console.log("transferResponse -------------w", transferResponse);
 
-      // Update user balance
-      await User.updateOne(
-        { userId: user.userId },
-        { balance: 0, last_game_id: game_id, agentId: provider.providercode }
-        // {upsert: true}
-      );
+      if (transferResponse.errCode === "0" && transferResponse.errMsg === 'SUCCESS') {
+        console.log("new game_url -----------------------------------------------2", game_url);
+        console.log("amount-4", amount)
+        await GameTable.create({
+          userId: user.userId,
+          agentId: provider.providercode,
+          gameId: Newgame.g_code,
+          currencyId: user.currencyId,
+          betAmount: amount,
+          transactionId: transId
+        });
 
-      if (!transferResponse || transferResponse.errCode !== "0") {
+        // Update user balance
+        await User.updateOne(
+          { userId: user.userId },
+          { balance: 0, last_game_id: Newgame.g_code, agentId: provider.providercode },
+          {upsert: true}
+        );
 
-        return res.json({ errCode: 2, errMsg: "Failed to load balance." });
+
+
+
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+
+
+        game_url = await fetchApi("launchGames.aspx", field);
+       
+
+        if (game_url.errCode !== "0") {
+          return res.status(400).json({ errCode: game_url.errCode, errMsg: game_url.errMsg });
+        }
+
+        const gameUrl = game_url.gameUrl;
+        console.log("gameUrl", gameUrl);
+
+        return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl });
+      } else {
+
+          game_url = await fetchApi("launchDGames.aspx", field);
+        const gameUrl = game_url.gameUrl;
+
+        return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl });
+        
       }
-
-
-
-
-      const signatureLunchGame = generateSignature(
-        provider.operatorcode,
-        provider.auth_pass,
-        provider.providercode,
-        provider.game_type,
-        user.userId,
-        provider.key
-
-      )
-      const field = {
-        operatorcode: provider.operatorcode,
-        providercode: provider.providercode,
-        username: user.userId,
-        password: provider.auth_pass,
-        type: Newgame.p_type,
-        gameid: game_id,
-        lang: "en-US",
-        html5: 1,
-        signature: signatureLunchGame
-      };
-      console.log("field:", field);
-
-
-
-      game_url = await fetchApi("launchGames.aspx", field);
-
-      
-
-      const gameUrl = game_url.gameUrl;
-     
-
-
-      return res.json({
-        errCode: 0,
-        errMsg: "Success",
-        gameUrl,
-     
-      });
-      // }
-
-
-
-      // return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
-
-
-
-
-
-    } else {
-
-      game_url = await fetchApi("launchDGames.ashx", field);
-      console.log(game_url)
-      return res.json(game_url || { errCode: 2, errMsg: "Failed to load API." });
     }
 
 
