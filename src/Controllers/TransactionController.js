@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const TransactionModel = require('../Models/TransactionModel');
 const generateReferralCode = require('../Services/generateReferralCode');
+const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable');
 // exports.addTransaction = async (req, res) => {
 //   try {
 //     const { userId, amount, type } = req.body;
@@ -752,23 +753,35 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
     }
 }
 
-
-exports.AddPaymentMethodNumber = async (req, res) => {
+exports.AddPaymentMethodNumberDeposit = async (req, res) => {
     try {
-        const { user_role, email, gateway_Number, referralCode, gateway_name, payment_type, image_url, start_time, end_time } = req.body.formData;
-        // console.log("Received Data:", user_role, email, gateway_Number, referralCode, gateway_name, type, payment_type);
-
+        const {
+            user_role,
+            email,
+            gateway_Number,
+            referralCode,
+            gateway_name,
+            payment_type,
+            minimun_amount,
+            maximum_amount,
+            image_url,
+            start_time,
+            end_time
+        } = req.body.formData;
 
         // Check if user exists
         const user = await SubAdmin.findOne({ user_role, email, referralCode });
-        console.log("user", user);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        console.log("User Found:", user);
+        // Fetch existing payment methods (oldest to newest)
+        const userPaymentMethods = await PaymentGateWayTable.find({
+            email,
+            referredBy: user.referralCode
+        }).sort({ updatetime: 1 }); // use 'updatetime' to maintain consistency
 
-        // Ensure you have a PaymentGateWayTable model
+        // Prepare the new method
         const newPaymentMethod = new PaymentGateWayTable({
             user_role: user.user_role,
             email,
@@ -779,14 +792,117 @@ exports.AddPaymentMethodNumber = async (req, res) => {
             referredBy: user.referralCode,
             start_time,
             end_time,
+            minimun_amount,
+            maximum_amount,
             is_active: true,
             updatetime: new Date()
         });
 
-        // Save to Database
+        // Check count
+        if (userPaymentMethods.length >= 4) {
+            // Delete the 5th one (newest)
+            const transactionToDelete = userPaymentMethods[4];
+            if (transactionToDelete && transactionToDelete._id) {
+                await PaymentGateWayTable.deleteOne({ _id: transactionToDelete._id });
+                console.log("Deleted newest 5th payment method:", transactionToDelete._id);
+                return res.status(200).json({
+                    message: "Payment method limit (4) reached. 5th method deleted.",
+                    deleted: transactionToDelete
+                });
+            } else {
+                return res.status(400).json({
+                    message: "Limit exceeded. New payment method not saved."
+                });
+            }
+        }
+
+        // Save new method
         await newPaymentMethod.save();
 
-        return res.status(201).json({ message: "Payment method added successfully", data: newPaymentMethod });
+        return res.status(201).json({
+            message: "Payment method added successfully",
+            data: newPaymentMethod
+        });
+
+    } catch (error) {
+        console.error("Error adding payment method:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+
+
+
+exports.AddPaymentMethodNumberWidthral = async (req, res) => {
+    try {
+        const {
+            user_role,
+            email,
+            gateway_Number,
+            referralCode,
+            gateway_name,
+            payment_type,
+            minimun_amount,
+            maximum_amount,
+            image_url,
+            start_time,
+            end_time
+        } = req.body.formData;
+
+        // Check if user exists
+        const user = await SubAdmin.findOne({ user_role, email, referralCode });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Fetch existing payment methods (oldest to newest)
+        const userPaymentMethods = await WidthralPaymentGateWayTable.find({
+            email,
+            referredBy: user.referralCode
+        }).sort({ updatetime: 1 }); // use 'updatetime' to maintain consistency
+
+        // Prepare the new method
+        const newPaymentMethodWidthral = new WidthralPaymentGateWayTable({
+            user_role: user.user_role,
+            email,
+            gateway_Number,
+            gateway_name,
+            payment_type,
+            image_url,
+            referredBy: user.referralCode,
+            start_time,
+            end_time,
+            minimun_amount,
+            maximum_amount,
+            is_active: true,
+            updatetime: new Date()
+        });
+
+        // Check count
+        if (userPaymentMethods.length >= 4) {
+            // Delete the 5th one (newest)
+            const transactionToDelete = userPaymentMethods[4];
+            if (transactionToDelete && transactionToDelete._id) {
+                await PaymentGateWayTable.deleteOne({ _id: transactionToDelete._id });
+                console.log("Deleted newest 5th payment method:", transactionToDelete._id);
+                return res.status(200).json({
+                    message: "Payment method limit (4) reached. 5th method deleted.",
+                    deleted: transactionToDelete
+                });
+            } else {
+                return res.status(400).json({
+                    message: "Limit exceeded. New payment method not saved."
+                });
+            }
+        }
+
+        // Save new method
+        await newPaymentMethodWidthral.save();
+
+        return res.status(201).json({
+            message: "Payment method added successfully",
+            data: newPaymentMethodWidthral
+        });
 
     } catch (error) {
         console.error("Error adding payment method:", error);
@@ -845,6 +961,27 @@ exports.subAdminGetWayList = async (req, res) => {
     }
 };
 
+// ------------------widthraw----------------------------
+
+exports.subAdminGetWayListWidthraw = async (req, res) => {
+    console.log(req.body);
+    try {
+        const { referralCode, email } = req.body;
+
+        // Querying the database using email and referralCode
+        const gateways = await WidthralPaymentGateWayTable.find({ email: email, referredBy: referralCode });
+        const gatewayCount = await WidthralPaymentGateWayTable.countDocuments({ email: email, referredBy: referralCode });
+
+        console.log(gateways);
+        // console.log(gatewayCount);
+
+        res.status(200).json({ gateways, gatewayCount });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 
 
 
@@ -854,6 +991,73 @@ exports.subAdminGetWayList = async (req, res) => {
 
 
 exports.GetPaymentMethodsUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        console.log("User ID:", userId);
+
+        // Validate User
+        const user = await User.findOne({ userId: userId });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        console.log("User found:", user);
+
+        // Get current time
+        const now = new Date();
+        const currentHours = now.getHours();
+        const currentMinutes = now.getMinutes();
+
+        // Use aggregation to filter active payment methods within time range
+        const paymentMethods = await WidthralPaymentGateWayTable.aggregate([
+            {
+                $match: {
+                    is_active: true,
+                    referredBy: user.referredBy
+                }
+            },
+            {
+                $match: {
+                    $expr: {
+                        $and: [
+                            { $lte: ["$startTotalMinutes", "$currentTotalMinutes"] },
+                            { $gte: ["$endTotalMinutes", "$currentTotalMinutes"] }
+                        ]
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    gateway_name: 1,
+                    gateway_Number: 1,
+                    payment_type: 1,
+                    image_url: 1,
+                    start_time: 1,
+                    end_time: 1,
+                    is_active: 1,
+                    minimun_amount: 1,
+                    maximum_amount: 1,
+                }
+            }
+        ]);
+
+        console.log("Available Payment Methods:", paymentMethods);
+
+        return res.status(200).json({ paymentMethods });
+    } catch (error) {
+        console.error("Error retrieving payment methods:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+
+
+// --------------------------------------------------user payment method withdraw list---------------------------------------------
+
+
+
+
+exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
     try {
         const { userId } = req.body;
         console.log("User ID:", userId);
@@ -1516,20 +1720,20 @@ exports.searchTransactionsbyUserId = async (req, res) => {
     try {
         console.log(req.body);
         const { filters, userId } = req.body;
-        const { type = [], status = [], date } = filters;
-        // console.log(type, status, date);
+        const { type , status , date } = filters;
+        console.log(type, status, date);
         // Set up date ranges based on the filter
         let dateRange = {};
         const match = {};
-        if (Array.isArray(type) && type.length > 0) {
-            match.type = { $in: type };
-        }
-        if (Array.isArray(status) && status.length > 0) {
-            match.status = { $in: status };
-        }
+        // if (Array.isArray(type) && type.length > 0) {
+        //     match.type = { $in: type };
+        // }
+        // if (Array.isArray(status) && status.length > 0) {
+        //     match.status = { $in: status };
+        // }
         if (userId) match.userId = userId;
-        // if (type) match.type = parseInt(type);
-        // if (status) match.status = parseInt(status);
+        if (type) match.type = parseInt(type);
+        if (status) match.status = parseInt(status);
         const currentDate = new Date();
 
         if (date === 'today') {

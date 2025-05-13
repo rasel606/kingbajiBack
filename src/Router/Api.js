@@ -138,10 +138,12 @@ router.post("/bank_add", AdminController.AddBank)
 // router.post('/set-create-promotion',PromotionController.setCreatePromotion) ;
 
 ///////////////////////////////////////////////////// Transaction ///////////////////////////////////////////////
-router.post('/addpaymentMethodNumber', TransactionController.AddPaymentMethodNumber);
+router.post('/add_payment_Method_deposit', TransactionController.AddPaymentMethodNumberDeposit);
+router.post('/add_payment_Method_Widthral', TransactionController.AddPaymentMethodNumberWidthral);
 router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
-router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
+router.post('/subadmin_getway_list_Widthraw', TransactionController.subAdminGetWayListWidthraw);
 router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
+router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
 
 // router.get("/api/v1/submitTransaction", (req,res)=>console.log(req));
 router.post("/submitTransaction", TransactionController.submitTransaction);
