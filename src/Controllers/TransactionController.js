@@ -1158,7 +1158,7 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 
 exports.updatedepositGatewayType = async (req, res) => {
   try {
-    const { gateway_name, payment_type, gateway_number, is_active } = req.body;
+    const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
 
     const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
       { gateway_name },
@@ -1216,9 +1216,10 @@ exports.updateWidthrawGatewayStatus = async (req, res) => {
 // ---------------------------------------------------- user payment method withdraw edit update---------------------------
 
 exports.updateWithdrawalGatewayType = async (req, res) => {
+    console.log(req.body);
   try {
-    const { gateway_name, payment_type, gateway_number, is_active } = req.body;
-
+    const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
+console.log(gateway_name, payment_type, gateway_number, is_active);
     const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
       { gateway_name },
       {
