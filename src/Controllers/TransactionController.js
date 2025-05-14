@@ -1151,16 +1151,19 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 exports.updatedepositGatewayType = async (req, res) => {
     try {
         const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
-
+console.log(gateway_name, payment_type, gateway_number, is_active);
         const updated = await PaymentGateWayTable.findOneAndUpdate(
             { gateway_name },
             {
                 payment_type,
-                gateway_number,
+                gateway_Number:gateway_number,
                 is_active,
             },
             { new: true }
         );
+
+        console.log("Updated Gateway:", updated);
+
 
         if (!updated) {
             return res.status(404).json({ success: false, message: "Gateway not found" });
@@ -1216,7 +1219,7 @@ exports.updateWithdrawalGatewayType = async (req, res) => {
             { gateway_name },
             {
                 payment_type,
-                gateway_number,
+                gateway_Number:gateway_number,
                 is_active,
             },
             { new: true }
