@@ -694,7 +694,7 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
         }
         // Find the transaction
         const transaction = await TransactionModel.findOne({ userId, transactionID, referredBy: subAdmin.referralCode, type: 1 });
-
+console.log(transaction);
 
         // Ensure transaction is not already processed
         if (transaction.referredBy !== subAdmin.referralCode && transaction.referredBy === user.referredBy) {
@@ -710,16 +710,17 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
 
         console.log("all", transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy);
         if (user.balance > 0 && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy) {
-            if (user.balance < transaction.base_amount) {
-                return res.status(400).json({ message: "Insufficient user balance" });
-            }
+           
 
-            console.log(transaction);
+            console.log("transaction",transaction);
 
             if (parseInt(status) === 1) {
                 // Approve the withdrawal
+            //      if (user.balance < transaction.base_amount) {
+            //     return res.status(400).json({ message: "Insufficient user balance" });
+            // }
 
-                user.balance -= transaction.base_amount;
+                // user.balance -= transaction.base_amount;
                 subAdmin.balance += transaction.base_amount;
 
                 transaction.status = 1; // Approved
@@ -940,6 +941,7 @@ exports.AddPaymentMethodNumberWidthral = async (req, res) => {
 //   }
 // }
 
+// ------------------deposit payment method list----------------------------
 
 
 exports.subAdminGetWayList = async (req, res) => {
@@ -961,7 +963,7 @@ exports.subAdminGetWayList = async (req, res) => {
     }
 };
 
-// ------------------widthraw----------------------------
+// ------------------widthraw payment method list----------------------------
 
 exports.subAdminGetWayListWidthraw = async (req, res) => {
     console.log(req.body);
@@ -987,7 +989,7 @@ exports.subAdminGetWayListWidthraw = async (req, res) => {
 
 
 
-
+// --------------------------------------------------user payment method deposit list---------------------------------------------
 
 
 exports.GetPaymentMethodsUser = async (req, res) => {
@@ -1008,7 +1010,7 @@ exports.GetPaymentMethodsUser = async (req, res) => {
         const currentMinutes = now.getMinutes();
 
         // Use aggregation to filter active payment methods within time range
-        const paymentMethods = await WidthralPaymentGateWayTable.aggregate([
+        const paymentMethods = await PaymentGateWayTable.aggregate([
             {
                 $match: {
                     is_active: true,
@@ -1118,6 +1120,71 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
 };
 
 
+
+
+
+
+// ---------------------------------------------------- user payment method deposit status update---------------------------
+
+
+exports.updateDepositGatewayStatus = async (req, res) => {
+  try {
+    const { gateway_name, is_active } = req.body;
+
+    console.log("Updating:", gateway_name, is_active);
+
+    const updated = await PaymentGateWayTable.findOneAndUpdate(
+      { gateway_name },
+      { is_active },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Gateway not found" });
+    }
+
+    console.log("Updated Gateway:", updated);
+
+    res.json({ success: true, updated });
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+// ---------------------------------------------------- user payment method withdraw edit update---------------------------
+
+exports.updatedepositGatewayType = async (req, res) => {
+  try {
+    const { gateway_name, payment_type, gateway_number, is_active } = req.body;
+
+    const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
+      { gateway_name },
+      {
+        payment_type,
+        gateway_number,
+        is_active,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Gateway not found" });
+    }
+
+    res.json({ success: true, updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+
+// ---------------------------------------------------- user payment method withdraw status update---------------------------
+
+
 exports.updateWidthrawGatewayStatus = async (req, res) => {
   try {
     const { gateway_name, is_active } = req.body;
@@ -1146,7 +1213,7 @@ exports.updateWidthrawGatewayStatus = async (req, res) => {
 
 
 
-
+// ---------------------------------------------------- user payment method withdraw edit update---------------------------
 
 exports.updateWithdrawalGatewayType = async (req, res) => {
   try {
@@ -1171,6 +1238,7 @@ exports.updateWithdrawalGatewayType = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 
@@ -1359,10 +1427,10 @@ exports.searchWidthdrawTransactionsReportAprove = async (req, res) => {
             query.datetime = { $gte: new Date(startDate) };
         }
         console.log(query);
-        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: 0, status: 1 }).sort({ datetime: -1 });
+        const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: 1, status: 1 }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
-            { $match: { referredBy: SubAdminuser.referralCode, type: 0, status: 1 } }, // Filter deposits & accepted transactions
+            { $match: { referredBy: SubAdminuser.referralCode, type: 1, status: 1 } }, // Filter deposits & accepted transactions
             { $match: { ...query } }, // Filter deposits & accepted transactions
             { $group: { _id: null, total: { $sum: "$amount" } } }
         ]);
