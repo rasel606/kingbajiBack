@@ -13,7 +13,7 @@ const WidthralPaymentGateWayTableSchema = new mongoose.Schema({
     maximun_amount: { type: Number },
     payment_type: { type: String, enum: ["Send Money", "Cashout", "Payment"], required: true },
     referredBy: { type: String , required: true }, // Ensure this matches the controller field name
-    image_url: { type: String , required: true },
+    image_url: { type: String , required: true , default: "" },
     start_time: { 
         hours: { type: Number, min: 0, max: 23, required: true }, 
         minutes: { type: Number, min: 0, max: 59, required: true } 

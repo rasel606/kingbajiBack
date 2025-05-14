@@ -676,83 +676,75 @@ exports.WithdrawTransaction = async (req, res) => {
 
 ////////////////////////////////////////////
 exports.approveWidthdrawBySubAdmin = async (req, res) => {
-
-
     try {
         const { userId, referralCode, status } = req.body;
         const transactionID = req.params.transactionID;
-        console.log(userId, referralCode, status, transactionID);
+
         // Find the user
         const user = await User.findOne({ userId, referredBy: referralCode });
-        if (user.referredBy !== referralCode) return res.status(404).json({ message: 'User not found' });
+        if (!user) return res.status(404).json({ message: 'User not found' });
 
         // Find the sub-admin
-        const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
+        const subAdmin = await SubAdmin.findOne({ referralCode });
+        if (!subAdmin) return res.status(400).json({ message: 'Sub-admin not found' });
 
-        if (!subAdmin.referralCode === referralCode) {
-            return res.status(400).json({ message: 'Invalid Match' });
-        }
-        // Find the transaction
-        const transaction = await TransactionModel.findOne({ userId, transactionID, referredBy: subAdmin.referralCode, type: 1 });
-console.log(transaction);
+        // Find the withdrawal transaction
+        const transaction = await TransactionModel.findOne({
+            userId,
+            transactionID,
+            referredBy: referralCode,
+            type: 1, // withdrawal
+        });
 
-        // Ensure transaction is not already processed
-        if (transaction.referredBy !== subAdmin.referralCode && transaction.referredBy === user.referredBy) {
+        if (!transaction) return res.status(404).json({ message: 'Transaction not found' });
 
-            return res.status(400).json({ message: "Transaction already processed" });
-        }
-
-
-        console.log("all-----1", transaction.referredBy !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredBy !== user.referredBy);
-        if (transaction.referredBy !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredBy !== user.referredBy) {
-            res.status(400).json({ message: "Transaction not found" });
+        // Ensure transaction is pending (not already processed)
+        if (transaction.status !== 0) {
+            return res.status(400).json({ message: 'Transaction already processed' });
         }
 
-        console.log("all", transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy);
-        if (user.balance > 0 && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy) {
-           
-
-            console.log("transaction",transaction);
-
-            if (parseInt(status) === 1) {
-                // Approve the withdrawal
-            //      if (user.balance < transaction.base_amount) {
-            //     return res.status(400).json({ message: "Insufficient user balance" });
-            // }
-
-                // user.balance -= transaction.base_amount;
-                subAdmin.balance += transaction.base_amount;
-
-                transaction.status = 1; // Approved
-                transaction.updatetime = new Date();
-
-                await user.save();
-                await subAdmin.save();
-                await transaction.save();
-
-                return res.status(200).json({ message: "Withdrawal approved successfully", userBalance: user.balance, subAdminBalance: subAdmin.balance });
-            } else {
-                // Reject the withdrawal
-                user.balance += transaction.base_amount;
-                transaction.status = 2; // Rejected
-                transaction.updatetime = new Date();
-                await transaction.save();
-                await user.save();
-
-                return res.status(200).json({ message: "Withdrawal rejected successfully" });
-            }
+        // Match verification (redundant now, but keeping just in case)
+        if (
+            transaction.referredBy !== referralCode ||
+            transaction.userId !== userId ||
+            transaction.transactionID !== transactionID
+        ) {
+            return res.status(400).json({ message: "Invalid transaction data" });
         }
 
+        // Process based on status
+        if (parseInt(status) === 1) {
+            // Approve the withdrawal
+            subAdmin.balance += transaction.base_amount;
 
-        // res.status(200).json({ message: "Admin balance not enough", Admin_Balance });
+            transaction.status = 1; // Approved
+            transaction.updatetime = new Date();
 
+            await subAdmin.save();
+            await transaction.save();
 
+            return res.status(200).json({
+                message: "Withdrawal approved successfully",
+                subAdminBalance: subAdmin.balance
+            });
+        } else {
+            // Reject the withdrawal
+            user.balance += transaction.base_amount;
 
+            transaction.status = 2; // Rejected
+            transaction.updatetime = new Date();
+
+            await user.save();
+            await transaction.save();
+
+            return res.status(200).json({ message: "Withdrawal rejected successfully" });
+        }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
-}
+};
+
 
 exports.AddPaymentMethodNumberDeposit = async (req, res) => {
     try {
@@ -1128,28 +1120,28 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
 
 
 exports.updateDepositGatewayStatus = async (req, res) => {
-  try {
-    const { gateway_name, is_active } = req.body;
+    try {
+        const { gateway_name, is_active } = req.body;
 
-    console.log("Updating:", gateway_name, is_active);
+        console.log("Updating:", gateway_name, is_active);
 
-    const updated = await PaymentGateWayTable.findOneAndUpdate(
-      { gateway_name },
-      { is_active },
-      { new: true }
-    );
+        const updated = await PaymentGateWayTable.findOneAndUpdate(
+            { gateway_name },
+            { is_active },
+            { new: true }
+        );
 
-    if (!updated) {
-      return res.status(404).json({ success: false, message: "Gateway not found" });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Gateway not found" });
+        }
+
+        console.log("Updated Gateway:", updated);
+
+        res.json({ success: true, updated });
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    console.log("Updated Gateway:", updated);
-
-    res.json({ success: true, updated });
-  } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 
@@ -1157,27 +1149,27 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 // ---------------------------------------------------- user payment method withdraw edit update---------------------------
 
 exports.updatedepositGatewayType = async (req, res) => {
-  try {
-    const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
+    try {
+        const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
 
-    const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
-      { gateway_name },
-      {
-        payment_type,
-        gateway_number,
-        is_active,
-      },
-      { new: true }
-    );
+        const updated = await PaymentGateWayTable.findOneAndUpdate(
+            { gateway_name },
+            {
+                payment_type,
+                gateway_number,
+                is_active,
+            },
+            { new: true }
+        );
 
-    if (!updated) {
-      return res.status(404).json({ success: false, message: "Gateway not found" });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Gateway not found" });
+        }
+
+        res.json({ success: true, updated });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    res.json({ success: true, updated });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 
@@ -1186,28 +1178,28 @@ exports.updatedepositGatewayType = async (req, res) => {
 
 
 exports.updateWidthrawGatewayStatus = async (req, res) => {
-  try {
-    const { gateway_name, is_active } = req.body;
+    try {
+        const { gateway_name, is_active } = req.body;
 
-    console.log("Updating:", gateway_name, is_active);
+        console.log("Updating:", gateway_name, is_active);
 
-    const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
-      { gateway_name },
-      { is_active },
-      { new: true }
-    );
+        const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
+            { gateway_name },
+            { is_active },
+            { new: true }
+        );
 
-    if (!updated) {
-      return res.status(404).json({ success: false, message: "Gateway not found" });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Gateway not found" });
+        }
+
+        console.log("Updated Gateway:", updated);
+
+        res.json({ success: true, updated });
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    console.log("Updated Gateway:", updated);
-
-    res.json({ success: true, updated });
-  } catch (error) {
-    console.error("Update error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 
@@ -1217,27 +1209,27 @@ exports.updateWidthrawGatewayStatus = async (req, res) => {
 
 exports.updateWithdrawalGatewayType = async (req, res) => {
     console.log(req.body);
-  try {
-    const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
-console.log(gateway_name, payment_type, gateway_number, is_active);
-    const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
-      { gateway_name },
-      {
-        payment_type,
-        gateway_number,
-        is_active,
-      },
-      { new: true }
-    );
+    try {
+        const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
+        console.log(gateway_name, payment_type, gateway_number, is_active);
+        const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
+            { gateway_name },
+            {
+                payment_type,
+                gateway_number,
+                is_active,
+            },
+            { new: true }
+        );
 
-    if (!updated) {
-      return res.status(404).json({ success: false, message: "Gateway not found" });
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Gateway not found" });
+        }
+
+        res.json({ success: true, updated });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
-
-    res.json({ success: true, updated });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
 };
 
 
@@ -1841,75 +1833,50 @@ exports.getTransactionDepositTotals = async (req, res) => {
 
 
 exports.searchTransactionsbyUserId = async (req, res) => {
-
     try {
-        console.log(req.body);
-        const { filters, userId } = req.body;
-        const { type , status , date } = filters;
-        console.log(type, status, date);
-        // Set up date ranges based on the filter
-        let dateRange = {};
+        const { filters = {}, userId } = req.body;
+        const { type = [], status = [], date } = filters;
+
         const match = {};
-        // if (Array.isArray(type) && type.length > 0) {
-        //     match.type = { $in: type };
-        // }
-        // if (Array.isArray(status) && status.length > 0) {
-        //     match.status = { $in: status };
-        // }
-        if (userId) match.userId = userId;
-        if (type) match.type = parseInt(type);
-        if (status) match.status = parseInt(status);
         const currentDate = new Date();
 
-        if (date === 'today') {
+        // Match userId
+        if (userId) match.userId = userId;
+
+        // Match types (array)
+        if (Array.isArray(type) && type.length > 0) {
+            match.type = { $in: type.map(t => parseInt(t)) };
+        }
+
+        // Match statuses (array)
+        if (Array.isArray(status) && status.length > 0) {
+            match.status = { $in: status.map(s => parseInt(s)) };
+        }
+
+        // Date filtering
+        let dateRange = {};
+        if (date === 'today' || !date) {
             const startOfDay = new Date(currentDate);
             startOfDay.setHours(0, 0, 0, 0);
-            dateRange = {
-                datetime: {
-                    $gte: startOfDay,
-                    $lte: currentDate
-                }
-            };
+            dateRange = { datetime: { $gte: startOfDay, $lte: currentDate } };
         } else if (date === 'yesterday') {
             const yesterday = new Date(currentDate);
             yesterday.setDate(yesterday.getDate() - 1);
-            const startOfYesterday = new Date(yesterday);
-            startOfYesterday.setHours(0, 0, 0, 0);
-            const endOfYesterday = new Date(yesterday);
-            endOfYesterday.setHours(23, 59, 59, 999);
-            dateRange = {
-                datetime: {
-                    $gte: startOfYesterday,
-                    $lte: endOfYesterday
-                }
-            };
+            const start = new Date(yesterday.setHours(0, 0, 0, 0));
+            const end = new Date(yesterday.setHours(23, 59, 59, 999));
+            dateRange = { datetime: { $gte: start, $lte: end } };
         } else if (date === 'last7days') {
             const sevenDaysAgo = new Date(currentDate);
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            dateRange = {
-                datetime: {
-                    $gte: sevenDaysAgo,
-                    $lte: currentDate
-                }
-            };
-        } else if (!date) {
-            // Default to today if no filter is provided
-            const startOfDay = new Date(currentDate);
-            startOfDay.setHours(0, 0, 0, 0);
-            dateRange = {
-                datetime: {
-                    $gte: startOfDay,
-                    $lte: currentDate
-                }
-            };
+            dateRange = { datetime: { $gte: sevenDaysAgo, $lte: currentDate } };
         }
-        // You could add more date filters here as needed
 
-
+        // Apply date range to match
         if (Object.keys(dateRange).length > 0) {
             match.datetime = dateRange.datetime;
         }
-        console.log(match);
+
+        // MongoDB aggregation
         const result = await Transaction.aggregate([
             { $match: match },
             {
@@ -1926,7 +1893,8 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                 $group: {
                     _id: {
                         date: "$date",
-                        type: "$type"
+                        type: "$type",
+                        status: "$status"
                     },
                     transactions: {
                         $push: {
@@ -1943,7 +1911,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                             datetime: "$datetime",
                             updatetime: "$updatetime"
                         }
-                    },
+                    }
                 }
             },
             {
@@ -1951,14 +1919,14 @@ exports.searchTransactionsbyUserId = async (req, res) => {
                     _id: 0,
                     date: "$_id.date",
                     type: "$_id.type",
-                    transactions: 1,
+                    status: "$_id.status",
+                    transactions: 1
                 }
             },
             {
                 $sort: { date: -1 }
             }
         ]);
-        console.log("result", result);
 
         res.json({ success: true, data: result });
     } catch (error) {
@@ -1970,6 +1938,7 @@ exports.searchTransactionsbyUserId = async (req, res) => {
         });
     }
 };
+
 
 
 exports.getTransactionDepositTotals = async (req, res) => {

@@ -30,7 +30,7 @@ const transactionSchema = new mongoose.Schema({
 
     payment_type: {
         type: String,
-        enum: ["Send Money", "cashout", "payment", "transfer"],
+        enum: ["Send Money", "Cashout", "payment", "transfer"],
     },
 
     datetime: { type: Date, default: Date.now },
