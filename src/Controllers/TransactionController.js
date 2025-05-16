@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const TransactionModel = require('../Models/TransactionModel');
+const notificationController = require('../Controllers/notificationController');
 const generateReferralCode = require('../Services/generateReferralCode');
 const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable');
 // exports.addTransaction = async (req, res) => {
@@ -175,10 +176,19 @@ exports.submitTransaction = async (req, res) => {
 
         console.log("Transaction Created:", newTransaction);
 
+          await notificationController.createNotification(
+            `Deposit Request by ${user.name} (User ID: ${user.userId})`,
+            newTransaction.userId,
+            `deposit of ${newTransaction.amount} has been submitted at ${new Date()}  by ${newTransaction.gateway_name}.
+            Please note that Your deposit request of ${newTransaction.amount} has been send at ${new Date()} with transaction ID: ${newTransaction.transactionID} by ${newTransaction.gateway_name} and will be processed within 15 minutes.`,
+                'deposit_request',
+                { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
+            );
+
         return res.status(200).json({
             success: true,
             message: 'Transaction submitted successfully',
-            transaction: newTransaction
+            transaction: newTransaction,
         });
 
     } catch (error) {
@@ -351,13 +361,37 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             await subAdmin.save();
             await transaction.save();
 
+
+              await notificationController.createNotification(
+                `Deposit approved for ${transaction.transactionID} with (User ID: ${user.userId})`,
+                user.userId,
+            `deposit of ${transaction.amount} has been processed at ${new Date()}  by ${transaction.gateway_name}.Your deposit of ${transaction.amount} has been approved at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed at ${new Date()}.`,
+                'deposit_approved',
+                { amount: transaction.amount, transactionID: transaction.transactionID }
+            );
+
             return res.status(200).json({ message: "Deposit approved successfully", user });
+
+
+
         } else if (parseInt(status) === 2) {
             console.log(transaction);
             transaction.updatetime = new Date();
             transaction.status = 2;
 
             await transaction.save();
+  await notificationController.createNotification(
+    `Deposit rejected for ${transaction.transactionID} with (User ID: ${user.userId})`,
+            `deposit of ${transaction.amount} has been rejected at ${new Date()}  by ${transaction.gateway_name}.`,
+                transaction.userId,
+                `Your deposit of ${transaction.amount} has been rejected at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed.`,
+                'deposit_rejected',
+                { amount: transaction.amount, transactionID: transaction.transactionID }
+            );
+           
+
+
+
             return res.status(200).json({ message: "Deposit rejected successfully" });
         } else {
             return res.status(400).json({ message: "Invalid status value" });
@@ -549,6 +583,14 @@ exports.WithdrawTransaction = async (req, res) => {
         console.log("New Transaction:", newTransaction);
         console.log("Updated User:", user);
 
+        await notificationController.createNotification(
+            `Withdrawal request send ${newTransaction.transactionID} with (User ID: ${user.userId})`,
+            newTransaction.userId,
+            `Withdrawal of ${newTransaction.amount} has been submitted at ${new Date()}  by ${newTransaction.gateway_name}.Your withdrawal request of ${newTransaction.amount} has been send at ${new Date()} with transaction ID: ${newTransaction.transactionID} by ${newTransaction.gateway_name} and will be processed within 15 minutes.`,
+                'withdrawal_request',
+                { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
+            );
+
         res.json({
             message: "Withdrawal request submitted successfully",
             transactionID,
@@ -723,6 +765,14 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
             await subAdmin.save();
             await transaction.save();
 
+            await notificationController.createNotification(
+                `Withdrawal approved by admin with (User ID: ${user.userId})`,
+                transaction.userId,
+                `Your withdrawal of ${transaction.base_amount} has been approved at ${new Date()}.`,
+                'withdrawal_accepted',
+                { amount: transaction.base_amount }
+            );
+
             return res.status(200).json({
                 message: "Withdrawal approved successfully",
                 subAdminBalance: subAdmin.balance
@@ -736,6 +786,14 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
 
             await user.save();
             await transaction.save();
+
+            await notificationController.createNotification(
+                `Withdrawal rejected by admin with (User ID: ${user.userId})`,
+                transaction.userId,
+                `Your withdrawal of ${transaction.base_amount} has been rejected at ${new Date()}.withdrawal _rejected by admin , please try again`,
+                'withdrawal_rejected',    
+                { amount: transaction.base_amount }
+            );
 
             return res.status(200).json({ message: "Withdrawal rejected successfully" });
         }
@@ -1151,12 +1209,12 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 exports.updatedepositGatewayType = async (req, res) => {
     try {
         const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
-console.log(gateway_name, payment_type, gateway_number, is_active);
+        console.log(gateway_name, payment_type, gateway_number, is_active);
         const updated = await PaymentGateWayTable.findOneAndUpdate(
             { gateway_name },
             {
                 payment_type,
-                gateway_Number:gateway_number,
+                gateway_Number: gateway_number,
                 is_active,
             },
             { new: true }
@@ -1219,7 +1277,7 @@ exports.updateWithdrawalGatewayType = async (req, res) => {
             { gateway_name },
             {
                 payment_type,
-                gateway_Number:gateway_number,
+                gateway_Number: gateway_number,
                 is_active,
             },
             { new: true }

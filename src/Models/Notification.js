@@ -1,13 +1,44 @@
-// models/Notification.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const notificationSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  title: String,
-  message: String,
-  status: { type: String, default: 'unread' }, // unread or read
-  createdAt: { type: Date, default: Date.now },
+  title: {
+    type: String,
+    required: true
+  },
+  userId: { 
+    type: String, 
+    required: true, 
+    ref: 'User' 
+  },
+  content: { 
+    type: String, 
+    required: true 
+  },
+  type: {
+    type: String,
+    enum: ['deposit_approved', 'deposit_rejected', 'deposit_processed', 'deposit_request' , 'withdrawal_processed', 'withdrawal_rejected', 'withdrawal_accepted' , 'withdrawal_request', 'balance_added', 'general'],
+    required: true
+  },
+  read: { 
+    type: Boolean, 
+    default: false 
+  },
+  metaData: {
+    amount: Number,
+    transactionId: String
+  },
+  createdAt: { 
+    type: Date, 
+    default: Date.now 
+  },
+  timeZone: {
+    type: String,
+    default: 'GMT+6'
+  }
 });
 
-const Notification = mongoose.model('Notification', notificationSchema);
+// Index for faster queries
+notificationSchema.index({ userId: 1, read: 1 });
+
+const Notification = mongoose.model("Notification", notificationSchema);
 module.exports = Notification;

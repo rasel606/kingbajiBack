@@ -30,6 +30,7 @@ const { getDailyWager } = require('../Controllers/MyController');
 const blank= require('../Controllers/blank');
 const blank2= require('../Controllers/blank2');
 const blank3= require('../Controllers/blank3');
+const notificationController = require('../Controllers/notificationController');
 
 
 
@@ -133,6 +134,16 @@ router.post("/bank_add", AdminController.AddBank)
 
 
 
+
+
+
+
+
+
+router.get('/get_notifications/:userId',notificationController.getGroupedNotifications);
+
+
+
 // 
 
 // router.post('/set-create-promotion',PromotionController.setCreatePromotion) ;
@@ -195,6 +206,7 @@ router.post('/casino_item_update', ModelBettingController.CasinoItemSingleUpdate
 router.get('/get-all-category', ModelBettingController.GetAllCategory)
 router.get('/games/:id', ModelBettingController.ShowGameListById)
 router.get('/get_all_provider', ModelBettingController.GetAllProvider)
+router.post('/DeleteGameListByGtype', ModelBettingController.DeleteGameListByGtype)
 router.post('/user_balance',Refresh_blance.refreshBalance)
 router.get('/featured',Refresh_blance.GetFeaturedGames)
 router.get('/get_all_providers',Refresh_blance.GetBettingProvider)
@@ -203,7 +215,7 @@ router.get('/get_all_category',Refresh_blance.GetBettingCategory)
 router.post('/bettingHistory-member-summary',Refresh_blance.GetBettingHistoryByMember);
 // router.get('/bettingHistory/grouped',Refresh_blance.GetBettingHistoryALL);
 // router.get('/get-betting-history-detailed',Refresh_blance.getBettingHistoryDetailed);
-router.get('/user-history',ModelBettingController.UserHistory)
+
 // router.post("/launch_game", ModelBettingController.launchGame);
 router.post("/launch_gamePlayer", Refresh_blance.launchGamePlayer);
 router.post("/game-update-serial", ModelBettingController.updateSerialNumber);
@@ -274,22 +286,11 @@ router.get('/bethistory/:id', BettingController.getBetHistory);
 
 // Update bet status
 router.put('/update-bet', BettingController.updateBet);
-router.put('/add_sports', ModelBettingController.Add_Sports);
+
 router.put('/betting_update', BettingController.BettingUpdate);
-// router.put('/betting_update', BettingController.BettingUpdate);
-// router.post('/apply', Controllers.Apply);
-// router.post('/delete-betting/:id', Controllers.DeleteBettingType);
-// router.get('/betting', BettingController.Betting);
-// router.post('/update_json/:id', BettingController.JsonUpdate);
-// router.post('/bet_sync', Controllers.betSync);
+
 router.get('/odds_sports/:key', AdminController.OddSportsByKey);
-// router.post('/odds_event', BettingController.OddEvents);
-// router.get('/odds-scores/:key', BettingController.OddSportsBykey);
-// router.get('/odds/active/:key', BettingController.OddsEventByKey);
-// router.get('/odds_betting/:id', oddsBetting);
-// router.get('/odds-historical', Controllers.OddHistory);
-// router.post('/edit', BettingController.EditBettingType);
-// router.delete('/deleteBetting/:type',  BettingController.OddHistory);
+
 router.get('/get_casino_cetagory', BettingController.getCasinoCategories);
 router.post('/casino-category', BettingController.saveOrUpdateGameCategory);
 router.post('/casino/update/:id', BettingController.casino_update);
@@ -297,10 +298,9 @@ router.post('/casino/update/:id', BettingController.casino_update);
 
 //bet
 
- router.get('/odds-sports/:key', ModelBettingController.getOddsSports);
- router.get('/OddSync', ModelBettingController.OddSync);
+
  
-router.post('/update-json', OddBettingController.updateJson);
+
 /////////////////////////////////////////////////////////test api//////////////////////////////////////////////////
 // router.get("/get-deeplink",blank2.getDeepLink)
 // // router.get("/checkTransaction",blank2.checkTransaction)
@@ -312,6 +312,7 @@ router.post('/update-json', OddBettingController.updateJson);
 // router.get("/kickPlayer",blank3.kickPlayer )
 router.get('/fetch-betting-history',blank3.BettingHistoryBet)
 router.get('/launch-app',blank3.launchApp)
+router.get('/is_player_ingame',blank3.isPlayerIngame)
 router.get('/fetch-betting',blank3.fetchBets)
 router.get('/get-daily-history',blank3.GetDailyHistory)
 router.get('/fetch-archived-history', blank3.ArchivedHistory)

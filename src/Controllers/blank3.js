@@ -15,6 +15,13 @@ const generateSignature = (operatorCode) => {
 
 
 
+const createSignature = ({ operatorcode, password, providercode, type, username, secret }) => {
+  const rawString = operatorcode + password + providercode + type + username + secret;
+  return crypto.createHash('md5').update(rawString).digest('hex').toUpperCase();
+};
+
+
+
 // function generateSignature(operatorCode, providerCode, secretKey) {
 //   const raw = operatorCode + providerCode + secretKey;
 //   return crypto.createHash('md5').update(raw).digest('hex').toUpperCase();
@@ -58,12 +65,49 @@ console.log(launchUrl);
 const operatorCode = 'rbdb';
     const secretKey = '9332fd9144a3a1a8bd3ab7afac3100b0';
     const logUrl = 'http://fetch.336699bet.com';
+    const password = 'asdf1234';
+    const providerCode = 'JD';
+    const username  = 'samit12348';
 
 
 // function generateSignature( ) {
 //   const raw = operatorCode + secretKey;
 //   return crypto.createHash('md5').update(raw).digest('hex').toUpperCase();
 // }
+
+exports.isPlayerIngame = async (req, res) => {
+  try {
+   
+
+    // Build the signature
+    const signatureRaw = operatorCode + password + providerCode + username + secretKey;
+    const signature = crypto.createHash('md5').update(signatureRaw).digest('hex').toUpperCase();
+
+    // Construct full request URL
+    const fullUrl = `${logUrl}/isPlayerIngame.ashx?operatorcode=${operatorCode}&providercode=${providerCode}&username=${username}&password=${password}&signature=${signature}`;
+console.log(fullUrl);
+    const response = await axios.get(fullUrl);
+
+    return res.json(response.data);
+  } catch (error) {
+    console.error('Error checking player in-game status:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 exports.BettingHistoryBet = async (req, res) => {
   try {
@@ -216,16 +260,14 @@ exports.fetchBets = async (req, res) => {
 
 
  exports.ArchivedHistory  =async (req, res) => {
-    const { operatorcode} = req.query;
+    // const { operatorcode} = req.query;
   
-    if (!operatorcode ) {
-      return res.status(400).json({ errCode: '400', errMsg: 'Missing required parameters' });
-    }
+  
   
     const signature = generateSignature(operatorcode);
     
     try {
-      const response = await axios.get(`${LOG_URL}/fetchArchieve.aspx`, {
+      const response = await axios.get(`${logUrl}/fetchArchieve.aspx`, {
         params: {
           operatorcode,
           versionkey: '0', // Always use versionkey=0

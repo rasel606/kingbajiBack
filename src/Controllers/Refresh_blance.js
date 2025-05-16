@@ -378,9 +378,9 @@ const fetchApi = async (endpoint, data = {}) => {
 
   console.log("data", data);
   try {
-    const baseURL = "http://fetch.336699bet.com/"; // Replace with actual API base URL
+    const baseURL = "http://gsmd.336699bet.com/"; // Replace with actual API base URL
     const url = `${baseURL}${endpoint}`;
-
+// console.log("url", url);
     const config = {
       method: "GET", // Default: POST
       url,
@@ -396,7 +396,7 @@ const fetchApi = async (endpoint, data = {}) => {
 
     const response = await axios(config);
 
-    console.log("response.data", response.data);
+    console.log("response", response.data);
     return response.data
     // 
   } catch (error) {
@@ -410,9 +410,9 @@ exports.launchGamePlayer = async (req, res) => {
 
   try {
     // Check if user is logged in
-
-    const { userId, game_id, is_demo, p_code, p_type } = req.body;
-    console.log("userId", userId, game_id, is_demo, p_code, p_type);
+console.log("launchGamePlayer", req.body);
+    const { userId, game_id,  p_code, p_type } = req.body;
+    console.log("userId", userId, game_id, p_code, p_type);
     if (!userId) {
 
       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
@@ -421,7 +421,7 @@ exports.launchGamePlayer = async (req, res) => {
 
     let amount = user?.balance;
     const last_game_id = user.last_game_id;
-    console.log("amount", amount)
+    // console.log("amount", amount)
 
     const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
     console.log("Newgame", Newgame);
@@ -429,7 +429,7 @@ exports.launchGamePlayer = async (req, res) => {
 
     const agent = await GameListTable.aggregate([
       {
-        $match: { g_code: game_id, p_code: p_code }
+        $match: { g_code: game_id, p_code: p_code , p_type: p_type}
       },
       {
         $lookup: {
@@ -556,9 +556,11 @@ exports.launchGamePlayer = async (req, res) => {
 
       )
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       // console.log("signature blance", signature);
       // Make transfer API call
+
+
       const transferResponse = await fetchApi("makeTransfer.aspx", {
         operatorcode: provider.operatorcode,
         providercode: provider.providercode,
