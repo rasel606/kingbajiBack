@@ -679,7 +679,7 @@ exports.getCategoriesWithProviders = async (req, res) => {
 
 exports.getCategoriesWithProvidersGameList = async (req, res) => {
   try {
-    const { provider, category, p_type, page = 1 } = req.query;
+    const { provider, category, page = 1 } = req.query;
 
     if (isNaN(page) || page < 1) {
       return res.status(400).json({ message: "Invalid page number" });
@@ -694,8 +694,7 @@ exports.getCategoriesWithProvidersGameList = async (req, res) => {
     }
 
     const query = {
-      p_code: provider,
-      p_type: p_type,
+      p_code: provider || [],
       category_name: category,
       is_active: true,
     };

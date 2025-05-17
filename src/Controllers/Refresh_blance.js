@@ -412,7 +412,7 @@ exports.launchGamePlayer = async (req, res) => {
     // Check if user is logged in
 console.log("launchGamePlayer", req.body);
     const { userId, game_id,  p_code, p_type } = req.body;
-    console.log("userId", userId, game_id, p_code, p_type);
+    console.log("userId", userId, game_id, p_code);
     if (!userId) {
 
       return res.status(400).json({ errCode: 1, errMsg: "User not found." });
@@ -423,13 +423,13 @@ console.log("launchGamePlayer", req.body);
     const last_game_id = user.last_game_id;
     // console.log("amount", amount)
 
-    const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, g_type: g_type });
+    const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code,  });
     console.log("Newgame", Newgame);
     // Refresh balance if last game exists
 
     const agent = await GameListTable.aggregate([
       {
-        $match: { g_code: game_id, p_code: p_code , g_type: g_type}
+        $match: { g_code: game_id, p_code: p_code }
       },
       {
         $lookup: {
