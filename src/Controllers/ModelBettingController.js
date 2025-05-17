@@ -454,25 +454,15 @@ exports.ShowFrontTable = async (req, res) => {
 exports.getCategoriesWithGamesAndProviders = async (req, res) => {
   try {
     // Fetch all categories
-    const categories = await Category.find({ id_active: true }).sort({ category_code: 1 });
-    console.log("Categories:", categories);
+ const categories = await Category.find({ id_active: true }).sort({ category_code: 1 });
 
-    // Fetch games for each category along with their providers
     const categoriesWithGamesAndProviders = await Promise.all(
       categories.map(async (category) => {
-        // Fetch games that match category's `p_type`
         const games = await GameListTable.aggregate([
           {
-            $lookup: {
-              from: "categories",
-              localField: "g_type",
-              foreignField: "g_type",
-              as: "matchedCategories",
-            },
-          },
-          {
             $match: {
-              "matchedCategories.category_name": category.category_name, // Match category name
+              g_type: category.g_type, // Direct match on g_type
+              category_name: category.category_name, // Direct match on category_name
             },
           },
           {
@@ -497,8 +487,6 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
           },
         ]);
 
-        // console.log("Games:", games);
-        // Extract unique provider codes
         const providerSet = new Set();
         games.forEach((game) => {
           game.providers.forEach((provider) =>
@@ -506,14 +494,18 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
           );
         });
 
-        console.log("Provider Set:", providerSet);
-
-        // Fetch unique providers from BetProviderTable
         const uniqueProviders = await BetProviderTable.find(
           { providercode: { $in: Array.from(providerSet) } },
-          { company: 1, providercode: 1, url: 1, image_url:1, _id: 0,p_type:1,serial_number:1 }
+          {
+            company: 1,
+            providercode: 1,
+            url: 1,
+            image_url: 1,
+            p_type: 1,
+            serial_number: 1,
+            _id: 0,
+          }
         ).sort({ serial_number: 1 });
-
         console.log("Unique Providers:", uniqueProviders);
 
         // Format the result
@@ -624,8 +616,8 @@ exports.getCategoriesWithProviders = async (req, res) => {
                   {
                     $lookup: {
                       from: "categories",
-                      localField: "p_type",
-                      foreignField: "p_type",
+                      localField: "g_type",
+                      foreignField: "g_type",
                       as: "matchedCategories",
                     },
                   },

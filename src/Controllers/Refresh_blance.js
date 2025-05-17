@@ -423,13 +423,13 @@ console.log("launchGamePlayer", req.body);
     const last_game_id = user.last_game_id;
     // console.log("amount", amount)
 
-    const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, p_type: p_type });
+    const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code, g_type: g_type });
     console.log("Newgame", Newgame);
     // Refresh balance if last game exists
 
     const agent = await GameListTable.aggregate([
       {
-        $match: { g_code: game_id, p_code: p_code , p_type: p_type}
+        $match: { g_code: game_id, p_code: p_code , g_type: g_type}
       },
       {
         $lookup: {

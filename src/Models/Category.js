@@ -17,7 +17,7 @@ const CategorySchema = new mongoose.Schema({
   g_code: [{ type: String}],
 
   p_code: [{ type: String, }],
-  p_type: { type: String },
+  g_type: { type: String },
   id_active: {
     type: Boolean,
 
