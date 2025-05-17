@@ -924,7 +924,7 @@ exports.AddPaymentMethodNumberWidthral = async (req, res) => {
             start_time,
             end_time,
             minimun_amount,
-            maximum_amount,
+            maximun_amount,
             is_active: true,
             updatetime: new Date()
         });

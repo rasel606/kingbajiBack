@@ -9,8 +9,8 @@ const PaymentGateWayTableSchema = new mongoose.Schema({
         required: true,
     },
     gateway_Number: { type: Number, required: true },
-    minimun_amount: { type: Number, required: true },
-    maximun_amount: { type: Number, required: true },
+    minimun_amount: { type: Number },
+    maximun_amount: { type: Number },
     payment_type: { type: String, enum: ["Send Money", "Cashout", "Payment"], required: true },
     referredBy: { type: String , required: true }, // Ensure this matches the controller field name
     image_url: { type: String , required: true },
