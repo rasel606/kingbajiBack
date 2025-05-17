@@ -694,7 +694,7 @@ exports.getCategoriesWithProvidersGameList = async (req, res) => {
     }
 
     const query = {
-      p_code: provider || [],
+      p_code: provider,
       category_name: category,
       is_active: true,
     };
