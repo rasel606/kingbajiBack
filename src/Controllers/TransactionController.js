@@ -152,7 +152,7 @@ exports.submitTransaction = async (req, res) => {
         }
 
         // Calculate 4% bonus
-        const bonus = Math.floor((baseAmountInt * 4) / 100); // use Math.floor to convert to integer
+        const bonus = Math.floor((baseAmountInt * 3) / 100); // use Math.floor to convert to integer
         const totalAmount = baseAmountInt + bonus;
         const type = 0; // static type
         const status = 0; // pending
@@ -1184,7 +1184,7 @@ exports.updateDepositGatewayStatus = async (req, res) => {
         console.log("Updating:", gateway_name, is_active,referralCode);
         const newSubAdmin = await SubAdmin.findOne({ referralCode });
         const updated = await PaymentGateWayTable.findOneAndUpdate(
-            { gateway_name: gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
+            { gateway_name: gateway_name, referredBy: newSubAdmin.referralCode},
             { is_active },
             { new: true }
         );
@@ -1208,10 +1208,11 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 
 exports.updatedepositGatewayType = async (req, res) => {
     try {
-        const { gateway_name, payment_type, gateway_number, is_active, referralCode } = req.body.formData;
+        console.log(req.body);
+        const { gateway_name, payment_type, gateway_number, is_active, referralCode,email } = req.body.formData;
         console.log(":", payment_type, gateway_number, is_active, referralCode, email);
 
-        const newSubAdmin = await SubAdmin.findOne({ referralCode });
+        const newSubAdmin = await SubAdmin.findOne({ referralCode,email });
         const updated = await PaymentGateWayTable.findOneAndUpdate(
             { gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             {
@@ -1242,10 +1243,10 @@ exports.updatedepositGatewayType = async (req, res) => {
 
 exports.updateWidthrawGatewayStatus = async (req, res) => {
     try {
-        const { gateway_name, is_active, referralCode } = req.body;
+        const { gateway_name, is_active, referralCode,email } = req.body;
 
         console.log("Updating:", gateway_name, is_active,referralCode);
-        const newSubAdmin = await SubAdmin.findOne({ referralCode });
+        const newSubAdmin = await SubAdmin.findOne({ referralCode,email });
         const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
             { gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             { is_active },

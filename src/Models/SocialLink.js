@@ -27,7 +27,10 @@ const socialLinkSchema = new mongoose.Schema({
       validator: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
       message: props => `${props.value} is not a valid email address!`
     }
-  }
+  },
+  referredBy: {
+    type: String,
+  },
 });
 
 module.exports = mongoose.model('SocialLink', socialLinkSchema);

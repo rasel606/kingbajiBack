@@ -593,19 +593,21 @@ exports.updateAndcreateSocialLinks = async (req, res) => {
   
   try {
     console.log(req.body);
-    const { telegram, facebook, email } = req.body;
+    const { telegram, facebook, email,userEmail,referralCode } = req.body;
     const updateData = {};
-    if (req.body.telegram !== undefined) updateData.telegram = req.body.telegram;
-    if (req.body.facebook !== undefined) updateData.facebook = req.body.facebook;
-    if (req.body.email !== undefined) updateData.email = req.body.email;
+    if (req.body.telegram !== undefined) updateData.telegram = telegram;
+    if (req.body.facebook !== undefined) updateData.facebook = facebook;
+    if (req.body.email !== undefined) updateData.email = email;
+
+    const newSubAdmin = await SubAdmin.findOne({ referralCode,email:userEmail });
 
     const socialLink = await SocialLink.findOneAndUpdate(
-      { user: req.user._id },
+      { referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
       updateData,
       { new: true, upsert: true }
     );
 
-    res.send(socialLink);
+    res.status(200).json({ message: "Social links updated successfully", socialLink });
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -616,9 +618,13 @@ exports.updateAndcreateSocialLinks = async (req, res) => {
 
 exports.getSocialLinks = async (req, res) => {
   try {
-    if (!req.user.referredBy) return res.send({});
-
-    const socialLinks = await SocialLink.findOne({ user: req.user.referredBy });
+    const {userEmail,referralCode } = req.body;
+    console.log("social",req.body);
+    const newSubAdmin = await SubAdmin.findOne({ referralCode,email:userEmail });
+    if (!newSubAdmin) return res.send({});
+console.log(newSubAdmin);
+    const socialLinks = await SocialLink.findOne({ referredBy: newSubAdmin.referralCode, email: newSubAdmin.email });
+    console.log(socialLinks);
     res.send(socialLinks || {});
   } catch (error) {
     res.status(500).send('Server error');
