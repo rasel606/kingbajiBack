@@ -302,6 +302,13 @@ exports.verify = async (req, res) => {
     const decoded = jwt.verify(token, "Kingbaji");
 
     const decodedId = decoded?.id;
+ await User.updateOne(
+        { userId: decodedId },
+        { $set: { onlinestatus: new Date() } }
+      );
+ 
+
+
     const details = await User.aggregate([
       { $match: { userId: decodedId } },
       {

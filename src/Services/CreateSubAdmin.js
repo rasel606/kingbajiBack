@@ -4,6 +4,7 @@ const axios = require("axios");
 const crypto = require("crypto");
 const SubAdmin = require("../Models/SubAdminModel");
 const User = require('../Models/User');
+const SocialLink = require('../Models/SocialLink');
 // const User = require("../Models/User");
 
 
@@ -187,6 +188,20 @@ exports.verifySubAdmin = async (req, res) => {
     if (!decodedEmail || !decodedRole) {
       return res.status(400).json({ message: "Invalid token payload!" });
     }
+    const newSubAdmin = await SubAdmin.findOne({ email: decodedEmail });
+
+    const activeThreshold = new Date(Date.now() - 3 * 60 * 1000);
+
+    const onlineUsers = await User.find({
+      onlinestatus: { $gte: activeThreshold }, referredBy: newSubAdmin.referralCode
+    }).select('userId name onlinestatus');
+    const totalonlineUsers = await User.find({
+      onlinestatus: { $gte: activeThreshold }, referredBy: newSubAdmin.referralCode
+    }).countDocuments();
+
+
+   
+
 
     const response = await SubAdmin.aggregate([
       { $match: { email: decodedEmail, user_role: decodedRole } },
@@ -213,13 +228,20 @@ exports.verifySubAdmin = async (req, res) => {
     const userDetails = response[0];
 
     if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
+ const totalUsers = await User.countDocuments({
+      referredBy: userDetails.referralCode
+    });
 
+    console.log("totalUsersrefferedBy", totalUsers);
+console.log("refferedBy", newSubAdmin.referralCode);
 
 
     res.status(200).json({
       success: true,
       token,
       userDetails,
+      totalonlineUsers,
+      totalUsers
     });
 
   } catch (error) {
@@ -408,7 +430,7 @@ exports.verifyPhoneManually = async (req, res) => {
     if (!phoneEntry) {
       return res.status(404).json({ error: 'Phone number not found for user' });
     }
-    console.log(!phoneEntry.verified,"1 new", phoneEntry);
+    console.log(!phoneEntry.verified, "1 new", phoneEntry);
     // Check if already verified
     if (!phoneEntry.number) {
       return res.status(400).json({ error: 'Phone number already verified' });
@@ -560,3 +582,42 @@ exports.changeEmailUserByAdmin = async (req, res) => {
     });
   }
 };
+
+
+
+
+
+
+exports.updateAndcreateSocialLinks = async (req, res) => {
+  try {
+    const updateData = {};
+    if (req.body.telegram !== undefined) updateData.telegram = req.body.telegram;
+    if (req.body.facebook !== undefined) updateData.facebook = req.body.facebook;
+    if (req.body.email !== undefined) updateData.email = req.body.email;
+
+    const socialLink = await SocialLink.findOneAndUpdate(
+      { user: req.user._id },
+      updateData,
+      { new: true, upsert: true }
+    );
+
+    res.send(socialLink);
+  } catch (error) {
+    res.status(400).send(error.message);
+  }
+}
+
+
+
+
+exports.getSocialLinks = async (req, res) => {
+  try {
+    if (!req.user.referredBy) return res.send({});
+
+    const socialLinks = await SocialLink.findOne({ user: req.user.referredBy });
+    res.send(socialLinks || {});
+  } catch (error) {
+    res.status(500).send('Server error');
+  }
+}
+

@@ -1179,12 +1179,12 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
 
 exports.updateDepositGatewayStatus = async (req, res) => {
     try {
-        const { gateway_name, is_active } = req.body;
+        const { gateway_name, is_active,referralCode,email } = req.body;
 
         console.log("Updating:", gateway_name, is_active);
 
         const updated = await PaymentGateWayTable.findOneAndUpdate(
-            { gateway_name },
+            { gateway_name: gateway_name,referredBy:referralCode,email:email  },
             { is_active },
             { new: true }
         );
@@ -1208,19 +1208,19 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 
 exports.updatedepositGatewayType = async (req, res) => {
     try {
-        const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
-        console.log(gateway_name, payment_type, gateway_number, is_active);
+        const { gateway_name, payment_type, gateway_number, is_active,referralCode,email } = req.body.formData;
+        console.log(":", payment_type, gateway_number, is_active,referralCode,email);
         const updated = await PaymentGateWayTable.findOneAndUpdate(
-            { gateway_name },
+           { gateway_name, referredBy: referralCode, email },
             {
                 payment_type,
-                gateway_Number: gateway_number,
+                gateway_Number: gateway_number, // Ensure this matches your schema's field name
                 is_active,
             },
             { new: true }
         );
 
-        console.log("Updated Gateway:", updated);
+        console.log("Updated my new Gateway:", updated);
 
 
         if (!updated) {
@@ -1271,10 +1271,10 @@ exports.updateWidthrawGatewayStatus = async (req, res) => {
 exports.updateWithdrawalGatewayType = async (req, res) => {
     console.log(req.body);
     try {
-        const { gateway_name, payment_type, gateway_number, is_active } = req.body.formData;
+        const { gateway_name, payment_type, gateway_number, is_active,referralCode,email } = req.body.formData;
         console.log(gateway_name, payment_type, gateway_number, is_active);
         const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
-            { gateway_name },
+            { gateway_name: gateway_name,referredBy:referralCode,email:email },
             {
                 payment_type,
                 gateway_Number: gateway_number,

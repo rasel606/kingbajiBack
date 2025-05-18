@@ -78,6 +78,8 @@ router.post('/admin_change_email_by_user',CreateSubAdmin.changeEmailUserByAdmin)
 router.post('/admin_verify_phone', CreateSubAdmin.verifyPhoneManually);
 router.post('/admin_verify_email', CreateSubAdmin.verifyEmailManually);
 router.post('/sub_admin_User_details', CreateSubAdmin.SubAdminUserDetails);
+router.post('/update_and_create_socialLinks', CreateSubAdmin.updateAndcreateSocialLinks);
+router.post('/get_socialLinks', CreateSubAdmin.getSocialLinks);
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
 router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
 router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);

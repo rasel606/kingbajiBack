@@ -8,11 +8,11 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: [{
       countryCode: { type: String, required: true },
-      number: { 
-        type: String, 
+      number: {
+        type: String,
         required: true,
         validate: {
-          validator: function(v) {
+          validator: function (v) {
             return /^\d{10,15}$/.test(v); // Basic phone number validation
           },
           message: props => `${props.value} is not a valid phone number!`
@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
       isDefault: { type: Boolean, default: false },
       verified: { type: Boolean, default: false },
       verificationCode: String,
-    verificationExpiry: Date
+      verificationExpiry: Date
     }],
     validate: [arrayLimit, 'Cannot add more than 3 phone numbers']
   },
@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema({
   agentId: { type: String },
   isNameVerified: { type: Boolean, default: false },
   isVerified: {
-    email: Boolean, 
+    email: Boolean,
     phone: Boolean
   },
   bonus: {
@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema({
   },
   isActive: { type: Boolean, default: true },
   timestamp: { type: Date, default: Date.now },
+  onlinestatus: { type: Date, default: Date.now },
   updatetimestamp: { type: Date, default: Date.now }
 });
 // Validate maximum of 3 phones
@@ -72,7 +73,7 @@ function arrayLimit(val) {
 userSchema.index({ 'phone.number': 1 }, { unique: true });
 
 // Pre-save hook to ensure exactly one default phone
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
   const defaultPhones = this.phone.filter(p => p.isDefault);
   if (defaultPhones.length > 1) {
     const err = new Error('Exactly one phone must be set as default');
