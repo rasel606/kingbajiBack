@@ -8,7 +8,7 @@ const WidthralPaymentGateWayTableSchema = new mongoose.Schema({
         enum: ["Bkash", "Nagad", "Rocket", "Upay", "transfer"],
         required: true,
     },
-    gateway_Number: { type: Number, required: true },
+    gateway_Number: { type: Number },
     minimun_amount: { type: Number  },
     maximun_amount: { type: Number },
     payment_type: { type: String, enum: ["Send Money", "Cashout", "Payment"], required: true },

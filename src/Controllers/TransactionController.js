@@ -176,14 +176,14 @@ exports.submitTransaction = async (req, res) => {
 
         console.log("Transaction Created:", newTransaction);
 
-          await notificationController.createNotification(
+        await notificationController.createNotification(
             `Deposit Request by ${user.name} (User ID: ${user.userId})`,
             newTransaction.userId,
             `deposit of ${newTransaction.amount} has been submitted at ${new Date()}  by ${newTransaction.gateway_name}.
             Please note that Your deposit request of ${newTransaction.amount} has been send at ${new Date()} with transaction ID: ${newTransaction.transactionID} by ${newTransaction.gateway_name} and will be processed within 15 minutes.`,
-                'deposit_request',
-                { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
-            );
+            'deposit_request',
+            { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
+        );
 
         return res.status(200).json({
             success: true,
@@ -362,10 +362,10 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             await transaction.save();
 
 
-              await notificationController.createNotification(
+            await notificationController.createNotification(
                 `Deposit approved for ${transaction.transactionID} with (User ID: ${user.userId})`,
                 user.userId,
-            `deposit of ${transaction.amount} has been processed at ${new Date()}  by ${transaction.gateway_name}.Your deposit of ${transaction.amount} has been approved at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed at ${new Date()}.`,
+                `deposit of ${transaction.amount} has been processed at ${new Date()}  by ${transaction.gateway_name}.Your deposit of ${transaction.amount} has been approved at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed at ${new Date()}.`,
                 'deposit_approved',
                 { amount: transaction.amount, transactionID: transaction.transactionID }
             );
@@ -380,15 +380,15 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             transaction.status = 2;
 
             await transaction.save();
-  await notificationController.createNotification(
-    `Deposit rejected for ${transaction.transactionID} with (User ID: ${user.userId})`,
-            `deposit of ${transaction.amount} has been rejected at ${new Date()}  by ${transaction.gateway_name}.`,
+            await notificationController.createNotification(
+                `Deposit rejected for ${transaction.transactionID} with (User ID: ${user.userId})`,
+                `deposit of ${transaction.amount} has been rejected at ${new Date()}  by ${transaction.gateway_name}.`,
                 transaction.userId,
                 `Your deposit of ${transaction.amount} has been rejected at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed.`,
                 'deposit_rejected',
                 { amount: transaction.amount, transactionID: transaction.transactionID }
             );
-           
+
 
 
 
@@ -587,9 +587,9 @@ exports.WithdrawTransaction = async (req, res) => {
             `Withdrawal request send ${newTransaction.transactionID} with (User ID: ${user.userId})`,
             newTransaction.userId,
             `Withdrawal of ${newTransaction.amount} has been submitted at ${new Date()}  by ${newTransaction.gateway_name}.Your withdrawal request of ${newTransaction.amount} has been send at ${new Date()} with transaction ID: ${newTransaction.transactionID} by ${newTransaction.gateway_name} and will be processed within 15 minutes.`,
-                'withdrawal_request',
-                { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
-            );
+            'withdrawal_request',
+            { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
+        );
 
         res.json({
             message: "Withdrawal request submitted successfully",
@@ -791,7 +791,7 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
                 `Withdrawal rejected by admin with (User ID: ${user.userId})`,
                 transaction.userId,
                 `Your withdrawal of ${transaction.base_amount} has been rejected at ${new Date()}.withdrawal _rejected by admin , please try again`,
-                'withdrawal_rejected',    
+                'withdrawal_rejected',
                 { amount: transaction.base_amount }
             );
 
@@ -828,7 +828,7 @@ exports.AddPaymentMethodNumberDeposit = async (req, res) => {
 
         // Fetch existing payment methods (oldest to newest)
         const userPaymentMethods = await PaymentGateWayTable.find({
-            email,
+            email:user.email,
             referredBy: user.referralCode
         }).sort({ updatetime: 1 }); // use 'updatetime' to maintain consistency
 
@@ -908,7 +908,7 @@ exports.AddPaymentMethodNumberWidthral = async (req, res) => {
 
         // Fetch existing payment methods (oldest to newest)
         const userPaymentMethods = await WidthralPaymentGateWayTable.find({
-            email,
+            email:user.email,
             referredBy: user.referralCode
         }).sort({ updatetime: 1 }); // use 'updatetime' to maintain consistency
 
@@ -924,7 +924,7 @@ exports.AddPaymentMethodNumberWidthral = async (req, res) => {
             start_time,
             end_time,
             minimun_amount,
-            maximun_amount,
+            maximum_amount,
             is_active: true,
             updatetime: new Date()
         });
@@ -1179,12 +1179,12 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
 
 exports.updateDepositGatewayStatus = async (req, res) => {
     try {
-        const { gateway_name, is_active,referralCode,email } = req.body;
+        const { gateway_name, is_active, referralCode, email } = req.body;
 
-        console.log("Updating:", gateway_name, is_active);
-
+        console.log("Updating:", gateway_name, is_active,referralCode);
+        const newSubAdmin = await SubAdmin.findOne({ referralCode });
         const updated = await PaymentGateWayTable.findOneAndUpdate(
-            { gateway_name: gateway_name,referredBy:referralCode,email:email  },
+            { gateway_name: gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             { is_active },
             { new: true }
         );
@@ -1208,10 +1208,12 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 
 exports.updatedepositGatewayType = async (req, res) => {
     try {
-        const { gateway_name, payment_type, gateway_number, is_active,referralCode,email } = req.body.formData;
-        console.log(":", payment_type, gateway_number, is_active,referralCode,email);
+        const { gateway_name, payment_type, gateway_number, is_active, referralCode } = req.body.formData;
+        console.log(":", payment_type, gateway_number, is_active, referralCode, email);
+
+        const newSubAdmin = await SubAdmin.findOne({ referralCode });
         const updated = await PaymentGateWayTable.findOneAndUpdate(
-           { gateway_name, referredBy: referralCode, email },
+            { gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             {
                 payment_type,
                 gateway_Number: gateway_number, // Ensure this matches your schema's field name
@@ -1240,12 +1242,12 @@ exports.updatedepositGatewayType = async (req, res) => {
 
 exports.updateWidthrawGatewayStatus = async (req, res) => {
     try {
-        const { gateway_name, is_active } = req.body;
+        const { gateway_name, is_active, referralCode } = req.body;
 
-        console.log("Updating:", gateway_name, is_active);
-
+        console.log("Updating:", gateway_name, is_active,referralCode);
+        const newSubAdmin = await SubAdmin.findOne({ referralCode });
         const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
-            { gateway_name },
+            { gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             { is_active },
             { new: true }
         );
@@ -1271,10 +1273,12 @@ exports.updateWidthrawGatewayStatus = async (req, res) => {
 exports.updateWithdrawalGatewayType = async (req, res) => {
     console.log(req.body);
     try {
-        const { gateway_name, payment_type, gateway_number, is_active,referralCode,email } = req.body.formData;
-        console.log(gateway_name, payment_type, gateway_number, is_active);
+        const { gateway_name, payment_type, gateway_number, is_active, referralCode } = req.body.formData;
+        console.log(gateway_name, payment_type, gateway_number, is_active,referralCode);
+        const newSubAdmin = await SubAdmin.findOne({ referralCode });
+
         const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
-            { gateway_name: gateway_name,referredBy:referralCode,email:email },
+            { gateway_name: gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             {
                 payment_type,
                 gateway_Number: gateway_number,

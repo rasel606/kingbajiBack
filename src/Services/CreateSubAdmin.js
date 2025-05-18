@@ -589,7 +589,11 @@ exports.changeEmailUserByAdmin = async (req, res) => {
 
 
 exports.updateAndcreateSocialLinks = async (req, res) => {
+
+  
   try {
+    console.log(req.body);
+    const { telegram, facebook, email } = req.body;
     const updateData = {};
     if (req.body.telegram !== undefined) updateData.telegram = req.body.telegram;
     if (req.body.facebook !== undefined) updateData.facebook = req.body.facebook;
