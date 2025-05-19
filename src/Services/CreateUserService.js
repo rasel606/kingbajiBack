@@ -212,7 +212,7 @@ exports.register = async (req, res) => {
 
 
 
-      const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2h' });
+      const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2d' });
 
       const newUserDetails = await User.aggregate([
         { $match: { userId } },
@@ -309,7 +309,7 @@ exports.register = async (req, res) => {
         }
       ]);
 
-      const token = jwt.sign({ id: user.userId }, "Kingbaji", { expiresIn: "2h" });
+      const token = jwt.sign({ id: user.userId }, "Kingbaji", { expiresIn: "2d" });
 
       res.status(200).json({ token, user, response });
     } catch (error) {
