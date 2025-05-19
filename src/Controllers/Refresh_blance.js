@@ -152,7 +152,7 @@ exports.refreshBalance = async (req, res) => {
         console.log("Transfer API Error:", transferError.message);
         return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
       }
-    }, 1000);
+    }, 500);
     const win = parseFloat(amount) - parseFloat(game.betAmount);
     console.log("Win Amount:", win);
 
@@ -235,20 +235,9 @@ const refreshBalancebefore = async (userId) => {
 
 
 
-  // const params = {
-  //   operatorcode: agent.operatorcode,
-  //   providercode: agent.providercode,
-  //   username: user.userId,
-  //   password: agent.auth_pass,
-  //   signature: Kicksignature
-  // };
-
-  // const kick = await axios.get('http://fetch.336699bet.com/kickPlayer.ashx', { params });
-  // console.log("Kick Response:", kick.data);
-  // console.log("Fetched Balance:", amount);
 
   if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
-    setTimeout(async () => {
+    
 
       balance += amount;
 
@@ -328,7 +317,7 @@ const refreshBalancebefore = async (userId) => {
 
 
 
-    }, 300);
+    
   }
 
 
@@ -598,7 +587,7 @@ console.log("launchGamePlayer", req.body);
 
 
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
 
         game_url = await fetchApi("launchGames.aspx", field);
