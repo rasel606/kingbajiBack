@@ -54,6 +54,7 @@ router.get('/verify', CreateUserService.verify);
 router.post('/sendphoneotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/sendemailotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/verify_opt', CreateUserService.verifyPhone);
+router.post('/get_user_social_links', CreateUserService.getUserSocialLinks);
 // router.post('/verify/send', CreateUserService.sendotp);
 router.patch('/profile/personal', CreateUserService.updateUser);
 // router.get('/verify/otp', UpdateProfile.verifyOTP);

@@ -584,6 +584,8 @@ exports.SendPhoneVerificationCode = async (req, res) => {
 
 const generateReferralCode = require('./generateReferralCode');
 const GenerateOtpCode = require('./GenerateOtpCode');
+const SubAdmin = require('../Models/SubAdminModel');
+const SocialLink = require('../Models/SocialLink');
 // const ReferralBonus = require('../Models/ReferralBonus');
 // const Affiliate = require('../Models/AffiliateModel');
 // const SubAdmin = require('../Models/SubAdminModel');
@@ -757,3 +759,41 @@ exports.updateUser = async (req, res) => {
     res.status(400).send(e);
   }
 }
+
+
+
+
+exports.getUserSocialLinks = async (req, res) => {
+  try {
+    const { userId,referredBy } = req.body;
+
+    console.log("getUserSocialLinks",userId,referredBy);
+
+    // Find the user by ID
+    const user = await User.findOne({userId:userId});
+    console.log(user);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if the user was referred by a SubAdmin
+
+
+    // Find the SubAdmin using the referral code
+    const subAdmin = await SubAdmin.findOne({ referralCode: user.referredBy });
+    console.log("subAdmin",subAdmin);
+    if (!subAdmin) {
+      return res.status(404).json({ message: 'Referring SubAdmin not found' });
+    }
+
+    // Retrieve the social links for the SubAdmin
+    const socialLinks = await SocialLink.findOne({
+      referredBy: subAdmin.referralCode,
+    });
+console.log("socialLinks",socialLinks);
+    res.status(200).json({ socialLinks: socialLinks || {} });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
