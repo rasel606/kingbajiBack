@@ -396,30 +396,18 @@ const fetchApi = async (endpoint, data = {}) => {
 
 
 exports.launchGamePlayer = async (req, res) => {
-
   try {
-    // Check if user is logged in
-console.log("launchGamePlayer", req.body);
-    const { userId, game_id,  p_code, p_type } = req.body;
-    console.log("userId", userId, game_id, p_code);
-    if (!userId) {
+    const { userId, game_id, p_code, p_type } = req.body;
+    if (!userId) return res.status(400).json({ errCode: 1, errMsg: "User not found." });
 
-      return res.status(400).json({ errCode: 1, errMsg: "User not found." });
-    }
     const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ errCode: 1, errMsg: "User not found." });
 
-    let amount = user?.balance;
-    const last_game_id = user.last_game_id;
-    // console.log("amount", amount)
-
-    const Newgame = await GameListTable.findOne({ g_code: game_id, p_code: p_code,  });
-    console.log("Newgame", Newgame);
-    // Refresh balance if last game exists
+    const Newgame = await GameListTable.findOne({ g_code: game_id, p_code });
+    if (!Newgame) return res.status(404).json({ errCode: 1, errMsg: "Game not found." });
 
     const agent = await GameListTable.aggregate([
-      {
-        $match: { g_code: game_id, p_code: p_code }
-      },
+      { $match: { g_code: game_id, p_code } },
       {
         $lookup: {
           from: "betprovidertables",
@@ -431,7 +419,6 @@ console.log("launchGamePlayer", req.body);
       { $unwind: "$provider" },
       {
         $project: {
-          // id: "$provider._id",
           providercode: "$provider.providercode",
           operatorcode: "$provider.operatorcode",
           key: "$provider.key",
@@ -441,78 +428,18 @@ console.log("launchGamePlayer", req.body);
       }
     ]);
 
+    if (!agent.length) return res.json({ errCode: 1, errMsg: "Agent not found." });
 
+    const provider = agent[0];
+    const amount = user.balance;
 
-
-    console.log("agent", agent)
-
-
-
-
-
-
-
-
-
-    const provider = agent[0]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    if (last_game_id) {
-
-
-      const resBalance = await refreshBalancebefore(user.userId, agent);
-      console.log("resBalance", resBalance)
-      // if (!resBalance || resBalance.errCode !== 0) {
-      //   return res.json(resBalance);
-      // }
-      // amount += resBalance.balance || 0;
-
-      // console.log("amount-3", amount)
+    if (user.last_game_id) {
+      await refreshBalancebefore(user.userId, agent); // optional validation
     }
 
-    // Insufficient balance check
-    // if (amount === 0) {
-    //   return res.json({ errCode: 2, errMsg: "Insufficient balance." });
-    // }
-
-    // Fetch game and provider details using aggregation
     const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
 
-
-
-    if (!agent || agent.length === 0) {
-      return res.json({ errCode: 1, errMsg: "Agent not found." });
-    }
-
-
-
-
-    console.log("provider", provider);
-    let game_url;
-
-
-    const signature = generateSignature(
-      provider.operatorcode,
-      provider.auth_pass,
-      provider.providercode,
-      provider.game_type,
-      user.userId,
-      provider.key
-
-    )
-    const field = {
+    const launchField = {
       operatorcode: provider.operatorcode,
       providercode: provider.providercode,
       username: user.userId,
@@ -521,19 +448,18 @@ console.log("launchGamePlayer", req.body);
       gameid: game_id,
       lang: "en-US",
       html5: 1,
-      signature: signature
+      signature: generateSignature(
+        provider.operatorcode,
+        provider.auth_pass,
+        provider.providercode,
+        provider.game_type,
+        user.userId,
+        provider.key
+      )
     };
 
-    console.log("field - All", field);
-
-
-
-   if (user.balance > 0 && amount > 0) {
-      // Generate transaction ID
-      const transId = `${randomStr(6)}${randomStr(6)}${randomStr(6)}`.substring(0, 10);
-
-
-      const signature = generateSignature(
+    if (amount > 0) {
+      const transferSignature = generateSignature(
         amount.toString(),
         provider.operatorcode,
         provider.auth_pass,
@@ -542,13 +468,9 @@ console.log("launchGamePlayer", req.body);
         0,
         user.userId,
         provider.key
+      );
 
-      )
-
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      // console.log("signature blance", signature);
-      // Make transfer API call
-
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       const transferResponse = await fetchApi("makeTransfer.aspx", {
         operatorcode: provider.operatorcode,
@@ -557,17 +479,11 @@ console.log("launchGamePlayer", req.body);
         password: provider.auth_pass,
         referenceid: transId,
         type: 0,
-        amount: amount,
-        signature: signature
+        amount,
+        signature: transferSignature
       });
 
-
-
-      console.log("transferResponse -------------w", transferResponse);
-
-      if (transferResponse.errCode === "0" && transferResponse.errMsg === 'SUCCESS') {
-        console.log("new game_url -----------------------------------------------2", game_url);
-        console.log("amount-4", amount)
+      if (transferResponse.errCode === "0" && transferResponse.errMsg === "SUCCESS") {
         await GameTable.create({
           userId: user.userId,
           agentId: provider.providercode,
@@ -577,58 +493,36 @@ console.log("launchGamePlayer", req.body);
           transactionId: transId
         });
 
-        // Update user balance
         await User.updateOne(
           { userId: user.userId },
-          { balance: 0, last_game_id: Newgame.g_code, agentId: provider.providercode },
-          {upsert: true}
+          { balance: 0, last_game_id: Newgame.g_code, agentId: provider.providercode }
         );
 
-
-
-
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-
-        game_url = await fetchApi("launchGames.aspx", field);
-       
-
-        if (game_url.errCode !== "0") {
-          return res.status(400).json({ errCode: game_url.errCode, errMsg: game_url.errMsg });
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const gameLaunchResponse = await fetchApi("launchGames.aspx", launchField);
+        if (gameLaunchResponse.errCode !== "0") {
+          return res.status(400).json({ errCode: gameLaunchResponse.errCode, errMsg: gameLaunchResponse.errMsg });
         }
 
-        const gameUrl = game_url.gameUrl;
-        console.log("gameUrl", gameUrl);
-
-        return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl });
-      } else {
-
-          game_url = await fetchApi("launchDGames.aspx", field);
-        const gameUrl = game_url.gameUrl;
-
-        return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl });
-        
+        return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: gameLaunchResponse.gameUrl });
       }
     }
 
+    // Fallback: No transfer, but still try to launch game
+    const fallbackGameLaunch = await fetchApi("launchGames.aspx", launchField);
+    return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: fallbackGameLaunch.gameUrl });
 
   } catch (error) {
     console.error("Launch Game Error:", error);
-    console.log("Launch Game Error:", error);
     res.status(500).json({ errCode: 500, errMsg: "Server error." });
   }
-
-}
+};
 
 function generateSignature(...args) {
   console.log("args:", args);
   return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
 }
 
-function extractQueryParam(url, param) {
-  const match = url.match(new RegExp(`[?&]${param}=([^&]+)`));
-  return match ? match[1] : null;
-}
 
 
 
@@ -650,277 +544,8 @@ exports.GetFeaturedGames = async (req, res) => {
 
 
 
-const getDateRanges = () => {
-  const startOfToday = moment().startOf('day').toDate();
-  const endOfToday = moment().endOf('day').toDate();
-  const startOfYesterday = moment().subtract(1, 'days').startOf('day').toDate();
-  const endOfYesterday = moment().subtract(1, 'days').endOf('day').toDate();
-  const last7Days = moment().subtract(7, 'days').toDate();
-
-  return {
-    startOfToday,
-    endOfToday,
-    startOfYesterday,
-    endOfYesterday,
-    last7Days,
-  };
-};
 
 
-
-// exports.GetBettingHistoryByMember = async (req, res) => {
-//   try {
-//     const now = new Date();
-//     const startOfToday = new Date("2025-02-19T00:00:00Z");
-//     const endOfToday = new Date("2025-02-19T23:59:59.999Z");
-
-//     const startOfYesterday = new Date(startOfToday);
-//     startOfYesterday.setDate(startOfYesterday.getDate() - 1);
-//     const endOfYesterday = new Date(startOfYesterday);
-//     endOfYesterday.setHours(23, 59, 59, 999);
-
-//     const last7Days = new Date();
-//     last7Days.setDate(last7Days.getDate() - 7);
-
-
-
-//     console.log({
-//       startOfToday,
-//       endOfToday,
-//       startOfYesterday,
-//       endOfYesterday,
-//       last7Days
-//     });
-
-
-
-//     const result = await BettingHistory.aggregate([
-//       {
-//         $match: {
-//           start_time: {
-//             $gte: new Date('2025-02-18T00:00:00Z'),
-//             $lte: new Date('2025-02-21T00:00:00Z')
-//           }
-//         }
-//       },
-//       {
-//         $project: {
-//           site: 1,
-//           product: 1,
-//           member: 1,
-//           bet: 1,
-//           turnover: 1,
-//           start_time: 1,
-//           isToday: {
-//             $and: [
-//               { $gte: ["$start_time", startOfToday] },
-//               { $lte: ["$start_time", endOfToday] }
-//             ]
-//           },
-//           isYesterday: {
-//             $and: [
-//               { $gte: ["$start_time", startOfYesterday] },
-//               { $lte: ["$start_time", endOfYesterday] }
-//             ]
-//           }
-//         }
-//       },
-//       {
-//         $group: {
-//           _id: {
-//             site: "$site",
-//             product: "$product",
-//             member: "$member"
-//           },
-//           totalBet7Days: { $sum: "$bet" },
-//           totalTurnover7Days: { $sum: "$turnover" },
-//           totalBetToday: {
-//             $sum: {
-//               $cond: ["$isToday", "$bet", 0]
-//             }
-//           },
-//           totalTurnoverToday: {
-//             $sum: {
-//               $cond: ["$isToday", "$turnover", 0]
-//             }
-//           },
-//           totalBetYesterday: {
-//             $sum: {
-//               $cond: ["$isYesterday", "$bet", 0]
-//             }
-//           },
-//           totalTurnoverYesterday: {
-//             $sum: {
-//               $cond: ["$isYesterday", "$turnover", 0]
-//             }
-//           }
-//         }
-//       },
-//       {
-//         $project: {
-//           _id: 0,
-//           site: "$_id.site",
-//           product: "$_id.product",
-//           member: "$_id.member",
-//           today: {
-//             totalBet: "$totalBetToday",
-//             totalTurnover: "$totalTurnoverToday"
-//           },
-//           yesterday: {
-//             totalBet: "$totalBetYesterday",
-//             totalTurnover: "$totalTurnoverYesterday"
-//           },
-//           last7Days: {
-//             totalBet: "$totalBet7Days",
-//             totalTurnover: "$totalTurnover7Days"
-//           }
-//         }
-//       }
-//     ]);
-
-//     res.json({ success: true, data: result });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ success: false, message: "Error", error: err.message });
-//   }
-// }
-
-// exports.GetBettingHistoryByMember = async (req, res) => {
-//   try {
-//     const { member, product, days } = req.query;
-// console.log({ member, product, days });
-//     // Date filtering setup
-//     const date = {};
-//     if (days) {
-//       const pastDate = new Date();
-//       pastDate.setDate(pastDate.getDate() - parseInt(days));
-//       date.end_time = { $gte: pastDate };
-//     }
-
-//     // Match conditions
-//     const match = {
-//       ...date,
-//       ...(member && { member }),
-//       ...(product && { product })
-//     };
-
-//     // Single aggregation with facet
-//     const results = await BettingHistory.aggregate([
-//       { $match: match },
-//       {
-//         $facet: {
-//           // Summary by date and product
-//           dateProductSummary: [
-//             {
-//               $addFields: {
-//                 date: {
-//                   $dateToString: {
-//                     format: "%Y-%m-%d",
-//                     date: "$end_time",
-//                     timezone: "UTC"
-//                   }
-//                 }
-//               }
-//             },
-//             {
-//               $group: {
-//                 _id: {
-//                   date: "$date",
-//                   product: "$product"
-//                 },
-//                 totalBet: { $sum: "$bet" },
-//                 totalTurnover: { $sum: "$turnover" },
-//                 totalPayout: { $sum: "$payout" },
-//                 totalRecords: { $sum: 1 },
-//                 bets: { $push: "$$ROOT" }
-//               }
-//             },
-//             {
-//               $project: {
-//                 _id: 0,
-//                 date: "$_id.date",
-//                 product: "$_id.product",
-//                 totalBet: 1,
-//                 totalTurnover: 1,
-//                 totalPayout: 1,
-//                 totalRecords: 1,
-//                 bets: 1
-//               }
-//             },
-//             { $sort: { date: -1, product: 1 } }
-//           ],
-          
-//           // Product-specific bet lists
-//           productBetLists: [
-//             {
-//               $group: {
-//                 _id: "$product",
-//                 totalProductBet: { $sum: "$bet" },
-//                 bets: { $push: "$$ROOT" }
-//               }
-//             },
-//             {
-//               $project: {
-//                 _id: 0,
-//                 product: "$_id",
-//                 totalProductBet: 1,
-//                 bets: {
-//                   $map: {
-//                     input: "$bets",
-//                     as: "bet",
-//                     in: {
-//                       ref_no: "$$bet.ref_no",
-//                       bet: "$$bet.bet",
-//                       payout: "$$bet.payout",
-//                       date: {
-//                         $dateToString: {
-//                           format: "%Y-%m-%d",
-//                           date: "$$bet.end_time",
-//                           timezone: "UTC"
-//                         }
-//                       }
-//                     }
-//                   }
-//                 }
-//               }
-//             },
-//             { $sort: { product: 1 } }
-//           ]
-//         }
-//       }
-//     ]);
-
-//     // Transform the output
-//     const response = {
-//       summary: results[0].dateProductSummary.map(item => ({
-//         ...item,
-//         bets: item.bets.map(bet => ({
-//           ref_no: bet.ref_no,
-//           oldbet: bet.bet,
-//           payout: bet.payout,
-//           bet:bet.payout-bet.bet,
-//           turnover: bet.turnover,
-//           gameName: bet.game_id,
-//           date: bet.date
-//         }))
-//       })),
-//       products: results[0].productBetLists
-//     };
-
-//     res.json({
-//       success: true,
-//       data: response
-//     });
-
-//   } catch (err) {
-//     console.error('Error fetching betting summary:', err);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Failed to retrieve betting summary',
-//       error: err.message
-//     });
-//   }
-// };
 
 
 exports.GetBettingProvider = async (req, res) => {
