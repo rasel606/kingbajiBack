@@ -10,7 +10,7 @@ const cors = require('cors');
 const dotenv = require("dotenv");
 const  cookieHandler  = require('./src/MiddleWare/cookieMiddleware');
 const cookieParser = require( 'cookie-parser' );
-
+const cron = require('node-cron');
 
 
 dotenv.config();
@@ -94,14 +94,18 @@ mongoose.connect(URI)
 
 // ✅ Security Middleware
 app.use(mongoSanitize());
-const bettingHistoryJob = require('./src/corn/BettingHistoryJob')
+const bettingHistoryJob = require('./src/corn/BettingHistoryJob');
+const { processDailyRewards } = require('./src/Services/rewardProcessor');
 // ✅ Basic Route for Testing
 app.get('/', (req, res) => {
     console.log('✔️ API Running');
     res.json({ message: "API is working!" });
 });
 
-
+cron.schedule('5 18 * * *', async () => {
+  console.log("Cron job started at", new Date());
+  await processDailyRewards();
+});
 
 // Route Handlers
 app.use("/api/v1", router);

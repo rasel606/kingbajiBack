@@ -821,3 +821,55 @@ exports.register = async (req, res) => {
       res.status(500).json({ message: 'Server error', error: error.message });
     }
   };
+
+
+
+
+
+
+
+  // Controller function to get referred users
+exports.getReferredUsers = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    const [todayRebate, yesterdayRebate] = await Promise.all([
+      ReferralBonus.aggregate([
+        { $match: { 
+          userId: user.userId,
+          earnedAt: { $gte: new Date().setHours(0,0,0,0) }
+        }},
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ]),
+      ReferralBonus.aggregate([
+        { $match: { 
+          userId: user.userId,
+          earnedAt: { 
+            $gte: new Date(Date.now() - 86400000).setHours(0,0,0,0),
+            $lt: new Date().setHours(0,0,0,0)
+          }
+        }},
+        { $group: { _id: null, total: { $sum: "$amount" } } }
+      ])
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        friendsInvited: user.levelOneReferrals.length,
+        friendsCompleted: await ReferralBonus.countDocuments({
+          userId: user.userId,
+          turnover: { $gte: 5000 } // Minimum turnover requirement
+        }),
+        todayRebate: todayRebate[0]?.total || 0,
+        yesterdayRebate: yesterdayRebate[0]?.total || 0,
+        claimableBonus: await ReferralBonus.aggregate([
+          { $match: { userId: user.userId, isClaimed: false } },
+          { $group: { _id: null, total: { $sum: "$amount" } } }
+        ])
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}

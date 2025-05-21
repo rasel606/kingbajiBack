@@ -14,58 +14,38 @@ const crypto = require('crypto');
 
 
 
-
-
 async function addGameWithCategory(gameData, category_name) {
-
-
-  
-  // if (!category_name) {
-    let category = await Category.findOne({ category_name });
-  //   category = new Casino_category_table.create({ category_name });
-
-  // }
-
-  let newGame;
-  if (!category) {
-    newGame = await GameListTable.create(
-      // Assuming `game_id` is unique
-      { ...gameData, category_name },
-
-    );
-  } else {
-    // Assuming `game_id` is unique
-    
-    newGame = await GameListTable.findOneAndUpdate(
-      { g_code: gameData.g_code },
-      { ...gameData, category_name: category_name },
-      { upsert: true, new: true }
-    );
-  }
-
-
-  console.log("Added :", newGame);
-
+  // Ensure category exists or create it
+  const category = await Category.findOneAndUpdate(
+    { category_name },
+    { $setOnInsert: { category_name } },
+    { new: true, upsert: true }
+  );
+console.log(gameData)
+  // Add or update game
+  const newGame = await GameListTable.findOneAndUpdate(
+    { g_code: gameData.g_code },
+    { ...gameData, category_name },
+    { upsert: true, new: true }
+  );
 
   return { newGame, category };
 }
 
-const fetchGamesFromApi = async (result, category_name) => {
-  console.log("Signature:", result.operatorcode, result.providercode, result.key);
+// Fetch games from external API and add to DB
+const fetchGamesFromApi = async (providerData, category_name) => {
   try {
-    const operatorcode = result.operatorcode;
-    const providercode = result.providercode;
-    const secret_key = result.key; // Replace with actual secret key
+    const { operatorcode, providercode, key } = providerData;
 
-    console.log("Signature:", operatorcode, providercode, secret_key);
     const signature = crypto
       .createHash("md5")
-      .update(operatorcode.toLowerCase() + providercode.toUpperCase() + secret_key)
+      .update(operatorcode.toLowerCase() + providercode.toUpperCase() + key)
       .digest("hex")
       .toUpperCase();
 
-
-    console.log("Signature:", signature);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Generated Signature:", signature);
+    }
 
     const response = await axios.get("https://gsmd.336699bet.com/getGameList.ashx", {
       params: {
@@ -78,19 +58,18 @@ const fetchGamesFromApi = async (result, category_name) => {
       },
     });
 
-    // console.log("Fetched Games:", response);
-
-    const gameData = JSON.parse(response.data?.gamelist);
-    // console.log("Fetched Games:", gameData.length);
-
+    const gameList = JSON.parse(response.data?.gamelist);
     let gameResults = [];
 
-    for (let game of gameData) {
-      const addedGame = await addGameWithCategory(game, category_name);
-      gameResults.push(addedGame);
+    for (let game of gameList) {
+      try {
+        const addedGame = await addGameWithCategory(game, category_name);
+        gameResults.push(addedGame);
+      } catch (err) {
+        console.error(`Failed to add game ${game.g_code}:`, err.message);
+      }
     }
-    // await addGameWithCategory(gameData, category_name);
-    // console.log("Added Games:", gameResults.length);
+
     return gameResults;
   } catch (error) {
     console.error("Error fetching games:", error.message);
@@ -98,13 +77,8 @@ const fetchGamesFromApi = async (result, category_name) => {
   }
 };
 
-
-
-
-
+// Main function to add provider and fetch games
 exports.CasinoItemAdd = async (req, res) => {
-
-  console.log(req.body);
   try {
     const {
       company,
@@ -118,13 +92,11 @@ exports.CasinoItemAdd = async (req, res) => {
       key,
       auth_pass,
       currency_id,
-      category_name
+      category_name,
+      image_url
     } = req.body;
-    let image_url = req.body.image_url;
 
-  
-
-    const updateData = {
+    const providerData = {
       company,
       name,
       url,
@@ -138,35 +110,22 @@ exports.CasinoItemAdd = async (req, res) => {
       currency_id,
       image_url,
       updatetimestamp: Date.now(),
-
     };
-    console.log("Update Data:",updateData);
 
-    let result;
-    if (company) {
-      
-      result = await BetProviderTable.findOneAndUpdate(
-        { company },
-      updateData,
-        { new: true, upsert: true }
-      );
-      console.log("meet:",result)
-    } else {
-      result = await BetProviderTable.create(updateData);
-      console.log("meet: 1",result)
-    }
+    const result = await BetProviderTable.findOneAndUpdate(
+      { company },
+      providerData,
+      { new: true, upsert: true }
+    );
+
     const NewResult = await fetchGamesFromApi(result, category_name);
-    console.log(NewResult);
-
 
     res.json({ success: true, data: NewResult });
   } catch (error) {
     console.error("Error adding casino item:", error);
     res.status(500).json({ success: false, error: error.message });
   }
-}
-
-
+};
 
 
 
@@ -563,10 +522,10 @@ exports.ShowGameListById = async (req, res) => {
 
 exports.DeleteGameListByGtype = async (req, res) => {
   try {
-    const { p_type } = req.body; // Destructure from body
-    console.log("Deleting games with p_type:", p_type);
+    const {  p_code,p_type} = req.body; // Destructure from body
+    console.log("Deleting games with p_type:", p_code,p_type);
 
-    const result = await GameListTable.deleteMany({ p_type: p_type });
+    const result = await GameListTable.deleteMany({ p_code:p_code});
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "No games found with given p_type" });
@@ -679,7 +638,7 @@ exports.getCategoriesWithProviders = async (req, res) => {
 
 exports.getCategoriesWithProvidersGameList = async (req, res) => {
   try {
-    const { provider, category, page = 1 } = req.query;
+    const { provider, category, page  } = req.query;
 
     if (isNaN(page) || page < 1) {
       return res.status(400).json({ message: "Invalid page number" });
@@ -700,7 +659,6 @@ exports.getCategoriesWithProvidersGameList = async (req, res) => {
     };
 
     const games = await GameListTable.find(query)
-      .sort({ serial_number: -1 })
       .skip(skip)
       .limit(limit);
 
