@@ -269,16 +269,18 @@ exports.register = async (req, res) => {
 
   exports.loginUser = async (req, res) => {
     const { userId, password } = req.body;
-    // console.log(req.body);
+    console.log(req.body);
     try {
       if (!userId) {
         return res.status(400).json({ message: "User Not Found, Please Login Or Sign Up" });
       }
 
       const user = await User.findOne({ userId });
+          console.log(req.body);
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log(isPasswordValid);
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid password" });
       }
@@ -871,5 +873,84 @@ exports.getReferredUsers = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+
+
+
+
+exports.resetAndUpdatePassword = async (req, res) => {
+  const { currentPassword, newPassword,userId } = req.body;
+  // const token = req.headers.authorization?.split(' ')[1];
+console.log(req.body)
+  // if (!token) {
+  //   return res.status(401).json({ 
+  //     success: false,
+  //     message: 'Authorization token missing' 
+  //   });
+  // }
+
+  try {
+    // Verify token
+    // const decoded = jwt.verify(token, 'Kingbaji');
+    // const userId = decoded.id;
+
+    // Find user
+    const user = await User.findOne({ userId:userId });
+    console.log(user, currentPassword);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    console.log(isMatch);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+console.log(user.userId, newPassword);
+    // Validate new password
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$%¨!%*#])[A-Za-z\d@$%¨!%*#]{6,20}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password does not meet requirements'
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+console.log(user.userId, hashedPassword);
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Password update error:', error);
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'Server error during password update'
+    });
   }
 }

@@ -51,6 +51,8 @@ router.post('/user_details', CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
+router.post('/reset_and_update_password', CreateUserService.resetAndUpdatePassword);
+
 router.post('/sendphoneotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/sendemailotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/verify_opt', CreateUserService.verifyPhone);
@@ -314,14 +316,13 @@ router.post('/casino/update/:id', BettingController.casino_update);
 
 // router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
 // router.get("/kickPlayer",blank3.kickPlayer )
-router.get('/fetch-betting-history',blank3.BettingHistoryBet)
-router.get('/launch-app',blank3.launchApp)
-router.get('/is_player_ingame',blank3.isPlayerIngame)
-router.get('/fetch-betting',blank3.fetchBets)
-router.get('/get-daily-history',blank3.GetDailyHistory)
-router.get('/fetch-archived-history', blank3.ArchivedHistory)
-router.get('/mark-betting-history', blank3.MarkBettingHistory)
-router.post('/mark-archived-history',blank3.MarkArchivedHistory)
+// router.get('/fetch-betting-history',blank3.BettingHistoryBet)
+// router.get('/launch-app',blank3.launchApp)
+router.get('/history', blank3.getHistory);
+router.get('/archived-history', blank3.getArchivedHistory);
+router.post('/mark', blank3.markTickets);
+router.post('/mark-archived', blank3.markArchivedTickets);
+router.post('/daily-report', blank3.getDailyReport);
 // router.get('/api/game/log',blank3.logGameSessionone) //app.post('/api/game/log',
 // router.get('/api/odds/:key/:id',blank3.getEventOddsById) //  app.post('/api/betting/update',
 // router.post('/api/betting/update',blank3.updateBettingEvents) 
