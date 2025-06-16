@@ -704,20 +704,20 @@ console.log("results", results);
 
 exports.checkWithdrawalEligibilityActive = async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId } = req.body;
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
         const matchQuery = {
             status: { $in: ['active'] },
-            updatedAt: { $gte: sevenDaysAgo }
+            updatedAt: { $gte: sevenDaysAgo },
         };
 
         if (userId) {
             matchQuery.userId = userId;
         }
-
+console.log("matchQuery", matchQuery);
         const completedBonuses = await UserBonus.aggregate([
             { $match: matchQuery },
             {
@@ -768,7 +768,7 @@ exports.checkWithdrawalEligibilityActive = async (req, res) => {
 
 exports.checkWithdrawalEligibilityComplated = async (req, res) => {
     try {
-        const { userId } = req.query;
+        const { userId } = req.body;
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
