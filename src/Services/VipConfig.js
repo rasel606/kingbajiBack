@@ -1,4 +1,4 @@
-module.exports = {
+const VipConfig = {
   vipLevels: {
     bronze: {
       name: 'Bronze',
@@ -32,3 +32,5 @@ module.exports = {
     }
   }
 };
+
+module.exports = VipConfig;

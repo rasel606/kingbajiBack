@@ -4,6 +4,40 @@ const BettingHistory = require('../Models/BettingHistory');
 const config = require('../Services/VipConfig');
 const { calculateVipLevel } = require('../Healper/vipCalculator');
 
+const VipConfig = {
+  vipLevels: {
+    bronze: {
+      name: 'Bronze',
+      monthlyTurnoverRequirement: 0,
+      vpConversionRate: 2000,
+      loyaltyBonus: 0.01 // 1% of turnover
+    },
+    silver: {
+      name: 'Silver',
+      monthlyTurnoverRequirement: 300000,
+      vpConversionRate: 1250,
+      loyaltyBonus: 0.02 // 2% of turnover
+    },
+    gold: {
+      name: 'Gold',
+      monthlyTurnoverRequirement: 800000,
+      vpConversionRate: 1000,
+      loyaltyBonus: 0.03 // 3% of turnover
+    },
+    diamond: {
+      name: 'Diamond',
+      monthlyTurnoverRequirement: 2000000,
+      vpConversionRate: 500,
+      loyaltyBonus: 0.05 // 5% of turnover
+    },
+    elite: {
+      name: 'Elite',
+      monthlyTurnoverRequirement: 5000000,
+      vpConversionRate: 400,
+      loyaltyBonus: 0.07 // 7% of turnover
+    }
+  }
+};
 // Update user VIP status based on betting activity
 exports.updateVipStatus = async (req, res) => {
   try {
@@ -31,7 +65,7 @@ exports.updateVipStatus = async (req, res) => {
     userVip.lifetimeTurnover += monthlyTurnover - userVip.lastMonthTurnover;
     
     // Calculate VIP points
-    const vipLevels = config.vipLevels;
+    const vipLevels = vipLevels;
     const currentLevel = userVip.currentLevel.toLowerCase();
     const vpConversionRate = vipLevels[currentLevel].vpConversionRate;
     const newVipPoints = monthlyTurnover / vpConversionRate;
@@ -98,7 +132,7 @@ exports.processLoyaltyBonus = async () => {
       lastLoyaltyBonusDate: { $lt: startOfMonth } 
     });
     
-    const vipLevels = config.vipLevels;
+    const vipLevels = vipLevels;
     
     for (const userVip of userVips) {
       const level = userVip.currentLevel.toLowerCase();
@@ -137,7 +171,7 @@ exports.convertVpToMoney = async (userId, vpAmount) => {
     }
 
     // Calculate money amount based on current level
-    const vipLevels = config.vipLevels;
+    const vipLevels = vipLevels;
     const currentLevel = userVip.currentLevel.toLowerCase();
     const conversionRate = vipLevels[currentLevel].vpConversionRate;
     const moneyAmount = vpAmount / conversionRate;

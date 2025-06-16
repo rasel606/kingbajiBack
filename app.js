@@ -93,10 +93,10 @@ mongoose.connect(URI)
     .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
 // ✅ Security Middleware
-app.use(mongoSanitize());
+
 const bettingHistoryJob = require('./src/corn/BettingHistoryJob');
 const { processDailyRewards } = require('./src/Services/rewardProcessor');
-const chatSocketHandler = require('./src/Healper/chatSocketHandler');
+// const chatSocketHandler = require('./src/Healper/chatSocketHandler');
 const {TurnOverJob} = require('./src/corn/TurnOverJob');
 // ✅ Basic Route for Testing
 app.get('/', (req, res) => {
