@@ -184,7 +184,7 @@ exports.submitTransaction = async (req, res) => {
                 }
 
                 bonusId = depositBonus._id;
-                turnoverRequirement = (baseAmount + bonusAmount) * depositBonus.percentage;
+                turnoverRequirement = (baseAmount + bonusAmount) * depositBonus.wageringRequirement;
             }
         }
 
