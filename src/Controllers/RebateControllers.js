@@ -30,6 +30,7 @@ router.post("/set-rebate", async (req, res) => {
 
   const cron = require("node-cron");
 const Rebate = require("../models/rebate");
+const User = require("../Models/User");
 
 // প্রতি ১ মিনিটে চেক করবে
 cron.schedule("*/1 * * * *", async () => {

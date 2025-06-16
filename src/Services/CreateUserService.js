@@ -57,6 +57,8 @@ exports.register = async (req, res) => {
 
     });
 
+    console.log("newUser", newUser);
+
     await newUser.save();
 
     
@@ -81,10 +83,10 @@ exports.register = async (req, res) => {
         }
       };
 
-
+console.log("newUser", newUser)
       let apiSuccess = await attemptApiCall()
 
-
+console.log("apiSuccess", apiSuccess)
       if (!apiSuccess) {
         // Retry once more
         console.log("Retrying API call...");
@@ -149,7 +151,7 @@ exports.register = async (req, res) => {
 
 
 
-        const referrer = await User.findOne({ referralCode: referredBy });
+        const referrer = await User.findOne({  referredBy: newUser.referralCode });
 
         if (referrer) {
           referrer.levelOneReferrals.push(newUser.userId);

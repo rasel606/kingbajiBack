@@ -152,7 +152,7 @@ exports.refreshBalance = async (req, res) => {
         console.log("Transfer API Error:", transferError.message);
         return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
       }
-    }, 500);
+    }, 1000);
     const win = parseFloat(amount) - parseFloat(game.betAmount);
     console.log("Win Amount:", win);
 
@@ -223,7 +223,7 @@ const refreshBalancebefore = async (userId) => {
 
   const username = user.userId;
   let amount = null;
-
+    setTimeout(async () => {
   if (balance === 0 && amount === null && amount !== 0) {
     amount = await fetchBalance(agent, username);
     if (amount === null) {
@@ -281,7 +281,7 @@ const refreshBalancebefore = async (userId) => {
 
       try {
 
-
+        setTimeout(async () => {
         const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
         console.log("Refund Response:-----------------before", refund.data);
         console.log("Updated Balance:", balance);
@@ -308,20 +308,22 @@ const refreshBalancebefore = async (userId) => {
         console.log("updatedUser Balance:", updatedUser.balance);
         return updatedUser.balance;
 
+      }, 1000);
+
       } catch (transferError) {
         console.log("Transfer API Error:", transferError.message);
         return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
       }
 
 
-
-
-
-    
+  } else {
+    return balance
   }
-
-
+}, 1000);
 }
+
+
+
 
 // const updatedUser = await User.findOne({ userId: userId });
 // return updatedUser.balance
@@ -470,7 +472,7 @@ exports.launchGamePlayer = async (req, res) => {
         provider.key
       );
 
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       const transferResponse = await fetchApi("makeTransfer.aspx", {
         operatorcode: provider.operatorcode,
@@ -498,7 +500,7 @@ exports.launchGamePlayer = async (req, res) => {
           { balance: 0, last_game_id: Newgame.g_code, agentId: provider.providercode }
         );
 
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         const gameLaunchResponse = await fetchApi("launchGames.aspx", launchField);
         if (gameLaunchResponse.errCode !== "0") {
           return res.status(400).json({ errCode: gameLaunchResponse.errCode, errMsg: gameLaunchResponse.errMsg });
@@ -507,7 +509,7 @@ exports.launchGamePlayer = async (req, res) => {
         return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: gameLaunchResponse.gameUrl });
       }
     }
-
+await new Promise(resolve => setTimeout(resolve, 1500));
     // Fallback: No transfer, but still try to launch game
     const fallbackGameLaunch = await fetchApi("launchGames.aspx", launchField);
     return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: fallbackGameLaunch.gameUrl });
@@ -591,130 +593,586 @@ exports.GetBettingCategory = async (req, res) => {
 
 
 
-exports.GetBettingHistoryByMember = async (req, res) => {
-  console.log("product", req.body);
+
+
+
+// exports.GetBettingHistoryByMember = async (req, res) => {
+//   try {
+//     const { filters, userId } = req.body;
+//     const { product = [], site = [], date = 'today' } = filters;
+//     const currentDate = new Date();
+//     const match = {};
+//     let dateRange = {};
+//     const member = userId;
+
+//     if (member) match.member = member;
+//     if (Array.isArray(product) && product.length > 0) {
+//       match.product = { $in: product };
+//     }
+//     if (Array.isArray(site) && site.length > 0) {
+//       match.site = { $in: site };
+//     }
+
+//     // Date range logic
+//     if (date === 'today') {
+//       const startOfDay = new Date(currentDate);
+//       startOfDay.setHours(0, 0, 0, 0);
+//       dateRange = { start_time: { $gte: startOfDay, $lte: currentDate } };
+//     } else if (date === 'yesterday') {
+//       const yesterday = new Date(currentDate);
+//       yesterday.setDate(yesterday.getDate() - 1);
+//       const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
+//       const endOfYesterday = new Date(startOfYesterday);
+//       endOfYesterday.setHours(23, 59, 59, 999);
+//       dateRange = { start_time: { $gte: startOfYesterday, $lte: endOfYesterday } };
+//     } else if (date === 'last7days') {
+//       const sevenDaysAgo = new Date(currentDate);
+//       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+//       sevenDaysAgo.setHours(0, 0, 0, 0);
+//       dateRange = { start_time: { $gte: sevenDaysAgo, $lte: currentDate } };
+//     } else {
+//       const startOfDay = new Date(currentDate);
+//       startOfDay.setHours(0, 0, 0, 0);
+//       dateRange = { start_time: { $gte: startOfDay, $lte: currentDate } };
+//     }
+
+//     match.start_time = dateRange.start_time;
+
+//     // Aggregation pipeline
+//     const bettingHistory = await BettingHistory.aggregate([
+//       { $match: match },
+//       // Join with GameListTable to get game and provider info
+//       {
+//         $lookup: {
+//           from: "gamelisttables",
+//           localField: "game_id",
+//           foreignField: "g_code",
+//           as: "gameInfo"
+//         }
+//       },
+//       { $unwind: { path: "$gameInfo", preserveNullAndEmptyArrays: true } },
+//       // Add formatted date field
+//       {
+//         $addFields: {
+//           date: {
+//             $dateToString: {
+//               format: "%Y-%m-%d",
+//               date: "$start_time"
+//             }
+//           },
+//           category_name: "$gameInfo.g_type",
+//           provider_code: "$gameInfo.p_code"
+//         }
+//       },
+//       // Group by date, category and provider
+//       {
+//         $group: {
+//           _id: {
+//             date: "$date",
+//             category_name: "$category_name",
+//             provider_code: "$provider_code"
+//           },
+//           totalBet: { $sum: "$bet" },
+//           totalTurnover: { $sum: "$turnover" },
+//           totalPayout: { $sum: "$payout" },
+//           totalRecords: { $sum: 1 },
+//           // Store all raw records
+//           rawRecords: { $push: "$$ROOT" }
+//         }
+//       },
+//       // Project to clean up fields
+//       {
+//         $project: {
+//           _id: 0,
+//           date: "$_id.date",
+//           category_name: "$_id.category_name",
+//           provider_code: "$_id.provider_code",
+//           totalBet: 1,
+//           totalTurnover: 1,
+//           totalPayout: 1,
+//           totalRecords: 1,
+//           rawRecords: 1
+//         }
+//       },
+//       { $sort: { date: -1 } }
+//     ]);
+
+//       console.log("bettingHistory-all", bettingHistory);
+//     // Get all categories for enrichment
+//     const categories = await Category.find({});
+//     const categoryMap = {};
+//     categories.forEach(cat => {
+//       categoryMap[cat.g_type] = cat;
+//     });
+
+
+//     console.log("bettingHistory-category", categoryMap);
+//     // Process and enrich results
+//     const finalResult = bettingHistory.map(item => {
+//       // Get category info
+//       const categoryInfo = categoryMap[item.category_name] || {};
+      
+//       // Process game records within this category and provider
+//       const gamesMap = {};
+//       item.rawRecords.forEach(record => {
+//         const gameId = record.game_id;
+//         if (!gamesMap[gameId]) {
+//           gamesMap[gameId] = {
+//             game_id: gameId,
+//             gameName: record.gameInfo?.gameName || gameId,
+//             records: [],
+//             totalBet: 0,
+//             totalTurnover: 0,
+//             totalPayout: 0,
+//             totalRecords: 0
+//           };
+//         }
+        
+//         gamesMap[gameId].records.push({
+//           ref_no: record.ref_no,
+//           bet: record.bet,
+//           payout: record.payout,
+//           start_time: record.start_time,
+//           end_time: record.end_time,
+//           status: record.status
+//         });
+        
+//         gamesMap[gameId].totalBet += record.bet;
+//         gamesMap[gameId].totalTurnover += record.turnover;
+//         gamesMap[gameId].totalPayout += record.payout;
+//         gamesMap[gameId].totalRecords++;
+//       });
+
+//       return {
+//         date: item.date,
+//         category_name: item.category_name,
+//         provider_code: item.provider_code,
+//         category_info: {
+//           g_type: categoryInfo.g_type,
+//           category_code: categoryInfo.category_code
+//         },
+//         totalBet: item.totalBet,
+//         totalTurnover: item.totalTurnover,
+//         totalPayout: item.totalPayout,
+//         totalRecords: item.totalRecords,
+//         games: Object.values(gamesMap)
+//       };
+//     });
+
+//     // Group by date for final structure
+//     const groupedByDate = finalResult.reduce((acc, item) => {
+//       const dateGroup = acc.find(g => g.date === item.date);
+//       if (dateGroup) {
+//         // Check if category exists in this date group
+//         const categoryGroup = dateGroup.categories.find(c => c.category_name === item.category_name);
+//         if (categoryGroup) {
+//           // Add provider to existing category
+//           categoryGroup.providers.push({
+//             provider_code: item.provider_code,
+//             totalBet: item.totalBet,
+//             totalTurnover: item.totalTurnover,
+//             totalPayout: item.totalPayout,
+//             totalRecords: item.totalRecords,
+//             games: item.games
+//           });
+//         } else {
+//           // Add new category with provider
+//           dateGroup.categories.push({
+//             category_name: item.category_name,
+//             category_info: item.category_info,
+//             providers: [{
+//               provider_code: item.provider_code,
+//               totalBet: item.totalBet,
+//               totalTurnover: item.totalTurnover,
+//               totalPayout: item.totalPayout,
+//               totalRecords: item.totalRecords,
+//               games: item.games
+//             }]
+//           });
+//         }
+//       } else {
+//         // Create new date group with category and provider
+//         acc.push({
+//           date: item.date,
+//           categories: [{
+//             category_name: item.category_name,
+//             category_info: item.category_info,
+//             providers: [{
+//               provider_code: item.provider_code,
+//               totalBet: item.totalBet,
+//               totalTurnover: item.totalTurnover,
+//               totalPayout: item.totalPayout,
+//               totalRecords: item.totalRecords,
+//               games: item.games
+//             }]
+//           }]
+//         });
+//       }
+//       return acc;
+//     }, []);
+
+//     res.json({ success: true, data: groupedByDate });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to get betting history",
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
+
+exports.GetBettingHistoryByMember =  async (req, res) => {
   try {
     const { filters, userId } = req.body;
-    const { product = [], site = [], date = 'today' } = filters;
+    const { providercode = [], g_type = [], date = 'today' } = filters;
     const currentDate = new Date();
     const match = {};
     let dateRange = {};
-    // const member = userId;
+    const member = userId;
 
-console.log("product", product,date,site);
-console.log("product", req.body);
-
-    // if (member) match.member = member;
-    if (Array.isArray(product) && product.length > 0) {
-      match.product = { $in: product }; 
+    if (member) match.member = member;
+    if (Array.isArray(g_type) && g_type.length > 0) {
+      match.product = { $in: g_type };
     }
-    if (Array.isArray(site) && site.length > 0) {
-      match.site = { $in: site };
+    if (Array.isArray(providercode) && providercode.length > 0) {
+      match.site = { $in: providercode };
     }
 
+    // Date range logic
     if (date === 'today') {
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
-      dateRange = {
-        start_time: { $gte: startOfDay, $lte: currentDate }
-      };
+      dateRange = { start_time: { $gte: startOfDay, $lte: currentDate } };
     } else if (date === 'yesterday') {
       const yesterday = new Date(currentDate);
       yesterday.setDate(yesterday.getDate() - 1);
       const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
       const endOfYesterday = new Date(startOfYesterday);
       endOfYesterday.setHours(23, 59, 59, 999);
-      dateRange = {
-        start_time: { $gte: startOfYesterday, $lte: endOfYesterday }
-      };
+      dateRange = { start_time: { $gte: startOfYesterday, $lte: endOfYesterday } };
     } else if (date === 'last7days') {
       const sevenDaysAgo = new Date(currentDate);
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 90); // includes today
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       sevenDaysAgo.setHours(0, 0, 0, 0);
-      dateRange = {
-        start_time: { $gte: sevenDaysAgo, $lte: currentDate }
-      };
+      dateRange = { start_time: { $gte: sevenDaysAgo, $lte: currentDate } };
     } else {
       const startOfDay = new Date(currentDate);
       startOfDay.setHours(0, 0, 0, 0);
-      dateRange = {
-        start_time: { $gte: startOfDay, $lte: currentDate }
-      };
+      dateRange = { start_time: { $gte: startOfDay, $lte: currentDate } };
     }
 
     match.start_time = dateRange.start_time;
-console.log("match", match);
-    const result = await BettingHistory.aggregate([
-      { $match: match },
-      {
-        $addFields: {
-          date: {
-            $dateToString: {
-              format: "%Y-%m-%d",
-              date: "$start_time"
-            }
+
+    // First, get all matching betting history records
+    const bettingRecords = await BettingHistory.find(match).lean().sort({ start_time: -1 });
+
+    // Get all unique game_ids from the betting records
+    const gameIds = [...new Set(bettingRecords.map(record => record.game_id))];
+
+    // Get game information for these game_ids
+    const games = await GameListTable.find({ g_code: { $in: gameIds } }).lean();
+
+    // Create a map of game_id to game info
+    const gameMap = {};
+    games.forEach(game => {
+      gameMap[game.g_code] = game;
+    });
+
+    // Get all unique g_types from the games
+    const gameTypes = [...new Set(games.map(game => game.g_type || game.category_name))];
+
+    // Get category information for these g_types
+    const categories = await Category.find({ g_type: { $in: gameTypes } }).lean();
+
+    // Create a map of g_type to category info
+    const categoryMap = {};
+    categories.forEach(category => {
+      categoryMap[category.g_type] = category;
+    });
+
+    // Get all unique provider codes (site)
+    const providerCodes = [...new Set(bettingRecords.map(record => record.site))];
+
+    // Get provider information
+    const providers = await BetProviderTable.find({ providercode: { $in: providerCodes } }).lean();
+
+    // Create a map of providercode to provider info
+    const providerMap = {};
+    providers.forEach(provider => {
+      providerMap[provider.providercode] = provider;
+    });
+
+    // Group records by date
+    const groupedByDate = bettingRecords.reduce((acc, record) => {
+      const dateStr = record.start_time.toISOString().split('T')[0];
+      if (!acc[dateStr]) {
+        acc[dateStr] = [];
+      }
+      acc[dateStr].push(record);
+      return acc;
+    }, {});
+
+    // Process each date group
+    const result = Object.entries(groupedByDate).map(([date, records]) => {
+      // Group records by site and product (g_type)
+      const groupedBySiteProduct = records.reduce((acc, record) => {
+        const gameInfo = gameMap[record.game_id] || {};
+        const categoryInfo = categoryMap[gameInfo.g_type] || {};
+        const providerInfo = providerMap[record.site] || {};
+        
+        const key = `${record.site}-${gameInfo.g_type}`;
+        if (!acc[key]) {
+          acc[key] = {
+            site: record.site,
+            product: gameInfo.g_type,
+            records: [],
+            totalBet: 0,
+            totalTurnover: 0,
+            totalPayout: 0,
+            totalRecords: 0,
+            category_name: categoryInfo.category_name || '',
+            provider_code: providerInfo.providercode || record.site,
+            provider_name: providerInfo.company || record.site
+          };
+        }
+        
+        acc[key].records.push(record);
+        acc[key].totalBet += record.bet || 0;
+        acc[key].totalTurnover += record.turnover || 0;
+        acc[key].totalPayout += record.payout || 0;
+        acc[key].totalRecords += 1;
+        
+        return acc;
+      }, {});
+
+      // Convert to array format
+      const items = Object.values(groupedBySiteProduct).map(item => {
+        const gameInfo = gameMap[item.records[0].game_id] || {};
+        const categoryInfo = categoryMap[item.product] || {};
+        
+        // Group games by game_id
+        const gamesMap = item.records.reduce((gamesAcc, record) => {
+          if (!gamesAcc[record.game_id]) {
+            const game = gameMap[record.game_id] || {};
+            gamesAcc[record.game_id] = {
+              game_id: record.game_id,
+              game_name: game.gameName?.gameName_enus || record.game_id,
+              totalBet: 0,
+              totalTurnover: 0,
+              totalPayout: 0,
+              totalRecords: 0,
+              records: []
+            };
           }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            date: "$date",
-            site: "$site",
-            // member: "$member",
-            product: "$product"
+          
+          gamesAcc[record.game_id].totalBet += record.bet || 0;
+          gamesAcc[record.game_id].totalTurnover += record.turnover || 0;
+          gamesAcc[record.game_id].totalPayout += record.payout || 0;
+          gamesAcc[record.game_id].totalRecords += 1;
+          gamesAcc[record.game_id].records.push(record);
+          
+          return gamesAcc;
+        }, {});
+
+        return {
+          date,
+          category_name: categoryInfo.category_name || '',
+          provider_code: item.provider_code,
+          provider_name: item.provider_name,
+          category_info: {
+            g_type: categoryInfo.g_type,
+            category_code: categoryInfo.category_code
           },
-          records: {
-            $push: {
-              ref_no: "$ref_no",
-              game_id: "$game_id",
-              bet: "$bet",
-              turnover: "$turnover",
-              payout: "$payout",
-              commission: "$commission",
-              p_share: "$p_share",
-              p_win: "$p_win",
-              status: "$status",
-              start_time: "$start_time",
-              end_time: "$end_time",
-              match_time: "$match_time",
-              bet_detail: "$bet_detail"
-            }
-          },
-          totalBet: { $sum: "$bet" },
-          totalTurnover: { $sum: "$turnover" },
-          totalPayout: { $sum: "$payout" },
-          totalRecords: { $sum: 1 }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-          date: "$_id.date",
-          site: "$_id.site",
-          // member: "$_id.member",
-          product: "$_id.product",
-          records: 1,
-          totalBet: 1,
-          totalTurnover: 1,
-          totalPayout: 1,
-          totalRecords: 1
-        }
-      },
-      { $sort: { date: -1, site: 1, member: 1 } }
-    ]);
-console.log("result", result);
-    res.json({ success: true, data: result });
+          totalBet: item.totalBet,
+          totalTurnover: item.totalTurnover,
+          totalPayout: item.totalPayout,
+          totalRecords: item.totalRecords,
+          games: Object.values(gamesMap),
+          records: item.records // Include all raw records for details view
+        };
+      });
+
+      return {
+        date,
+        items
+      };
+    });
+
+    res.json({
+      success: true,
+      data: result
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Error fetching betting history:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to get detailed betting history",
+      message: 'Failed to fetch betting history',
       error: error.message
     });
   }
-};
+}
 
+
+
+
+
+
+
+
+
+
+
+// exports.GetBettingHistoryByMember = async (req, res) => {
+//   console.log("product", req.body);
+//   try {
+//     const { filters, userId } = req.body;
+//     const { product = [], site = [], date = 'today' } = filters;
+//     const currentDate = new Date();
+//     const match = {};
+//     let dateRange = {};
+//     // const member = userId;
+
+// console.log("product", product,date,site);
+// console.log("product", req.body);
+
+//     // if (member) match.member = member;
+//     if (Array.isArray(product) && product.length > 0) {
+//       match.product = { $in: product }; 
+//     }
+//     if (Array.isArray(site) && site.length > 0) {
+//       match.site = { $in: site };
+//     }
+
+//     if (date === 'today') {
+//       const startOfDay = new Date(currentDate);
+//       startOfDay.setHours(0, 0, 0, 0);
+//       dateRange = {
+//         start_time: { $gte: startOfDay, $lte: currentDate }
+//       };
+//     } else if (date === 'yesterday') {
+//       const yesterday = new Date(currentDate);
+//       yesterday.setDate(yesterday.getDate() - 1);
+//       const startOfYesterday = new Date(yesterday.setHours(0, 0, 0, 0));
+//       const endOfYesterday = new Date(startOfYesterday);
+//       endOfYesterday.setHours(23, 59, 59, 999);
+//       dateRange = {
+//         start_time: { $gte: startOfYesterday, $lte: endOfYesterday }
+//       };
+//     } else if (date === 'last7days') {
+//       const sevenDaysAgo = new Date(currentDate);
+//       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 90); // includes today
+//       sevenDaysAgo.setHours(0, 0, 0, 0);
+//       dateRange = {
+//         start_time: { $gte: sevenDaysAgo, $lte: currentDate }
+//       };
+//     } else {
+//       const startOfDay = new Date(currentDate);
+//       startOfDay.setHours(0, 0, 0, 0);
+//       dateRange = {
+//         start_time: { $gte: startOfDay, $lte: currentDate }
+//       };
+//     }
+
+//     match.start_time = dateRange.start_time;
+// console.log("match", match);
+//     const result = await BettingHistory.aggregate([
+//       { $match: match },
+//       {
+//         $addFields: {
+//           date: {
+//             $dateToString: {
+//               format: "%Y-%m-%d",
+//               date: "$start_time"
+//             }
+//           }
+//         }
+//       },
+//       {
+//         $group: {
+//           _id: {
+//             date: "$date",
+//             site: "$site",
+//             // member: "$member",
+//             product: "$product"
+//           },
+//           records: {
+//             $push: {
+//               ref_no: "$ref_no",
+//               game_id: "$game_id",
+//               bet: "$bet",
+//               turnover: "$turnover",
+//               payout: "$payout",
+//               commission: "$commission",
+//               p_share: "$p_share",
+//               p_win: "$p_win",
+//               status: "$status",
+//               start_time: "$start_time",
+//               end_time: "$end_time",
+//               match_time: "$match_time",
+//               bet_detail: "$bet_detail"
+//             }
+//           },
+//           totalBet: { $sum: "$bet" },
+//           totalTurnover: { $sum: "$turnover" },
+//           totalPayout: { $sum: "$payout" },
+//           totalRecords: { $sum: 1 }
+//         }
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           date: "$_id.date",
+//           site: "$_id.site",
+//           // member: "$_id.member",
+//           product: "$_id.product",
+//           records: 1,
+//           totalBet: 1,
+//           totalTurnover: 1,
+//           totalPayout: 1,
+//           totalRecords: 1
+//         }
+//       },
+//       { $sort: { date: -1, site: 1, member: 1 } }
+//     ]);
+// console.log("result", result);
+//     res.json({ success: true, data: result });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to get detailed betting history",
+//       error: error.message
+//     });
+//   }
+// };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // const getDateRange = (rangeType) => {
 //   const now = new Date();

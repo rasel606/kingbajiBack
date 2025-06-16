@@ -96,6 +96,8 @@ mongoose.connect(URI)
 app.use(mongoSanitize());
 const bettingHistoryJob = require('./src/corn/BettingHistoryJob');
 const { processDailyRewards } = require('./src/Services/rewardProcessor');
+const chatSocketHandler = require('./src/Healper/chatSocketHandler');
+const {TurnOverJob} = require('./src/corn/TurnOverJob');
 // ✅ Basic Route for Testing
 app.get('/', (req, res) => {
     console.log('✔️ API Running');

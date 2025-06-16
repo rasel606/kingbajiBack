@@ -15,12 +15,12 @@ const WidthralPaymentGateWayTableSchema = new mongoose.Schema({
     referredBy: { type: String , required: true }, // Ensure this matches the controller field name
     image_url: { type: String , required: true , default: "" },
     start_time: { 
-        hours: { type: Number, min: 0, max: 23, required: true }, 
-        minutes: { type: Number, min: 0, max: 59, required: true } 
+        hours: { type: Number, min: 0, max: 23,  }, 
+        minutes: { type: Number, min: 0, max: 59, } 
     },
     end_time: { 
-        hours: { type: Number, min: 0, max: 23, required: true }, 
-        minutes: { type: Number, min: 0, max: 59, required: true } 
+        hours: { type: Number, min: 0, max: 23,  }, 
+        minutes: { type: Number, min: 0, max: 59, } 
     },
     is_active: { type: Boolean, default: true },
     timestamp: { type: Date, default: Date.now },

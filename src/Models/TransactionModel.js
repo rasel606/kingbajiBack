@@ -17,12 +17,12 @@ const transactionSchema = new mongoose.Schema({
 
     type: {
         type: Number,
-        enum: [0, 1 , 2], // 0 = Deposit, 1 = Withdrawal
+        enum: [0, 1, 2, 3], // 0 = Deposit, 1 = Withdrawal
         required: true,
     },
     status: {
         type: Number,
-        enum: [0, 1, 2 , 3], // 0 = Hold, 1 = Accept, 2 = Reject
+        enum: [0, 1, 2, 3], // 0 = Hold, 1 = Accept, 2 = Reject
         required: true,
     },
 
@@ -32,12 +32,21 @@ const transactionSchema = new mongoose.Schema({
         type: String,
         enum: ["Send Money", "Cashout", "Payment", "transfer"],
     },
-
-    datetime: { type: Date, default: Date.now },
+    bonusId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bonus' },
+    isBonusApplied: { type: Boolean, default: false },
+    bonusStatus: {
+        type: String,
+        enum: ['pending', 'active', 'completed', 'expired', 'cancelled']
+    },
+    turnoverRequirement: { type: Number, default: 0 },
+    turnoverCompleted: { type: Number, default: 0 },
+    isTurnoverCompleted: { type: Boolean, default: false },
+    expiryDate: { type: Date }, // For bonus expiry
     is_commission: { type: Boolean, default: false },
     referredBy: { type: String },
     referredbyAffiliate: { type: String, ref: 'AffiliateUser' },
     referredbysubAdmin: { type: String, ref: 'SubAdmin' },
+    datetime: { type: Date, default: Date.now },
     updatetime: { type: Date, default: Date.now },
 });
 

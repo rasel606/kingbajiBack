@@ -9,6 +9,10 @@ const TransactionModel = require('../Models/TransactionModel');
 const notificationController = require('../Controllers/notificationController');
 const generateReferralCode = require('../Services/generateReferralCode');
 const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable');
+const Bonus = require('../Models/Bonus');
+const UserBonus = require('../Models/UserBonus');
+const BettingHistory = require('../Models/BettingHistory');
+const { use } = require('../Router/Api');
 // exports.addTransaction = async (req, res) => {
 //   try {
 //     const { userId, amount, type } = req.body;
@@ -113,6 +117,7 @@ exports.submitTransaction = async (req, res) => {
             payment_type,
             gateway_Number,
             transactionID,
+            bonusCode
         } = req.body;
 
         console.log("Incoming Request Body: -------------1", req.body);
@@ -123,9 +128,9 @@ exports.submitTransaction = async (req, res) => {
         }
         console.log("Incoming Request Body:", req.body);
         // Validate base_amount is a number
-        const baseAmountInt = parseInt(base_amount);
-        if (isNaN(baseAmountInt) || baseAmountInt <= 0) {
-            return res.status(400).json({ error: "Invalid base amount." });
+        const baseAmount = parseFloat(base_amount);
+        if (isNaN(baseAmount) || baseAmount <= 0) {
+            return res.status(400).json({ error: "Invalid base amount" });
         }
 
         // Optionally validate transaction ID format
@@ -151,9 +156,39 @@ exports.submitTransaction = async (req, res) => {
             return res.status(409).json({ message: 'Transaction already used' });
         }
 
+        let bonusAmount = 0;
+        let bonusId = null;
+        let turnoverRequirement = 0;
+        const bonusType = 'deposit';
+        const totalAmount = baseAmount + bonusAmount;
+        const depositBonus = null
+
+        if (baseAmount >= 200) { // Minimum deposit for bonus
+            const depositBonus = await Bonus.findOne({
+                bonusType: 'deposit',
+                isActive: true,
+                minDeposit: { $lte: baseAmount },
+                _id: bonusCode
+            }).sort({ minDeposit: -1 }); // Get the best matching bonus
+
+
+            console.log("depositBonus", depositBonus);
+            if (depositBonus) {
+                // Calculate bonus amount
+                bonusAmount = depositBonus.fixedAmount ||
+                    Math.floor((baseAmount * depositBonus.percentage) / 100);
+
+                // Apply max bonus limit if exists
+                if (depositBonus.maxBonus && bonusAmount > depositBonus.maxBonus) {
+                    bonusAmount = depositBonus.maxBonus;
+                }
+
+                bonusId = depositBonus._id;
+                turnoverRequirement = (baseAmount + bonusAmount) 
+            }
+        }
+
         // Calculate 4% bonus
-        const bonus = Math.floor((baseAmountInt * 3) / 100); // use Math.floor to convert to integer
-        const totalAmount = baseAmountInt + bonus;
         const type = 0; // static type
         const status = 0; // pending
 
@@ -161,8 +196,8 @@ exports.submitTransaction = async (req, res) => {
         const newTransaction = await Transaction.create({
             userId: user.userId,
             transactionID,
-            base_amount: baseAmountInt,
-            bonus_amount: bonus,
+            base_amount: baseAmount,
+            bonus_amount: bonusAmount,
             amount: totalAmount,
             gateway_name,
             gateway_Number,
@@ -172,6 +207,12 @@ exports.submitTransaction = async (req, res) => {
             status,
             referredBy: user.referredBy,
             is_commission: false,
+            bonusId,
+            isBonusApplied: bonusAmount > 0,
+            bonusStatus: bonusAmount > 0 ? 'pending' : undefined,
+            turnoverRequirement: turnoverRequirement,
+            expiryDate: bonusAmount > 0 ?
+                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null // 7 days expiry
         });
 
         console.log("Transaction Created:", newTransaction);
@@ -189,6 +230,8 @@ exports.submitTransaction = async (req, res) => {
             success: true,
             message: 'Transaction submitted successfully',
             transaction: newTransaction,
+            bonusApplied: !!depositBonus,
+            bonusAmount
         });
 
     } catch (error) {
@@ -310,18 +353,21 @@ exports.submitTransaction = async (req, res) => {
 // };
 
 exports.approveDepositbySubAdmin = async (req, res) => {
+    console.log("console body", req.body);
     try {
         const { userId, referralCode, status } = req.body;
         const transactionID = req.params.transactionID;
-        console.log(userId, referralCode, status, transactionID);
+        console.log("Find the", userId, referralCode, status, transactionID);
         // Find the user
         const user = await User.findOne({ userId, referredBy: referralCode });
+        console.log("user", userId);
         if (!user || user.referredBy !== referralCode) {
             return res.status(404).json({ message: 'User not found or referral mismatch' });
         }
 
         // Find the sub-admin
         const subAdmin = await SubAdmin.findOne({ referralCode });
+        console.log("sub", subAdmin.referralCode);
         if (!subAdmin || subAdmin.referralCode !== referralCode) {
             return res.status(400).json({ message: 'Invalid SubAdmin referral code' });
         }
@@ -333,17 +379,21 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             referredBy: referralCode,
             type: 0,
         });
-
+        console.log("transactionID", transactionID);
+        console.log("transaction  --- 2 ", req.body.status);
         if (!transaction) {
             return res.status(404).json({ message: "Transaction not found" });
         }
 
+        console.log("transaction  --- 2 ", req.body.status);
+
         // Check if already approved
-        if (transaction.status === 1) {
+        if (transaction.status !== 0) {
             return res.status(400).json({ message: "Transaction already approved" });
         }
 
 
+        console.log("transaction  --- 3 ", transaction.status);
 
         // Process based on status
         if (parseInt(status) === 1) {
@@ -351,17 +401,56 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             if (subAdmin.balance < transaction.amount) {
                 return res.status(400).json({ message: "SubAdmin balance is not enough" });
             }
+            // Update balances
             subAdmin.balance -= transaction.amount;
             user.balance += transaction.amount;
 
-            transaction.updatetime = new Date();
+            // Update transaction status
             transaction.status = 1;
+            transaction.updatetime = new Date();
+            transaction.bonusStatus = 'active';
+            // If bonus was applied, create UserBonus record
+            // if (transaction.isBonusApplied === true ) {
+            // bonusAmount = (depositBonus.percentage / 100) * baseAmount;
+            // turnoverRequirement = bonusAmount * depositBonus.wageringRequirement;
+            user.bonus = {
+                active: true,
+                bonusAmount: transaction.bonus_amount,
+                wageringRequirement: transaction.turnoverRequirement,
+                completedTurnover: 0
+            };
 
-            await user.save();
+            // }
+
+
+            console.log("transaction  --- 4 ", transaction.base_amount, transaction.bonus_amount, transaction.turnoverRequirement);
+
+            // Save all changes
+
+            console.log("transaction  --- 5 ", transaction.isBonusApplied);
+            if (transaction.isBonusApplied) {
+                const bonus = await Bonus.findOne({ bonusType: 'deposit', _id: transaction.bonusId, isActive: true });
+
+                console.log("bonus", bonus);
+                if (bonus) {
+                    await UserBonus.create({
+                        userId: user.userId,
+                        bonusId: transaction.bonusId,
+                        amount: transaction.amount,
+                        bonusAmount: transaction.bonus_amount,
+                        remainingAmount: transaction.bonus_amount,
+                        turnoverRequirement: transaction.turnoverRequirement,
+                        expiryDate: transaction.expiryDate,
+                        transactionId: transaction.transactionID
+                    });
+                    console.log("UserBonus created", user.userId, transaction.bonusId, transaction.amount, transaction.bonus_amount, transaction.turnoverRequirement, transaction.transactionID);
+
+                }
+
+            }
             await subAdmin.save();
+            await user.save();
             await transaction.save();
-
-
             await notificationController.createNotification(
                 `Deposit approved for ${transaction.transactionID} with (User ID: ${user.userId})`,
                 user.userId,
@@ -370,7 +459,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
                 { amount: transaction.amount, transactionID: transaction.transactionID }
             );
 
-            return res.status(200).json({ message: "Deposit approved successfully", user });
+            return res.status(200).json({ message: "Deposit approved successfully", transaction });
 
 
 
@@ -382,9 +471,9 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             await transaction.save();
             await notificationController.createNotification(
                 `Deposit rejected for ${transaction.transactionID} with (User ID: ${user.userId})`,
-                `deposit of ${transaction.amount} has been rejected at ${new Date()}  by ${transaction.gateway_name}.`,
-                transaction.userId,
-                `Your deposit of ${transaction.amount} has been rejected at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed.`,
+                user.userId,
+                `deposit of ${transaction.amount} has been rejected at ${new Date()}  by ${transaction.gateway_name}.
+            Your deposit of ${transaction.amount} has been rejected at ${new Date()} with transaction ID: ${transaction.transactionID} by ${transaction.gateway_name} and will be processed.`,
                 'deposit_rejected',
                 { amount: transaction.amount, transactionID: transaction.transactionID }
             );
@@ -392,7 +481,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 
 
 
-            return res.status(200).json({ message: "Deposit rejected successfully" });
+            return res.status(200).json({ message: "Deposit rejected successfully", transaction });
         } else {
             return res.status(400).json({ message: "Invalid status value" });
         }
@@ -529,6 +618,218 @@ exports.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin = async (req, res
 
 
 
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+exports.checkWithdrawalEligibility = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const userBonuses = await UserBonus.find({
+      userId,
+      status: 'active',
+      expiryDate: { $gt: new Date() }
+    }).populate('bonusId');
+
+    if (!userBonuses.length) {
+      return res.status(200).json({ message: 'No active bonuses found for this user.' });
+    }
+
+    const results = [];
+console.log("userBonuses", userBonuses);
+    for (const bonus of userBonuses) {
+      const { createdAt, expiryDate, bonusId, turnoverRequirement } = bonus;
+      const eligibleGames = bonusId?.eligibleGames || [];
+
+      const matchQuery = {
+        member: userId,
+        start_time: { $gte: createdAt, $lte: expiryDate }
+      };
+
+      if (eligibleGames.length && eligibleGames[0] !== 'all') {
+        matchQuery.game_id = { $in: eligibleGames };
+      }
+
+      const turnoverData = await BettingHistory.aggregate([
+        { $match: matchQuery },
+        {
+          $group: {
+            _id: null,
+            totalTurnover: { $sum: '$turnover' }
+          }
+        }
+      ]);
+
+      const completedTurnover = turnoverData[0]?.totalTurnover || 0;
+      const isCompleted = completedTurnover >= turnoverRequirement;
+
+      results.push({
+        bonusId: bonus._id,
+        bonusName: bonusId.name,
+        required: turnoverRequirement,
+        completed: completedTurnover,
+        status: isCompleted ? 'completed' : 'incomplete'
+      });
+    }
+console.log("results", results);
+    return res.status(200).json({
+      message: 'Turnover check completed',
+      bonuses: results
+    });
+  } catch (error) {
+    console.error('checkCompleteTurnover error:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+exports.checkWithdrawalEligibilityActive = async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const matchQuery = {
+            status: { $in: ['active'] },
+            updatedAt: { $gte: sevenDaysAgo }
+        };
+
+        if (userId) {
+            matchQuery.userId = userId;
+        }
+
+        const completedBonuses = await UserBonus.aggregate([
+            { $match: matchQuery },
+            {
+                $lookup: {
+                    from: 'bonus',
+                    localField: 'bonusId',
+                    foreignField: '_id',
+                    as: 'bonusInfo'
+                }
+            },
+            { $unwind: '$bonusInfo' },
+            {
+                $project: {
+                    _id: 1,
+                    userId: 1,
+                    bonusId: 1,
+                    amount: 1,
+                    remainingAmount: 1,
+                    turnoverRequirement: 1,
+                    completedTurnover: 1,
+                    status: 1,
+                    expiryDate: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    transactionId: 1,
+                    'bonusInfo.name': 1,
+                    'bonusInfo.bonusType': 1,
+                    'bonusInfo.percentage': 1,
+                    'bonusInfo.fixedAmount': 1,
+                    'bonusInfo.validDays': 1,
+                    'bonusInfo.eligibleGames': 1
+                }
+            },
+            // { $sort: { updatedAt: -1 } }
+        ]);
+        console.log("completedBonuses", completedBonuses)
+        res.status(200).json({ success: true, data: completedBonuses });
+    } catch (error) {
+        console.error('Error fetching completed user bonuses:', error);
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+};
+
+
+
+
+
+
+exports.checkWithdrawalEligibilityComplated = async (req, res) => {
+    try {
+        const { userId } = req.query;
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const matchQuery = {
+            status: { $in: ['completed', 'expired', 'cancelled', 'pending'] },
+            updatedAt: { $gte: sevenDaysAgo }
+        };
+
+        if (userId) {
+            matchQuery.userId = userId;
+        }
+
+        const completedBonuses = await UserBonus.aggregate([
+            { $match: matchQuery },
+            {
+                $lookup: {
+                    from: 'bonus',
+                    localField: 'bonusId',
+                    foreignField: '_id',
+                    as: 'bonusInfo'
+                }
+            },
+            { $unwind: '$bonusInfo' },
+            {
+                $project: {
+                    _id: 1,
+                    userId: 1,
+                    bonusId: 1,
+                    amount: 1,
+                    remainingAmount: 1,
+                    turnoverRequirement: 1,
+                    completedTurnover: 1,
+                    status: 1,
+                    expiryDate: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    transactionId: 1,
+                    'bonusInfo.name': 1,
+                    'bonusInfo.bonusType': 1,
+                    'bonusInfo.percentage': 1,
+                    'bonusInfo.fixedAmount': 1,
+                    'bonusInfo.validDays': 1,
+                    'bonusInfo.eligibleGames': 1
+                }
+            },
+            // { $sort: { updatedAt: -1 } }
+        ]);
+        console.log("completedBonuses", completedBonuses)
+        res.status(200).json({ success: true, data: completedBonuses });
+    } catch (error) {
+        console.error('Error fetching completed user bonuses:', error);
+        res.status(500).json({ success: false, error: 'Server Error' });
+    }
+};
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 exports.WithdrawTransaction = async (req, res) => {
     const { userId, amount, gateway_name, mobile, referredBy } = req.body;
     console.log(req.body);
@@ -558,6 +859,8 @@ exports.WithdrawTransaction = async (req, res) => {
                 return res.status(404).json({ message: 'Invalid referral code' });
             }
         }
+
+        // checkTurnoverRequirements(user.userId);
 
         const transactionID = generateReferralCode();
         const newTransaction = new Transaction({
@@ -804,162 +1107,208 @@ exports.approveWidthdrawBySubAdmin = async (req, res) => {
 };
 
 
-exports.AddPaymentMethodNumberDeposit = async (req, res) => {
-    try {
-        const {
-            user_role,
-            email,
-            gateway_Number,
-            referralCode,
-            gateway_name,
-            payment_type,
-            minimun_amount,
-            maximum_amount,
-            image_url,
-            start_time,
-            end_time
-        } = req.body.formData;
+// exports.AddPaymentMethodNumberDeposit = async ({
+//     user_role,
+//     email,
+//     referralCode,
 
-        // Check if user exists
-        const user = await SubAdmin.findOne({ user_role, email, referralCode });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+// }) => {
+//     const defaultGateways = [
+//         {
+//             gateway_name: "Bkash",
+//             image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
+//         {
+//             gateway_name: "Nagad",
+//             image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
+//         {
+//             gateway_name: "Rocket",
+//             image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
+//         {
+//             gateway_name: "Upay",
+//             image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
 
-        // Fetch existing payment methods (oldest to newest)
-        const userPaymentMethods = await PaymentGateWayTable.find({
-            email:user.email,
-            referredBy: user.referralCode
-        }).sort({ updatetime: 1 }); // use 'updatetime' to maintain consistency
+//     ];
 
-        // Prepare the new method
-        const newPaymentMethod = new PaymentGateWayTable({
-            user_role: user.user_role,
-            email,
-            gateway_Number,
-            gateway_name,
-            payment_type,
-            image_url,
-            referredBy: user.referralCode,
-            start_time,
-            end_time,
-            minimun_amount,
-            maximum_amount,
-            is_active: true,
-            updatetime: new Date()
-        });
+//     try {
+//         const user = await SubAdmin.findOne({ user_role, email, referralCode });
+//         if (!user) {
+//             return { success: false, message: "User not found" };
+//         }
 
-        // Check count
-        if (userPaymentMethods.length >= 4) {
-            // Delete the 5th one (newest)
-            const transactionToDelete = userPaymentMethods[4];
-            if (transactionToDelete && transactionToDelete._id) {
-                await PaymentGateWayTable.deleteOne({ _id: transactionToDelete._id });
-                console.log("Deleted newest 5th payment method:", transactionToDelete._id);
-                return res.status(200).json({
-                    message: "Payment method limit (4) reached. 5th method deleted.",
-                    deleted: transactionToDelete
-                });
-            } else {
-                return res.status(400).json({
-                    message: "Limit exceeded. New payment method not saved."
-                });
-            }
-        }
+//         // Remove oldest custom method if limit is reached
+//         const userCustomMethods = await PaymentGateWayTable.find({
+//             email,
+//             referredBy: referralCode,
+//             isDefault: false
+//         }).sort({ updatetime: 1 });
 
-        // Save new method
-        await newPaymentMethod.save();
+//         if (userCustomMethods.length >= 4) {
+//             const oldest = userCustomMethods[0];
+//             if (oldest) {
+//                 await PaymentGateWayTable.deleteOne({ _id: oldest._id });
+//             }
+//         }
 
-        return res.status(201).json({
-            message: "Payment method added successfully",
-            data: newPaymentMethod
-        });
+//         // Create new gateways if not already present
+//         for (const gateway of defaultGateways) {
+//             const exists = await PaymentGateWayTable.findOne({
+//                 gateway_name: gateway.gateway_name,
+//                 referredBy: referralCode,
+//                 email,
+//                 user_role
+//             });
 
-    } catch (error) {
-        console.error("Error adding payment method:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
+//             if (!exists) {
+//                 await PaymentGateWayTable.create({
+//                     user_role: user.user_role,
+//                     email:user.email,
+//                     gateway_name: gateway.gateway_name,
+//                     gateway_Number: gateway.gateway_Number || null,
+//                     payment_type: gateway.payment_type || null,
+//                     image_url: gateway.image_url,
+//                     referredBy: user.referralCode,
+//                     start_time: gateway.start_time || null,
+//                     end_time: gateway.end_time || null,
+//                     minimum_amount: gateway.minimum_amount || 0,
+//                     maximum_amount: gateway.maximum_amount || 0,
+//                     is_active: true,
+//                     timestamp: new Date(),
+//                     updatetime: new Date()
+//                 });
+//             }
+//         }
+
+//         return {
+//             success: true,
+//             message: "Payment method added successfully"
+//         };
+
+//     } catch (error) {
+//         console.error("AddPaymentMethodNumberWithdrawal Error:", error);
+//         return {
+//             success: false,
+//             message: "Internal server error",
+//             error: error.message
+//         };
+//     }
+// };
 
 
 
 
-exports.AddPaymentMethodNumberWidthral = async (req, res) => {
-    try {
-        const {
-            user_role,
-            email,
-            gateway_Number,
-            referralCode,
-            gateway_name,
-            payment_type,
-            minimun_amount,
-            maximum_amount,
-            image_url,
-            start_time,
-            end_time
-        } = req.body.formData;
 
-        // Check if user exists
-        const user = await SubAdmin.findOne({ user_role, email, referralCode });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
 
-        // Fetch existing payment methods (oldest to newest)
-        const userPaymentMethods = await WidthralPaymentGateWayTable.find({
-            email:user.email,
-            referredBy: user.referralCode
-        }).sort({ updatetime: 1 }); // use 'updatetime' to maintain consistency
+// exports.AddPaymentMethodNumberWithdrawal = async ({
+//     user_role,
+//     email,
+//     referralCode,
 
-        // Prepare the new method
-        const newPaymentMethodWidthral = new WidthralPaymentGateWayTable({
-            user_role: user.user_role,
-            email,
-            gateway_Number,
-            gateway_name,
-            payment_type,
-            image_url,
-            referredBy: user.referralCode,
-            start_time,
-            end_time,
-            minimun_amount,
-            maximum_amount,
-            is_active: true,
-            updatetime: new Date()
-        });
+// }) => {
+//      const defaultGateways = [
+//         {
+//             gateway_name: "Bkash",
+//             image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
+//         {
+//             gateway_name: "Nagad",
+//             image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
+//         {
+//             gateway_name: "Rocket",
+//             image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
+//         {
+//             gateway_name: "Upay",
+//             image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
+//             is_active: true,
+//             payment_type: "Cashout"
+//         },
 
-        // Check count
-        if (userPaymentMethods.length >= 4) {
-            // Delete the 5th one (newest)
-            const transactionToDelete = userPaymentMethods[4];
-            if (transactionToDelete && transactionToDelete._id) {
-                await PaymentGateWayTable.deleteOne({ _id: transactionToDelete._id });
-                console.log("Deleted newest 5th payment method:", transactionToDelete._id);
-                return res.status(200).json({
-                    message: "Payment method limit (4) reached. 5th method deleted.",
-                    deleted: transactionToDelete
-                });
-            } else {
-                return res.status(400).json({
-                    message: "Limit exceeded. New payment method not saved."
-                });
-            }
-        }
+//     ];
 
-        // Save new method
-        await newPaymentMethodWidthral.save();
+//     try {
+//         const user = await SubAdmin.findOne({ user_role, email, referralCode });
+//         if (!user) {
+//             return { success: false, message: "User not found" };
+//         }
 
-        return res.status(201).json({
-            message: "Payment method added successfully",
-            data: newPaymentMethodWidthral
-        });
+//         // Remove oldest custom method if limit is reached
+//         const userCustomMethods = await WidthralPaymentGateWayTable.find({
+//             email,
+//             referredBy: referralCode,
+//             isDefault: false
+//         }).sort({ updatetime: 1 });
 
-    } catch (error) {
-        console.error("Error adding payment method:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-};
+//         if (userCustomMethods.length >= 4) {
+//             const oldest = userCustomMethods[0];
+//             if (oldest) {
+//                 await WidthralPaymentGateWayTable.deleteOne({ _id: oldest._id });
+//             }
+//         }
+
+//         // Create new gateways if not already present
+//         for (const gateway of defaultGateways) {
+//             const exists = await WidthralPaymentGateWayTable.findOne({
+//                 gateway_name: gateway.gateway_name,
+//                 referredBy: referralCode,
+//                 email,
+//                 user_role
+//             });
+
+//             if (!exists) {
+//                 await WidthralPaymentGateWayTable.create({
+//                     user_role: user.user_role,
+//                     email:user.email,
+//                     gateway_name: gateway.gateway_name,
+//                     gateway_Number: gateway.gateway_Number || null,
+//                     payment_type: gateway.payment_type || null,
+//                     image_url: gateway.image_url,
+//                     referredBy: user.referralCode,
+//                     start_time: gateway.start_time || null,
+//                     end_time: gateway.end_time || null,
+//                     minimum_amount: gateway.minimum_amount || 0,
+//                     maximum_amount: gateway.maximum_amount || 0,
+//                     is_active: true,
+//                     timestamp: new Date(),
+//                     updatetime: new Date()
+//                 });
+//             }
+//         }
+
+//         return {
+//             success: true,
+//             message: "Payment method added successfully"
+//         };
+
+//     } catch (error) {
+//         console.error("AddPaymentMethodNumberWithdrawal Error:", error);
+//         return {
+//             success: false,
+//             message: "Internal server error",
+//             error: error.message
+//         };
+//     }
+// };
+
+
 
 
 // exports.subAdminGetWayList = async (req, res) => {
@@ -1181,10 +1530,10 @@ exports.updateDepositGatewayStatus = async (req, res) => {
     try {
         const { gateway_name, is_active, referralCode, email } = req.body;
 
-        console.log("Updating:", gateway_name, is_active,referralCode);
+        console.log("Updating:", gateway_name, is_active, referralCode);
         const newSubAdmin = await SubAdmin.findOne({ referralCode });
         const updated = await PaymentGateWayTable.findOneAndUpdate(
-            { gateway_name: gateway_name, referredBy: newSubAdmin.referralCode},
+            { gateway_name: gateway_name, referredBy: newSubAdmin.referralCode },
             { is_active },
             { new: true }
         );
@@ -1195,7 +1544,7 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 
         console.log("Updated Gateway:", updated);
 
-        res.json({ success: true, updated });
+        res.json({ success: true, updated, message: "Gateway status updated successfully" });
     } catch (error) {
         console.error("Update error:", error);
         res.status(500).json({ success: false, message: error.message });
@@ -1209,10 +1558,10 @@ exports.updateDepositGatewayStatus = async (req, res) => {
 exports.updatedepositGatewayType = async (req, res) => {
     try {
         console.log(req.body);
-        const { gateway_name, payment_type, gateway_number, is_active, referralCode,email } = req.body.formData;
+        const { gateway_name, payment_type, gateway_number, is_active, referralCode, email } = req.body.formData;
         console.log(":", payment_type, gateway_number, is_active, referralCode, email);
 
-        const newSubAdmin = await SubAdmin.findOne({ referralCode,email });
+        const newSubAdmin = await SubAdmin.findOne({ referralCode, email });
         const updated = await PaymentGateWayTable.findOneAndUpdate(
             { gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             {
@@ -1230,7 +1579,7 @@ exports.updatedepositGatewayType = async (req, res) => {
             return res.status(404).json({ success: false, message: "Gateway not found" });
         }
 
-        res.json({ success: true, updated });
+        res.json({ success: true, updated, message: "Gateway updated successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -1243,10 +1592,10 @@ exports.updatedepositGatewayType = async (req, res) => {
 
 exports.updateWidthrawGatewayStatus = async (req, res) => {
     try {
-        const { gateway_name, is_active, referralCode,email } = req.body;
+        const { gateway_name, is_active, referralCode, email } = req.body;
 
-        console.log("Updating:", gateway_name, is_active,referralCode);
-        const newSubAdmin = await SubAdmin.findOne({ referralCode,email });
+        console.log("Updating:", gateway_name, is_active, referralCode);
+        const newSubAdmin = await SubAdmin.findOne({ referralCode, email });
         const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
             { gateway_name, referredBy: newSubAdmin.referralCode, email: newSubAdmin.email },
             { is_active },
@@ -1259,7 +1608,7 @@ exports.updateWidthrawGatewayStatus = async (req, res) => {
 
         console.log("Updated Gateway:", updated);
 
-        res.json({ success: true, updated });
+        res.json({ success: true, updated, message: "Gateway status updated successfully" });
     } catch (error) {
         console.error("Update error:", error);
         res.status(500).json({ success: false, message: error.message });
@@ -1275,7 +1624,7 @@ exports.updateWithdrawalGatewayType = async (req, res) => {
     console.log(req.body);
     try {
         const { gateway_name, payment_type, gateway_number, is_active, referralCode } = req.body.formData;
-        console.log(gateway_name, payment_type, gateway_number, is_active,referralCode);
+        console.log(gateway_name, payment_type, gateway_number, is_active, referralCode);
         const newSubAdmin = await SubAdmin.findOne({ referralCode });
 
         const updated = await WidthralPaymentGateWayTable.findOneAndUpdate(
@@ -1292,7 +1641,7 @@ exports.updateWithdrawalGatewayType = async (req, res) => {
             return res.status(404).json({ success: false, message: "Gateway not found" });
         }
 
-        res.json({ success: true, updated });
+        res.json({ success: true, updated, message: "Gateway updated successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -1601,7 +1950,7 @@ exports.Search_Deposit_Transactions_Pending = async (req, res) => {
 
         const SubAdminuser = await SubAdmin.findOne({ referralCode: referredBy })
         if (!SubAdminuser) return res.status(404).json({ message: 'User not found' });
-        console.log(SubAdminuser);
+        // console.log(SubAdminuser);
         // Find the transaction
         // const user = await User.findOne({ referredBy: SubAdminuser.referralCode });
         // if (!user) return res.status(404).json({ message: 'User not found' });
@@ -1609,7 +1958,7 @@ exports.Search_Deposit_Transactions_Pending = async (req, res) => {
 
         const transactionExists = await TransactionModel.findOne({ referredBy, type: 0 });
         if (!transactionExists) return res.status(404).json({ message: "Transaction not found" });
-        console.log(transactionExists);
+        // console.log(transactionExists);
 
 
         let query = {};
@@ -1636,7 +1985,7 @@ exports.Search_Deposit_Transactions_Pending = async (req, res) => {
         } else if (startDate) {
             query.datetime = { $gte: new Date(startDate) };
         }
-        console.log(query);
+        // console.log(query);
         const transactions = await Transaction.find({ ...query, referredBy: SubAdminuser.referralCode, type: parseInt(0), status: parseInt(0) }).sort({ datetime: -1 });
 
         const totalDeposit = await Transaction.aggregate([
@@ -2446,7 +2795,6 @@ exports.WidthdrawListByUser = async (req, res) => {
 
 
 ///////////////////////////////////////
-
 
 
 

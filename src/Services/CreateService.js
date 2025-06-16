@@ -25,7 +25,7 @@ console.log(reqBody)
       });
 
       
-     
+     console.log("newUser",newUser)
      if(!newUser){
         const user =  await dataModel.aggregate([
             { $match: { userId } },

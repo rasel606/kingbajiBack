@@ -15,6 +15,7 @@ const subAdminSchema = new mongoose.Schema(
     countryCode: { type: String },
     phone: { type: String },
     user_role: { type: String, default: "subAdmin" },
+    userId: { type: String, default: "subAdmin" },
     users: [{ type: String, ref: 'User' }],
     Agent: [{ type: String, ref: 'Agent' }],
     Affiliate: [{ type: String, ref: 'Affiliate' }],

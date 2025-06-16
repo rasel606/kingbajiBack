@@ -16,9 +16,9 @@ const AffiliateController = require('../Controllers/AffiliateController');
 const AgentController = require('../Controllers/AgentController');
 // const Controllers = require('../Services/CornController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
-const messageController = require('../Controllers/messageController');
+// const messageController = require('../Controllers/messageController');
 const CreateSubAdmin = require('../Services/CreateSubAdmin');
-const socketIo = require('socket.io');
+
 
 
 // const Promotion = require('../Models/PromotionSchema');
@@ -30,7 +30,14 @@ const { getDailyWager } = require('../Controllers/MyController');
 const blank= require('../Controllers/blank');
 const blank2= require('../Controllers/blank2');
 const blank3= require('../Controllers/blank3');
+const chatController= require('../Controllers/ChatController');
 const notificationController = require('../Controllers/notificationController');
+const Message = require('../Models/Message');
+const SubAdmin = require('../Models/SubAdminModel');
+const ChatService = require('../services/chatService');
+const { createBonus,getAllBonuses } = require('../Controllers/BonusController');
+const VipController = require('../Controllers/VipController');
+
 
 
 
@@ -80,6 +87,7 @@ router.post('/admin_change_password_by_user',CreateSubAdmin.changePasswordUserBy
 router.post('/admin_change_email_by_user',CreateSubAdmin.changeEmailUserByAdmin);
 
 router.post('/admin_verify_phone', CreateSubAdmin.verifyPhoneManually);
+router.post('/admin_delate', CreateSubAdmin.SubAdminDelate);
 router.post('/admin_verify_email', CreateSubAdmin.verifyEmailManually);
 router.post('/sub_admin_User_details', CreateSubAdmin.SubAdminUserDetails);
 router.post('/update_and_create_socialLinks', CreateSubAdmin.updateAndcreateSocialLinks);
@@ -90,6 +98,12 @@ router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.get
 router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
 router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
 router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
+router.post('/checkWithdrawalEligibility', TransactionController.checkWithdrawalEligibility);
+router.post('/checkWithdrawalEligibility/active', TransactionController.checkWithdrawalEligibilityActive);
+router.post('/checkWithdrawalEligibility/complate', TransactionController.checkWithdrawalEligibilityComplated);
+
+router.post('/create_bonuses',createBonus);
+router.get('/bonuses',getAllBonuses);
 // router.post('/subadmin_forgot-password', CreateSubAdmin.forgotPassword);
 // router.post('/subadmin/reset-password', CreateSubAdmin.resetPassword);
 // router.post('/subadmin/update-password', CreateSubAdmin.updatePassword);
@@ -155,8 +169,8 @@ router.get('/get_notifications/:userId',notificationController.getGroupedNotific
 // router.post('/set-create-promotion',PromotionController.setCreatePromotion) ;
 
 ///////////////////////////////////////////////////// Transaction ///////////////////////////////////////////////
-router.post('/add_payment_Method_deposit', TransactionController.AddPaymentMethodNumberDeposit);
-router.post('/add_payment_Method_Widthral', TransactionController.AddPaymentMethodNumberWidthral);
+// router.post('/add_payment_Method_deposit', TransactionController.AddPaymentMethodNumberDeposit);
+// router.post('/add_payment_Method_Widthral', TransactionController.AddPaymentMethodNumberWidthral);
 router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
 router.post('/subadmin_getway_list_Widthraw', TransactionController.subAdminGetWayListWidthraw);
 router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
@@ -193,9 +207,11 @@ router.post('/getUser_Transaction_History', TransactionController.getUserTransac
 
 
 
+///////////////////////////////////////////////////// Chat ///////////////////////////////////////////////
 
-
-
+// router.get("/:userId", chatController.getChatHistory);
+// router.get("/referral-chat/:user1Id/:user2Id", chatController.getReferralChat);
+// router.get("/chat-list", chatController.getChatList);
 
 
 
@@ -341,6 +357,62 @@ router.post("/update-bank/:id",BankController.UpdateBank)
 router.post("/delete-bank",BankController.DeleteBank)
 
 
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////Vip api//////////////////////////////////////////////////
+
+
+
+router.post("/vip_info",VipController.getUserVipInfo)
+router.post("/convert",VipController.convertVpToMoney)
+// router.post("/history",VipController.getConversionHistory)
+
+
+// Get VP conversion history
+// router.get('/history', VipController.getConversionHistory);
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////////////////massege api//////////////////////////////////////////////////
+
+// router.get('/contacts/:senderId',  async (req, res) => {
+//   const userId = req.params;
+//   console.log('/contacts/:senderId-----------------4',req.params);
+//   try {
+//     const contacts = await ChatService.getAllowedContacts(userId.senderId);
+//     res.json(contacts);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
+
+// // Get chat history (HTTP fallback)
+// router.get('/history/:senderId/:receiverId',  async (req, res) => {
+//   try {
+//     console.log('/history/:senderId/:receiverId-----------------5',req.params);
+//     const messages = await ChatService.getChatHistory(
+//       req.params.senderId,
+//       req.params.receiverId
+//     );
+//     res.json(messages);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// });
 
 
 

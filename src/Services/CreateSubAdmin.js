@@ -5,56 +5,262 @@ const crypto = require("crypto");
 const SubAdmin = require("../Models/SubAdminModel");
 const User = require('../Models/User');
 const SocialLink = require('../Models/SocialLink');
+const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
+const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable');
+
 // const User = require("../Models/User");
 
 
 const saltRounds = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
+// exports.registerSubAdmin = async (req, res) => {
+//   try {
+//     const { email, phone, password, countryCode, referredBy } = req.body;
+//     console.log(req.body);
+//     if (!email || !password) {
+//       return res.status(400).json({ success: false, message: "Please enter all fields" });
+//     }
+
+
+//     // Check if user already exists
+//     const existingUser = await SubAdmin.findOne({ email:email.toLowerCase() });
+//     if (existingUser) {
+//       return res.status(400).json({ success: false, message: "User already exists" });
+//     }
+
+//     const existingPhone = await SubAdmin.findOne({ phone });
+// if (existingPhone) {
+//   return res.status(400).json({ success: false, message: "Phone already registered" });
+// }
+
+
+//     // Generate required IDs
+//     const SubAdminId = Math.random().toString(36).substring(2, 11);
+//     const hashedPassword = await bcrypt.hash(password, saltRounds);
+//     const referredCode = Math.random().toString(36).substring(2, 8);
+
+
+//     const baseUrl = "https://kingbaji.live/?ref=";
+//     const agentbaseUrl = "http://coag.kingbaji.live/?ref=";
+//     const affiliatebaseUrl = "http://co.kingbaji.live/?ref=";
+//     const user_referredLink = baseUrl + referredCode;
+//     const agent_referred_Link = agentbaseUrl + referredCode;
+//     const affiliate_referredsLink = affiliatebaseUrl + referredCode;
+//     if (!referredCode) {
+//       return res.status(500).json({ success: false, message: "Failed to generate referral code" });
+//     }
+
+//     console.log("SubAdminId", SubAdminId);
+//     console.log("hashedPassword", hashedPassword);
+//     console.log("referredCode", referredCode);
+//     // Create new SubAdmin
+//     const newUser = await new SubAdmin({
+//       email,
+//       phone,
+//       countryCode,
+//       referredBy,
+//       referralCode: referredCode,
+//       userId:referredCode,
+//       password: hashedPassword,
+//       balance: 0,
+//       SubAdminId: SubAdminId,
+//       isActive: true,
+//       user_referredLink,
+//       agent_referredLink: agent_referred_Link,
+//       affiliate_referredLink: affiliate_referredsLink,
+//     });
+
+//     await newUser.save();
+//     console.log("newUser", newUser);
+//     // Fetch user details using aggregation
+//     const response = await SubAdmin.aggregate([
+//       { $match: { email: newUser.email.toLowerCase() } },
+//       {
+//         $project: {
+//           email: 1,
+//           phone: 1,
+//           countryCode: 1,
+//           balance: 1,
+//           referredBy: 1,
+//           user_referredLink: 1,
+//           // agent_referredLink: 1,
+//           // affiliate_referredLink: 1,
+//           referralCode: 1,
+//           user_role: 1,
+//         },
+//       },
+//     ]);
+
+
+//     const defaultGateways = [
+//         {
+//             gateway_name: "Bkash",
+//             image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
+//             is_active: true,
+//             payment_type: "Cashout",
+//             gateway_Number: "01700000000"
+//         },
+//         {
+//             gateway_name: "Nagad",
+//             image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
+//             is_active: true,
+//             payment_type: "Cashout",
+//             gateway_Number: "01700000000"
+//         },
+//         {
+//             gateway_name: "Rocket",
+//             image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
+//             is_active: true,
+//             payment_type: "Cashout",
+//             gateway_Number: "01700000000"
+//         },
+//         {
+//             gateway_name: "Upay",
+//             image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
+//             is_active: true,
+//             payment_type: "Cashout",
+//             gateway_Number: "01700000000"
+//         },
+        
+//     ];
+
+
+   
+//            for (const gateway of defaultGateways) {
+   
+//                    await PaymentGateWayTable.create({
+//                        user_role: response[0].user_role,
+//                        email:response[0].email,
+//                        gateway_name: gateway.gateway_name,
+//                        gateway_Number: gateway.gateway_Number || null,
+//                        payment_type: gateway.payment_type || null,
+//                        image_url: gateway.image_url,
+//                        referredBy: response[0].referralCode,
+//                        start_time: gateway.start_time || null,
+//                        end_time: gateway.end_time || null,
+//                        minimum_amount: gateway.minimum_amount || 0,
+//                        maximum_amount: gateway.maximum_amount || 0,
+//                        is_active: true,
+//                        timestamp: new Date(),
+//                        updatetime: new Date()
+//                    });
+               
+//            }
+
+
+
+//              for (const gateway of defaultGateways) {
+            
+//                 await WidthralPaymentGateWayTable.create({
+//                       user_role: response[0].user_role,
+//                        email:response[0].email,
+//                     gateway_name: gateway.gateway_name,
+//                     gateway_Number: gateway.gateway_Number || null,
+//                     payment_type: gateway.payment_type || null,
+//                     image_url: gateway.image_url,
+//                      referredBy: response[0].referralCode,
+//                     start_time: gateway.start_time || null,
+//                     end_time: gateway.end_time || null,
+//                     minimum_amount: gateway.minimum_amount || 0,
+//                     maximum_amount: gateway.maximum_amount || 0,
+//                     is_active: true,
+//                     timestamp: new Date(),
+//                     updatetime: new Date()
+//                 });
+            
+//         }
+
+
+
+    
+//     console.log("userRespons", response);
+//     if (!response) {
+//       return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
+//     }
+
+//     // Generate JWT token
+//     const userDetails = response[0];
+//     console.log("userDetails", userDetails);
+//     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
+
+//     res.status(201).json({
+//       success: true,
+//       token,
+//       userDetails,
+//     });
+//   } catch (error) {
+//     console.error("❌ Error in register function:", error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
+
+
+
+
+///////////////////////////////////////////    login   //////////////////////////////////////////////////
+
+
+
+
+
+
 exports.registerSubAdmin = async (req, res) => {
   try {
     const { email, phone, password, countryCode, referredBy } = req.body;
-    console.log(req.body);
+
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: "Please enter all fields" });
+      return res.status(400).json({ success: false, message: "Please enter all required fields" });
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase();
+
     // Check if user already exists
-    const existingUser = await SubAdmin.findOne({ email });
+    const existingUser = await SubAdmin.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
     }
 
+    // Optionally: check for existing phone
+    // const existingPhone = await SubAdmin.findOne({ phone });
+    // if (existingPhone) {
+    //   return res.status(400).json({ success: false, message: "Phone already registered" });
+    // }
 
-    // Generate required IDs
-    const SubAdminId = Math.random().toString(36).substring(2, 11);
+    // Generate unique referral code
+    let referredCode;
+    let codeExists = true;
+
+    while (codeExists) {
+      referredCode = Math.random().toString(36).substring(2, 8);
+      codeExists = await SubAdmin.findOne({ referralCode: referredCode });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const referredCode = Math.random().toString(36).substring(2, 8);
 
-
+    // Generate user & referral IDs
+    const SubAdminId = Math.random().toString(36).substring(2, 11);
     const baseUrl = "https://kingbaji.live/?ref=";
     const agentbaseUrl = "http://coag.kingbaji.live/?ref=";
     const affiliatebaseUrl = "http://co.kingbaji.live/?ref=";
+
     const user_referredLink = baseUrl + referredCode;
     const agent_referred_Link = agentbaseUrl + referredCode;
     const affiliate_referredsLink = affiliatebaseUrl + referredCode;
-    if (!referredCode) {
-      return res.status(500).json({ success: false, message: "Failed to generate referral code" });
-    }
 
-    console.log("SubAdminId", SubAdminId);
-    console.log("hashedPassword", hashedPassword);
-    console.log("referredCode", referredCode);
     // Create new SubAdmin
-    const newUser = await SubAdmin({
-      email,
+    const newUser = new SubAdmin({
+      email: normalizedEmail,
       phone,
       countryCode,
       referredBy,
       referralCode: referredCode,
+      userId: referredCode,
       password: hashedPassword,
       balance: 0,
-      SubAdminId: SubAdminId,
+      SubAdminId,
       isActive: true,
       user_referredLink,
       agent_referredLink: agent_referred_Link,
@@ -62,10 +268,10 @@ exports.registerSubAdmin = async (req, res) => {
     });
 
     await newUser.save();
-    console.log("newUser", newUser);
-    // Fetch user details using aggregation
+
+    // Fetch user details via aggregation
     const response = await SubAdmin.aggregate([
-      { $match: { email: newUser.email.toLowerCase() } },
+      { $match: { email: normalizedEmail } },
       {
         $project: {
           email: 1,
@@ -74,38 +280,94 @@ exports.registerSubAdmin = async (req, res) => {
           balance: 1,
           referredBy: 1,
           user_referredLink: 1,
-          // agent_referredLink: 1,
-          // affiliate_referredLink: 1,
           referralCode: 1,
           user_role: 1,
         },
       },
     ]);
-    console.log("userRespons", response);
-    if (!response) {
-      return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
+
+    if (!response || response.length === 0) {
+      return res.status(500).json({ success: false, message: "User not found after creation" });
     }
 
-    // Generate JWT token
     const userDetails = response[0];
-    console.log("userDetails", userDetails);
-    const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
 
-    res.status(201).json({
+    const defaultGateways = [
+      {
+        gateway_name: "Bkash",
+        image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+      {
+        gateway_name: "Nagad",
+        image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+      {
+        gateway_name: "Rocket",
+        image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+      {
+        gateway_name: "Upay",
+        image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+    ];
+
+    const timestamp = new Date();
+
+    // Create entries for both payment gateway tables
+    const gatewayPayload = defaultGateways.map((gateway) => ({
+      user_role: userDetails.user_role,
+      email: userDetails.email,
+      gateway_name: gateway.gateway_name,
+      gateway_Number: gateway.gateway_Number,
+      payment_type: gateway.payment_type,
+      image_url: gateway.image_url,
+      referredBy: userDetails.referralCode,
+      start_time: null,
+      end_time: null,
+      minimum_amount: 0,
+      maximum_amount: 0,
+      is_active: true,
+      timestamp,
+      updatetime: timestamp,
+    }));
+
+    await Promise.all([
+      PaymentGateWayTable.insertMany(gatewayPayload),
+      WidthralPaymentGateWayTable.insertMany(gatewayPayload),
+    ]);
+
+    // Generate JWT Token
+    const token = jwt.sign(
+      { email: userDetails.email, user_role: userDetails.user_role },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    return res.status(201).json({
       success: true,
       token,
       userDetails,
     });
   } catch (error) {
-    console.error("❌ Error in register function:", error);
-    res.status(500).json({ success: false, error: error.message });
+    console.error("❌ Error in registerSubAdmin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
 
 
-
-///////////////////////////////////////////    login   //////////////////////////////////////////////////
 
 exports.loginSubAdmin = async (req, res) => {
   const { email, password } = req.body;
@@ -180,11 +442,11 @@ exports.verifySubAdmin = async (req, res) => {
     if (!token) return res.status(401).json({ message: "Token missing!" });
 
     const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("Decoded Token:", decoded);
+    // console.log("Decoded Token:", decoded);
 
     const decodedEmail = decoded?.email;
     const decodedRole = decoded?.user_role; // Fix role field
-    console.log("decodedEmail", decodedEmail);
+    // console.log("decodedEmail", decodedEmail);
     if (!decodedEmail || !decodedRole) {
       return res.status(400).json({ message: "Invalid token payload!" });
     }
@@ -232,8 +494,8 @@ exports.verifySubAdmin = async (req, res) => {
       referredBy: userDetails.referralCode
     });
 
-    console.log("totalUsersrefferedBy", totalUsers);
-console.log("refferedBy", newSubAdmin.referralCode);
+//     console.log("totalUsersrefferedBy", totalUsers);
+// console.log("refferedBy", newSubAdmin.referralCode);
 
 
     res.status(200).json({
@@ -290,7 +552,7 @@ exports.SubAdminUserDetails = async (req, res) => {
         },
       },
     ]);
-    console.log("decoded", details[0]);
+    // console.log("decoded", details[0]);
     res.status(200).json({ message: "User ", user: details[0] });
 
   } catch (error) {
@@ -628,6 +890,27 @@ console.log(newSubAdmin);
     res.send(socialLinks || {});
   } catch (error) {
     res.status(500).send('Server error');
+  }
+}
+
+
+exports.SubAdminDelate = async (req, res) => {
+  try {
+    const {email,balance } = req.body;
+    console.log("social",req.body);
+    const newSubAdmin = await SubAdmin.findOne({ email });
+    console.log("newSubAdmin",newSubAdmin);
+    if (!newSubAdmin) return res.send({});
+
+    const delateAdmin = await SubAdmin.findOneAndUpdate({email: newSubAdmin.email}, { balance: balance }, { new: true });
+    console.log(delateAdmin);
+    //  const delateAdminDeposit = await PaymentGateWayTable.deleteOne({ referredBy: newSubAdmin.referralCode, email: newSubAdmin.email });
+    //  const delateAdminWidthrow = await WidthralPaymentGateWayTable.deleteOne({ referredBy: newSubAdmin.referralCode, email: newSubAdmin.email });
+    //  console.log(delateAdminDeposit,delateAdminWidthrow);
+    // res.send("delate success",newSubAdmin); 
+  } catch (error) {
+    console.log(error);
+    // res.status(500).send('Server error');
   }
 }
 

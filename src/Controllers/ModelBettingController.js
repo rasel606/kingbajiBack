@@ -465,7 +465,7 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
             _id: 0,
           }
         ).sort({ serial_number: 1 });
-        console.log("Unique Providers:", uniqueProviders);
+        // console.log("Unique Providers:", uniqueProviders);
 
         // Format the result
         return {
@@ -481,7 +481,7 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
       })
       
     );
-console.log("Games:", categoriesWithGamesAndProviders);
+// console.log("Games:", categoriesWithGamesAndProviders);
     res.json(categoriesWithGamesAndProviders);
   } catch (error) {
     console.error("Error fetching categories with games and providers:", error);
