@@ -103,7 +103,7 @@ router.post('/checkWithdrawalEligibility/active', TransactionController.checkWit
 router.post('/checkWithdrawalEligibility/complate', TransactionController.checkWithdrawalEligibilityComplated);
 
 router.post('/create_bonuses',createBonus);
-router.get('/bonuses',getAllBonuses);
+router.post('/bonuses',getAllBonuses);
 // router.post('/subadmin_forgot-password', CreateSubAdmin.forgotPassword);
 // router.post('/subadmin/reset-password', CreateSubAdmin.resetPassword);
 // router.post('/subadmin/update-password', CreateSubAdmin.updatePassword);

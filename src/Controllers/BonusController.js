@@ -74,3 +74,61 @@ exports.getAllBonuses = async (req, res) => {
     });
   }
 }
+
+
+
+
+// // GET /api/bonuses
+// exports.getAllBonuses =  async (req, res) => {
+//   try {
+//     const { userId } = req.body;
+//     const now = new Date();
+
+//     // Step 1: Get all system-wide active bonuses (not expired)
+//     const allBonuses = await Bonus.find({
+//       isActive: true,
+//       endDate: { $gt: now }
+//     });
+
+//     // ❌ No userId? Return all active bonuses
+//     if (!userId) {
+//       return res.status(200).json({
+//         success: true,
+//         message: 'All active bonuses retrieved successfully',
+//         availableBonuses: allBonuses,
+//         count: allBonuses.length
+//       });
+//     }
+
+//     // ✅ If userId exists: get user's active and unexpired bonuses
+//     const userBonuses = await UserBonus.find({
+//       userId,
+//       expiryDate: { $gt: now }
+//     });
+
+//     // Get claimed bonusId list
+//     const claimedBonusIds = userBonuses.map(b => b.bonusId.toString());
+
+//     // Filter out bonuses already claimed
+//     const availableBonuses = allBonuses.filter(bonus =>
+//       !claimedBonusIds.includes(bonus._id.toString())
+//     );
+
+//     return res.status(200).json({
+//       success: true,
+//       message: availableBonuses.length
+//         ? 'Available bonuses retrieved successfully'
+//         : 'No new bonuses available for this user',
+//       availableBonuses,
+//       count: availableBonuses.length
+//     });
+
+//   } catch (error) {
+//     console.error('checkAvailableBonuses error:', error);
+//     return res.status(500).json({
+//       success: false,
+//       message: 'Internal Server Error',
+//       error: error.message
+//     });
+//   }
+// };
