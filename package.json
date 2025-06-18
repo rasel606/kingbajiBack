@@ -25,7 +25,7 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.0.0",
-    "http-proxy-middleware": "^3.0.3",
+    "http-proxy-middleware": "^3.0.5",
     "https-proxy-agent": "^7.0.6",
     "js-md5": "^0.8.3",
     "jsonwebtoken": "^9.0.2",
