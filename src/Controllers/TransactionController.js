@@ -198,7 +198,7 @@ exports.submitTransaction = async (req, res) => {
             transactionID,
             base_amount: baseAmount,
             bonus_amount: bonusAmount,
-            amount: totalAmount,
+            amount: baseAmount + bonusAmount,
             gateway_name,
             gateway_Number,
             payment_type,
@@ -394,6 +394,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
 
 
         console.log("transaction  --- 3 ", transaction.status);
+        console.log("transaction  --- 3 ", transaction.amount);
 
         // Process based on status
         if (parseInt(status) === 1) {
@@ -625,15 +626,6 @@ exports.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin = async (req, res
 
 exports.checkWithdrawalEligibility = async (req, res) => {
   try {
-    // Validate input
-    // const errors = validationResult(req);
-    // if (!errors.isEmpty()) {
-    //   return res.status(400).json({ 
-    //     errors: errors.array(),
-    //     eligible: false
-    //   });
-    // }
-
     const { userId } = req.body;
     
     // Find active bonuses for user
