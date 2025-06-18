@@ -187,7 +187,7 @@ exports.submitTransaction = async (req, res) => {
                 turnoverRequirement = (baseAmount + bonusAmount) * depositBonus.wageringRequirement;
             }
         }
-
+console.log("depositBonus", depositBonus , "bonusAmount", bonusAmount, "turnoverRequirement", turnoverRequirement);
         // Calculate 4% bonus
         const type = 0; // static type
         const status = 0; // pending
@@ -808,7 +808,7 @@ console.log("matchQuery", matchQuery);
                     'bonusInfo.eligibleGames': 1
                 }
             },
-            // { $sort: { updatedAt: -1 } }
+            { $sort: { updatedAt: -1 } }
         ]);
         console.log("completedBonuses", completedBonuses)
         res.status(200).json({ success: true, data: completedBonuses });
@@ -872,7 +872,7 @@ exports.checkWithdrawalEligibilityComplated = async (req, res) => {
                     'bonusInfo.eligibleGames': 1
                 }
             },
-            // { $sort: { updatedAt: -1 } }
+            { $sort: { updatedAt: -1 } }
         ]);
         console.log("completedBonuses", completedBonuses)
         res.status(200).json({ success: true, data: completedBonuses });
