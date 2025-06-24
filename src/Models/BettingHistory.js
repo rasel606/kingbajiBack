@@ -21,4 +21,5 @@ const bettingHistorySchema = new mongoose.Schema({
   updatetimestamp: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model('BettingHistory', bettingHistorySchema);
+const BettingHistory = mongoose.model('BettingHistory', bettingHistorySchema);
+module.exports = BettingHistory;

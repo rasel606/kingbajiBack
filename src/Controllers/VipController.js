@@ -1,7 +1,7 @@
 const UserVip = require('../Models/UserVip');
 const VipLevel = require('../Models/VipLevel');
 const BettingHistory = require('../Models/BettingHistory');
-const config = require('../Services/VipConfig');
+// const config = require('../Services/VipConfig');
 const { calculateVipLevel } = require('../Healper/vipCalculator');
 
 const VipConfig = {

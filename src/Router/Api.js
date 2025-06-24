@@ -3,13 +3,13 @@ const router = express.Router()
 const AdminController = require("../Controllers/AdminController")
 const CreateUserService = require("../Services/CreateUserService");
 const UpdateProfile = require('../Controllers/UpdateProfile');
-const { authMiddleware } = require('../MiddleWare/AuthVerifyMiddleWare');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+// const  authMiddleware  = require('../MiddleWare/AuthVerifyMiddleWare');
+// const multer = require('multer');
+// const path = require('path');
+// const fs = require('fs');
 const BettingController = require('../Controllers/BettingController');
 const BankController = require('../Controllers/BankController');
-const OddBettingController = require('../Controllers/OddBettingController');
+// const OddBettingController = require('../Controllers/OddBettingController');
 const ModelBettingController = require('../Controllers/ModelBettingController');
 const TransactionController = require('../Controllers/TransactionController');
 const AffiliateController = require('../Controllers/AffiliateController');
@@ -23,18 +23,18 @@ const bettingHistoryController = require ("../Controllers/bettingHistoryControll
 
 
 // const Promotion = require('../Models/PromotionSchema');
-const PromotionController = require('../Controllers/PromotionController');
-const AuthVerifyMiddleWare = require('../MiddleWare/AuthVerifyMiddleWare');
+// const PromotionController = require('../Controllers/PromotionController');
+// const AuthVerifyMiddleWare = require('../MiddleWare/AuthVerifyMiddleWare');
 const GetAllUser= require('../Services/GetAllUser');
-const { Transaction } = require('mongodb');
+// const { Transaction } = require('mongodb');
 const { getDailyWager } = require('../Controllers/MyController');
-const blank= require('../Controllers/blank');
-const blank2= require('../Controllers/blank2');
-const blank3= require('../Controllers/blank3');
+// const blank= require('../Controllers/blank');
+// const blank2= require('../Controllers/blank2');
+// const blank3= require('../Controllers/blank3');
 // const chatController= require('../Controllers/ChatController');
 const notificationController = require('../Controllers/notificationController');
 // const Message = require('../Models/Message');
-const SubAdmin = require('../Models/SubAdminModel');
+// const SubAdmin = require('../Models/SubAdminModel');
 
 const { createBonus,getAllBonuses } = require('../Controllers/BonusController');
 const VipController = require('../Controllers/VipController');
@@ -235,7 +235,7 @@ router.get('/featured',Refresh_blance.GetFeaturedGames)
 router.get('/get_all_providers',Refresh_blance.GetBettingProvider)
 router.get('/get_all_category',Refresh_blance.GetBettingCategory)
 
-router.post('/bettingHistory-member-summary',Refresh_blance.GetBettingHistoryByMember);
+// router.post('/bettingHistory-member-summary',Refresh_blance.GetBettingHistoryByMember);
 // router.get('/bettingHistory/grouped',Refresh_blance.GetBettingHistoryALL);
 // router.get('/get-betting-history-detailed',Refresh_blance.getBettingHistoryDetailed);
 
@@ -337,11 +337,11 @@ router.post('/casino/update/:id', BettingController.casino_update);
 // router.get("/kickPlayer",blank3.kickPlayer )
 // router.get('/fetch-betting-history',blank3.BettingHistoryBet)
 // router.get('/launch-app',blank3.launchApp)
-router.get('/history', blank3.getHistory);
-router.get('/archived-history', blank3.getArchivedHistory);
-router.post('/mark', blank3.markTickets);
-router.post('/mark-archived', blank3.markArchivedTickets);
-router.post('/daily-report', blank3.getDailyReport);
+// router.get('/history', blank3.getHistory);
+// router.get('/archived-history', blank3.getArchivedHistory);
+// router.post('/mark', blank3.markTickets);
+// router.post('/mark-archived', blank3.markArchivedTickets);
+// router.post('/daily-report', blank3.getDailyReport);
 // router.get('/api/game/log',blank3.logGameSessionone) //app.post('/api/game/log',
 // router.get('/api/odds/:key/:id',blank3.getEventOddsById) //  app.post('/api/betting/update',
 // router.post('/api/betting/update',blank3.updateBettingEvents) 

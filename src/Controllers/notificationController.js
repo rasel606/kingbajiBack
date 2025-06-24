@@ -123,16 +123,16 @@ exports.getGroupedNotifications = async (req, res) => {
 
 
 // Mark notifications as read
-exports.markAsRead = async (notificationIds) => {
-  try {
-    return await Notification.updateMany(
-      { _id: { $in: notificationIds } },
-      { $set: { read: true } }
-    );
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
+// exports.markAsRead = async (notificationIds) => {
+//   try {
+//     return await Notification.updateMany(
+//       { _id: { $in: notificationIds } },
+//       { $set: { read: true } }
+//     );
+//   } catch (error) {
+//     throw new Error(error.message);
+//   }
+// };
 
 // router.get("/:userId", async (req, res) => {
 //   try {

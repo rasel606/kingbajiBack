@@ -45,18 +45,23 @@
 //   console.log(`Server is running on port ${PORT}`);
 // });
 
-try {
-  const app = require('./app');
+const app = require('./app');
+
+// try {
+  
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
   });
-} catch (err) {
-  if (err.code === 'MODULE_NOT_FOUND') {
-    console.error('❌ Missing module:', err.message);
-  } else {
-    console.error('❌ Startup error:', err);
-  }
-  process.exit(1); // Exit gracefully
-}
+// } catch (err) {
+  // if (err.code === 'MODULE_NOT_FOUND') {
+  //   console.error('❌ Missing module:', err.message);
+  // } else {
+  //   console.error('❌ Startup error:', err);
+  // }
+  // process.exit(1); // Exit gracefully
+
+//   console.error('❌ Startup error:', err);
+//   // process.exit(1);
+// }

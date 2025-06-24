@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 
 
-const Affiliate_Earning_ModalSchema = new mongoose.Schema({
+const AffiliateEarningModalSchema = new mongoose.Schema({
     totalRevenue: { type: Number, default: 0 },
     totalProfitLoss: { type: Number, default: 0 },
     totalJackpot: { type: Number, default: 0 },
@@ -20,6 +20,6 @@ const Affiliate_Earning_ModalSchema = new mongoose.Schema({
 
 
 
-const Affiliate_Earning_Modal = mongoose.model('Affiliate_Earning_Modal', Affiliate_Earning_ModalSchema);
+const AffiliateEarningModal = mongoose.model('AffiliateEarningModal', AffiliateEarningModalSchema);
 
-module.exports = Affiliate_Earning_Modal;
+module.exports = AffiliateEarningModal;

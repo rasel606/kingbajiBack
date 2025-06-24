@@ -43,8 +43,8 @@ app.use(express.json());
 
 
   // Constructing the signature
-  function generateSignature(...args) {
-    console.log("args:", args);
-    return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-  }
+  // function generateSignature(...args) {
+  //   console.log("args:", args);
+  //   return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
+  // }
 

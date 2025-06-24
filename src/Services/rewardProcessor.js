@@ -1,11 +1,11 @@
 const User = require('../Models/User');
 const BettingHistory = require('../Models/BettingHistory');
 const ReferralBonus = require('../Models/ReferralBonus');
-
+const cron = require('node-cron');
 const tiers = [
   { threshold: 500000, tier1: 0.0020, tier2: 0.0007, tier3: 0.0003 },
   { threshold: 200000, tier1: 0.0015, tier2: 0.0006, tier3: 0.0002 },
-  { threshold: 100,    tier1: 0.0010, tier2: 0.0005, tier3: 0.0001 }
+  { threshold: 100, tier1: 0.0010, tier2: 0.0005, tier3: 0.0001 }
 ];
 
 function getRewardPercent(turnover, level) {
@@ -19,7 +19,7 @@ function getRewardPercent(turnover, level) {
   return 0;
 }
 
-async function getTurnoverSum(userIds, start, end) {
+const getTurnoverSum = async (userIds, start, end) => {
   if (!userIds || userIds.length === 0) return 0;
   const result = await BettingHistory.aggregate([
     {
@@ -38,7 +38,12 @@ async function getTurnoverSum(userIds, start, end) {
   return result.length > 0 ? result[0].totalTurnover : 0;
 }
 
-async function processDailyReferralCashback() {
+
+console.log("✅ Daily referral cashback calculation completed.");
+      console.log("Cron job started at", new Date()),
+      console.log("Cron job ended at", new Date());
+
+exports.rewardProcessor = async () => {
   try {
     const now = new Date();
 
@@ -67,9 +72,9 @@ async function processDailyReferralCashback() {
       const level1Reward = level1Turnover * level1Percent;
       const level2Reward = level2Turnover * level2Percent;
       const level3Reward = level3Turnover * level3Percent;
-console.log(level1Reward, "level1Reward",level2Reward,"level1Reward",level3Reward)
+      console.log(level1Reward, "level1Reward", level2Reward, "level1Reward", level3Reward)
       const totalReward = level1Reward + level2Reward + level3Reward;
-console.log("totalReward",totalReward)
+      console.log("totalReward", totalReward)
       if (totalReward >= 0.01) {
         await ReferralBonus.create([
           {
@@ -109,15 +114,17 @@ console.log("totalReward",totalReward)
           $inc: { cashReward: totalReward }
         });
       }
+
     }
-
-    console.log("✅ Daily referral cashback calculation completed.");
+      
   } catch (error) {
-    console.error("❌ Error in daily cashback job:", error);
+      console.error("❌ Error in daily cashback job:", error);
+    }
   }
-}
 
-module.exports = { processDailyReferralCashback };
+
+
+
 
 
 

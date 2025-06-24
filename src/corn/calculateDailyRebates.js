@@ -1,15 +1,15 @@
 const moment = require("moment");
-const cron = require('node-cron');
+
 
 const BettingHistory = require("../Models/BettingHistory");
 const User = require("../Models/User");
 const RebateSetting = require("../Models/RebateSetting");
 const RebateLog = require("../Models/RebateLog");
 const UserBonus = require("../Models/UserBonus");
-const { createNotification } = require("../Controllers/notificationController");
+const createNotification = require("../Controllers/notificationController");
 const Bonus = require("../Models/Bonus");
 
-const dailyLossBonusCrons = async () => {
+exports.calculateDailyRebates = async () => {
   try {
     console.log('🌀 Daily Loss Bonus cron started');
 
@@ -70,7 +70,7 @@ const dailyLossBonusCrons = async () => {
             );
 
             const user = await User.findOne({ userId });
-console.log("user",user);
+            console.log("user", user);
             await UserBonus.create({
               userId: user.userId,
               bonusId: bonus._id,
@@ -111,8 +111,8 @@ console.log("user",user);
 };
 
 // Run every day at 01:00 AM (BD time = 19:00 UTC)
-cron.schedule('10 1 * * *', dailyLossBonusCrons, {
-  timezone: 'Asia/Dhaka'
-});
+// cron.schedule('10 1 * * *', dailyLossBonusCrons, {
+//   timezone: 'Asia/Dhaka'
+// });
 
-module.exports = dailyLossBonusCrons;
+

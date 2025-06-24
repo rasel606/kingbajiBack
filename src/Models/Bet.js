@@ -42,14 +42,14 @@
   
 
 
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
-const betSchema = new mongoose.Schema({
+// const betSchema = new mongoose.Schema({
 
-   ticketId: String,
-  data: Object,
-  isArchived: Boolean,
-  marked: Boolean,
-});
+//    ticketId: String,
+//   data: Object,
+//   isArchived: Boolean,
+//   marked: Boolean,
+// });
 
-module.exports = mongoose.model('Bet', betSchema);
+// module.exports = mongoose.model('Bet', betSchema);

@@ -187,7 +187,7 @@ exports.submitTransaction = async (req, res) => {
                 turnoverRequirement = (baseAmount + bonusAmount) * depositBonus.wageringRequirement;
             }
         }
-console.log("depositBonus", depositBonus , "bonusAmount", bonusAmount, "turnoverRequirement", turnoverRequirement);
+        console.log("depositBonus", depositBonus, "bonusAmount", bonusAmount, "turnoverRequirement", turnoverRequirement);
         // Calculate 4% bonus
         const type = 0; // static type
         const status = 0; // pending
@@ -625,123 +625,123 @@ exports.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin = async (req, res
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 exports.checkWithdrawalEligibility = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    
-    // Find active bonuses for user
-    const userBonuses = await UserBonus.find({
-      userId,
-      status: { $in: ['active', 'pending'] }, // Include pending bonuses
-      expiryDate: { $gt: new Date() }
-    }).populate('bonusId');
+    try {
+        const { userId } = req.body;
 
-    // If no active bonuses, user is eligible by default
-    if (!userBonuses.length) {
-      return res.status(200).json({ 
-        message: 'No active bonuses found. User is eligible for withdrawal.',
-        eligible: true,
-        bonuses: []
-      });
-    }
+        // Find active bonuses for user
+        const userBonuses = await UserBonus.find({
+            userId,
+            status: { $in: ['active', 'pending'] }, // Include pending bonuses
+            expiryDate: { $gt: new Date() }
+        }).populate('bonusId');
 
-    const results = [];
-    let isFullyEligible = true;
-
-    // Check each bonus's turnover requirement
-    for (const bonus of userBonuses) {
-      const { createdAt, expiryDate, bonusId, turnoverRequirement } = bonus;
-      const eligibleGames = bonusId?.eligibleGames || [];
-
-      // Build query for betting history
-      const matchQuery = {
-        member: userId,
-        start_time: { $gte: createdAt },
-        end_time: { $lte: expiryDate },
-        status: 1 // Only count settled bets (assuming 1 means settled)
-      };
-
-      // Filter by eligible games if specified
-      if (eligibleGames.length && eligibleGames[0] !== 'all') {
-        matchQuery.game_id = { $in: eligibleGames };
-      }
-
-      // Calculate completed turnover
-      const turnoverData = await BettingHistory.aggregate([
-        { $match: matchQuery },
-        {
-          $group: {
-            _id: null,
-            totalTurnover: { $sum: '$turnover' },
-            totalBets: { $sum: 1 } // Additional metric
-          }
+        // If no active bonuses, user is eligible by default
+        if (!userBonuses.length) {
+            return res.status(200).json({
+                message: 'No active bonuses found. User is eligible for withdrawal.',
+                eligible: true,
+                bonuses: []
+            });
         }
-      ]);
 
-      const completedTurnover = turnoverData[0]?.totalTurnover || 0;
-      const isCompleted = completedTurnover >= turnoverRequirement;
-      
-      // Update the bonus status in database if completed
-      if (isCompleted && bonus.status !== 'completed') {
-        await UserBonus.findByIdAndUpdate(bonus._id, {
-          status: 'completed',
-          completedTurnover,
-          updatedAt: new Date()
+        const results = [];
+        let isFullyEligible = true;
+
+        // Check each bonus's turnover requirement
+        for (const bonus of userBonuses) {
+            const { createdAt, expiryDate, bonusId, turnoverRequirement } = bonus;
+            const eligibleGames = bonusId?.eligibleGames || [];
+
+            // Build query for betting history
+            const matchQuery = {
+                member: userId,
+                start_time: { $gte: createdAt },
+                end_time: { $lte: expiryDate },
+                status: 1 // Only count settled bets (assuming 1 means settled)
+            };
+
+            // Filter by eligible games if specified
+            if (eligibleGames.length && eligibleGames[0] !== 'all') {
+                matchQuery.game_id = { $in: eligibleGames };
+            }
+
+            // Calculate completed turnover
+            const turnoverData = await BettingHistory.aggregate([
+                { $match: matchQuery },
+                {
+                    $group: {
+                        _id: null,
+                        totalTurnover: { $sum: '$turnover' },
+                        totalBets: { $sum: 1 } // Additional metric
+                    }
+                }
+            ]);
+
+            const completedTurnover = turnoverData[0]?.totalTurnover || 0;
+            const isCompleted = completedTurnover >= turnoverRequirement;
+
+            // Update the bonus status in database if completed
+            if (isCompleted && bonus.status !== 'completed') {
+                await UserBonus.findByIdAndUpdate(bonus._id, {
+                    status: 'completed',
+                    completedTurnover,
+                    updatedAt: new Date()
+                });
+            }
+
+            // If any bonus requirement isn't met, user isn't fully eligible
+            if (!isCompleted) {
+                isFullyEligible = false;
+            }
+
+            results.push({
+                bonusId: bonus._id,
+                bonusName: bonusId?.name || 'Unknown Bonus',
+                bonusType: bonusId?.bonusType || 'unknown',
+                requiredTurnover: turnoverRequirement,
+                completedTurnover,
+                remainingTurnover: Math.max(0, turnoverRequirement - completedTurnover),
+                status: isCompleted ? 'completed' : 'incomplete',
+                expiryDate: expiryDate.toISOString(),
+                createdAt: bonus.createdAt.toISOString(),
+                eligibleGames: eligibleGames,
+                wageringRequirement: bonusId?.wageringRequirement || 1
+            });
+        }
+
+        return res.status(200).json({
+            message: isFullyEligible
+                ? 'All bonus requirements met'
+                : 'Some bonus requirements not met',
+            eligible: isFullyEligible,
+            bonuses: results,
+            summary: {
+                totalBonuses: results.length,
+                completedBonuses: results.filter(b => b.status === 'completed').length,
+                pendingBonuses: results.filter(b => b.status === 'incomplete').length,
+                totalRequiredTurnover: results.reduce((sum, b) => sum + b.requiredTurnover, 0),
+                totalCompletedTurnover: results.reduce((sum, b) => sum + b.completedTurnover, 0),
+                totalRemainingTurnover: results.reduce((sum, b) => sum + b.remainingTurnover, 0)
+            },
+            timestamp: new Date().toISOString()
         });
-      }
 
-      // If any bonus requirement isn't met, user isn't fully eligible
-      if (!isCompleted) {
-        isFullyEligible = false;
-      }
+    } catch (error) {
+        console.error('checkWithdrawalEligibility error:', error);
 
-      results.push({
-        bonusId: bonus._id,
-        bonusName: bonusId?.name || 'Unknown Bonus',
-        bonusType: bonusId?.bonusType || 'unknown',
-        requiredTurnover: turnoverRequirement,
-        completedTurnover,
-        remainingTurnover: Math.max(0, turnoverRequirement - completedTurnover),
-        status: isCompleted ? 'completed' : 'incomplete',
-        expiryDate: expiryDate.toISOString(),
-        createdAt: bonus.createdAt.toISOString(),
-        eligibleGames: eligibleGames,
-        wageringRequirement: bonusId?.wageringRequirement || 1
-      });
+        // Differentiate between server errors and database errors
+        const statusCode = error.name === 'MongoError' ? 503 : 500;
+
+        return res.status(statusCode).json({
+            message: 'Error checking withdrawal eligibility',
+            error: process.env.NODE_ENV === 'production'
+                ? 'Internal server error'
+                : error.message,
+            eligible: false, // Assume not eligible in case of error
+            systemStatus: 'error',
+            timestamp: new Date().toISOString()
+        });
     }
-
-    return res.status(200).json({
-      message: isFullyEligible 
-        ? 'All bonus requirements met' 
-        : 'Some bonus requirements not met',
-      eligible: isFullyEligible,
-      bonuses: results,
-      summary: {
-        totalBonuses: results.length,
-        completedBonuses: results.filter(b => b.status === 'completed').length,
-        pendingBonuses: results.filter(b => b.status === 'incomplete').length,
-        totalRequiredTurnover: results.reduce((sum, b) => sum + b.requiredTurnover, 0),
-        totalCompletedTurnover: results.reduce((sum, b) => sum + b.completedTurnover, 0),
-        totalRemainingTurnover: results.reduce((sum, b) => sum + b.remainingTurnover, 0)
-      },
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('checkWithdrawalEligibility error:', error);
-    
-    // Differentiate between server errors and database errors
-    const statusCode = error.name === 'MongoError' ? 503 : 500;
-    
-    return res.status(statusCode).json({ 
-      message: 'Error checking withdrawal eligibility',
-      error: process.env.NODE_ENV === 'production' 
-        ? 'Internal server error' 
-        : error.message,
-      eligible: false, // Assume not eligible in case of error
-      systemStatus: 'error',
-      timestamp: new Date().toISOString()
-    });
-  }
 };
 
 
@@ -774,7 +774,7 @@ exports.checkWithdrawalEligibilityActive = async (req, res) => {
         if (userId) {
             matchQuery.userId = userId;
         }
-console.log("matchQuery", matchQuery);
+        console.log("matchQuery", matchQuery);
         const completedBonuses = await UserBonus.aggregate([
             { $match: matchQuery },
             {
