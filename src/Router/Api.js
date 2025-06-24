@@ -18,6 +18,7 @@ const AgentController = require('../Controllers/AgentController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 // const messageController = require('../Controllers/messageController');
 const CreateSubAdmin = require('../Services/CreateSubAdmin');
+const bettingHistoryController = require ("../Controllers/bettingHistoryController")
 
 
 
@@ -220,7 +221,7 @@ router.post('/getUser_Transaction_History', TransactionController.getUserTransac
 
 //game font
 
-router.get('/search',ModelBettingController.searchGames)
+// router.get('/search',ModelBettingController.searchGames)
 router.post('/casino_item_add', ModelBettingController.CasinoItemAdd)
 
 router.post('/create-category', ModelBettingController.CreateCategory)
@@ -245,8 +246,10 @@ router.post("/game-update-category", ModelBettingController.updateCategoryGameBy
 router.get("/New-table-categories", ModelBettingController.getCategoriesWithGamesAndProviders);
 router.get("/New-table-Games-with-Providers", ModelBettingController.getCategoriesWithProviders);
 router.get("/New-Games-with-Providers-By-Category", ModelBettingController.getCategoriesWithProvidersGameList);
-
-
+router.get('/search', ModelBettingController.searchGamesByName);
+router.post('/categories', ModelBettingController.moveGamesToAnotherCategory);
+router.get('/betting-records/detail',bettingHistoryController.BettingRecordDetails)
+router.get('/betting-records/summary',bettingHistoryController.BettingRecordSummary)
 // router.post("/legal",blank.tnx)
 // router.post("/bnct",blnc)
 

@@ -105,109 +105,152 @@ console.log("apiSuccess", apiSuccess)
 
 
 
-      if (referredBy) {
+      // if (referredBy) {
 
 
-        // const referrerWithAffiliate = await AffiliateUser.findOne({ referralCode: referredBy });
-        // const referrerWithNewuserSubadmin = await SubAdminModel.findOne({ referralCode: referredBy });
+      //   // const referrerWithAffiliate = await AffiliateUser.findOne({ referralCode: referredBy });
+      //   // const referrerWithNewuserSubadmin = await SubAdminModel.findOne({ referralCode: referredBy });
 
-        // const referrerAffiliate = await AffiliateUser.findOne({ referralCode: referrerWithAffiliate.referredBy });
-        // const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate.referredbyAffiliate });
-
-
-
-        // if (referrerAffiliate) {
-        //   // Affiliate referral
-        //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
-        //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
-        //   await referrerAffiliate.save();
-
-        //   // Find parent SubAdmin
-        //   const parentSubAdmin = await SubAdmin.findOne({ referralCode: referrerAffiliate.referredbysubAdmin });
-        //   if (parentSubAdmin) {
-        //     newUser.referredbysubAdmin = parentSubAdmin.referralCode;
-        //     parentSubAdmin.users.push(newUser.userId);
-        //     await parentSubAdmin.save();
-        //   }
-        //   // newUser.referredbyAffiliate = referrerAffiliate.referralCode,
-        //   //   newUser.referredbysubAdmin = referrerbysubAdmin.referralCode,
-
-        //   //   newUser.save();
+      //   // const referrerAffiliate = await AffiliateUser.findOne({ referralCode: referrerWithAffiliate.referredBy });
+      //   // const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate.referredbyAffiliate });
 
 
 
-        // } else if (referrerWithNewuserSubadmin) {
-        //   // Direct SubAdmin referral
-        //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referralCode;
-        //   const subAdmin = await SubAdmin.findOne({ referralCode: referrerWithNewuserSubadmin.referredbysubAdmin });
-        //   subAdmin.users.push(newUser.userId);
-        //   await subAdmin.save();
-        // } else if (referrerAffiliate) {
-        //   // Direct SubAdmin referral
-        //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
-        //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
-        //   await referrerAffiliate.save();
-        // }
+      //   // if (referrerAffiliate) {
+      //   //   // Affiliate referral
+      //   //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+      //   //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
+      //   //   await referrerAffiliate.save();
+
+      //   //   // Find parent SubAdmin
+      //   //   const parentSubAdmin = await SubAdmin.findOne({ referralCode: referrerAffiliate.referredbysubAdmin });
+      //   //   if (parentSubAdmin) {
+      //   //     newUser.referredbysubAdmin = parentSubAdmin.referralCode;
+      //   //     parentSubAdmin.users.push(newUser.userId);
+      //   //     await parentSubAdmin.save();
+      //   //   }
+      //   //   // newUser.referredbyAffiliate = referrerAffiliate.referralCode,
+      //   //   //   newUser.referredbysubAdmin = referrerbysubAdmin.referralCode,
+
+      //   //   //   newUser.save();
 
 
 
-        const referrer = await User.findOne({  referredBy: newUser.referralCode });
+      //   // } else if (referrerWithNewuserSubadmin) {
+      //   //   // Direct SubAdmin referral
+      //   //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referralCode;
+      //   //   const subAdmin = await SubAdmin.findOne({ referralCode: referrerWithNewuserSubadmin.referredbysubAdmin });
+      //   //   subAdmin.users.push(newUser.userId);
+      //   //   await subAdmin.save();
+      //   // } else if (referrerAffiliate) {
+      //   //   // Direct SubAdmin referral
+      //   //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+      //   //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
+      //   //   await referrerAffiliate.save();
+      //   // }
 
-        if (referrer) {
-          referrer.levelOneReferrals.push(newUser.userId);
-          await referrer.save();
 
-          await new ReferralBonus({
-            userId: referrer.userId,
-            referredUser: newUser.userId,
-            // referredbyAffiliate: referrerAffiliate.referralCode || null,
-            // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
-            level: 1
-          }).save();
 
-          if (referrer.referredBy) {
-            const level2Ref = await User.findOne({ referralCode: referrer.referredBy });
-            if (level2Ref) {
-              level2Ref.levelTwoReferrals.push(newUser.userId);
-              await level2Ref.save();
+      //   const referrer = await User.findOne({  referralCode: referredBy });
 
-              await new ReferralBonus({
-                userId: level2Ref.userId,
-                referredUser: newUser.userId,
-                // referredbyAffiliate: referrerAffiliate.referralCode || null,
-                // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+      //   if (referrer) {
+      //     referrer.levelOneReferrals.push(newUser.userId);
+      //     await referrer.save();
 
-                level: 2
-              }).save();
+      //     await new ReferralBonus({
+      //       userId: referrer.userId,
+      //       referredUser: newUser.userId,
+      //       // referredbyAffiliate: referrerAffiliate.referralCode || null,
+      //       // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+      //       level: 1
+      //     }).save();
 
-              if (level2Ref.referredBy) {
-                const level3Ref = await User.findOne({ referralCode: level2Ref.referredBy });
-                if (level3Ref) {
-                  level3Ref.levelThreeReferrals.push(newUser.userId);
-                  await level3Ref.save();
+      //     if (referrer.referredBy) {
+      //       const level2Ref = await User.findOne({ referralCode: referrer.referredBy });
+      //       if (level2Ref) {
+      //         level2Ref.levelTwoReferrals.push(newUser.userId);
+      //         await level2Ref.save();
 
-                  await new ReferralBonus({
-                    userId: level3Ref.userId,
-                    referredUser: newUser.userId,
-                    // referredbyAffiliate: referrerAffiliate.referralCode || null,
-                    // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
-                    level: 3
-                  }).save();
-                }
+      //         await new ReferralBonus({
+      //           userId: level2Ref.userId,
+      //           referredUser: newUser.userId,
+      //           // referredbyAffiliate: referrerAffiliate.referralCode || null,
+      //           // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+
+      //           level: 2
+      //         }).save();
+
+      //         if (level2Ref.referredBy) {
+      //           const level3Ref = await User.findOne({ referralCode: level2Ref.referredBy });
+      //           if (level3Ref) {
+      //             level3Ref.levelThreeReferrals.push(newUser.userId);
+      //             await level3Ref.save();
+
+      //             await new ReferralBonus({
+      //               userId: level3Ref.userId,
+      //               referredUser: newUser.userId,
+      //               // referredbyAffiliate: referrerAffiliate.referralCode || null,
+      //               // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
+      //               level: 3
+      //             }).save();
+      //           }
+      //         }
+      //       }
+      //     }
+      //     // if (referrerAffiliate.referredbyAffiliate) {
+      //     //   newUser.referredbyAffiliate = referrerAffiliate.referredbyAffiliate;
+      //     // }
+      //     // if (referrerWithNewuserSubadmin.referredbysubAdmin) {
+      //     //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
+      //     // }
+      //     // if (referrerWithNewuserSubadmin.referredbysubAdmin && referrerWithNewuserSubadmin.referredbysubAdmin) {
+      //     //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
+      //     // }
+      //   }
+      // }
+
+      if (referralCode) {
+      const referrer = await User.findOne({ referralCode:referredBy });
+      if (referrer) {
+        referrer.levelOneReferrals.push(newUser.userId);
+        await referrer.save();
+
+        await new ReferralBonus({
+          userId: referrer.userId,
+          referredUser: newUser.userId,
+          level: 1
+        }).save();
+
+        if (referrer.referredBy) {
+          const level2Ref = await User.findOne({ referralCode: referrer.referredBy });
+          if (level2Ref) {
+            level2Ref.levelTwoReferrals.push(newUser.userId);
+            await level2Ref.save();
+
+            await new ReferralBonus({
+              userId: level2Ref.userId,
+              referredUser: newUser.userId,
+              level: 2
+            }).save();
+
+            if (level2Ref.referredBy) {
+              const level3Ref = await User.findOne({ referralCode: level2Ref.referredBy });
+              if (level3Ref) {
+                level3Ref.levelThreeReferrals.push(newUser.userId);
+                await level3Ref.save();
+
+                await new ReferralBonus({
+                  userId: level3Ref.userId,
+                  referredUser: newUser.userId,
+                  level: 3
+                }).save();
               }
             }
           }
-          // if (referrerAffiliate.referredbyAffiliate) {
-          //   newUser.referredbyAffiliate = referrerAffiliate.referredbyAffiliate;
-          // }
-          // if (referrerWithNewuserSubadmin.referredbysubAdmin) {
-          //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
-          // }
-          // if (referrerWithNewuserSubadmin.referredbysubAdmin && referrerWithNewuserSubadmin.referredbysubAdmin) {
-          //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
-          // }
         }
       }
+    }
+
 
       await newUser.save();
 

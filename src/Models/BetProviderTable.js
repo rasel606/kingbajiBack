@@ -16,6 +16,11 @@ const BetProviderTableSchema = new mongoose.Schema({
   type: { type: String },
   g_type: { type: String },
   serial_number: { type: Number,unique: true},
+  gamelist: [{
+    g_code: String,
+    p_code: String,
+    g_type: String,
+  }],
   timestamp: { type: Date, default: Date.now },
   updatetimestamp: { type: Date, default: Date.now },
 });

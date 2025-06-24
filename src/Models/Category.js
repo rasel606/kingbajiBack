@@ -23,6 +23,11 @@ const CategorySchema = new mongoose.Schema({
 
     default: true,
   },
+  gamelist: [{
+    g_code: String,
+    p_code: String,
+    g_type: String,
+  }],
   timestamp: { type: Date, default: Date.now },
   updatetimestamp: { type: Date, default: Date.now },
 });

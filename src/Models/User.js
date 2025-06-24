@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   birthday: { type: Date },
   referralCode: { type: String, unique: true },
-  referredBy: { type: String },
+  referredBy: { type: String, default:"adminmain" },
   referredbyAgent: { type: String, ref: 'Agent' },
   referredbyAffiliate: { type: String, ref: 'AffiliateUser' },
   referredbysubAdmin: { type: String, ref: 'SubAdmin' },

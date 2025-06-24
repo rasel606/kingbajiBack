@@ -12,6 +12,8 @@ exports.createNotification = async (title, userId, content, type, metaData = {})
       metaData
     });
     await notification.save();
+    const notificationId = notification._id;
+    console.log(notificationId);
     console.log(notification);
     return notification;
   } catch (error) {

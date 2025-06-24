@@ -61,7 +61,7 @@ exports.createBonus = async (req, res) => {
 // GET /api/bonuses
 exports.getAllBonuses = async (req, res) => {
   try {
-    const bonuses = await Bonus.find({isActive: true});
+    const bonuses = await Bonus.find({isActive: true, bonusType: { $in: ['deposit', 'signup', 'referral', 'turnover', 'birthday'] }});
     res.json({
       success: true,
       data: bonuses

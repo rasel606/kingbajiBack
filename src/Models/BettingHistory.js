@@ -16,7 +16,9 @@ const bettingHistorySchema = new mongoose.Schema({
   commission: { type: Number, required: true },
   p_share: { type: Number, required: true },
   p_win: { type: Number, required: true },
-  status: { type: Number, required: true },
+  status: { type: Number },
+  timestamp: { type: Date, default: Date.now },
+  updatetimestamp: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model('BettingHistory', bettingHistorySchema);

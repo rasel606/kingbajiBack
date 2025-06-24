@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const DataSchema = mongoose.Schema({
+const AdminSchema = mongoose.Schema({
 
     email: { type: String, required: true, unique: true },
     firstName: { type: String},
@@ -8,7 +8,7 @@ const DataSchema = mongoose.Schema({
     balance: { type: Number},
  
     referredLink: { type: String, default: null },
-    referredCode: { type: String, unique: true },
+    referredCode: { type: String, default: "adminmain" },
     password: { type: String, required: true },
     role: { type: String, default: "Admin" },
     timestamp: { type: Date, default: Date.now },
@@ -18,6 +18,6 @@ const DataSchema = mongoose.Schema({
         versionKey: false
     })
 
-const AdminModel = mongoose.model("admin", DataSchema)
+const AdminModel = mongoose.model("admin", AdminSchema)
 module.exports = AdminModel
 

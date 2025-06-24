@@ -371,7 +371,7 @@ const fetchApi = async (endpoint, data = {}) => {
   try {
     const baseURL = "http://gsmd.336699bet.com/"; // Replace with actual API base URL
     const url = `${baseURL}${endpoint}`;
-// console.log("url", url);
+console.log("url", url);
     const config = {
       method: "GET", // Default: POST
       url,

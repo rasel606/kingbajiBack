@@ -1,35 +1,12 @@
-
-const BettingHistory = require('../Models/BettingHistory');
-
 const User = require('../Models/User');
+const BettingHistory = require('../Models/BettingHistory');
+const ReferralBonus = require('../Models/ReferralBonus');
 
-// রিওয়ার্ড টিয়ার ও পারসেন্টেজ
 const tiers = [
   { threshold: 500000, tier1: 0.0020, tier2: 0.0007, tier3: 0.0003 },
   { threshold: 200000, tier1: 0.0015, tier2: 0.0006, tier3: 0.0002 },
   { threshold: 100,    tier1: 0.0010, tier2: 0.0005, tier3: 0.0001 }
 ];
-
-async function getTurnoverSum(referralUserIds, start, end) {
-  if (!referralUserIds || referralUserIds.length === 0) return 0;
-
-  const result = await BettingHistory.aggregate([
-    {
-      $match: {
-        userId: { $in: referralUserIds },
-        placedAt: { $gte: start, $lte: end }
-      }
-    },
-    {
-      $group: {
-        _id: null,
-        totalTurnover: { $sum: "$amount" }
-      }
-    }
-  ]);
-
-  return result.length > 0 ? result[0].totalTurnover : 0;
-}
 
 function getRewardPercent(turnover, level) {
   for (const tier of tiers) {
@@ -42,126 +19,179 @@ function getRewardPercent(turnover, level) {
   return 0;
 }
 
-async function processDailyRewards() {
+async function getTurnoverSum(userIds, start, end) {
+  if (!userIds || userIds.length === 0) return 0;
+  const result = await BettingHistory.aggregate([
+    {
+      $match: {
+        member: { $in: userIds },
+        start_time: { $gte: start, $lte: end }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalTurnover: { $sum: "$turnover" }
+      }
+    }
+  ]);
+  return result.length > 0 ? result[0].totalTurnover : 0;
+}
+
+async function processDailyReferralCashback() {
   try {
     const now = new Date();
 
-    // Assume server timezone UTC+6 (Bangladesh)
-    const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 18, 0, 0)); 
-    // 18:00 UTC = 00:00 BD time, adjust accordingly
-
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
+    // Set time: 22:00 (BD GMT+6) previous day to 21:59 today
+    const start = new Date(now);
+    start.setHours(0, 0, 0, 0); // 00:00 today (BDT)
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    end.setMilliseconds(-1); // 23:59:59.999
 
     const users = await User.find();
 
     for (const user of users) {
-      const level1Turnover = await getTurnoverSum(user.levelOneReferrals, todayStart, todayEnd);
-      const level2Turnover = await getTurnoverSum(user.levelTwoReferrals, todayStart, todayEnd);
-      const level3Turnover = await getTurnoverSum(user.levelThreeReferrals, todayStart, todayEnd);
+      const level1Ids = user.levelOneReferrals || [];
+      const level2Ids = user.levelTwoReferrals || [];
+      const level3Ids = user.levelThreeReferrals || [];
 
-      const tier1Percent = getRewardPercent(level1Turnover, 1);
-      const tier2Percent = getRewardPercent(level2Turnover, 2);
-      const tier3Percent = getRewardPercent(level3Turnover, 3);
+      const level1Turnover = await getTurnoverSum(level1Ids, start, end);
+      const level2Turnover = await getTurnoverSum(level2Ids, start, end);
+      const level3Turnover = await getTurnoverSum(level3Ids, start, end);
 
-      const tier1Reward = level1Turnover * tier1Percent;
-      const tier2Reward = level2Turnover * tier2Percent;
-      const tier3Reward = level3Turnover * tier3Percent;
+      const level1Percent = getRewardPercent(level1Turnover, 1);
+      const level2Percent = getRewardPercent(level2Turnover, 2);
+      const level3Percent = getRewardPercent(level3Turnover, 3);
 
-      const todayDate = new Date(todayStart.toISOString().slice(0, 10));
+      const level1Reward = level1Turnover * level1Percent;
+      const level2Reward = level2Turnover * level2Percent;
+      const level3Reward = level3Turnover * level3Percent;
+console.log(level1Reward, "level1Reward",level2Reward,"level1Reward",level3Reward)
+      const totalReward = level1Reward + level2Reward + level3Reward;
+console.log("totalReward",totalReward)
+      if (totalReward >= 0.01) {
+        await ReferralBonus.create([
+          {
+            userId: user.userId,
+            referredUser: null,
+            level: 1,
+            amount: level1Reward,
+            turnover: level1Turnover,
+            referredbyAgent: user.referredbyAgent || null,
+            referredbyAffiliate: user.referredbyAffiliate || null,
+            referredbysubAdmin: user.referredbysubAdmin || null,
+          },
+          {
+            userId: user.userId,
+            referredUser: null,
+            level: 2,
+            amount: level2Reward,
+            turnover: level2Turnover,
+            referredbyAgent: user.referredbyAgent || null,
+            referredbyAffiliate: user.referredbyAffiliate || null,
+            referredbysubAdmin: user.referredbysubAdmin || null,
+          },
+          {
+            userId: user.userId,
+            referredUser: null,
+            level: 3,
+            amount: level3Reward,
+            turnover: level3Turnover,
+            referredbyAgent: user.referredbyAgent || null,
+            referredbyAffiliate: user.referredbyAffiliate || null,
+            referredbysubAdmin: user.referredbysubAdmin || null,
+          }
+        ]);
 
-      await Turnover.create([
-        {
-          userId: user.userId,
-          tier: 1,
-          date: todayDate,
-          turnoverAmount: level1Turnover,
-          rewardPercent: tier1Percent,
-          rewardAmount: tier1Reward
-        },
-        {
-          userId: user.userId,
-          tier: 2,
-          date: todayDate,
-          turnoverAmount: level2Turnover,
-          rewardPercent: tier2Percent,
-          rewardAmount: tier2Reward
-        },
-        {
-          userId: user.userId,
-          tier: 3,
-          date: todayDate,
-          turnoverAmount: level3Turnover,
-          rewardPercent: tier3Percent,
-          rewardAmount: tier3Reward
-        }
-      ]);
+        // Update User’s cashReward
+        await User.updateOne({ userId: user.userId }, {
+          $inc: { cashReward: totalReward }
+        });
+      }
     }
-    console.log("Daily reward processing completed.");
-  } catch (err) {
-    console.error("Error processing daily rewards:", err);
+
+    console.log("✅ Daily referral cashback calculation completed.");
+  } catch (error) {
+    console.error("❌ Error in daily cashback job:", error);
   }
 }
 
-module.exports = { processDailyRewards };
+module.exports = { processDailyReferralCashback };
 
 
 
 
 
-
-
-
-
-// const Turnover = require('../models/Turnover');
 // const User = require('../models/User');
+// const BettingHistory = require('../models/BettingHistory');
+// const ReferralBonus = require('../models/ReferralBonus');
 
-// const TIER_PERCENTAGES = {
-//   tier1: 0.05,
-//   tier2: 0.03,
-//   tier3: 0.02,
-// };
+// const BONUS_AMOUNT = 300;
+// const REQUIRED_TURNOVER = 8500;
+// const REQUIRED_REFERRER_TURNOVER = 4250;
+// const REQUIRED_REFERRER_DEPOSIT = 1000;
+// const MAX_VALID_DAYS = 7;
 
-// exports.calculateDailyRewards = async () => {
+// const calculateReferralBonus = async () => {
 //   try {
-//     const today = new Date();
-//     today.setHours(0, 0, 0, 0);
-//     const tomorrow = new Date(today);
-//     tomorrow.setDate(tomorrow.getDate() + 1);
+//     const users = await User.find({ referredBy: { $ne: null }, createdAt: { $exists: true } });
 
-//     const todayTurnovers = await Turnover.find({
-//       date: { $gte: today, $lt: tomorrow }
-//     }).populate('user');
+//     for (const referee of users) {
+//       const referrer = await User.findOne({ referralCode: referee.referredBy });
+//       if (!referrer) continue;
 
-//     for (const turnover of todayTurnovers) {
-//       const user = turnover.user;
+//       const registrationDate = new Date(referee.createdAt);
+//       const today = new Date();
+//       const diffDays = Math.floor((today - registrationDate) / (1000 * 60 * 60 * 24));
+//       if (diffDays > MAX_VALID_DAYS) continue;
 
-//       if (user.referredBy) {
-//         const tier1 = await User.findOne({ referralCode: user.referredBy });
-//         if (tier1) {
-//           tier1.cashReward += turnover.amount * TIER_PERCENTAGES.tier1;
-//           await tier1.save();
-//         }
+//       const referrerBets = await BettingHistory.aggregate([
+//         { $match: { member: referrer.userId } },
+//         { $group: { _id: null, totalTurnover: { $sum: "$turnover" }, totalBet: { $sum: "$bet" } } }
+//       ]);
+//       const refereeBets = await BettingHistory.aggregate([
+//         { $match: { member: referee.userId } },
+//         { $group: { _id: null, totalTurnover: { $sum: "$turnover" } } }
+//       ]);
 
-//         if (tier1?.referredBy) {
-//           const tier2 = await User.findOne({ referralCode: tier1.referredBy });
-//           if (tier2) {
-//             tier2.cashReward += turnover.amount * TIER_PERCENTAGES.tier2;
-//             await tier2.save();
-//           }
+//       const referrerTurnover = referrerBets[0]?.totalTurnover || 0;
+//       const referrerDeposit = referrerBets[0]?.totalBet || 0;
+//       const refereeTurnover = refereeBets[0]?.totalTurnover || 0;
 
-//           if (tier2?.referredBy) {
-//             const tier3 = await User.findOne({ referralCode: tier2.referredBy });
-//             if (tier3) {
-//               tier3.cashReward += turnover.amount * TIER_PERCENTAGES.tier3;
-//               await tier3.save();
-//             }
-//           }
-//         }
+//       const alreadyGiven = await ReferralBonus.findOne({
+//         userId: referrer.userId,
+//         referredUser: referee.userId,
+//         level: 1
+//       });
+
+//       if (
+//         referrerTurnover >= REQUIRED_REFERRER_TURNOVER &&
+//         referrerDeposit >= REQUIRED_REFERRER_DEPOSIT &&
+//         refereeTurnover >= REQUIRED_TURNOVER &&
+//         !alreadyGiven
+//       ) {
+//         await ReferralBonus.create({
+//           userId: referrer.userId,
+//           referredUser: referee.userId,
+//           level: 1,
+//           amount: BONUS_AMOUNT,
+//           turnover: 0,
+//           referredbyAgent: referrer.referredbyAgent,
+//           referredbyAffiliate: referrer.referredbyAffiliate,
+//           referredbysubAdmin: referrer.referredbysubAdmin
+//         });
+
+//         referrer.totalBonus += BONUS_AMOUNT;
+//         await referrer.save();
+//         console.log(`✅ Bonus added for ${referrer.userId} for referring ${referee.userId}`);
 //       }
 //     }
 
-//     console.log('✅ Daily rewards calculation complete.');
+//     console.log("🎉 Referral Bonus check completed.");
 //   } catch (err) {
-//     console.error('❌ Error:', err);
+//     console.error("❌ Referral Bonus Error:", err);
 //   }
 // };
+
+// module.exports = calculateReferralBonus;

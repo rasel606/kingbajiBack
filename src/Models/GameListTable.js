@@ -9,14 +9,30 @@ const GameListTableSchema = new mongoose.Schema({
   web: String,
   status: String,
   g_progressive: String,
+  h5_fun: { type: String },
+  web_fun: { type: String },
+  status: { type: String },
+  g_code_h5: { type: String },
+  g_code_fun_h5: { type: String },
+  g_code_web: { type: String },
+  g_code_fun_web: { type: String },
   gameName: {
     gameName_enus: String,
     gameName_zhcn: String,
     gameName_zhtw: String
   },
   imgFileName: String,
+  gameNameTrial: { type: String, default: null },
+  displaydemo: { type: String },
+  position: { type: String },
+  externalgid: { type: String },
+  externalmgid: { type: String },
+  brand: { type: String },
   category_name: { type: String,ref: 'Category'},
   serial_number: { type: Number,unique: true},
+  new_brand: { type: String },
+  new_category_name: { type: String },
+  
  
   
   // image_url: { type: Boolean, default: true },

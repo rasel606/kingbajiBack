@@ -165,7 +165,7 @@ console.log("response", response.data);
 // Cron Job: Runs every minute
 cron.schedule('* * * * *', async () => {
   console.log(`⏱️ Running betting history fetch at ${new Date().toLocaleString()}`);
-  await fetchAndStoreBettingHistory;
+  await fetchAndStoreBettingHistory();
 });
 
 

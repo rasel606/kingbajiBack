@@ -5,12 +5,12 @@ const BonusSchema = new mongoose.Schema({
   description: { type: String, required: true },
   bonusType: { 
     type: String, 
-    enum: ['deposit', 'signup', 'referral', 'turnover', 'birthday'], 
+    enum: ['deposit', 'signup', 'referral', 'turnover', 'birthday', 'other'], 
     required: true 
   },
   percentage: { type: Number }, // For percentage-based bonuses like 3% deposit
   fixedAmount: { type: Number }, // For fixed amount bonuses
-  minDeposit: { type: Number, default: 200 }, // Minimum deposit to qualify
+  minDeposit: { type: Number }, // Minimum deposit to qualify
   maxBonus: { type: Number }, // Maximum bonus amount (if applicable)
   wageringRequirement: { type: Number, default: 1 }, // 1x turnover
   validDays: { type: Number, default: 7 }, // Days to complete turnover

@@ -14,22 +14,51 @@ const crypto = require('crypto');
 
 
 
-async function addGameWithCategory(gameData, category_name) {
+async function addGameWithCategory(gameData, category_name,provider) {
   // Ensure category exists or create it
   const category = await Category.findOneAndUpdate(
     { category_name },
     { $setOnInsert: { category_name } },
     { new: true, upsert: true }
   );
-console.log(gameData)
-  // Add or update game
+
+  console.log(gameData)
+
   const newGame = await GameListTable.findOneAndUpdate(
-    { g_code: gameData.g_code },
+    { g_code: gameData.g_code, p_code: gameData.p_code },
     { ...gameData, category_name },
     { upsert: true, new: true }
   );
 
-  return { newGame, category };
+  // গেমের কোড provider এর gamelist-এ ঢোকান
+  await BetProviderTable.updateOne(
+    { company: provider.company },
+    {
+      $addToSet: {
+        gamelist: {
+          g_code: gameData.g_code,
+          p_code: gameData.p_code,
+          g_type: gameData.g_type,
+        },
+      },
+    }
+  );
+
+  // গেমের কোড category এর gamelist-এ ঢোকান
+  await Category.updateOne(
+    { category_name },
+    {
+      $addToSet: {
+        gamelist: {
+          g_code: gameData.g_code,
+          p_code: gameData.p_code,
+          g_type: gameData.g_type,
+        },
+      },
+    }
+  );
+
+  return newGame;
 }
 
 // Fetch games from external API and add to DB
@@ -58,12 +87,16 @@ const fetchGamesFromApi = async (providerData, category_name) => {
       },
     });
 
+    console.log(`https://gsmd.336699bet.com/getGameList.ashx?operatorcode=${operatorcode}&providercode=${providercode}&lang=en&html=0&reformatjson=yes&signature=${signature}`
+      
+    );
+
     const gameList = JSON.parse(response.data?.gamelist);
     let gameResults = [];
 
     for (let game of gameList) {
       try {
-        const addedGame = await addGameWithCategory(game, category_name);
+        const addedGame = await addGameWithCategory(game, category_name, providerData);
         gameResults.push(addedGame);
       } catch (err) {
         console.error(`Failed to add game ${game.g_code}:`, err.message);
@@ -93,7 +126,8 @@ exports.CasinoItemAdd = async (req, res) => {
       auth_pass,
       currency_id,
       category_name,
-      image_url
+      image_url,
+      g_type
     } = req.body;
 
     const providerData = {
@@ -109,6 +143,7 @@ exports.CasinoItemAdd = async (req, res) => {
       auth_pass,
       currency_id,
       image_url,
+      g_type,
       updatetimestamp: Date.now(),
     };
 
@@ -638,37 +673,86 @@ exports.getCategoriesWithProviders = async (req, res) => {
 
 exports.getCategoriesWithProvidersGameList = async (req, res) => {
   try {
-    const { provider, category, page  } = req.query;
+    let { 
+      provider = [], 
+      category, 
+      page = 1, 
+      gameName = '',
+      sortBy = 'serial_number',
+      sortOrder = 'asc'
+    } = req.query;
 
+    console.log(req.query)
+
+    console.log(provider, category, page, gameName, sortBy, sortOrder);
+    // Validate and parse inputs
+    /* page = parseInt(page); */
     if (isNaN(page) || page < 1) {
-      return res.status(400).json({ message: "Invalid page number" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid page number" 
+      });
     }
 
     const limit = 24;
     const skip = (page - 1) * limit;
 
+    // Check if category exists
     const categoryData = await Category.findOne({ category_name: category });
     if (!categoryData) {
-      return res.status(404).json({ message: "Category not found" });
+      return res.status(404).json({ 
+        success: false, 
+        message: "Category not found" 
+      });
     }
 
+    // Convert single provider to array if not already
+    if (!Array.isArray(provider)) {
+      provider = [provider].filter(Boolean);
+    }
+
+    // Build dynamic query
     const query = {
-      p_code: provider,
       category_name: category,
       is_active: true,
     };
 
+    // Optional filters
+    if (provider.length > 0) {
+      query.p_code = { $in: provider };
+    }
+
+    if (gameName) {
+      query['$or'] = [
+        { 'gameName.gameName_enus': { $regex: gameName, $options: 'i' } },
+        { 'gameName.gameName_zhcn': { $regex: gameName, $options: 'i' } },
+        { name: { $regex: gameName, $options: 'i' } }
+      ];
+    }
+
+    // Sort options mapping
+ 
+
+    // Determine sort
+
+    // Fetch paginated games with sorting
     const games = await GameListTable.find(query)
       .skip(skip)
       .limit(limit);
 
+    // Total count for pagination
     const total = await GameListTable.countDocuments(query);
+
+    // Get all unique providers for this category
+    const providers = await GameListTable.distinct('p_code', { 
+      category_name: category 
+    });
 
     res.json({
       success: true,
       data: games,
       pagination: {
-        page: parseInt(page),
+        page,
         limit,
         total,
       },
@@ -684,9 +768,106 @@ exports.getCategoriesWithProvidersGameList = async (req, res) => {
 
 
 
+exports.searchGamesByName = async (req, res) => {
+  console.log(req)
+  try {
+    let { q = '', lang = 'enus' } = req.query;
+console.log(req.query)
+    if (!q) {
+      return res.status(400).json({ success: false, message: 'Query parameter q is required' });
+    }
 
+    // Supported language fields
+    const supportedLangs = ['enus', 'zhcn', 'zhtw', 'bn'];
+    if (!supportedLangs.includes(lang)) {
+      return res.status(400).json({ success: false, message: `Unsupported language: ${lang}` });
+    }
 
+    // Construct dynamic field for search e.g. 'gameName.gameName_enus'
+    const searchField = `gameName.gameName_${lang}`;
 
+    // Case-insensitive regex search
+    const regex = new RegExp(q.trim(), 'i');
+
+    const games = await GameListTable.find({
+      [searchField]: regex,
+      is_active: true // optional filter to return only active games
+    })
+       
+
+    return res.json({ success: true, count: games.length, data: games });
+  } catch (error) {
+    console.error('Search error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+}
+
+exports.moveGamesToAnotherCategory = async (req, res) => {
+  console.log(req.body)
+  try {
+    const {
+      fromCategoryName,
+      toCategoryName,
+      gamesToMove // গেমের array: [{ g_code, p_code }]
+    } = req.body;
+
+    if (!fromCategoryName || !toCategoryName || !Array.isArray(gamesToMove)) {
+      return res.status(400).json({ success: false, message: 'অনুগ্রহ করে সব তথ্য দিন।' });
+    }
+
+    // দুই ক্যাটাগরির তথ্য খোঁজা
+    const fromCategory = await Category.findOne({ category_name: fromCategoryName });
+    const toCategory = await Category.findOne({ category_name: toCategoryName });
+console.log(fromCategory, toCategory)
+    if (!fromCategory || !toCategory) {
+      return res.status(404).json({ success: false, message: 'ক্যাটাগরি পাওয়া যায়নি।' });
+    }
+
+    // গেম ফিল্টার করে যেগুলো স্থানান্তর করতে হবে
+    const gamesToRemove = new Set(gamesToMove.map(game => game.g_code + game.p_code));
+console.log(gamesToRemove)
+    // পুরাতন ক্যাটাগরি থেকে গেম সরানো
+    fromCategory.gamelist = fromCategory.gamelist.filter(
+      game => !gamesToRemove.has(game.g_code + game.p_code)
+    );
+console.log(fromCategory.gamelist)
+    // নতুন ক্যাটাগরিতে গেম যোগ করা (ডুপ্লিকেট এড়াতে filter)
+    const existingSet = new Set(toCategory.gamelist.map(game => game.g_code + game.p_code));
+    console.log("existingSet",existingSet)
+    const newGames = gamesToMove.filter(
+      game => !existingSet.has(game.g_code + game.p_code)
+    );
+    console.log("newGames",newGames)
+    toCategory.gamelist.push(...newGames);
+
+    // GameListTable আপডেট করা যাতে category_name পরিবর্তিত হয়
+    for (let game of gamesToMove) {
+      console.log("GameListTable",game)
+      await GameListTable.updateMany(
+        { g_code: game.g_code, p_code: game.p_code },
+        { category_name: toCategoryName,
+          g_type: toCategory.g_type,
+          new_brand: game.g_code,
+          new_category_name: toCategoryName,
+         }
+      );
+    }
+console.log("GameListTable",toCategory)
+    // সংরক্ষণ
+    await fromCategory.save();
+    await toCategory.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'গেম সফলভাবে স্থানান্তর করা হয়েছে।',
+      movedGames: gamesToMove
+    });
+
+  } catch (err) {
+    console.error('ত্রুটি:', err);
+    res.status(500).json({ success: false, message: 'সার্ভার ত্রুটি হয়েছে।' });
+  }
+};
 
 
 
@@ -740,3 +921,9 @@ exports.AddCetagory = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
+
+
+
+
+

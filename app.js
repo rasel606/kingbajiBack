@@ -98,16 +98,30 @@ const bettingHistoryJob = require('./src/corn/BettingHistoryJob');
 const { processDailyRewards } = require('./src/Services/rewardProcessor');
 // const chatSocketHandler = require('./src/Healper/chatSocketHandler');
 const {TurnOverJob} = require('./src/corn/TurnOverJob');
+const WeeklyLossBonus = require('./src/corn/weeklyLossBonusCron');
+const calculateDailyRebate = require('./src/corn/calculateDailyRebate');
+// const referralController = require('./src/Controllers/referralController');
 // ✅ Basic Route for Testing
 app.get('/', (req, res) => {
     console.log('✔️ API Running');
     res.json({ message: "API is working!" });
 });
 
-cron.schedule('5 18 * * *', async () => {
+cron.schedule('* * * * *', async () => {
   console.log("Cron job started at", new Date());
   await processDailyRewards();
 });
+// const calculateReferralBonus = require('./src/Services/rewardProcessor');
+// const calculateDailyCashback = require('./src/corn/dailyCashbackCron');
+
+// // Run every day at 3:00 AM (GMT+6)
+// cron.schedule('0 21 * * *', async () => {
+//   console.log("🚀 Starting Referral and Cashback Cron Jobs...");
+//   await calculateReferralBonus();
+//   await calculateDailyCashback();
+// });
+
+
 
 // Route Handlers
 app.use("/api/v1", router);
