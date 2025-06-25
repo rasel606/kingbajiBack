@@ -43,7 +43,7 @@ console.log("✅ Daily referral cashback calculation completed.");
       console.log("Cron job started at", new Date()),
       console.log("Cron job ended at", new Date());
 
-exports.rewardProcessor = async () => {
+const rewardProcessor = async () => {
   try {
     const now = new Date();
 
@@ -125,9 +125,9 @@ exports.rewardProcessor = async () => {
 
 
 
+cron.schedule('10 1 * * *',rewardProcessor);
 
-
-
+module.exports = rewardProcessor;
 
 
 // const User = require('../models/User');

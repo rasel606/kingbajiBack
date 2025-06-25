@@ -10,6 +10,6 @@ const RebateLogSchema = new mongoose.Schema({
   sessionEnd: { type: Date, required: true },
   createdAt: { type: Date, default: Date.now }
 });
-
+RebateLogSchema.index({ userId: 1, date: 1 }, { unique: true });
 const RebateLog = mongoose.model('RebateLog', RebateLogSchema);
 module.exports = RebateLog

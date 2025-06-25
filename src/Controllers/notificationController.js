@@ -12,8 +12,6 @@ exports.createNotification = async (title, userId, content, type, metaData = {})
       metaData
     });
     await notification.save();
-    const notificationId = notification._id;
-    console.log(notificationId);
     console.log(notification);
     return notification;
   } catch (error) {
@@ -123,16 +121,16 @@ exports.getGroupedNotifications = async (req, res) => {
 
 
 // Mark notifications as read
-// exports.markAsRead = async (notificationIds) => {
-//   try {
-//     return await Notification.updateMany(
-//       { _id: { $in: notificationIds } },
-//       { $set: { read: true } }
-//     );
-//   } catch (error) {
-//     throw new Error(error.message);
-//   }
-// };
+exports.markAsRead = async (notificationIds) => {
+  try {
+    return await Notification.updateMany(
+      { _id: { $in: notificationIds } },
+      { $set: { read: true } }
+    );
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
 // router.get("/:userId", async (req, res) => {
 //   try {

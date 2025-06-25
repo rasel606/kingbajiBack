@@ -8,9 +8,9 @@ const Bonus = require('../Models/Bonus');
 
 // Run every Sunday at 23:59 (BD Time)
 // server time UTC, BD+6
-  console.log('Weekly Loss Bonus cron started');
+ console.log('Weekly Loss Bonus cron started');
 const weeklyLossBonusCrons =async ()=>{
-    
+     console.log('Weekly Loss Bonus cron started');
 
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
@@ -23,7 +23,7 @@ const weeklyLossBonusCrons =async ()=>{
       userId: user.userId,
       type: 0, // Deposit
       status: 1, // Accepted
-      datetime: { $gte: oneWeekAgo }
+      datetime: { $gte: oneWeekAgo  }
     });
 
     const totalDeposit = deposits.reduce((sum, trx) => sum + trx.base_amount, 0);
@@ -32,8 +32,14 @@ const weeklyLossBonusCrons =async ()=>{
       const bonusAmount = parseFloat((totalDeposit * 0.01).toFixed(2)); // 1% bonus
 
       // Update user balance
-      user.balance += bonusAmount;
-      await user.save();
+      
+      await User.updateOne(
+              { userId: user.userId },
+              {
+                $inc: { balance: bonusAmount, totalBonus: rebateAmount },
+                $set: { updatetimestamp: new Date() }
+              }
+            );
 
       // Create bonus log (optional)
       await UserBonus.create({
@@ -64,5 +70,9 @@ const weeklyLossBonusCrons =async ()=>{
   console.log('Weekly Loss Bonus cron finished');
 }
 
-cron.schedule('59 17 * * 0', weeklyLossBonusCrons, { timezone: 'Asia/Dhaka' }).start( new Date() );
+// cron.schedule('59 17 * * 0', weeklyLossBonusCrons, { timezone: 'Asia/Dhaka' }).start( new Date() );
+
+cron.schedule('* * * * *', weeklyLossBonusCrons);
+
+
 module.exports = weeklyLossBonusCrons;

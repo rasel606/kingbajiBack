@@ -1,6 +1,7 @@
 const User = require('../Models/User');
 const BettingHistory = require('../Models/BettingHistory');
 
+
 const getCashbackRate = (total, level) => {
   for (let tier of CASHBACK_TIERS) {
     if (total >= tier.minTurnover) return tier[`tier${level}`] || 0;
@@ -8,7 +9,7 @@ const getCashbackRate = (total, level) => {
   return 0;
 };
 
-const calculateDailyCashback = async () => {
+exports.calculateDailyCashback = async () => {
   const today = new Date();
   today.setHours(22, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -49,5 +50,3 @@ const calculateDailyCashback = async () => {
 
   console.log("✅ Daily Cashback Calculation Done");
 };
-
-module.exports = calculateDailyCashback;

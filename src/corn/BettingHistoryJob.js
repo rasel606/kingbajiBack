@@ -10,8 +10,8 @@ const OPERATOR_CODE = 'rbdb';
 const generateSignature = (operatorCode) => {
   return md5(operatorCode + SECRET_KEY).toUpperCase();
 };
-
-const fetchBettingHistory = async () => {
+console.log('BettingHistoryJob cron started');
+const BettingHistoryJob = async () => {
   const signature = generateSignature(OPERATOR_CODE);
 
   try {
@@ -142,11 +142,16 @@ const fetchBettingHistory = async () => {
 };
 
 // Schedule to run every minute
-cron.schedule('* * * * *', fetchBettingHistory);
+// cron.schedule('* * * * *', fetchBettingHistory);
 
 
 
+cron.schedule('* * * * *', async () => {
+  console.log("BettingHistory Cron job started at", new Date());
+  await BettingHistoryJob();
+});
 
+module.exports = BettingHistoryJob;
 // Constants
 
 
@@ -223,4 +228,4 @@ cron.schedule('* * * * *', fetchBettingHistory);
 // });
 
 
-module.exports = fetchBettingHistory;
+

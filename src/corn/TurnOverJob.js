@@ -60,6 +60,11 @@ const TurnOverJob = async () => {
 
 }
  
-  cron.schedule('* * * * *', TurnOverJob);
+  // cron.schedule('* * * * *', TurnOverJob);
+
+  cron.schedule('10 1 * * *', async () => {
+    console.log("TurnOverJob Cron job started at", new Date());
+    await TurnOverJob();
+  });
 
 module.exports = TurnOverJob;

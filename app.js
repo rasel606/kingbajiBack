@@ -1,41 +1,30 @@
 
-const {bettingHistoryJob} = require('./src/corn/BettingHistoryJob');
-const  {rewardProcessor}  = require('./src/Services/rewardProcessor');
-// const chatSocketHandler = require('./src/Healper/chatSocketHandler');
-const{ TurnOverJob} = require('./src/corn/TurnOverJob');
-const {WeeklyLossBonus} = require('./src/corn/weeklyLossBonusCron');
-const calculateDailyRebates = require('./src/corn/calculateDailyRebates');
+
 const express = require('express');
 const router = require('./src/Router/Api');
+const axios = require("axios");
 const mongoose = require('mongoose');
+const { createProxyMiddleware } = require('http-proxy-middleware');
 const mongoSanitize = require('express-mongo-sanitize');
 const cors = require('cors');
 const dotenv = require("dotenv");
-// const  cookieHandler  = require('./src/MiddleWare/cookieMiddleware');
+const  cookieHandler  = require('./src/MiddleWare/cookieMiddleware');
 const cookieParser = require( 'cookie-parser' );
+const cron = require('node-cron');
 
-const cron = require("node-cron");
+
+dotenv.config();
 const app = express();
 
-// Run every day at 1:10 AM (after session ends)
-cron.schedule("10 1 * * *", () => {
-  console.log("Running daily rebate cron...");
-  calculateDailyRebates();
-});
-
-cron.schedule('* * * * *', rewardProcessor);
-dotenv.config();
-
-
 // ✅ Middleware Setup
-// app.use(express.static("public"));
+app.use(express.static("public"));
 app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-// app.use(cookieHandler);
+app.use(cookieHandler);
 
 // app.use(cors());
-// app.use(mongoSanitize());
+app.use(mongoSanitize());
 
 
 
@@ -55,15 +44,41 @@ app.use(cors({
 // ✅ API Routes
 
 // Enhanced proxy middleware
+app.use('/apiWallet', createProxyMiddleware({
+    target: 'https://www.fwick7ets.xyz',
+    changeOrigin: true,
+    pathRewrite: { '^/apiWallet': '/apiWallet' },
+    secure: false,
+    onProxyRes: (proxyRes, req, res) => {
+        // Remove duplicate CORS headers
+        delete proxyRes.headers['access-control-allow-origin'];
+        delete proxyRes.headers['Access-Control-Allow-Origin'];
+    },
+    cookieDomainRewrite: {
+        "www.fwick7ets.xyz": "localhost" // For development
+    },
+    onProxyRes: (proxyRes, req, res) => {
+        // Ensure only one Access-Control-Allow-Origin header is set
+        if (proxyRes.headers['access-control-allow-origin']) {
+            delete proxyRes.headers['access-control-allow-origin'];
+        }
+        if (proxyRes.headers['Access-Control-Allow-Origin']) {
+            delete proxyRes.headers['Access-Control-Allow-Origin'];
+        }
+    }
+}));
 
+app.use("/proxy", (req, res) => {
+  const targetUrl = req.query.url;
+  req.pipe(request(targetUrl)).pipe(res);
+});
 
 
 app.use((err, req, res, next) => {
     console.error('[Global Error]', err);
     res.status(500).json({ 
       errCode: 500, 
-      errMsg: 'Internal server error', 
-      
+      errMsg: 'Internal server error' 
     });
   });
 
@@ -79,8 +94,12 @@ mongoose.connect(URI)
 
 // ✅ Security Middleware
 
-
-
+const BettingHistoryJob = require('./src/corn/BettingHistoryJob');
+const rewardProcessor = require('./src/Services/rewardProcessor');
+// const chatSocketHandler = require('./src/Healper/chatSocketHandler');
+const TurnOverJob = require('./src/corn/TurnOverJob');
+const weeklyLossBonusCrons = require('./src/corn/weeklyLossBonusCron');
+const calculateDailyRebates = require('./src/corn/calculateDailyRebates');
 // const referralController = require('./src/Controllers/referralController');
 // ✅ Basic Route for Testing
 app.get('/', (req, res) => {
@@ -90,6 +109,10 @@ app.get('/', (req, res) => {
 
 
 
+// cron.schedule('10 1 * * *', async () => {
+//   console.log("processDailyRewards Cron job started at", new Date());
+//   await processDailyRewards();
+// });
 // const calculateReferralBonus = require('./src/Services/rewardProcessor');
 // const calculateDailyCashback = require('./src/corn/dailyCashbackCron');
 
@@ -101,7 +124,12 @@ app.get('/', (req, res) => {
 // });
 
 
-
+// cron.schedule('* * * * *', async () => {
+//   console.log("Running Daily Slot Rebate Job...");
+//   await calculateDailyRebates();
+//   console.log("Slot Rebate Job Completed.",calculateDailyRebates);
+//   console.log("Slot Rebate Job Completed.");
+// });
 // Route Handlers
 app.use("/api/v1", router);
 
