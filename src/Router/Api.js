@@ -8,18 +8,21 @@ const UpdateProfile = require('../Controllers/UpdateProfile');
 // const path = require('path');
 // const fs = require('fs');
 const BettingController = require('../Controllers/BettingController');
-const BankController = require('../Controllers/BankController');
+// const BankController = require('../Controllers/BankController.js');
 // const OddBettingController = require('../Controllers/OddBettingController');
 const ModelBettingController = require('../Controllers/ModelBettingController');
 const TransactionController = require('../Controllers/TransactionController');
 const AffiliateController = require('../Controllers/AffiliateController');
+const AffiliateDashboardController = require('../Controllers/AffiliateDashboardController');
+const AffiliateMemberController = require('../Controllers/AffiliateMemberController');
+
 const AgentController = require('../Controllers/AgentController');
 // const Controllers = require('../Services/CornController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 // const messageController = require('../Controllers/messageController');
 const CreateSubAdmin = require('../Services/CreateSubAdmin');
 const bettingHistoryController = require ("../Controllers/bettingHistoryController")
-
+const vipController = require('../controllers/vipController');
 
 
 // const Promotion = require('../Models/PromotionSchema');
@@ -33,11 +36,13 @@ const blank= require('../Controllers/blank');
 // const blank3= require('../Controllers/blank3');
 // const chatController= require('../Controllers/ChatController');
 const notificationController = require('../Controllers/notificationController');
+const BankController = require('../Controllers/BankController');
 // const Message = require('../Models/Message');
 // const SubAdmin = require('../Models/SubAdminModel');
 
 const { createBonus,getAllBonuses } = require('../Controllers/BonusController');
 const VipController = require('../Controllers/VipController');
+const { Console } = require('winston/lib/winston/transports');
 
 
 
@@ -55,6 +60,12 @@ router.get('/odds-sync',AdminController.SyncOdds)
 
 router.post('/createUser', CreateUserService.register);
 router.post('/login_user', CreateUserService.loginUser);
+// router.post('/login_user',(req,res)=>{
+//   const { userId, password } = req.body;
+//  console.log(req.body);
+
+//   CreateUserService.loginUser(req, res);
+// })
 router.post('/user_details', CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
@@ -78,6 +89,16 @@ router.post('/searchTransactionsbyUserId', TransactionController.searchTransacti
 
 
 
+
+// VIP Status
+router.get('/status/:userId', vipController.getVipStatus);
+router.post('/convert', vipController.convertPoints);
+
+// Admin endpoints
+router.post('/adjust', vipController.adjustPoints);
+router.post('/update-level', vipController.updateLevel);
+router.post('/run-daily', vipController.runDailyCalculation);
+router.post('/run-monthly', vipController.runMonthlyProcessing);
 
 
 ///////////////////////////////////////SUb Admin    ///////////////////////////////////////////////
@@ -110,9 +131,22 @@ router.post('/bonuses',getAllBonuses);
 // router.post('/subadmin/update-password', CreateSubAdmin.updatePassword);
 ///////////////////////////////////////affiliate    ///////////////////////////////////////////////
 router.post('/register_affiliate',AffiliateController.registerAffiliate) ;
-router.post('/login_affiliate',AffiliateController.login) ;
-router.get('/verify_affiliate', AffiliateController.verify);
+router.post('/login_affiliate',AffiliateController.Affiliate_login) ;
+// router.get('/verify_affiliate', AffiliateController.verify_affiliate);
+// router.get('/captcha', AffiliateController.generateCaptcha); 
+router.get('/logout', AffiliateController.logout); 
+router.get('/get_dashboard_data', AffiliateController.protect,AffiliateDashboardController.getAffiliateDashboard); 
+router.get('/search_members', AffiliateController.protect,AffiliateMemberController.searchMembers); 
+router.get('/export_members', AffiliateController.protect,AffiliateMemberController.exportMembers); 
+router.post('/affilate_profile',  AffiliateController.getProfile);
 router.get('/sub_affiliate', GetAllUser.GetAllUserForSUbAdmin);
+
+
+router.get('/check', AffiliateController.protect, (req, res) => {
+// console.log(req.user) 
+  res.status(200).json({ user: req.user });
+});
+// router.get('/affiliate/dashboard', AffiliateDashboardController.getAffiliateDashboard);
 ///////////////////////////////////////////////////agent   ///////////////////////////////////////////////
 router.post('/register_agent',AgentController.registerAgent) ;
 router.post('/login_agent',AgentController.loginAgent) ;
@@ -151,7 +185,7 @@ router.post("/adminlogin", AdminController.AdminLogin)
 // router.post("/adminregistation", AdminController.CreateAdmin)
 // router.post("/adminlogin", AdminController.AdminLogin)
 // router.post("/adminlogin", AdminController.AdminLogin)
-router.post("/bank_add", AdminController.AddBank)
+router.get("/bank", BankController.getBanks)
 
 
 
@@ -296,8 +330,9 @@ router.post('/category/add',ModelBettingController.AddCetagory)
 router.get('/get_casino',AdminController.GetCasinoData);
 router.get('/get_active_sports',AdminController.GetActiveSports);
 // router.post('/syncCasinoInfo',AdminController.syncCasinoInfo)
-router.post('/add-bank',AdminController.AddBank)
-router.delete('/delete-bank/:id',AdminController.DeleteBank)
+router.post('/add-bank',BankController.addBank)
+router.post('/update-bank',BankController.updateBank)
+// router.delete('/delete-bank/:id',BankController.updateBank)
 
 //bet
 
@@ -356,8 +391,8 @@ router.post('/casino/update/:id', BettingController.casino_update);
 
 /////////////////////////////////////////////////////////test api//////////////////////////////////////////////////
 // bank
-router.post("/update-bank/:id",BankController.UpdateBank)
-router.post("/delete-bank",BankController.DeleteBank)
+router.post("/update-bank/:id",BankController.updateBank)
+router.post("/delete-bank",BankController.deleteBank)
 
 
 
@@ -373,8 +408,8 @@ router.post("/delete-bank",BankController.DeleteBank)
 
 
 
-router.post("/vip_info",VipController.getUserVipInfo)
-router.post("/convert",VipController.convertVpToMoney)
+// router.post("/vip_info",VipController.getUserVipInfo)
+// router.post("/convert",VipController.convertVpToMoney)
 // router.post("/history",VipController.getConversionHistory)
 
 

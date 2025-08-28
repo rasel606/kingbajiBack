@@ -9,124 +9,154 @@ const UserBonus = require("../Models/UserBonus");
 const { createNotification } = require("../Controllers/notificationController");
 const Bonus = require("../Models/Bonus");
 const { format } = require("morgan");
-console.log('🌀 Daily Loss Bonus cron started');
+const AffiliateModel = require("../models/AffiliateModel");
+const { addBonusToUser } = require("../Healper/bonusService");
 const calculateDailyRebates = async () => {
   try {
-    console.log('🌀 Daily Loss Bonus cron started');
+    const now = new Date();
+    const sessionStart = new Date(now);
+    sessionStart.setMinutes(sessionStart.getMinutes() - 5); // Last 5 minutes session
 
-    const today = moment().format('YYYY-MM-DD');
+    const todayStr = moment(now).format("YYYY-MM-DD");
+    console.log(`🌀 Daily Rebate Bonus cron started at ${moment(now).format('YYYY-MM-DD HH:mm:ss')}`);
+
     const settings = await RebateSetting.find({ active: true });
-
     const bonus = await Bonus.findById("685afbdf7af170ea4dfaf7fc");
+
     if (!bonus) {
       console.log("❌ Bonus config not found");
       return;
     }
 
-    for (const setting of settings) {
-      const sessionStart = moment(`${today} ${setting.sessionStart}`, "YYYY-MM-DD HH:mm");
-      const sessionEnd = moment(`${today} ${setting.sessionEnd}`, "YYYY-MM-DD HH:mm");
+    const users = await User.find({});
 
-      const users = await User.find({}); // Find all users
-      for (const user of users) {
-        console.log("user----------------------1", user);
-        const bets = await BettingHistory.aggregate([
-          {
-            $match: {
-              member: user.userId,
-              start_time: { $gte: sessionStart.toDate(), $lte: sessionEnd.toDate() }
-            }
+    for (const user of users) {
+      const bets = await BettingHistory.aggregate([
+        {
+          $match: {
+            member: user.userId,
+            start_time: { $gte: sessionStart, $lte: now },
           },
-          {
-            $group: {
-              _id: "$member",
-              totalTurnover: { $sum: "$turnover" },
-              totalBets: { $sum: 1 }
-            }
-          }
-        ]);
+        },
+        {
+          $group: {
+            _id: "$member",
+            totalTurnover: { $sum: "$turnover" },
+            totalBets: { $sum: 1 },
+          },
+        },
+      ]);
 
-        console.log("bets----------------------2", bets);
-        for (const bet of bets) {
-          console.log("bet------------------------1", bet);
-          const userId = bet._id;
-          const turnover = bet.totalTurnover;
-          const totalBets = bet.totalBets;
-          console.log("totalBets userId", userId, totalBets, totalBets >= setting.minTurnover && totalBets <= setting.maxTurnover);
-          if (totalBets >= setting.minTurnover && totalBets <= setting.maxTurnover) {
-            const rebateAmount = parseFloat(((turnover * setting.rebatePercentage) / 100).toFixed(2));
+      if (!bets.length) continue;
 
-            try {
-              await RebateLog.create({
-                userId,
-                totalTurnover: turnover,
-                totalBets,
-                rebateAmount,
-                percentageApplied: setting.rebatePercentage,
-                date: sessionStart.startOf('day').toDate(),
-                sessionStart: sessionStart.toDate(),
-                sessionEnd: sessionEnd.toDate()
-              });
+      const { totalTurnover, totalBets } = bets[0];
 
-              await User.updateOne(
-                { userId },
-                {
-                  $inc: { balance: rebateAmount, totalBonus: rebateAmount },
-                  $set: { updatetimestamp: new Date() }
-                }
-              );
+      for (const setting of settings) {
+        if (totalBets >= setting.minTurnover && totalBets <= setting.maxTurnover) {
+          const rebateAmount = parseFloat(((totalTurnover * setting.rebatePercentage) / 100).toFixed(2));
 
+          try {
+            // Create rebate log
+            await RebateLog.create({
+              userId: user.userId,
+              totalTurnover,
+              totalBets,
+              rebateAmount,
+              percentageApplied: setting.rebatePercentage,
+              date: moment(now).startOf("day").toDate(),
+              sessionStart,
+              sessionEnd: now,
+            });
 
-              console.log("user", user);
-              await UserBonus.create({
-                userId: user.userId,
+            // Update user balance
+            await User.updateOne(
+              { userId: user.userId },
+              {
+                $inc: { balance: rebateAmount, totalBonus: rebateAmount },
+                $set: { updatetimestamp: new Date() }
+              }
+            );
+
+            // Check if user was referred by an affiliate
+            if (user.referredBy) {
+              const affiliate = await AffiliateModel.findOne({ referralCode: user.referredBy });
+
+              if (affiliate) {
+                // Calculate affiliate commission (example: 20% of the rebate)
+                const commissionRate = affiliate.settings?.commissionRate || 55;
+                const platformFee = affiliate.settings?.platformFee || 20;
+
+                const commissionAmount = parseFloat((rebateAmount * (commissionRate / 100)).toFixed(2));
+                const afterPlatformFee = parseFloat((commissionAmount * (1 - platformFee / 100)).toFixed(2));
+
+                // Update affiliate's balance and stats
+                await AffiliateModel.updateOne(
+                  { referralCode: user.referredBy },
+                  {
+                    $inc: {
+                      balance: afterPlatformFee,
+                      availableBalance: afterPlatformFee,
+                      totalCommission: afterPlatformFee
+                    }
+                  }
+                );
+
+                // Record in UserBonus for tracking
+                await addBonusToUser({
+                user,
                 bonusId: bonus._id,
                 amount: rebateAmount,
-                remainingAmount: rebateAmount,
-                completedTurnover: totalBets,
-                turnoverRequirement: totalBets,
-                status: "completed",
-                updatedAt: new Date()
+                totalBets: totalBets,
+                totalTurnover: totalTurnover,
+                bonusType: 'dailyRebate',
+                referredBy: user.referredBy,
+                message: `আপনি আজকের রিবেট বোনাস হিসেবে ${rebateAmount}৳ পেয়েছেন!`
               });
-
-              await createNotification(
-                'দৈনিক রিবেট বোনাস',
-                user.userId,
-                `আপনি আজকে দৈনিক রিবেট বোনাস ${rebateAmount}৳ বোনাস পেয়েছেন!`,
-                'balance_added',
-                {
-                  amount: rebateAmount
-                }
-              );
-
-              const minBonus = await UserBonus.findOne({ userId: user.userId });
-
-              console.log("minBonus", minBonus);
-              console.log(`✅ Bonus given to user ${user.userId}: ${rebateAmount}৳`);
-            } catch (err) {
-              if (err.code === 11000) {
-                console.log(`⚠️ Duplicate rebate for ${userId} on ${today}`);
-              } else {
-                console.error(`❌ Error processing user ${userId}:`, err);
+                // Create affiliate earnings record
+                await AffiliateEarnings.create({
+                  affiliateId: affiliate._id,
+                  period: new Date(now.getFullYear(), now.getMonth(), 1),
+                  dailyRebate: commissionAmount,
+                  netProfit: afterPlatformFee,
+                  status: 'pending'
+                });
               }
+            }
+            else {
+              // Record in UserBonus for tracking
+              await addBonusToUser({
+                user,
+                bonusId: bonus._id,
+                amount: rebateAmount,
+                totalBets: totalBets,
+                totalTurnover: totalTurnover,
+                bonusType: 'dailyRebate',
+                message: `আপনি আজকের রিবেট বোনাস হিসেবে ${rebateAmount}৳ পেয়েছেন!`
+              });
+            }
+
+            console.log(`✅ ${moment().format('HH:mm:ss')} - Bonus ৳${rebateAmount} added to ${user.userId}`);
+
+            break; // Stop checking other settings if one is applied
+          } catch (err) {
+            if (err.code === 11000) {
+              console.log(`⚠️ Duplicate rebate for ${user.userId} on ${todayStr}`);
+            } else {
+              console.error(`❌ Error for user ${user.userId}:`, err);
             }
           }
         }
-
       }
-
-
     }
-    console.log(`Daily Loss Bonus given to user ${user.userId}: ${bonusAmount}৳`);
-    console.log('✅ Daily Loss Bonus cron finished');
   } catch (err) {
-    console.error('❌ Daily Loss Bonus cron error:', err);
+    console.error("❌ Daily Rebate Bonus cron error:", err);
   }
 };
 
-// Run every day at 01:00 AM (BD time = 19:00 UTC)
-// cron.schedule('10 1 * * *', calculateDailyRebates, {
-//   timezone: 'Asia/Dhaka'
-// });
-cron.schedule('10 1 * * *', calculateDailyRebates);
+// Schedule to run daily at 1:10 AM
+cron.schedule('* * * * *', async () => {
+  console.log("🧪 Running calculateDailyRebates...");
+  await calculateDailyRebates();
+});
+
 module.exports = calculateDailyRebates;

@@ -5,7 +5,7 @@ const bettingHistorySchema = new mongoose.Schema({
   site: { type: String, required: true },
   product: { type: String, required: true },
   member: { type: String, required: true },
-  game_id: { type: String, required: true },
+  game_id: { type: String},
   start_time: { type: Date, required: true },
   match_time: { type: Date, required: true },
   end_time: { type: Date, required: true },

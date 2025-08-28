@@ -501,6 +501,7 @@ exports.launchGamePlayer = async (req, res) => {
 
         await new Promise(resolve => setTimeout(resolve, 1000));
         const gameLaunchResponse = await fetchApi("launchGames.aspx", launchField);
+        console.log("gameLaunchResponse", gameLaunchResponse);
         if (gameLaunchResponse.errCode !== "0") {
           return res.status(400).json({ errCode: gameLaunchResponse.errCode, errMsg: gameLaunchResponse.errMsg });
         }

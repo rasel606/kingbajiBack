@@ -10,9 +10,10 @@ const referralBonusSchema = new mongoose.Schema({
   earnedAt: { type: Date, default: Date.now },
   claimedAt: { type: Date },
   referredbyAgent: { type: String, ref: 'Agent',default: null },
-  referredbyAffiliate: { type: String, ref: 'AffiliateUser',default: null  },
+  // : { type: String, ref: 'AffiliateUser',default: null  },
   referredbysubAdmin: { type: String, ref: 'SubAdmin',default: null  },
 }, { timestamps: true });
+referralBonusSchema.index({ userId: 1, referredUser: 1 }, { unique: true });
 
 const ReferralBonus = mongoose.model('ReferralBonus', referralBonusSchema);
 module.exports = ReferralBonus;

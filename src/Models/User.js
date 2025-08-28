@@ -6,23 +6,23 @@ const userSchema = new mongoose.Schema({
   userId: { type: String, required: true, unique: true },
   name: { type: String },
   phone: {
-    type: [{
-      countryCode: { type: String, required: true },
-      number: {
-        type: String,
-        required: true,
-        validate: {
-          validator: function (v) {
-            return /^\d{10,15}$/.test(v); // Basic phone number validation
-          },
-          message: props => `${props.value} is not a valid phone number!`
-        }
-      },
-      isDefault: { type: Boolean, default: false },
-      verified: { type: Boolean, default: false },
-      verificationCode: String,
-      verificationExpiry: Date
-    }],
+    type: [
+      {
+        countryCode: { type: String, required: true },
+        number: {
+          type: String,
+          required: true,
+          validate: {
+            validator: v => /^\d{10,15}$/.test(v),
+            message: props => `${props.value} is not a valid phone number!`
+          }
+        },
+        isDefault: { type: Boolean, default: false },
+        verified: { type: Boolean, default: false },
+        verificationCode: String,
+        verificationExpiry: Date
+      }
+    ],
     validate: [arrayLimit, 'Cannot add more than 3 phone numbers']
   },
   apiVerified: { type: Boolean, default: false }, // Add this field
@@ -32,9 +32,9 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   birthday: { type: Date },
   referralCode: { type: String, unique: true },
-  referredBy: { type: String, default:"adminmain" },
+  referredBy: { type: String, default: "adminmain" },
   referredbyAgent: { type: String, ref: 'Agent' },
-  referredbyAffiliate: { type: String, ref: 'AffiliateUser' },
+  referredByAffiliate: { type: String, ref: 'AffiliateModal' },
   referredbysubAdmin: { type: String, ref: 'SubAdmin' },
   referredLink: { type: String },
   levelOneReferrals: [{ type: String, ref: 'User' }],
@@ -59,10 +59,38 @@ const userSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true },
     appliedDate: { type: Date },
   },
+  // userVipPoint: {
+  //   currentLevel: {
+  //     type: String,
+  //     // required: true,
+  //     enum: ['Bronze', 'Silver', 'Gold', 'Diamond', 'Elite'],
+  //     default: 'Bronze'
+  //   },
+  //   vipPoints: {
+  //     type: Number,
+  //     default: 0,
+  //     min: 0
+  //   },
+  //   lestAmountConverted: {
+  //     type: Number,
+  //     required: true
+  //   },
+  //   // userVipPointTransactiondate: {
+  //   //   type: Date,
+  //   //   default: Date.now,
+  //   //   index: true
+  //   // },
+  // },
+  role: { type: String, default: 'user' },
   isActive: { type: Boolean, default: true },
   timestamp: { type: Date, default: Date.now },
   onlinestatus: { type: Date, default: Date.now },
-  updatetimestamp: { type: Date, default: Date.now }
+  updatetimestamp: { type: Date, default: Date.now },
+  lastLoginIp: { type: String },
+  lastLoginTime: { type: Date, default: Date.now },
+  lastDepositTime: { type: Date, default: Date.now },
+  lastBetTime: { type: Date, default: Date.now },
+
 });
 // Validate maximum of 3 phones
 function arrayLimit(val) {
@@ -76,11 +104,11 @@ userSchema.index({ 'phone.number': 1 }, { unique: true });
 userSchema.pre('save', function (next) {
   const defaultPhones = this.phone.filter(p => p.isDefault);
   if (defaultPhones.length > 1) {
-    const err = new Error('Exactly one phone must be set as default');
-    return next(err);
+    return next(new Error('Only one phone can be set as default'));
   }
   next();
 });
+
 
 const User = mongoose.model("user", userSchema);
 module.exports = User;

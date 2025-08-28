@@ -10,6 +10,8 @@ const getCashbackRate = (total, level) => {
 };
 
 exports.calculateDailyCashback = async () => {
+
+  console.log("calculateDailyCashback");
   const today = new Date();
   today.setHours(22, 0, 0, 0);
   const tomorrow = new Date(today);
@@ -28,12 +30,12 @@ exports.calculateDailyCashback = async () => {
 
     for (const { level, ids } of referrals) {
       if (!ids || ids.length === 0) continue;
-
+console.log("ids",ids, "level",level);
       const bets = await BettingHistory.aggregate([
         { $match: { member: { $in: ids }, start_time: { $gte: today, $lt: tomorrow } } },
         { $group: { _id: null, totalTurnover: { $sum: "$turnover" } } }
       ]);
-
+console.log("bets",bets);
       const turnover = bets[0]?.totalTurnover || 0;
       const cashbackRate = getCashbackRate(turnover, level);
       const cashback = turnover * cashbackRate;

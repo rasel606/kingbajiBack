@@ -62,7 +62,7 @@ const TurnOverJob = async () => {
  
   // cron.schedule('* * * * *', TurnOverJob);
 
-  cron.schedule('10 1 * * *', async () => {
+  cron.schedule('* * * * *', async () => {
     console.log("TurnOverJob Cron job started at", new Date());
     await TurnOverJob();
   });

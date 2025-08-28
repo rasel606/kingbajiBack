@@ -12,6 +12,7 @@ const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTab
 const Bonus = require('../Models/Bonus');
 const UserBonus = require('../Models/UserBonus');
 const BettingHistory = require('../Models/BettingHistory');
+const AffiliateModel = require('../models/AffiliateModel');
 
 // exports.addTransaction = async (req, res) => {
 //   try {
@@ -52,6 +53,133 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 //   });
 
 
+
+
+
+// const getPaymentOwnersWithReferralChain = async (referralCode) => {
+//     // 1. SubAdmin directly
+//     const subAdmin = await SubAdmin.findOne({ referralCode });
+//     if (subAdmin) {
+//         return [subAdmin];
+//     }
+
+//     // 2. Affiliate path
+//     const affiliate = await AffiliateModel.findOne({ referralCode });
+//     if (affiliate) {
+//         const owners = [];
+
+//         // Affiliate referredBy => SubAdmin
+//         if (affiliate.referredBy) {
+//             const subAdminFromAffiliate = await SubAdmin.findOne({ referralCode: affiliate.referredBy });
+//             if (subAdminFromAffiliate) owners.push(subAdminFromAffiliate);
+//         }
+
+//         // Always push Admin fallback
+//         const admin = await AdminModel.findOne({ referredCode: null });
+//         if (admin) owners.push(admin);
+
+//         return owners;
+//     }
+
+//     // 3. Admin fallback
+//     const admin = await AdminModel.findOne({ referredCode: null });
+//     if (admin) {
+//         return [admin];
+//     }
+
+//     return [];
+// };
+
+// // Referral depth users
+// const getReferralLevelsWithGateways = async (user) => {
+//     const levelOneUsers = await User.find({ referredBy: user.referralCode });
+//     const levelTwoUsers = await User.find({
+//         referredBy: { $in: levelOneUsers.map(u => u.referralCode) }
+//     });
+//     const levelThreeUsers = await User.find({
+//         referredBy: { $in: levelTwoUsers.map(u => u.referralCode) }
+//     });
+
+//     const levelOneGateways = {};
+//     const levelTwoGateways = {};
+//     const levelThreeGateways = {};
+
+//     for (const u of levelOneUsers) {
+//         const owners = await getPaymentOwnersWithReferralChain(u.referredBy);
+//         levelOneGateways[u.userId] = owners.map(o => o.referralCode);
+//     }
+//     for (const u of levelTwoUsers) {
+//         const owners = await getPaymentOwnersWithReferralChain(u.referredBy);
+//         levelTwoGateways[u.userId] = owners.map(o => o.referralCode);
+//     }
+//     for (const u of levelThreeUsers) {
+//         const owners = await getPaymentOwnersWithReferralChain(u.referredBy);
+//         levelThreeGateways[u.userId] = owners.map(o => o.referralCode);
+//     }
+
+//     return {
+//         levelOneUsers,
+//         levelTwoUsers,
+//         levelThreeUsers,
+//         levelOneGateways,
+//         levelTwoGateways,
+//         levelThreeGateways
+//     };
+// };
+
+
+
+// const getReferralCodesFromChain = async (user) => {
+//   const referralCodes = new Set();
+
+//   const getOwnerReferralCode = async (referredBy) => {
+//     if (!referredBy) return null;
+
+//     const subAdmin = await SubAdmin.findOne({ referralCode: referredBy });
+//     if (subAdmin) return subAdmin.referralCode;
+
+//     const affiliate = await AffiliateModel.findOne({ referralCode: referredBy });
+//     if (affiliate) {
+//       if (affiliate.referredBy) {
+//         const subAdmin = await SubAdmin.findOne({ referralCode: affiliate.referredBy });
+//         if (subAdmin) referralCodes.add(subAdmin.referralCode);
+//       }
+//       referralCodes.add(affiliate.referralCode);
+//     }
+
+//     const admin = await AdminModel.findOne({ referredCode: null });
+//     if (admin) return admin.referralCode;
+
+//     return null;
+//   };
+
+//   // Level 1
+//   const levelOneUsers = await User.find({ referredBy: user.referralCode });
+//   for (const levelOne of levelOneUsers) {
+//     const ref1 = await getOwnerReferralCode(levelOne.referredBy);
+//     if (ref1) referralCodes.add(ref1);
+
+//     // Level 2
+//     const levelTwoUsers = await User.find({ referredBy: levelOne.referralCode });
+//     for (const levelTwo of levelTwoUsers) {
+//       const ref2 = await getOwnerReferralCode(levelTwo.referredBy);
+//       if (ref2) referralCodes.add(ref2);
+
+//       // Level 3
+//       const levelThreeUsers = await User.find({ referredBy: levelTwo.referralCode });
+//       for (const levelThree of levelThreeUsers) {
+//         const ref3 = await getOwnerReferralCode(levelThree.referredBy);
+//         if (ref3) referralCodes.add(ref3);
+//       }
+//     }
+//   }
+
+//   // নিজের মালিকও ধরুন
+//   const refSelf = await getOwnerReferralCode(user.referredBy);
+//   if (refSelf) referralCodes.add(refSelf);
+
+//   return Array.from(referralCodes);
+// };
 
 
 // router.post("/deposit", 
@@ -262,95 +390,9 @@ exports.submitTransaction = async (req, res) => {
 ///////////////////////////////////////////////////////////////
 
 // router.put("/deposit/approve/:transactionID", 
-// exports.approveDepositbySubAdmin = async (req, res) => {
-//     try {
-//         const { userId, referralCode, status } = req.body;
-//         const transactionID = req.params.transactionID;
-//         console.log(userId, referralCode, status, transactionID);
-//         // Find the user
-//         // console.log(referralCode);
-//         const user = await User.findOne({ userId, referredBy: referralCode });
-//         // console.log(user);
-//         // console.log(user[0].referredBy);
-//         console.log(user.referredBy !== referralCode);
-//         if (user.referredBy !== referralCode) return res.status(404).json({ message: 'User not found' });
-//         // console.log("ad",referralCode);
-//         // Find the sub-admin
-//         const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
-//         console.log("sub", subAdmin.referralCode);
-//         if (!subAdmin.referralCode === referralCode) {
-//             return res.status(400).json({ message: 'Invalid Match' });
-//         }
-//         // Find the transaction
-//         const transaction = await TransactionModel.findOne({ userId, transactionID, referredBy: subAdmin.referralCode, type: 0 });
-
-//         console.log("transaction  --- 1 ", transaction);
-//         // Ensure transaction is not already processed
-//         if (transaction.referredBy !== subAdmin.referralCode && transaction.referredBy === user.referredBy) {
-//             console.log("transaction  --- 1 ", transaction.referredBy !== subAdmin.referralCode && transaction.referredBy === user.referredBy);
-//             console.log("transaction  --- 1 ", transaction.referredBy, subAdmin.referralCode, user.referredBy);
-//             return res.status(400).json({ message: "Transaction already processed" });
-//         }
-
-//         console.log("transaction  --- 2 ",req.body.status);
-
-//         if (transaction.referredBy !== subAdmin.referralCode && transaction.userId !== user.userId && transaction.transactionID !== transactionID && transaction.referredBy !== user.referredBy) {
-//             res.status(400).json({ message: "Transaction not found" });
-//         }
-
-//         console.log(subAdmin.balance >= transaction.amount && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy);
-//         if (subAdmin.balance >= transaction.amount && transaction.referredBy === subAdmin.referralCode && transaction.userId === user.userId && transaction.transactionID === transactionID && transaction.referredBy === user.referredBy) {
-
-
-// console.log("transaction  --- 2 ",req.body.status);
-
-//             if (parseInt(req.body.status) === parseInt(1)) {
-
-
-//                 subAdmin.balance -= transaction.amount;
-//                 // const bonusAmount = Math.floor((transaction.amount * 4) / 100); // use Math.floor to convert to integer
-//                 // const totalAmount = baseAmountInt + bonus;
-
-
-//                 user.balance += transaction.amount;
-
-
-//                 // const totalAmount = transaction.amount + bonusAmount;
-//                 // subAdmin.balance -= transaction.amount;
-//                 // if (user.bonus) {
-//                 //     user.bonus.bonusAmount += bonusAmount;
-//                 //     user.bonus.isActive = true;
-//                 //     user.bonus.appliedDate = new Date();
-//                 // }
-
-//                 transaction.updatetime = new Date();
-//                 transaction.status = 1; // Mark as approved
-//                 await user.save();
-//                 await subAdmin.save();
-//                 await transaction.save();
-//                 res.status(200).json({ message: "Deposit processed successfully", user });
-//             } else if (parseInt(req.body.status) === parseInt(2)) {
-
-
-//                 transaction.updatetime = new Date();
-//                 transaction.status = parseInt(2)// Mark as approved
-//                 await transaction.save();
-
-
-//                 let Admin_Balance = SubAdmin.balance
-//                 res.status(200).json({ message: "Deposit processed successfully" });
-//             }
-//         }
 
 
 
-
-
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ message: "Admin balance not enough" });
-//     }
-// };
 
 exports.approveDepositbySubAdmin = async (req, res) => {
     console.log("console body", req.body);
@@ -361,16 +403,38 @@ exports.approveDepositbySubAdmin = async (req, res) => {
         // Find the user
         const user = await User.findOne({ userId, referredBy: referralCode });
         console.log("user", userId);
-        if (!user || user.referredBy !== referralCode) {
+        // if (!user || user.referredBy !== referralCode) {
+        //     return res.status(404).json({ message: 'User not found or referral mismatch' });
+        // }
+
+        // // Find the sub-admin
+        // const subAdmin = await SubAdmin.findOne({ referralCode });
+        // console.log("sub", subAdmin.referralCode);
+        // if (!subAdmin || subAdmin.referralCode !== referralCode) {
+        //     return res.status(400).json({ message: 'Invalid SubAdmin referral code' });
+        // }
+
+        //  const user = await User.findOne({ userId, referredBy: referralCode });
+        if (!user) {
             return res.status(404).json({ message: 'User not found or referral mismatch' });
         }
 
-        // Find the sub-admin
-        const subAdmin = await SubAdmin.findOne({ referralCode });
-        console.log("sub", subAdmin.referralCode);
-        if (!subAdmin || subAdmin.referralCode !== referralCode) {
-            return res.status(400).json({ message: 'Invalid SubAdmin referral code' });
+        // Get who referred
+        const referralData = await getReferralOwner(referralCode);
+        if (!referralData) {
+            return res.status(400).json({ message: 'Invalid referralCode' });
         }
+        let paymentGatewayOwner = null;
+
+        if (referralData.role === 'affiliate') {
+            if (!referralData.subAdmin) {
+                return res.status(400).json({ message: 'Affiliate is not assigned to a valid SubAdmin' });
+            }
+            paymentGatewayOwner = referralData.subAdmin;
+        } else {
+            paymentGatewayOwner = referralData.owner;
+        }
+
 
         // Find the transaction
         const transaction = await TransactionModel.findOne({
@@ -399,11 +463,11 @@ exports.approveDepositbySubAdmin = async (req, res) => {
         // Process based on status
         if (parseInt(status) === 1) {
             // Check SubAdmin balance
-            if (subAdmin.balance < transaction.amount) {
+            if (paymentGatewayOwner.balance < transaction.amount) {
                 return res.status(400).json({ message: "SubAdmin balance is not enough" });
             }
             // Update balances
-            subAdmin.balance -= transaction.amount;
+            paymentGatewayOwner.balance -= transaction.amount;
             user.balance += transaction.amount;
 
             // Update transaction status
@@ -449,7 +513,7 @@ exports.approveDepositbySubAdmin = async (req, res) => {
                 }
 
             }
-            await subAdmin.save();
+            await paymentGatewayOwner.save();
             await user.save();
             await transaction.save();
             await notificationController.createNotification(
@@ -468,8 +532,9 @@ exports.approveDepositbySubAdmin = async (req, res) => {
             console.log(transaction);
             transaction.updatetime = new Date();
             transaction.status = 2;
-
+            transaction.paymentGatewayOwner = paymentGatewayOwner
             await transaction.save();
+
             await notificationController.createNotification(
                 `Deposit rejected for ${transaction.transactionID} with (User ID: ${user.userId})`,
                 user.userId,
@@ -1451,41 +1516,31 @@ exports.subAdminGetWayListWidthraw = async (req, res) => {
 exports.GetPaymentMethodsUser = async (req, res) => {
     try {
         const { userId } = req.body;
-        console.log("User ID:", userId);
+        const user = await User.findOne({ userId });
+        if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Validate User
-        const user = await User.findOne({ userId: userId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        // Get owners based on referral chain
+        const gatewayOwnersData = await getPaymentOwnersWithReferralChain(user.referredBy);
+        if (!gatewayOwnersData.length) {
+            return res.status(404).json({ message: 'No Payment Gateway Owner found' });
         }
-        console.log("User found:", user);
 
-        // Get current time
+        const referredByList = gatewayOwnersData.map(o => o.referralCode);
         const now = new Date();
-        const currentHours = now.getHours();
-        const currentMinutes = now.getMinutes();
+        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
-        // Use aggregation to filter active payment methods within time range
+        // Get payment gateways
         const paymentMethods = await PaymentGateWayTable.aggregate([
             {
                 $match: {
                     is_active: true,
-                    referredBy: user.referredBy
-                }
-            },
-            {
-                $match: {
-                    $expr: {
-                        $and: [
-                            { $lte: ["$startTotalMinutes", "$currentTotalMinutes"] },
-                            { $gte: ["$endTotalMinutes", "$currentTotalMinutes"] }
-                        ]
-                    }
+                    referredBy: { $in: referredByList },
+                    startTotalMinutes: { $lte: currentTotalMinutes },
+                    endTotalMinutes: { $gte: currentTotalMinutes },
                 }
             },
             {
                 $project: {
-                    _id: 1,
                     gateway_name: 1,
                     gateway_Number: 1,
                     payment_type: 1,
@@ -1499,14 +1554,28 @@ exports.GetPaymentMethodsUser = async (req, res) => {
             }
         ]);
 
-        console.log("Available Payment Methods:", paymentMethods);
+        // Optional: get multi-level users with gateway ownership
+        const referrals = await getReferralLevelsWithGateways(user);
 
-        return res.status(200).json({ paymentMethods });
-    } catch (error) {
-        console.error("Error retrieving payment methods:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        return res.status(200).json({
+            paymentMethods,
+            referralLevels: {
+                levelOne: referrals.levelOneUsers.length,
+                levelTwo: referrals.levelTwoUsers.length,
+                levelThree: referrals.levelThreeUsers.length
+            },
+            gatewayMap: {
+                levelOneGateways: referrals.levelOneGateways,
+                levelTwoGateways: referrals.levelTwoGateways,
+                levelThreeGateways: referrals.levelThreeGateways
+            }
+        });
+    } catch (err) {
+        console.error("GetPaymentMethodsUser Error:", err);
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
+
 
 
 
@@ -1518,26 +1587,26 @@ exports.GetPaymentMethodsUser = async (req, res) => {
 exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
     try {
         const { userId } = req.body;
-        console.log("User ID:", userId);
+        const user = await User.findOne({ userId });
+        if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // Validate User
-        const user = await User.findOne({ userId: userId });
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        // Get owners based on referral chain
+        const gatewayOwnersData = await getPaymentOwnersWithReferralChain(user.referredBy);
+        if (!gatewayOwnersData.length) {
+            return res.status(404).json({ message: 'No Payment Gateway Owner found' });
         }
-        console.log("User found:", user);
 
-        // Get current time
+        const referredByList = gatewayOwnersData.map(o => o.referralCode);
         const now = new Date();
-        const currentHours = now.getHours();
-        const currentMinutes = now.getMinutes();
-
+        const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
         // Use aggregation to filter active payment methods within time range
         const paymentMethods = await WidthralPaymentGateWayTable.aggregate([
             {
                 $match: {
                     is_active: true,
-                    referredBy: user.referredBy
+                    referredBy: { $in: referredByList },
+                    startTotalMinutes: { $lte: currentTotalMinutes },
+                    endTotalMinutes: { $gte: currentTotalMinutes },
                 }
             },
             {
@@ -1568,12 +1637,27 @@ exports.GetPaymentMethodsWidthrawUser = async (req, res) => {
 
         console.log("Available Payment Methods:", paymentMethods);
 
-        return res.status(200).json({ paymentMethods });
-    } catch (error) {
-        console.error("Error retrieving payment methods:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        const referrals = await getReferralLevelsWithGateways(user);
+
+        return res.status(200).json({
+            paymentMethods,
+            referralLevels: {
+                levelOne: referrals.levelOneUsers.length,
+                levelTwo: referrals.levelTwoUsers.length,
+                levelThree: referrals.levelThreeUsers.length
+            },
+            gatewayMap: {
+                levelOneGateways: referrals.levelOneGateways,
+                levelTwoGateways: referrals.levelTwoGateways,
+                levelThreeGateways: referrals.levelThreeGateways
+            }
+        });
+    } catch (err) {
+        console.error("GetPaymentMethodsUser Error:", err);
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };
+
 
 
 

@@ -1,0 +1,27 @@
+2025-06-26 12:33:08 [ERROR]: unhandledRejection: logger is not defined
+ReferenceError: logger is not defined
+    at connectDB (D:\crickex-Demo\Backend\src\Config\db.js:11:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ReferenceError: logger is not defined
+    at connectDB (D:\crickex-Demo\Backend\src\Config\db.js:11:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-06-26 12:33:35 [ERROR]: unhandledRejection: logger is not defined
+ReferenceError: logger is not defined
+    at connectDB (D:\crickex-Demo\Backend\src\Config\db.js:11:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ReferenceError: logger is not defined
+    at connectDB (D:\crickex-Demo\Backend\src\Config\db.js:11:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-07-05 21:43:30 [ERROR]: unhandledRejection: _id is not defined
+ReferenceError: _id is not defined
+    at exports.getDashboardData (D:\crickex-Demo\Backend\src\Controllers\AffiliateDashboardController.js:565:37)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at exports.protect (D:\crickex-Demo\Backend\src\Controllers\AffiliateController.js:181:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+ReferenceError: _id is not defined
+    at exports.getDashboardData (D:\crickex-Demo\Backend\src\Controllers\AffiliateDashboardController.js:565:37)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at exports.protect (D:\crickex-Demo\Backend\src\Controllers\AffiliateController.js:181:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)

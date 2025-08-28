@@ -1,92 +1,56 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
-// const contactInfoSchema = new mongoose.Schema({
-//     phoneNumber: { type: String, trim: true, required: false },
-//     email: { 
-//         type: String, 
-//         trim: true, 
-//         required: false, 
-//         match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'] 
-//     },
-//     whatsApp: { type: String, trim: true, required: false }
-// });
+const AffiliateModelSchema = new mongoose.Schema({
+  userId: { type: String, required: true, unique: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  phone: { type: String },
+  whatsapp: { type: String },
+  password: { type: String, required: true },
+  dob: { type: Date },
+  referralCode: { type: String, unique: true },
+  referredBy: { type: String },
+  status: { type: String, default: 'Active' },
+  approvedDate: { type: Date, default: Date.now },
+  lastLogin: { type: Date },
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  negativeBalance: { type: Number, default: 0 },
+  bankAccounts: [{
+    bankName: String,
+    accountNumber: String,
+    accountName: String,
+    branch: String,
+    isDefault: { type: Boolean, default: false }
+  }],
+  balance: { type: Number, default: 0 },
+  language: { type: String, default: 'en' },
+  currencyType: { type: String, default: 'BDT' },
+  callingCode: { type: String, default: '880' },
+  totalCommission: { type: Number, default: 0 },
+  availableBalance: { type: Number, default: 0 },
+  withdrawnBalance: { type: Number, default: 0 },
+  activePlayers: { type: Number, default: 0 },
+  totalPlayers: { type: Number, default: 0 },
+  role: { type: String, default: 'Affiliate' },
+  settings: {
+    commissionRate: { type: Number, default: 55 }, // 55% commission
+    platformFee: { type: Number, default: 20 } // 20% platform fee
+  }
+}, { timestamps: true });
 
+AffiliateModelSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
 
-// const earningsStatusSchema = new mongoose.Schema({
-//     pending: { type: Number, default: 0 },
-//     available: { type: Number, default: 0 },
-//     processingWithdrawal: { type: Number, default: 0 }
-// });
+AffiliateModelSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
 
-
-
-const AffiliateSchema = new mongoose.Schema({
-    userId: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    // confirmPassword: {
-    //     type: String,
-    //     required: true
-    // },
-    currencyType: {
-        type: String,
-        
-    },
-    firstName: {
-        type: String,
-        required: true
-    },
-    lastName: {
-        type: String,
-        // required: true
-    },
-    dateOfBirth: {
-        type: Date,
-        // required: true
-    },
-    callingCode: {
-        type: String,
-        // required: true
-    },
-    phone: {
-        type: String,
-        // required: true
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    contactType: {
-        type: String,
-        
-    },
-    contactTypeValue: {
-        type: String,
-        
-    },
-    captcha: { type: String},
-    lastWithdrawalTime: { type: Date, },
-    referralCode: { type: String, unique: true, min: 11, max: 11 },
-    affiliateId: { type: String, unique: true, min: 11, max: 11 },
-    referredLink: { type: String },
-    user_role: { type: String, default: 'affiliate' },
-    accountStatus: { type: String, enum: ['Active', 'Suspended', 'Closed'], default: 'Active' },
-    approvedDateTime: { type: Date, default: Date.now },
-    lastLoginTime: { type: Date},
-    // contactInfo: { type: contactInfoSchema, required: true },
-    // earnings: earningsSchema,
-    commission: { type: Number, default: 0 },
-    // earningsStatus: earningsStatusSchema,
-    // links: [linksSchema],
-    timestamps: { type: Date, default: Date.now }
-})
-
-const Affiliate = mongoose.model('Affiliate', AffiliateSchema);
-module.exports = Affiliate;
+module.exports = mongoose.models.AffiliateModel || mongoose.model('AffiliateModel', AffiliateModelSchema);

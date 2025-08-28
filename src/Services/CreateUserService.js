@@ -3,12 +3,12 @@ const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
 const User = require('../Models/User');
-const AffiliateUser = require('../Models/AffiliateUser');
+// const AffiliateUser = require('../Models/AffiliateUser');
 const SubAdminModel = require('../Models/SubAdminModel');
 const ReferralBonus = require('../Models/ReferralBonus');
 const { OTP } = require('../Models/Opt');
 const { sendSms } = require('../Services/sendSms');
-
+  const generateReferralCode = require('./generateReferralCode');
 
 const saltRounds = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
@@ -112,13 +112,13 @@ console.log("apiSuccess", apiSuccess)
       //   // const referrerWithNewuserSubadmin = await SubAdminModel.findOne({ referralCode: referredBy });
 
       //   // const referrerAffiliate = await AffiliateUser.findOne({ referralCode: referrerWithAffiliate.referredBy });
-      //   // const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate.referredbyAffiliate });
+      //   // const referrersubAdminAffiliate = await User.findOne({ referralCode: referrerAffiliate. });
 
 
 
       //   // if (referrerAffiliate) {
       //   //   // Affiliate referral
-      //   //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+      //   //   newUser. = referrerAffiliate.referralCode;
       //   //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
       //   //   await referrerAffiliate.save();
 
@@ -129,7 +129,7 @@ console.log("apiSuccess", apiSuccess)
       //   //     parentSubAdmin.users.push(newUser.userId);
       //   //     await parentSubAdmin.save();
       //   //   }
-      //   //   // newUser.referredbyAffiliate = referrerAffiliate.referralCode,
+      //   //   // newUser. = referrerAffiliate.referralCode,
       //   //   //   newUser.referredbysubAdmin = referrerbysubAdmin.referralCode,
 
       //   //   //   newUser.save();
@@ -144,7 +144,7 @@ console.log("apiSuccess", apiSuccess)
       //   //   await subAdmin.save();
       //   // } else if (referrerAffiliate) {
       //   //   // Direct SubAdmin referral
-      //   //   newUser.referredbyAffiliate = referrerAffiliate.referralCode;
+      //   //   newUser.e.referralCode;
       //   //   referrerAffiliate.AffiliatereferralOfUser.push(newUser.userId);
       //   //   await referrerAffiliate.save();
       //   // }
@@ -160,7 +160,7 @@ console.log("apiSuccess", apiSuccess)
       //     await new ReferralBonus({
       //       userId: referrer.userId,
       //       referredUser: newUser.userId,
-      //       // referredbyAffiliate: referrerAffiliate.referralCode || null,
+      //       // .referralCode || null,
       //       // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
       //       level: 1
       //     }).save();
@@ -174,7 +174,7 @@ console.log("apiSuccess", apiSuccess)
       //         await new ReferralBonus({
       //           userId: level2Ref.userId,
       //           referredUser: newUser.userId,
-      //           // referredbyAffiliate: referrerAffiliate.referralCode || null,
+      //           // : referrerAffiliate.referralCode || null,
       //           // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
 
       //           level: 2
@@ -189,7 +189,7 @@ console.log("apiSuccess", apiSuccess)
       //             await new ReferralBonus({
       //               userId: level3Ref.userId,
       //               referredUser: newUser.userId,
-      //               // referredbyAffiliate: referrerAffiliate.referralCode || null,
+      //               // : referrerAffiliate.referralCode || null,
       //               // referredbysubAdmin: referrerbysubAdmin.referralCode || null,
       //               level: 3
       //             }).save();
@@ -197,8 +197,8 @@ console.log("apiSuccess", apiSuccess)
       //         }
       //       }
       //     }
-      //     // if (referrerAffiliate.referredbyAffiliate) {
-      //     //   newUser.referredbyAffiliate = referrerAffiliate.referredbyAffiliate;
+      //     // if (referrerAffiliate.) {
+      //     //   newUser. = referrerAffiliate.;
       //     // }
       //     // if (referrerWithNewuserSubadmin.referredbysubAdmin) {
       //     //   newUser.referredbysubAdmin = referrerWithNewuserSubadmin.referredbysubAdmin;
@@ -294,7 +294,7 @@ console.log("apiSuccess", apiSuccess)
           countryCode: newUser.countryCode,
           isVerified: newUser.isVerified,
           referredLink: newUser.referredLink,
-          referredbyAffiliate: newUser.referredbyAffiliate,
+          // : newUser.,
           referredbysubAdmin: newUser.referredbysubAdmin,
           levelOneReferrals: newUser.levelOneReferrals,
           levelTwoReferrals: newUser.levelTwoReferrals,
@@ -321,14 +321,28 @@ console.log("apiSuccess", apiSuccess)
       }
 
       const user = await User.findOne({ userId });
-          console.log(req.body);
+          console.log(user.userId);
       if (!user) return res.status(404).json({ message: "User not found" });
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log(isPasswordValid);
+      console.log(
+        "isPasswordValid",isPasswordValid);
+
+
+
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid password" });
       }
+
+
+
+      //  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+      //   console.log(" clientIp", clientIp)
+      //   // Update last login IP and time
+      //   user.lastLoginIp = clientIp;
+      //   user.lastLoginTime = new Date();
+      //   await user.save();
+      //   console.log(" clientIp user", user)
 
       const response = await User.aggregate([
         { $match: { userId } },
@@ -347,8 +361,8 @@ console.log("apiSuccess", apiSuccess)
             countryCode: 1,
             isVerified: 1,
             isNameVerified: 1,
-            referredbyAffiliate: 1,
-            referredbysubAdmin: 1,
+            
+            // referredbysubAdmin: 1,
             levelOneReferrals: 1,
             levelTwoReferrals: 1,
             levelThreeReferrals: 1
@@ -366,7 +380,7 @@ console.log("apiSuccess", apiSuccess)
 
   exports.verify = async (req, res) => {
     const authHeader = req.header("Authorization");
-    // console.log("userId",authHeader);
+    console.log("userId",authHeader);
     const token = authHeader?.split(" ")[1];
     if (!token) return res.status(401).json({ message: "Token missing!" });
     try {
@@ -444,7 +458,7 @@ console.log("apiSuccess", apiSuccess)
               birthday: 1,
               isVerified: 1,
               isNameVerified: 1,
-              referredbyAffiliate: 1,
+              // : 1,
               referredbysubAdmin: 1,
               levelOneReferrals: 1,
               levelTwoReferrals: 1,
@@ -653,7 +667,7 @@ console.log("apiSuccess", apiSuccess)
 
   // const nodemailer = require("nodemailer");
 
-  const generateReferralCode = require('./generateReferralCode');
+
   const GenerateOtpCode = require('./GenerateOtpCode');
   const SubAdmin = require('../Models/SubAdminModel');
   const SocialLink = require('../Models/SocialLink');
@@ -920,6 +934,37 @@ exports.getReferredUsers = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 }
+
+
+
+
+
+// Get referral statistics
+exports.getReferralStats = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    const [levelOne, levelTwo, levelThree] = await Promise.all([
+      User.find({ referredBy: userId }),
+      User.find({ referredBy: { $in: req.user.levelOneReferrals } }),
+      User.find({ referredBy: { $in: req.user.levelTwoReferrals } })
+    ]);
+
+    const referralBonuses = await ReferralBonus.find({ userId })
+      .sort({ earnedAt: -1 })
+      .limit(10);
+
+    res.send({
+      levelOne: levelOne.length,
+      levelTwo: levelTwo.length,
+      levelThree: levelThree.length,
+      referralBonuses
+    });
+  } catch (error) {
+    res.status(500).send({ error: 'Internal server error' });
+  }
+};
+
 
 
 

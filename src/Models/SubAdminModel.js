@@ -14,7 +14,7 @@ const subAdminSchema = new mongoose.Schema(
     affiliate_referredLink: { type: String, sparse: true, default: 1 },
     countryCode: { type: String },
     phone: { type: String },
-    user_role: { type: String, default: "subAdmin" },
+    role: { type: String, default: "subAdmin" },
     userId: { type: String, default: "subAdmin" },
     users: [{ type: String, ref: 'User' }],
     Agent: [{ type: String, ref: 'Agent' }],

@@ -1,4 +1,4 @@
-const config = require('../Services/VipConfig');
+const config = require('../Services/VipService');
 
 
 
@@ -6,7 +6,7 @@ const config = require('../Services/VipConfig');
     bronze: {
       name: 'Bronze',
       monthlyTurnoverRequirement: 0,
-      vpConversionRate: 2000,
+      vpConversionRate: 5000,
       loyaltyBonus: 0.01 // 1% of turnover
     },
     silver: {

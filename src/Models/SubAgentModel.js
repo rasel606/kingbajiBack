@@ -13,6 +13,7 @@ const subAgentSchema = new mongoose.Schema({
   IsActive: { type: Boolean, default: true },
   timestamp: { type: Date, default: Date.now },
   updatetimestamp: { type: Date, default: Date.now },
+      role:{ type: String, ref: 'SubAgent' },
 });
 
 const SubAgent = mongoose.model('SubAgent', subAgentSchema);

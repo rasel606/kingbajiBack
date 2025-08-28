@@ -1,3 +1,4 @@
+const { ref } = require("joi");
 const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema({
@@ -40,14 +41,16 @@ const transactionSchema = new mongoose.Schema({
     },
     turnoverRequirement: { type: Number, default: 0 },
     turnoverCompleted: { type: Number, default: 0 },
+    // role:{ type: String, ref: ['User', 'SubAdmin', 'Agent', "Admin"] },
     isTurnoverCompleted: { type: Boolean, default: false },
     expiryDate: { type: Date }, // For bonus expiry
     is_commission: { type: Boolean, default: false },
     referredBy: { type: String },
-    referredbyAffiliate: { type: String, ref: 'AffiliateUser' },
+    paymentGatewayOwner: { type: String,  enum: ['User', 'SubAdmin', 'Agent', "Admin"] },
     referredbysubAdmin: { type: String, ref: 'SubAdmin' },
     datetime: { type: Date, default: Date.now },
     updatetime: { type: Date, default: Date.now },
+    
 });
 
 

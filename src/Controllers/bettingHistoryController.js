@@ -6,11 +6,11 @@ const GameListTable = require('../Models/GameListTable');
 // router.get('/betting-records/summary',
 exports.BettingRecordSummary = async (req, res) => {
     try {
-        
 
 
-        const { userId, dateRange = 'last7days',  platform, gameType } = req.query;
-console.log("req.query", gameType);
+
+        const { userId, dateRange = 'last7days', platform, gameType } = req.query;
+        console.log("req.query", gameType);
         // Validate required parameters
         if (!userId) {
             return res.status(400).json({ error: 'User ID is required' });
@@ -29,7 +29,7 @@ console.log("req.query", gameType);
         // if (status) matchConditions.status = status;
         if (platform) matchConditions['categoryInfo.p_code'] = { $in: platform.split(',') };
         if (gameType) matchConditions['categoryInfo.category_name'] = { $in: gameType.split(',') };
-console.log("matchConditions", matchConditions);
+        console.log("matchConditions", matchConditions);
         // Aggregate betting records
         const records = await BettingHistory.aggregate([
             {
@@ -86,7 +86,7 @@ console.log("matchConditions", matchConditions);
             { $sort: { date: -1 } }
         ]);
 
-        console.log("records", records);
+        // console.log("records", records);
         // const { userId, dateRange = 'last7days' } = req.query;
         // console.log("dateRange", dateRange, "userId", userId);
         // // Validate input
@@ -160,7 +160,7 @@ console.log("matchConditions", matchConditions);
         //     },
         //     { $sort: { date: -1 } }
         // ]);
-        console.log("records", records);
+        // console.log("records", records);
         res.json(records);
     } catch (error) {
         console.error('Error fetching betting records:', error);
@@ -178,7 +178,7 @@ exports.BettingRecordDetails = async (req, res) => {
         if (!userId || !date) {
             return res.status(400).json({ error: 'Missing required parameters' });
         }
-
+        const getdDate = calculateDateRange(date);
         // Calculate date range
         const startDate = new Date(date);
         const endDate = new Date(date);
