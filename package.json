@@ -27,7 +27,7 @@
     "express-async-handler": "^1.2.0",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.5.1",
-    "express-validator": "^7.2.1",
+    "express-validator": "^7.3.0",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^3.0.3",
     "https-proxy-agent": "^7.0.6",
