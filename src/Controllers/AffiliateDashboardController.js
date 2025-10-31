@@ -1,10 +1,4 @@
-// const AffiliateModel = require('../Models/AffiliateModel');
-// const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-// const User = require('../Models/User');
-// const Transaction = require('../Models/TransactionModel');
-// const BettingHistory = require('../Models/BettingHistory');
-// const moment = require('moment');
-const AffiliateModel = require('../Models/AffiliateModel');
+const Affiliate = require('../Models/AffiliateModel');
 const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
 const User = require('../Models/User');
 const Transaction = require('../Models/TransactionModel');
@@ -12,7 +6,7 @@ const BettingHistory = require('../Models/BettingHistory');
 const UserBonus = require('../Models/UserBonus');
 const moment = require('moment');
 const mongoose = require('mongoose');
-
+const catchAsync = require('../utils/catchAsync');
 // Custom error class for application errors
 class AppError extends Error {
   constructor(message, statusCode) {
@@ -24,47 +18,37 @@ class AppError extends Error {
   }
 }
 
-// Async error handling wrapper
-const catchAsync = (fn) => {
-  return (req, res, next) => {
-    fn(req, res, next).catch(next);
+// Helper function for turnover aggregation
+const getTurnoverStats = async (referredUserIds, startDate, endDate = null) => {
+  const matchStage = {
+    member: { $in: referredUserIds },
+    start_time: { $gte: startDate }
   };
-};
+  
+  if (endDate) {
+    matchStage.start_time.$lt = endDate;
+  }
 
-const getPeriodDates = () => {
-  const now = new Date();
-  
-  // Use UTC dates for consistency
-  const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const lastPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-  
-  // Today in UTC
-  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  
-  // Yesterday in UTC
-  const yesterdayStart = new Date(todayStart);
-  yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
-  
-  // Week calculations in UTC
-  const startOfWeek = new Date(now);
-  startOfWeek.setUTCDate(now.getUTCDate() - now.getUTCDay());
-  startOfWeek.setUTCHours(0, 0, 0, 0);
-  
-  const startOfLastWeek = new Date(startOfWeek);
-  startOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 7);
-  
-  const endOfLastWeek = new Date(startOfWeek);
-  endOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 1);
-  
-  return {
-    currentPeriodStart,
-    lastPeriodStart,
-    todayStart,
-    yesterdayStart,
-    startOfWeek,
-    startOfLastWeek,
-    endOfLastWeek
-  };
+  const result = await BettingHistory.aggregate([
+    {
+      $match: matchStage
+    },
+    {
+      $group: {
+        _id: '$member',
+        userTurnover: { $sum: '$turnover' }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        count: { $sum: { $cond: [{ $gt: ['$userTurnover', 0] }, 1, 0] } },
+        amount: { $sum: '$userTurnover' }
+      }
+    }
+  ]);
+
+  return result.length > 0 ? result[0] : { count: 0, amount: 0 };
 };
 
 // Get dashboard data for affiliate
@@ -78,9 +62,13 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
   
   const {
     currentPeriodStart,
+    currentPeriodEnd,
     lastPeriodStart,
+    lastPeriodEnd,
     todayStart,
+    todayEnd,
     yesterdayStart,
+    yesterdayEnd,
     startOfWeek,
     startOfLastWeek,
     endOfLastWeek
@@ -88,7 +76,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
   
   try {
     // Get affiliate data
-    const affiliate = await AffiliateModel.findOne({ userId: userId });
+    const affiliate = await Affiliate.findOne({ userId: userId });
     if (!affiliate) {
       return next(new AppError('Affiliate not found', 404));
     }
@@ -96,8 +84,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
     // Get referred users
     const referredUsers = await User.find({ referredBy: affiliate.referralCode });
     const referredUserIds = referredUsers.map(u => u.userId);
-    console.log("referredUserIds", referredUserIds);
-    console.log("referredUsers", referredUsers);
+    
     // Execute all queries in parallel for better performance
     const [
       currentEarnings,
@@ -106,28 +93,29 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       activePlayersLast,
       registrationStats,
       firstDeposits,
+      turnoverStats,
       depositStats,
       withdrawalStats,
       bonusStats,
-      turnoverStats,
+      totalTurnoverStats,
       bonusDeductions
     ] = await Promise.all([
       // Earnings data
       AffiliateEarnings.findOne({
-        affiliateId: affiliate._id,
+        affiliateId: affiliate.userId,
         period: currentPeriodStart
       }),
       AffiliateEarnings.findOne({
-        affiliateId: affiliate._id,
+        affiliateId: affiliate.userId,
         period: lastPeriodStart
       }),
       
-      // Active players (current period)
+      // Active players (current period) - users with at least 1000 turnover
       BettingHistory.aggregate([
         {
           $match: {
             member: { $in: referredUserIds },
-            start_time: { $gte: currentPeriodStart }
+            start_time: { $gte: currentPeriodStart, $lt: currentPeriodEnd }
           }
         },
         {
@@ -146,12 +134,12 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
         }
       ]),
       
-      // Active players (last period)
+      // Active players (last period) - users with at least 1000 turnover
       BettingHistory.aggregate([
         {
           $match: {
             member: { $in: referredUserIds },
-            start_time: { $gte: lastPeriodStart, $lt: currentPeriodStart }
+            start_time: { $gte: lastPeriodStart, $lt: lastPeriodEnd }
           }
         },
         {
@@ -174,12 +162,12 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       (async () => {
         const today = await User.countDocuments({ 
           referredBy: affiliate.referralCode, 
-          timestamp: { $gte: todayStart } 
+          timestamp: { $gte: todayStart, $lt: todayEnd } 
         });
-        console.log("today", today);
+        
         const yesterday = await User.countDocuments({ 
           referredBy: affiliate.referralCode, 
-          timestamp: { $gte: yesterdayStart, $lt: todayStart } 
+          timestamp: { $gte: yesterdayStart, $lt: yesterdayEnd } 
         });
         
         const thisWeek = await User.countDocuments({ 
@@ -189,33 +177,124 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
         
         const lastWeek = await User.countDocuments({ 
           referredBy: affiliate.referralCode, 
-          createdAt: { $gte: startOfLastWeek, $lt: startOfWeek } 
+          timestamp: { $gte: startOfLastWeek, $lt: startOfWeek } 
         });
         
         const thisMonth = await User.countDocuments({ 
           referredBy: affiliate.referralCode, 
-          timestamp: { $gte: currentPeriodStart } 
+          timestamp: { $gte: currentPeriodStart, $lt: currentPeriodEnd } 
         });
         
         const lastMonth = await User.countDocuments({ 
           referredBy: affiliate.referralCode, 
-          timestamp: { $gte: lastPeriodStart, $lt: currentPeriodStart } 
+          timestamp: { $gte: lastPeriodStart, $lt: lastPeriodEnd } 
         });
-        console.log("lastMonth",  thisWeek);
+        
         return { today, yesterday, thisWeek, lastWeek, thisMonth, lastMonth };
       })(),
       
-      // First deposit stats (placeholder)
-      Promise.resolve({
-        today: { count: 0, amount: 0 },
-        yesterday: { count: 0, amount: 0 },
-        thisWeek: { count: 0, amount: 0 },
-        lastWeek: { count: 0, amount: 0 },
-        thisMonth: { count: 0, amount: 0 },
-        lastMonth: { count: 0, amount: 0 }
-      }),
+      // First deposit stats
+      (async () => {
+        // Find first deposits by getting the earliest deposit for each user
+        const firstDeposits = await Transaction.aggregate([
+          {
+            $match: {
+              userId: { $in: referredUserIds },
+              type: 0, // Deposit type
+              status: 1 // Accepted status
+            }
+          },
+          {
+            $group: {
+              _id: '$userId',
+              firstDepositDate: { $min: '$datetime' },
+              firstDepositAmount: { $first: '$base_amount' }
+            }
+          }
+        ]);
+        
+        // Count first deposits by period
+        const today = firstDeposits.filter(d => 
+          d.firstDepositDate >= todayStart && d.firstDepositDate < todayEnd
+        );
+        
+        const yesterday = firstDeposits.filter(d => 
+          d.firstDepositDate >= yesterdayStart && d.firstDepositDate < yesterdayEnd
+        );
+        
+        const thisWeek = firstDeposits.filter(d => 
+          d.firstDepositDate >= startOfWeek
+        );
+        
+        const lastWeek = firstDeposits.filter(d => 
+          d.firstDepositDate >= startOfLastWeek && d.firstDepositDate < startOfWeek
+        );
+        
+        const thisMonth = firstDeposits.filter(d => 
+          d.firstDepositDate >= currentPeriodStart && d.firstDepositDate < currentPeriodEnd
+        );
+        
+        const lastMonth = firstDeposits.filter(d => 
+          d.firstDepositDate >= lastPeriodStart && d.firstDepositDate < lastPeriodEnd
+        );
+        
+        return {
+          today: { 
+            count: today.length, 
+            amount: today.reduce((sum, d) => sum + d.firstDepositAmount, 0) 
+          },
+          yesterday: { 
+            count: yesterday.length, 
+            amount: yesterday.reduce((sum, d) => sum + d.firstDepositAmount, 0) 
+          },
+          thisWeek: { 
+            count: thisWeek.length, 
+            amount: thisWeek.reduce((sum, d) => sum + d.firstDepositAmount, 0) 
+          },
+          lastWeek: { 
+            count: lastWeek.length, 
+            amount: lastWeek.reduce((sum, d) => sum + d.firstDepositAmount, 0) 
+          },
+          thisMonth: { 
+            count: thisMonth.length, 
+            amount: thisMonth.reduce((sum, d) => sum + d.firstDepositAmount, 0) 
+          },
+          lastMonth: { 
+            count: lastMonth.length, 
+            amount: lastMonth.reduce((sum, d) => sum + d.firstDepositAmount, 0) 
+          }
+        };
+      })(),
       
-      // Deposit stats
+      // Turnover stats
+      (async () => {
+        const [
+          today,
+          yesterday,
+          thisWeek,
+          lastWeek,
+          thisMonth,
+          lastMonth
+        ] = await Promise.all([
+          getTurnoverStats(referredUserIds, todayStart, todayEnd),
+          getTurnoverStats(referredUserIds, yesterdayStart, yesterdayEnd),
+          getTurnoverStats(referredUserIds, startOfWeek),
+          getTurnoverStats(referredUserIds, startOfLastWeek, startOfWeek),
+          getTurnoverStats(referredUserIds, currentPeriodStart, currentPeriodEnd),
+          getTurnoverStats(referredUserIds, lastPeriodStart, lastPeriodEnd)
+        ]);
+
+        return {
+          today,
+          yesterday,
+          thisWeek,
+          lastWeek,
+          thisMonth,
+          lastMonth
+        };
+      })(),
+      
+      // Deposit stats (current period)
       (async () => {
         const deposits = await Transaction.aggregate([
           {
@@ -223,7 +302,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
               userId: { $in: referredUserIds },
               type: 0, // Deposit type
               status: 1, // Accepted status
-              datetime: { $gte: currentPeriodStart }
+              datetime: { $gte: currentPeriodStart, $lt: currentPeriodEnd }
             }
           },
           {
@@ -238,7 +317,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
         return deposits.length > 0 ? deposits[0] : { count: 0, amount: 0 };
       })(),
       
-      // Withdrawal stats
+      // Withdrawal stats (current period)
       (async () => {
         const withdrawals = await Transaction.aggregate([
           {
@@ -246,7 +325,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
               userId: { $in: referredUserIds },
               type: 1, // Withdrawal type
               status: 1, // Accepted status
-              datetime: { $gte: currentPeriodStart }
+              datetime: { $gte: currentPeriodStart, $lt: currentPeriodEnd }
             }
           },
           {
@@ -257,17 +336,17 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
             }
           }
         ]);
-        console.log("withdrawals", withdrawals);
+        
         return withdrawals.length > 0 ? withdrawals[0] : { count: 0, amount: 0 };
       })(),
       
-      // Bonus stats
+      // Bonus stats (current period)
       (async () => {
         const bonuses = await UserBonus.aggregate([
           {
             $match: {
               userId: { $in: referredUserIds },
-              createdAt: { $gte: currentPeriodStart }
+              createdAt: { $gte: currentPeriodStart, $lt: currentPeriodEnd }
             }
           },
           {
@@ -282,18 +361,19 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
         return bonuses.length > 0 ? bonuses[0] : { count: 0, amount: 0 };
       })(),
       
-      // Turnover stats
+      // Total turnover stats (current period)
       (async () => {
         const turnover = await BettingHistory.aggregate([
           {
             $match: {
               member: { $in: referredUserIds },
-              start_time: { $gte: currentPeriodStart }
+              start_time: { $gte: currentPeriodStart, $lt: currentPeriodEnd }
             }
           },
           {
             $group: {
               _id: null,
+              count: { $sum: 1 },
               totalTurnover: { $sum: '$turnover' }
             }
           }
@@ -312,8 +392,6 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       })()
     ]);
     
-    console.log("stats",  currentPeriodStart
-      );
     // Prepare comprehensive dashboard data
     const dashboardData = {
       summary: {
@@ -325,13 +403,12 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
           thisPeriod: activePlayersCurrent[0]?.activePlayers || 0,
           lastPeriod: activePlayersLast[0]?.activePlayers || 0
         },
-        
         totalPlayers: referredUsers.length,
-        totalTurnover: turnoverStats,
+        totalTurnover: totalTurnoverStats,
         bonusDeductions: bonusDeductions
       },
-      // Match frontend expected structure
       
+      // Match frontend expected structure
       commission: {
         thisPeriod: currentEarnings?.finalCommission || 0,
         lastPeriod: lastEarnings?.finalCommission || 0
@@ -349,6 +426,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
         lastMonth: registrationStats.lastMonth
       },
       firstDeposits: firstDeposits,
+      turnovers: turnoverStats,
       deposits: {
         count: depositStats.count,
         amount: depositStats.amount
@@ -366,7 +444,6 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       cancelFees: { count: 0, amount: 0 },
       vipCashBonuses: { count: 0, amount: 0 },
       referralCommissions: { count: 0, amount: 0 },
-      turnovers: { count: 0, amount: 0 },
       profitLoss: { count: 0, amount: 0 }
     };
     
@@ -380,3 +457,217 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
     return next(new AppError('Internal server error', 500));
   }
 });
+
+// Get detailed player statistics
+exports.getPlayerStats = catchAsync(async (req, res, next) => {
+  const { userId } = req.user;
+  
+  if (!userId) {
+    return next(new AppError('Valid user ID is required', 400));
+  }
+  
+  const affiliate = await Affiliate.findOne({ userId: userId });
+  if (!affiliate) {
+    return next(new AppError('Affiliate not found', 404));
+  }
+  
+  try {
+    // Get referred users with their details
+    const referredUsers = await User.find({ referredBy: affiliate.referralCode });
+    const referredUserIds = referredUsers.map(u => u.userId);
+    
+    // Get additional stats for each player
+    const playerStats = await Promise.all(
+      referredUsers.map(async (user) => {
+        const [deposits, withdrawals, turnover, bonuses] = await Promise.all([
+          // Total deposits
+          Transaction.aggregate([
+            {
+              $match: {
+                userId: user.userId,
+                type: 0,
+                status: 1
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$base_amount' }
+              }
+            }
+          ]),
+          
+          // Total withdrawals
+          Transaction.aggregate([
+            {
+              $match: {
+                userId: user.userId,
+                type: 1,
+                status: 1
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$base_amount' }
+              }
+            }
+          ]),
+          
+          // Total turnover
+          BettingHistory.aggregate([
+            {
+              $match: {
+                member: user.userId
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$turnover' }
+              }
+            }
+          ]),
+          
+          // Total bonuses
+          UserBonus.aggregate([
+            {
+              $match: {
+                userId: user.userId
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: '$amount' }
+              }
+            }
+          ])
+        ]);
+        
+        return {
+          userId: user.userId,
+          username: user.username,
+          email: user.email,
+          registrationDate: user.timestamp,
+          totalDeposits: deposits[0]?.total || 0,
+          totalWithdrawals: withdrawals[0]?.total || 0,
+          totalTurnover: turnover[0]?.total || 0,
+          totalBonuses: bonuses[0]?.total || 0,
+          netRevenue: (deposits[0]?.total || 0) - (withdrawals[0]?.total || 0)
+        };
+      })
+    );
+    
+    res.status(200).json({
+      success: true,
+      data: playerStats
+    });
+    
+  } catch (error) {
+    console.error('Error in getPlayerStats:', error);
+    return next(new AppError('Internal server error', 500));
+  }
+});
+
+// Get commission history
+exports.getCommissionHistory = catchAsync(async (req, res, next) => {
+  const { userId } = req.user;
+  const { page = 1, limit = 10 } = req.query;
+  
+  if (!userId) {
+    return next(new AppError('Valid user ID is required', 400));
+  }
+  
+  const affiliate = await Affiliate.findOne({ userId: userId });
+  if (!affiliate) {
+    return next(new AppError('Affiliate not found', 404));
+  }
+  
+  try {
+    const options = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      sort: { period: -1 }
+    };
+    
+    // Using aggregate to get paginated results with total count
+    const commissionHistory = await AffiliateEarnings.aggregate([
+      { $match: { affiliateId: affiliate._id } },
+      { $sort: { period: -1 } },
+      {
+        $facet: {
+          metadata: [{ $count: "totalCount" }],
+          data: [{ $skip: (options.page - 1) * options.limit }, { $limit: options.limit }]
+        }
+      }
+    ]);
+    
+    const totalCount = commissionHistory[0].metadata[0]?.totalCount || 0;
+    const commissions = commissionHistory[0].data;
+    
+    res.status(200).json({
+      success: true,
+      data: commissions,
+      pagination: {
+        page: options.page,
+        limit: options.limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / options.limit)
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error in getCommissionHistory:', error);
+    return next(new AppError('Internal server error', 500));
+  }
+});
+
+// Helper function to get period dates
+function getPeriodDates() {
+  const now = new Date();
+  
+  // Use UTC dates for consistency
+  const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const lastPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  
+  // Today in UTC
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const todayEnd = new Date(todayStart);
+  todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
+  
+  // Yesterday in UTC
+  const yesterdayStart = new Date(todayStart);
+  yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
+  const yesterdayEnd = new Date(todayStart);
+  
+  // Week calculations in UTC
+  const startOfWeek = new Date(now);
+  startOfWeek.setUTCDate(now.getUTCDate() - now.getUTCDay());
+  startOfWeek.setUTCHours(0, 0, 0, 0);
+  
+  const startOfLastWeek = new Date(startOfWeek);
+  startOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 7);
+  
+  const endOfLastWeek = new Date(startOfWeek);
+  endOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 1);
+  endOfLastWeek.setUTCHours(23, 59, 59, 999);
+  
+  // Month calculations
+  const nextMonthStart = new Date(currentPeriodStart);
+  nextMonthStart.setUTCMonth(nextMonthStart.getUTCMonth() + 1);
+  
+  return {
+    currentPeriodStart,
+    currentPeriodEnd: nextMonthStart,
+    lastPeriodStart,
+    lastPeriodEnd: currentPeriodStart,
+    todayStart,
+    todayEnd,
+    yesterdayStart,
+    yesterdayEnd,
+    startOfWeek,
+    startOfLastWeek,
+    endOfLastWeek
+  };
+}

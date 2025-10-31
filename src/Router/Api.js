@@ -20,7 +20,7 @@ const AgentController = require('../Controllers/AgentController');
 // const Controllers = require('../Services/CornController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 // const messageController = require('../Controllers/messageController');
-const CreateSubAdmin = require('../Services/CreateSubAdmin');
+// const CreateSubAdmin = require('../Services/CreateSubAdmin');
 const bettingHistoryController = require ("../Controllers/bettingHistoryController")
 const vipController = require('../controllers/vipController');
 
@@ -39,34 +39,24 @@ const notificationController = require('../Controllers/notificationController');
 const BankController = require('../Controllers/BankController');
 // const Message = require('../Models/Message');
 // const SubAdmin = require('../Models/SubAdminModel');
-
+const {auth} = require('../MiddleWare/auth');
 const { createBonus,getAllBonuses } = require('../Controllers/BonusController');
-const VipController = require('../Controllers/VipController');
+// const VipController = require('../Controllers/VipController');
 const { Console } = require('winston/lib/winston/transports');
 
 
 
 
 
-
-router.get('/odds-sync',AdminController.SyncOdds)
-
-
-
-
-// Admin Route
-
-
-
 router.post('/createUser', CreateUserService.register);
-router.post('/login_user', CreateUserService.loginUser);
-// router.post('/login_user',(req,res)=>{
-//   const { userId, password } = req.body;
-//  console.log(req.body);
+// router.post('/login_user', CreateUserService.loginUser);
+router.post('/login_user',(req,res)=>{
+  const { userId, password } = req.body;
+ console.log(req.body);
 
-//   CreateUserService.loginUser(req, res);
-// })
-router.post('/user_details', CreateUserService.userDetails);
+  CreateUserService.loginUser(req, res);
+})
+router.get('/user_details', auth, CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
@@ -75,7 +65,7 @@ router.post('/reset_and_update_password', CreateUserService.resetAndUpdatePasswo
 router.post('/sendphoneotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/sendemailotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/verify_opt', CreateUserService.verifyPhone);
-router.post('/get_user_social_links', CreateUserService.getUserSocialLinks);
+// router.post('/get_user_social_links', CreateUserService.getUserSocialLinks);
 router.post('/get_referred_users', CreateUserService.getReferredUsers);
 // router.post('/verify/send', CreateUserService.sendotp);
 router.patch('/profile/personal', CreateUserService.updateUser);
@@ -102,18 +92,18 @@ router.post('/run-monthly', vipController.runMonthlyProcessing);
 
 
 ///////////////////////////////////////SUb Admin    ///////////////////////////////////////////////
-router.post('/register_sub_admin',CreateSubAdmin.registerSubAdmin) ;
-router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
-router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
-router.post('/admin_change_password_by_user',CreateSubAdmin.changePasswordUserByAdmin);
-router.post('/admin_change_email_by_user',CreateSubAdmin.changeEmailUserByAdmin);
+// router.post('/register_sub_admin',CreateSubAdmin.registerSubAdmin) ;
+// router.post('/login_sub_admin',CreateSubAdmin.loginSubAdmin) ;
+// router.get('/verify_sub_admin', CreateSubAdmin.verifySubAdmin);
+// router.post('/admin_change_password_by_user',CreateSubAdmin.changePasswordUserByAdmin);
+// router.post('/admin_change_email_by_user',CreateSubAdmin.changeEmailUserByAdmin);
 
-router.post('/admin_verify_phone', CreateSubAdmin.verifyPhoneManually);
-router.post('/admin_delate', CreateSubAdmin.SubAdminDelate);
-router.post('/admin_verify_email', CreateSubAdmin.verifyEmailManually);
-router.post('/sub_admin_User_details', CreateSubAdmin.SubAdminUserDetails);
-router.post('/update_and_create_socialLinks', CreateSubAdmin.updateAndcreateSocialLinks);
-router.post('/get_socialLinks', CreateSubAdmin.getSocialLinks);
+// router.post('/admin_verify_phone', CreateSubAdmin.verifyPhoneManually);
+// router.post('/admin_delate', CreateSubAdmin.SubAdminDelate);
+// router.post('/admin_verify_email', CreateSubAdmin.verifyEmailManually);
+// router.post('/sub_admin_User_details', CreateSubAdmin.SubAdminUserDetails);
+// router.post('/update_and_create_socialLinks', CreateSubAdmin.updateAndcreateSocialLinks);
+// router.post('/get_socialLinks', CreateSubAdmin.getSocialLinks);
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
 router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
 router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
@@ -148,15 +138,15 @@ router.get('/check', AffiliateController.protect, (req, res) => {
 });
 // router.get('/affiliate/dashboard', AffiliateDashboardController.getAffiliateDashboard);
 ///////////////////////////////////////////////////agent   ///////////////////////////////////////////////
-router.post('/register_agent',AgentController.registerAgent) ;
-router.post('/login_agent',AgentController.loginAgent) ;
-router.get('/verify_agent', AgentController.verifyAgent);
-router.get('/sub_agent_agent_user', GetAllUser.GetAllUserForSUbAdmin);
+// router.post('/register_agent',AgentController.registerAgent) ;
+// router.post('/login_agent',AgentController.loginAgent) ;
+// router.get('/verify_agent', AgentController.verifyAgent);
+// router.get('/sub_agent_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 ///////////////////////////////////////////////////  Sub-agent   ///////////////////////////////////////////////
-router.post('/register_Sub_agent',AgentController.registerAgent) ;
-router.post('/login_Sub_agent',AgentController.loginAgent) ;
-router.get('/verify_Sub_agent', AgentController.verifyAgent);
-router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
+// router.post('/register_Sub_agent',AgentController.registerAgent) ;
+// router.post('/login_Sub_agent',AgentController.loginAgent) ;
+// router.get('/verify_Sub_agent', AgentController.verifyAgent);
+// router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 
 ///////////////////////////////////////////////////  Deposit   ///////////////////////////////////////////////
 
@@ -172,8 +162,8 @@ router.get('/sub_Sub_agent_user', GetAllUser.GetAllUserForSUbAdmin);
 // router.post('/verify-otp', verifyOtp);
 // router.post('./routes/transactionRoutes');
 // Admin Route
-router.post("/adminregistation", AdminController.CreateAdmin)
-router.post("/adminlogin", AdminController.AdminLogin)
+// router.post("/adminregistation", AdminController.CreateAdmin)
+// router.post("/adminlogin", AdminController.AdminLogin)
 // router.get('/verifyAdmin', AdminController.verifySubAdmin);
 
 // Sub Admin  Route
@@ -223,9 +213,9 @@ router.post('/deposits_list', TransactionController.DepositsList);
 
 // router.get('/admin_deposits_list', TransactionController.AdminDepositsList);
 router.post('/deposit_with_bonus', TransactionController.addTransaction)
-router.post('/widthdraw_with_transaction', TransactionController.WithdrawTransaction)
+// router.post('/widthdraw_with_transaction', TransactionController.WithdrawTransaction)
 router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
-router.post('/searchDepositTransactions', TransactionController.Search_Deposit_Transactions_Pending)
+router.post('/search_Deposit_transactions_pendings', TransactionController.Search_Deposit_Transactions_Pending)
 router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
 router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
 
@@ -264,7 +254,7 @@ router.get('/get-all-category', ModelBettingController.GetAllCategory)
 router.get('/games/:id', ModelBettingController.ShowGameListById)
 router.get('/get_all_provider', ModelBettingController.GetAllProvider)
 router.post('/DeleteGameListByGtype', ModelBettingController.DeleteGameListByGtype)
-router.post('/user_balance',Refresh_blance.refreshBalance)
+router.get('/user_balance',auth, Refresh_blance.refreshBalance)
 router.get('/featured',Refresh_blance.GetFeaturedGames)
 router.get('/get_all_providers',Refresh_blance.GetBettingProvider)
 router.get('/get_all_category',Refresh_blance.GetBettingCategory)
@@ -274,7 +264,7 @@ router.get('/get_all_category',Refresh_blance.GetBettingCategory)
 // router.get('/get-betting-history-detailed',Refresh_blance.getBettingHistoryDetailed);
 
 // router.post("/launch_game", ModelBettingController.launchGame);
-router.post("/launch_gamePlayer", Refresh_blance.launchGamePlayer);
+router.get("/launch_gamePlayer/:game_id/:p_code",auth, Refresh_blance.launchGamePlayer);
 router.post("/game-update-serial", ModelBettingController.updateSerialNumber);
 router.post("/game-update-category", ModelBettingController.updateCategoryGameByID);
 router.get("/New-table-categories", ModelBettingController.getCategoriesWithGamesAndProviders);
@@ -302,37 +292,24 @@ router.get('/betting-records/summary',bettingHistoryController.BettingRecordSumm
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////
-// router.post('/betting',Controllers.Betting);
 
-// router.post('/odds_event',Controllers.OddEvents);
-// router.get('/category_sports',ModelBettingController.Category);
-router.put('/update-sports/:id', AdminController.UpdateSportsBettingCategory)
-// router.get('/sports',AdminController.GetSports);
-router.get('/casino',AdminController.GetCasino);
 router.put('/update-bet-provider',AdminController.UpdateBetProvider);
 router.put('/update-status-game',AdminController.UpdateStatusGame);
-router.put('/updat-status-type',AdminController.UpdateStatusType);
+// router.put('/updat-status-type',AdminController.UpdateStatusType);
 // router.put('/updat-provider-status',AdminController.UpdateStatusProvider);
 // router.put('/updat-provider-status',AdminController.UpdateStatusProvider);
-router.post('/add-ports',AdminController.AddSports);
+// router.post('/add-ports',AdminController.AddSports);
 
-router.get('/api/sports',AdminController.GetSportsCategories);
+
 
 router.get('/GateAllGames',AdminController.GateAllGames);
-router.post('/sports_category_add',AdminController.Category_Add);
-router.get('/get_sub_category/:cat_id',AdminController.GetSubcategoryById)
+
 // router.get('/odds-sync',AdminController.OddSynrouter)
 // router.get('/categories',AdminController.Category)
 // router.get('/odds/:key',AdminController.OddByKey)
 router.post('/category/add',ModelBettingController.AddCetagory)
 
-// router.post('/bet-price',AdminController.BetPrice);
-router.get('/get_casino',AdminController.GetCasinoData);
-router.get('/get_active_sports',AdminController.GetActiveSports);
-// router.post('/syncCasinoInfo',AdminController.syncCasinoInfo)
-router.post('/add-bank',BankController.addBank)
-router.post('/update-bank',BankController.updateBank)
-// router.delete('/delete-bank/:id',BankController.updateBank)
+
 
 //bet
 
@@ -349,108 +326,17 @@ router.put('/update-bet', BettingController.updateBet);
 
 router.put('/betting_update', BettingController.BettingUpdate);
 
-router.get('/odds_sports/:key', AdminController.OddSportsByKey);
+// router.get('/odds_sports/:key', AdminController.OddSportsByKey);
 
-router.get('/get_casino_cetagory', BettingController.getCasinoCategories);
-router.post('/casino-category', BettingController.saveOrUpdateGameCategory);
-router.post('/casino/update/:id', BettingController.casino_update);
+// router.get('/get_casino_cetagory', BettingController.getCasinoCategories);
+// router.post('/casino-category', BettingController.saveOrUpdateGameCategory);
+// router.post('/casino/update/:id', BettingController.casino_update);
 
 
 //bet
 
 
  
-
-/////////////////////////////////////////////////////////test api//////////////////////////////////////////////////
-// router.get("/get-deeplink",blank2.getDeepLink)
-// // router.get("/checkTransaction",blank2.checkTransaction)
-// router.get("/fetchBettingHistory",blank3.fetchBettingHistory)
-// router.get("/launch-app",blank3.launchApp)
-// // router.get("/launch",blank3.generateGameLaunchUrl)
-
-// router.get("/fetchArchivedBettingHistory",blank3.fetchArchivedBettingHistory )
-// router.get("/kickPlayer",blank3.kickPlayer )
-// router.get('/fetch-betting-history',blank3.BettingHistoryBet)
-// router.get('/launch-app',blank3.launchApp)
-// router.get('/history', blank3.getHistory);
-// router.get('/archived-history', blank3.getArchivedHistory);
-// router.post('/mark', blank3.markTickets);
-// router.post('/mark-archived', blank3.markArchivedTickets);
-// router.post('/daily-report', blank3.getDailyReport);
-// router.get('/api/game/log',blank3.logGameSessionone) //app.post('/api/game/log',
-// router.get('/api/odds/:key/:id',blank3.getEventOddsById) //  app.post('/api/betting/update',
-// router.post('/api/betting/update',blank3.updateBettingEvents) 
-// router.post('/launchGameapiorginal',blank3.launchGameapiorginal)
-// router.post("/api/gamesADD",blank3.CasinoItemAddNew)
-// router.post('/create-member',blank3.createMember)
-// router.post("/api/place-bet",blank3.placeBet)
-// router.post("/api/deposit",blank3.depositFunds)
-// router.post("/api/withdraw",blank3.withdrawFunds)
-
-
-
-/////////////////////////////////////////////////////////test api//////////////////////////////////////////////////
-// bank
-router.post("/update-bank/:id",BankController.updateBank)
-router.post("/delete-bank",BankController.deleteBank)
-
-
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////Vip api//////////////////////////////////////////////////
-
-
-
-// router.post("/vip_info",VipController.getUserVipInfo)
-// router.post("/convert",VipController.convertVpToMoney)
-// router.post("/history",VipController.getConversionHistory)
-
-
-// Get VP conversion history
-// router.get('/history', VipController.getConversionHistory);
-
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////massege api//////////////////////////////////////////////////
-
-// router.get('/contacts/:senderId',  async (req, res) => {
-//   const userId = req.params;
-//   console.log('/contacts/:senderId-----------------4',req.params);
-//   try {
-//     const contacts = await ChatService.getAllowedContacts(userId.senderId);
-//     res.json(contacts);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
-
-// // Get chat history (HTTP fallback)
-// router.get('/history/:senderId/:receiverId',  async (req, res) => {
-//   try {
-//     console.log('/history/:senderId/:receiverId-----------------5',req.params);
-//     const messages = await ChatService.getChatHistory(
-//       req.params.senderId,
-//       req.params.receiverId
-//     );
-//     res.json(messages);
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// });
 
 
 
@@ -460,4 +346,4 @@ router.get("/daily-wager", getDailyWager);
 
 
 
-module.exports = router
+module.exports = router;

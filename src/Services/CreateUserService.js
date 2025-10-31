@@ -7,7 +7,7 @@ const User = require('../Models/User');
 const SubAdminModel = require('../Models/SubAdminModel');
 const ReferralBonus = require('../Models/ReferralBonus');
 const { OTP } = require('../Models/Opt');
-const { sendSms } = require('../Services/sendSms');
+const { sendSms } = require('./sendSms');
   const generateReferralCode = require('./generateReferralCode');
 
 const saltRounds = 10;
@@ -257,7 +257,7 @@ console.log("apiSuccess", apiSuccess)
 
 
 
-      const token = jwt.sign({ id: newUser.userId }, "Kingbaji", { expiresIn: '2d' });
+      const token = jwt.sign({ userId: newUser.userId }, JWT_SECRET, { expiresIn: '2d' });
 
       const newUserDetails = await User.aggregate([
         { $match: { userId } },
@@ -370,7 +370,7 @@ console.log("apiSuccess", apiSuccess)
         }
       ]);
 
-      const token = jwt.sign({ id: user.userId }, "Kingbaji", { expiresIn: "2d" });
+      const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: "2d" });
 
       res.status(200).json({ token, user, response });
     } catch (error) {
@@ -387,6 +387,8 @@ console.log("apiSuccess", apiSuccess)
       const decoded = jwt.verify(token, "Kingbaji");
 
       const decodedId = decoded?.id;
+
+        console.log("User profile fetched:", decodedId);
       await User.updateOne(
         { userId: decodedId },
         { $set: { onlinestatus: new Date() } }
@@ -394,30 +396,10 @@ console.log("apiSuccess", apiSuccess)
 
 
 
-      const details = await User.aggregate([
-        { $match: { userId: decodedId } },
-        {
-          $project: {
-            userId: 1,
-            name: 1,
-            phone: 1,
-            balance: 1,
-            referredBy: 1,
-            referredLink: 1,
-            referralCode: 1,
-            timestamp: 1,
-            birthday: 1,
-            levelOneReferrals: 1,
-            levelTwoReferrals: 1,
-            levelThreeReferrals: 1,
-            countryCode: 1,
-            isVerified: 1,
-            isNameVerified: 1
-          }
-        },
-
-      ]);
-      // console.log( "decoded",details );
+      const details = await User.findOne({ userId: decodedId }).select(
+        "-password"
+      )
+      console.log( "decoded",details );
       res.status(200).json({ message: "User authenticated", userId: decoded.id, user: details[0] });
     } catch (error) {
       res.status(400).json({ message: "Invalid token!" });
@@ -428,17 +410,20 @@ console.log("apiSuccess", apiSuccess)
 
 
   exports.userDetails = async (req, res) => {
-    const { userId } = req.body;
+    // const { userId } = req.body;
+    const  userId = req.user.userId;
     // const authHeader = req.header("Authorization");
-    // console.log("userId", req.body.userId);
-    // console.log("userId :            1", userId);
+    // console.log("userId", authHeader);
+    // // console.log("userId :            1", userId);
     // const token = authHeader?.split(" ")[1];
+    // console.log("userId", token);
     // if (!token) return res.status(401).json({ message: "Token missing!" }); 
     try {
       // const decoded = jwt.verify(token, "Kingbaji");
-      // console.log(userId)
-      // const decodedId = decoded?.id;
-      const user = await User.findOne({ userId });
+      // console.log("decoded", decoded);
+      // const decodedId = decoded?.userId;
+      const user = await User.findOne({ userId: userId });
+      console.log("user", user);
       if (!user) return res.status(404).json({ message: "User not found" });
       // console.log(user.userId )
       if (user) {
@@ -466,7 +451,7 @@ console.log("apiSuccess", apiSuccess)
             },
           },
         ]);
-        // console.log( "decoded",details );
+        console.log( "details",details );
         res.status(200).json({ message: "User balance", user: details[0] });
       } else {
         res.status(200).json({ message: "User game balance is 0", user: details[0] });
@@ -476,6 +461,15 @@ console.log("apiSuccess", apiSuccess)
       res.status(400).json({ message: "Invalid token!" });
     }
   };
+
+
+
+
+
+
+
+
+
 
   exports.verifyPhone = async (req, res) => {
     console.log(req.body);

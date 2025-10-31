@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
-const AffiliateModel = require('../models/AffiliateModel');
+const AffiliateModel = require('../Models/AffiliateModel');
 
 const protectAffiliate = asyncHandler(async (req, res, next) => {
   let token;

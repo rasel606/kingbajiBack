@@ -25,9 +25,13 @@ const TurnOverJob = async () => {
         start_time: { $gte: createdAt, $lte: expiryDate }
       };
 
-      if (eligibleGames.length && eligibleGames[0] !== 'all') {
-        matchQuery.game_id = { $in: eligibleGames };
+      if (eligibleGames.length > 0 && eligibleGames[0]?.g_code !== 'all') {
+        matchQuery.$or = eligibleGames.map(game => ({
+          product: game.g_code,
+          site: game.p_code
+        }));
       }
+
 
       const result = await BettingHistory.aggregate([
         { $match: matchQuery },
@@ -45,8 +49,8 @@ const TurnOverJob = async () => {
           updatedAt: new Date()
         }
       );
-//  console.log('🔄 Running Turnover Auto Update...');
-  
+      //  console.log('🔄 Running Turnover Auto Update...');
+
       // console.log(
       //   `Turnover updated for bonus ${_id}: Completed Turnover: ${completedTurnover}, Status: ${status}`
       // );
@@ -59,12 +63,12 @@ const TurnOverJob = async () => {
   }
 
 }
- 
-  // cron.schedule('* * * * *', TurnOverJob);
 
-  cron.schedule('* * * * *', async () => {
-    console.log("TurnOverJob Cron job started at", new Date());
-    await TurnOverJob();
-  });
+// cron.schedule('* * * * *', TurnOverJob);
+
+cron.schedule('* * * * *', async () => {
+  console.log("TurnOverJob Cron job started at", new Date());
+  await TurnOverJob();
+});
 
 module.exports = TurnOverJob;

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const bettingHistorySchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
   ref_no: { type: String, required: true, unique: true },
   site: { type: String, required: true },
   product: { type: String, required: true },

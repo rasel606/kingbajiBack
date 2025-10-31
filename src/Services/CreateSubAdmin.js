@@ -7,205 +7,23 @@ const User = require('../Models/User');
 const SocialLink = require('../Models/SocialLink');
 const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
 const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 
 // const User = require("../Models/User");
 
 
 const saltRounds = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-
-// exports.registerSubAdmin = async (req, res) => {
-//   try {
-//     const { email, phone, password, countryCode, referredBy } = req.body;
-//     console.log(req.body);
-//     if (!email || !password) {
-//       return res.status(400).json({ success: false, message: "Please enter all fields" });
-//     }
-
-
-//     // Check if user already exists
-//     const existingUser = await SubAdmin.findOne({ email:email.toLowerCase() });
-//     if (existingUser) {
-//       return res.status(400).json({ success: false, message: "User already exists" });
-//     }
-
-//     const existingPhone = await SubAdmin.findOne({ phone });
-// if (existingPhone) {
-//   return res.status(400).json({ success: false, message: "Phone already registered" });
-// }
-
-
-//     // Generate required IDs
-//     const SubAdminId = Math.random().toString(36).substring(2, 11);
-//     const hashedPassword = await bcrypt.hash(password, saltRounds);
-//     const referredCode = Math.random().toString(36).substring(2, 8);
-
-
-//     const baseUrl = "https://kingbaji.live/?ref=";
-//     const agentbaseUrl = "http://coag.kingbaji.live/?ref=";
-//     const affiliatebaseUrl = "http://co.kingbaji.live/?ref=";
-//     const user_referredLink = baseUrl + referredCode;
-//     const agent_referred_Link = agentbaseUrl + referredCode;
-//     const affiliate_referredsLink = affiliatebaseUrl + referredCode;
-//     if (!referredCode) {
-//       return res.status(500).json({ success: false, message: "Failed to generate referral code" });
-//     }
-
-//     console.log("SubAdminId", SubAdminId);
-//     console.log("hashedPassword", hashedPassword);
-//     console.log("referredCode", referredCode);
-//     // Create new SubAdmin
-//     const newUser = await new SubAdmin({
-//       email,
-//       phone,
-//       countryCode,
-//       referredBy,
-//       referralCode: referredCode,
-//       userId:referredCode,
-//       password: hashedPassword,
-//       balance: 0,
-//       SubAdminId: SubAdminId,
-//       isActive: true,
-//       user_referredLink,
-//       agent_referredLink: agent_referred_Link,
-//       affiliate_referredLink: affiliate_referredsLink,
-//     });
-
-//     await newUser.save();
-//     console.log("newUser", newUser);
-//     // Fetch user details using aggregation
-//     const response = await SubAdmin.aggregate([
-//       { $match: { email: newUser.email.toLowerCase() } },
-//       {
-//         $project: {
-//           email: 1,
-//           phone: 1,
-//           countryCode: 1,
-//           balance: 1,
-//           referredBy: 1,
-//           user_referredLink: 1,
-//           // agent_referredLink: 1,
-//           // affiliate_referredLink: 1,
-//           referralCode: 1,
-//           user_role: 1,
-//         },
-//       },
-//     ]);
-
-
-//     const defaultGateways = [
-//         {
-//             gateway_name: "Bkash",
-//             image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
-//             is_active: true,
-//             payment_type: "Cashout",
-//             gateway_Number: "01700000000"
-//         },
-//         {
-//             gateway_name: "Nagad",
-//             image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
-//             is_active: true,
-//             payment_type: "Cashout",
-//             gateway_Number: "01700000000"
-//         },
-//         {
-//             gateway_name: "Rocket",
-//             image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
-//             is_active: true,
-//             payment_type: "Cashout",
-//             gateway_Number: "01700000000"
-//         },
-//         {
-//             gateway_name: "Upay",
-//             image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
-//             is_active: true,
-//             payment_type: "Cashout",
-//             gateway_Number: "01700000000"
-//         },
-        
-//     ];
-
-
-   
-//            for (const gateway of defaultGateways) {
-   
-//                    await PaymentGateWayTable.create({
-//                        user_role: response[0].user_role,
-//                        email:response[0].email,
-//                        gateway_name: gateway.gateway_name,
-//                        gateway_Number: gateway.gateway_Number || null,
-//                        payment_type: gateway.payment_type || null,
-//                        image_url: gateway.image_url,
-//                        referredBy: response[0].referralCode,
-//                        start_time: gateway.start_time || null,
-//                        end_time: gateway.end_time || null,
-//                        minimum_amount: gateway.minimum_amount || 0,
-//                        maximum_amount: gateway.maximum_amount || 0,
-//                        is_active: true,
-//                        timestamp: new Date(),
-//                        updatetime: new Date()
-//                    });
-               
-//            }
+const generateToken = (email) => {
+  return jwt.sign({ email }, JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+  });
+};
 
 
 
-//              for (const gateway of defaultGateways) {
-            
-//                 await WidthralPaymentGateWayTable.create({
-//                       user_role: response[0].user_role,
-//                        email:response[0].email,
-//                     gateway_name: gateway.gateway_name,
-//                     gateway_Number: gateway.gateway_Number || null,
-//                     payment_type: gateway.payment_type || null,
-//                     image_url: gateway.image_url,
-//                      referredBy: response[0].referralCode,
-//                     start_time: gateway.start_time || null,
-//                     end_time: gateway.end_time || null,
-//                     minimum_amount: gateway.minimum_amount || 0,
-//                     maximum_amount: gateway.maximum_amount || 0,
-//                     is_active: true,
-//                     timestamp: new Date(),
-//                     updatetime: new Date()
-//                 });
-            
-//         }
-
-
-
-    
-//     console.log("userRespons", response);
-//     if (!response) {
-//       return res.status(500).json({ success: false, message: "Failed to retrieve user details" });
-//     }
-
-//     // Generate JWT token
-//     const userDetails = response[0];
-//     console.log("userDetails", userDetails);
-//     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
-
-//     res.status(201).json({
-//       success: true,
-//       token,
-//       userDetails,
-//     });
-//   } catch (error) {
-//     console.error("❌ Error in register function:", error);
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// };
-
-
-
-
-///////////////////////////////////////////    login   //////////////////////////////////////////////////
-
-
-
-
-
-
-exports.registerSubAdmin = async (req, res) => {
+exports.registerSubAdmin =  catchAsync(async (req, res) => {
   try {
     const { email, phone, password, countryCode, referredBy } = req.body;
 
@@ -351,11 +169,28 @@ exports.registerSubAdmin = async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    return res.status(201).json({
-      success: true,
-      token,
-      userDetails,
-    });
+        res.status(201).json({
+    success: true,
+    data: {
+      userId: userDetails.userId,
+      username: userDetails.userId,
+      email: userDetails.email,
+      firstName: userDetails.firstName,
+      lastName: userDetails.lastName,
+      referralCode: userDetails.referralCode,
+      phone: userDetails.phone,
+          countryCode: userDetails.countryCode,
+          balance: userDetails.balance,
+          referralCode: userDetails.referralCode,
+          referralBy: user.referralBy,
+          referredLink: userDetails.referredLink,
+          user_referredLink: userDetails.user_referredLink,
+          agent_referredLink: agent_referred_Link,
+          affiliate_referredLink: affiliate_referredsLink,
+          referralCode: userDetails.referralCode,
+      token: generateToken(user.userId),
+    }
+  });
   } catch (error) {
     console.error("❌ Error in registerSubAdmin:", error);
     return res.status(500).json({
@@ -364,153 +199,240 @@ exports.registerSubAdmin = async (req, res) => {
       error: error.message,
     });
   }
-};
+});
 
 
 
 
-exports.loginSubAdmin = async (req, res) => {
+// exports.loginSubAdmin = async (req, res) => {
+//   const { email, password } = req.body;
+//   console.log(req.body);
+
+//   try {
+
+//     if (!email) return res.status(400).json({ message: "Email is required" });
+
+//     const user = await SubAdmin.findOne({ email: email });
+
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     const isPasswordValid = await bcrypt.compare(password, user.password);
+//     console.log("isPasswordValid", isPasswordValid);
+//     if (!isPasswordValid) return res.status(401).json({ message: "Invalid password" });
+
+
+
+//     const response = await SubAdmin.aggregate([
+//       { $match: { email: user.email } },
+//       {
+//         $project: {
+//           email: 1,
+//           name: 1,
+//           phone: 1,
+//           countryCode: 1,
+//           balance: 1,
+          
+//           referralByCode: 1,
+//           referredLink: 1,
+//           user_referredLink: 1,
+//           agent_referredLink: 1,
+//           affiliate_referredLink: 1,
+//           referralCode: 1,
+//           user_role: 1,
+//           _id: 0
+//         },
+//       },
+//     ]);
+
+//     if (!response.length) return res.status(500).json({ message: "Error fetching user data" });
+
+//     const userDetails = response[0];
+
+//     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
+
+
+//     // res.status(201).json({
+//     //   success: true,
+
+//     //   token,
+//     //   userDetails
+//     // });
+
+
+//      res.status(201).json({
+//     success: true,
+//     data: {
+//       userId: user.userId,
+//       username: user.userId,
+//       email: user.email,
+//       firstName: user.firstName,
+//       lastName: user.lastName,
+//       referralCode: user.referralCode,
+//       phone: user.phone,
+//           countryCode: user.countryCode,
+//           balance: user.balance,
+//           referralCode: user.referralCode,
+//           referralBy: user.referralBy,
+//           referredLink: user.referredLink,
+//           user_referredLink: user.user_referredLink,
+//           agent_referredLink: agent_referred_Link,
+//           affiliate_referredLink: affiliate_referredsLink,
+//           referralCode: user.referralCode,
+//       token: generateToken(user.userId),
+//     }
+//   });
+
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+exports.loginSubAdmin = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(req.body);
-
-  try {
-
-    if (!email) return res.status(400).json({ message: "Email is required" });
-
-    const user = await SubAdmin.findOne({ email: email });
-
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log("isPasswordValid", isPasswordValid);
-    if (!isPasswordValid) return res.status(401).json({ message: "Invalid password" });
-
-
-
-    const response = await SubAdmin.aggregate([
-      { $match: { email: user.email } },
-      {
-        $project: {
-          email: 1,
-          name: 1,
-          phone: 1,
-          countryCode: 1,
-          balance: 1,
-          referralCode: 1,
-          referralByCode: 1,
-          referredLink: 1,
-          user_referredLink: 1,
-          agent_referredLink: 1,
-          affiliate_referredLink: 1,
-          referralCode: 1,
-          user_role: 1,
-          _id: 0
-        },
-      },
-    ]);
-
-    if (!response.length) return res.status(500).json({ message: "Error fetching user data" });
-
-    const userDetails = response[0];
-
-    const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "30d" });
-
-
-    res.status(201).json({
-      success: true,
-
-      token,
-      userDetails
-    });
-
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
+console.log(req.body);
+  // Check if username and password exist
+  if (!email || !password) {
+    return next(new AppError('Please provide username and password', 400));
   }
-};
+
+  // Find user and include password explicitly
+  const user = await SubAdmin.findOne({ email }).select('+password');
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+
+  // Ensure password exists in DB
+  if (!user.password) {
+    return next(new AppError('Password not set for this user', 500));
+  }
+
+  // Compare password
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return next(new AppError('Incorrect password', 401));
+  }
+
+  // Update last login
+  user.lastLogin = new Date();
+  await user.save();
+
+  // Respond with user data and token
+  res.status(200).json({
+    success: true,
+    data: {
+      userId: user.userId,
+      username: user.username,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      referralCode: user.referralCode,
+      token: generateToken(user.email),
+    },
+    message: 'Login successful'
+  })
+});
 
 
 
 ///////////////////////////////////////////////////////////    verify   //////////////////////////////////////////////////
 
-exports.verifySubAdmin = async (req, res) => {
-  try {
+exports.getMeSubAdmin = catchAsync(async (req, res, next) => {
+  console.log("req.user",req.user);
+  const user = await SubAdmin.findOne({ email: req.user.email });
+if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+  res.json({
+    success: true,
+    data: user
+  });
+});
 
-    console.log(req.body);
-    const authHeader = req.header("Authorization");
-    const token = authHeader?.split(" ")[1];
 
-    if (!token) return res.status(401).json({ message: "Token missing!" });
 
-    const decoded = jwt.verify(token, JWT_SECRET);
-    // console.log("Decoded Token:", decoded);
 
-    const decodedEmail = decoded?.email;
-    const decodedRole = decoded?.user_role; // Fix role field
-    // console.log("decodedEmail", decodedEmail);
-    if (!decodedEmail || !decodedRole) {
-      return res.status(400).json({ message: "Invalid token payload!" });
-    }
-    const newSubAdmin = await SubAdmin.findOne({ email: decodedEmail });
 
-    const activeThreshold = new Date(Date.now() - 3 * 60 * 1000);
 
-    const onlineUsers = await User.find({
-      onlinestatus: { $gte: activeThreshold }, referredBy: newSubAdmin.referralCode
-    }).select('userId name onlinestatus');
-    const totalonlineUsers = await User.find({
-      onlinestatus: { $gte: activeThreshold }, referredBy: newSubAdmin.referralCode
-    }).countDocuments();
+
+
+// exports.verifySubAdmin = async (req, res) => {
+//   try {
+
+//     console.log(req.body);
+//     const authHeader = req.header("Authorization");
+//     const token = authHeader?.split(" ")[1];
+
+//     if (!token) return res.status(401).json({ message: "Token missing!" });
+
+//     const decoded = jwt.verify(token, JWT_SECRET);
+//     // console.log("Decoded Token:", decoded);
+
+//     const decodedEmail = decoded?.email;
+//     const decodedRole = decoded?.user_role; // Fix role field
+//     // console.log("decodedEmail", decodedEmail);
+//     if (!decodedEmail || !decodedRole) {
+//       return res.status(400).json({ message: "Invalid token payload!" });
+//     }
+//     const newSubAdmin = await SubAdmin.findOne({ email: decodedEmail });
+
+//     const activeThreshold = new Date(Date.now() - 3 * 60 * 1000);
+
+//     const onlineUsers = await User.find({
+//       onlinestatus: { $gte: activeThreshold }, referredBy: newSubAdmin.referralCode
+//     }).select('userId name onlinestatus');
+//     const totalonlineUsers = await User.find({
+//       onlinestatus: { $gte: activeThreshold }, referredBy: newSubAdmin.referralCode
+//     }).countDocuments();
 
 
    
 
 
-    const response = await SubAdmin.aggregate([
-      { $match: { email: decodedEmail, user_role: decodedRole } },
-      {
-        $project: {
-          email: 1,
-          name: 1,
-          phone: 1,
-          countryCode: 1,
-          balance: 1,
-          referralCode: 1,
-          referralByCode: 1,
-          referredLink: 1,
-          user_referredLink: 1,
-          agent_referredLink: 1,
-          // affiliate_referredLink: 1,
-          referralCode: 1,
-          user_role: 1,
-          isActive: 1,
-        },
-      },
-    ]);
+//     const response = await SubAdmin.aggregate([
+//       { $match: { email: decodedEmail, user_role: decodedRole } },
+//       {
+//         $project: {
+//           email: 1,
+//           name: 1,
+//           phone: 1,
+//           countryCode: 1,
+//           balance: 1,
+//           referralCode: 1,
+//           referralByCode: 1,
+//           referredLink: 1,
+//           user_referredLink: 1,
+//           agent_referredLink: 1,
+//           // affiliate_referredLink: 1,
+//           referralCode: 1,
+//           user_role: 1,
+//           isActive: 1,
+//         },
+//       },
+//     ]);
 
-    const userDetails = response[0];
+//     const userDetails = response[0];
 
-    if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
- const totalUsers = await User.countDocuments({
-      referredBy: userDetails.referralCode
-    });
+//     if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
+//  const totalUsers = await User.countDocuments({
+//       referredBy: userDetails.referralCode
+//     });
 
-//     console.log("totalUsersrefferedBy", totalUsers);
-// console.log("refferedBy", newSubAdmin.referralCode);
+// //     console.log("totalUsersrefferedBy", totalUsers);
+// // console.log("refferedBy", newSubAdmin.referralCode);
 
 
-    res.status(200).json({
-      success: true,
-      token,
-      userDetails,
-      totalonlineUsers,
-      totalUsers
-    });
+//     res.status(200).json({
+//       success: true,
+//       token,
+//       userDetails,
+//       totalonlineUsers,
+//       totalUsers
+//     });
 
-  } catch (error) {
+//   } catch (error) {
 
-    res.status(400).json({ message: "Invalid token!" });
-  }
-};
+//     res.status(400).json({ message: "Invalid token!" });
+//   }
+// };
 
 
 
@@ -519,47 +441,47 @@ exports.verifySubAdmin = async (req, res) => {
 
 
 
-exports.SubAdminUserDetails = async (req, res) => {
-  const { email } = req.body;
-  console.log(email)
-  // const authHeader = req.header("Authorization");
-  // console.log("userId", req.body.userId);
-  // console.log("userId :            1", userId);
-  // const token = authHeader?.split(" ")[1];
-  // if (!token) return res.status(401).json({ message: "Token missing!" }); 
-  try {
-    // const decoded = jwt.verify(token, "Kingbaji");
+// exports.SubAdminUserDetails = async (req, res) => {
+//   const { email } = req.body;
+//   console.log(email)
+//   // const authHeader = req.header("Authorization");
+//   // console.log("userId", req.body.userId);
+//   // console.log("userId :            1", userId);
+//   // const token = authHeader?.split(" ")[1];
+//   // if (!token) return res.status(401).json({ message: "Token missing!" }); 
+//   try {
+//     // const decoded = jwt.verify(token, "Kingbaji");
 
-    // const decodedId = decoded?.id;
-    const user = await SubAdmin.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User not found" });
+//     // const decodedId = decoded?.id;
+//     const user = await SubAdmin.findOne({ email });
+//     if (!user) return res.status(404).json({ message: "User not found" });
 
 
-    const details = await SubAdmin.aggregate([
-      { $match: { email: user.email } },
-      {
-        $project: {
-          name: 1,
-          email: 1,
-          phone: 1,
-          balance: 1,
-          SubAdminId: 1,
-          IsActive: 1,
-          user_referredLink: 1,
-          affiliate_referredLink: 1,
-          referralCode: 1,
-          timestamp: 1,
-        },
-      },
-    ]);
-    // console.log("decoded", details[0]);
-    res.status(200).json({ message: "User ", user: details[0] });
+//     const details = await SubAdmin.aggregate([
+//       { $match: { email: user.email } },
+//       {
+//         $project: {
+//           name: 1,
+//           email: 1,
+//           phone: 1,
+//           balance: 1,
+//           SubAdminId: 1,
+//           IsActive: 1,
+//           user_referredLink: 1,
+//           affiliate_referredLink: 1,
+//           referralCode: 1,
+//           timestamp: 1,
+//         },
+//       },
+//     ]);
+//     // console.log("decoded", details[0]);
+//     res.status(200).json({ message: "User ", user: details[0] });
 
-  } catch (error) {
-    console.log("error", error);
-    res.status(400).json({ message: "Invalid token!" });
-  }
-};
+//   } catch (error) {
+//     console.log("error", error);
+//     res.status(400).json({ message: "Invalid token!" });
+//   }
+// };
 
 
 /////////////////////////////////////////// Forgot Password ///////////////////////////////////////////////
@@ -878,20 +800,19 @@ exports.updateAndcreateSocialLinks = async (req, res) => {
 
 
 
-exports.getSocialLinks = async (req, res) => {
-  try {
-    const {userEmail,referralCode } = req.body;
-    console.log("social",req.body);
-    const newSubAdmin = await SubAdmin.findOne({ referralCode,email:userEmail });
-    if (!newSubAdmin) return res.send({});
-console.log(newSubAdmin);
-    const socialLinks = await SocialLink.findOne({ referredBy: newSubAdmin.referralCode, email: newSubAdmin.email });
-    console.log(socialLinks);
-    res.send(socialLinks || {});
-  } catch (error) {
-    res.status(500).send('Server error');
-  }
-}
+// exports.getSocialLinks = async (req, res) => {
+//   try {
+    
+    
+  
+
+//     const socialLinks = await SocialLink.findOne({ referredBy: newSubAdmin.referralCode, email: newSubAdmin.email });
+//     console.log(socialLinks);
+//     res.send(socialLinks || {});
+//   } catch (error) {
+//     res.status(500).send('Server error');
+//   }
+// }
 
 
 exports.SubAdminDelate = async (req, res) => {

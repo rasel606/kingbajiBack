@@ -16,7 +16,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['deposit_approved', 'deposit_rejected', 'deposit_processed', 'deposit_request' , 'withdrawal_processed', 'withdrawal_rejected', 'withdrawal_accepted' , 'withdrawal_request', 'balance_added', 'general'],
+    enum: ['approved', 'rejected', 'processed', 'request' , 'withdrawal_processed', 'withdrawal_rejected', 'withdrawal_accepted' , 'withdrawal_request', 'balance_added', 'general'],
     required: true
   },
   read: { 

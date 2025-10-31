@@ -3,15 +3,15 @@ var fs = require('fs');
 
 
 
-const sendSms = (to, text) => {
+const sendSms = (phone_number, verificationCode) => {
     // console.log(to, text);
     return new Promise((resolve, reject) => {
       const postData = JSON.stringify({
         messages: [
           {
-            destinations: [{ to }],
+            destinations: [{ phone_number }],
             from: "Kingbaji",
-            text
+            verificationCode
           }
         ]
       });
@@ -62,3 +62,49 @@ req.end();
 }
 
 exports.sendSms = sendSms;
+
+
+// services/smsService.js
+// // const twilio = require('twilio');
+
+// class SMSService {
+//   constructor() {
+//     this.client = null;
+//     this.isEnabled = process.env.SMS_SERVICE_ENABLED === 'true';
+    
+//     // if (this.isEnabled && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+//     //   this.client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+//     // }
+//   }
+
+//   async sendVerificationCode(phoneNumber, code) {
+//     // if (!this.isEnabled || !this.client) {
+//     //   // Mock SMS for development
+//     //   console.log(`[DEV SMS] Verification code for ${phoneNumber}: ${code}`);
+//     //   return { success: true, message: 'SMS sent successfully (development mode)' };
+//     // }
+
+//     // try {
+//     //   const message = await this.client.messages.create({
+//     //     body: `Your verification code is: ${code}. This code will expire in 10 minutes.`,
+//     //     from: process.env.TWILIO_PHONE_NUMBER,
+//     //     to: phoneNumber
+//     //   });
+
+//     //   return { 
+//     //     success: true, 
+//     //     message: 'SMS sent successfully',
+//     //     sid: message.sid 
+//     //   };
+//     // } catch (error) {
+//     //   console.error('SMS sending error:', error);
+//     //   return { 
+//     //     success: false, 
+//     //     message: 'Failed to send SMS',
+//     //     error: error.message 
+//     //   };
+//     // }
+//   }
+// }
+
+// module.exports = new SMSService();

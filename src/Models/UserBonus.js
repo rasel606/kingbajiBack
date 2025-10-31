@@ -8,7 +8,7 @@ const UserBonusSchema = new mongoose.Schema({
   bonusType: {
     type: String,
     required: true,
-    enum: ['deposit', 'dailyRebate', 'weeklyBonus', 'vip', 'referral', 'other']
+    enum: ['deposit', 'dailyRebate', 'weeklyBonus', 'vip', 'referral', 'other','referralRebate','normalDeposit','signup','birthday']
   },
   turnoverRequirement: { type: Number, required: true },
   completedTurnover: { type: Number, default: 0 },
@@ -17,6 +17,7 @@ const UserBonusSchema = new mongoose.Schema({
     enum: ['active', 'completed', 'expired', 'cancelled'],
     default: 'active'
   },
+  
   expiryDate: { type: Date },
   transactionId: { type: String, ref: 'Transaction' },
   referredBy: { type: String },

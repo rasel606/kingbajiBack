@@ -1,23 +1,28 @@
 const mongoose = require('mongoose');
-const AdminSchema = mongoose.Schema({
+const bcrypt = require('bcryptjs');
 
-    email: { type: String, required: true, unique: true },
-    firstName: { type: String},
-    mobile: { type: String,  unique: true },
-    countryCode: { type: String, required: true },
-    balance: { type: Number},
- 
-    referredLink: { type: String, default: null },
-    referredCode: { type: String, default: "adminmain" },
-    password: { type: String, required: true },
-    role: { type: String, default: "Admin" },
-    timestamp: { type: Date, default: Date.now },
-    updatetimestamp: { type: Date, default: Date.now },
-},
-    {
-        versionKey: false
-    })
+const AdminSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, lowercase: true },
+  firstName: { type: String },
+  mobile: { type: String, unique: true, sparse: true, required: false },
+  countryCode: { type: String },
+  balance: { type: Number, default: 0 },
+  referralCode: { type: String ,default:null },
+  password: { type: String, required: true },
+  role: { type: String, default: "Admin", enum: ["Admin", "SubAdmin", "User"] },
+  userId: { type: String, unique: true },
+  lastLogin: { type: Date } // ✅ added
+}, {
+  timestamps: true,
+  versionKey: false
+});
 
-const AdminModel = mongoose.model("admin", AdminSchema)
-module.exports = AdminModel
+// Hash password before save
+// AdminSchema.pre('save', async function (next) {
+//   if (!this.isModified('password')) return next();
+//   this.password = await bcrypt.hash(this.password, 10);
+//   next();
+// });
 
+const AdminModel = mongoose.model("AdminModel", AdminSchema);
+module.exports = AdminModel;

@@ -3,6 +3,7 @@ const BetProviderTable = require("../Models/BetProviderTable");
 const Category = require("../Models/Category");
 const GameListTable = require("../Models/GameListTable");
 const crypto = require('crypto');
+const { claimDailyReferralCashback } = require("./referralCashbackController");
 
 
 
@@ -14,7 +15,7 @@ const crypto = require('crypto');
 
 
 
-async function addGameWithCategory(gameData, category_name,provider) {
+async function addGameWithCategory(gameData, category_name, provider) {
   // Ensure category exists or create it
   const category = await Category.findOneAndUpdate(
     { category_name },
@@ -88,7 +89,7 @@ const fetchGamesFromApi = async (providerData, category_name) => {
     });
 
     console.log(`https://gsmd.336699bet.com/getGameList.ashx?operatorcode=${operatorcode}&providercode=${providercode}&lang=en&html=0&reformatjson=yes&signature=${signature}`
-      
+
     );
 
     const gameList = JSON.parse(response.data?.gamelist);
@@ -383,8 +384,8 @@ exports.ShowFrontTable = async (req, res) => {
 
     const categories = await Category.aggregate([
       {
-        $match: { categoryId: { $in: categoryId } ,p_type: {$in:p_type}},
-        
+        $match: { categoryId: { $in: categoryId }, p_type: { $in: p_type } },
+
       },
       {
         $lookup: {
@@ -448,7 +449,7 @@ exports.ShowFrontTable = async (req, res) => {
 exports.getCategoriesWithGamesAndProviders = async (req, res) => {
   try {
     // Fetch all categories
- const categories = await Category.find({ id_active: true }).sort({ category_code: 1 });
+    const categories = await Category.find({ id_active: true }).sort({ category_code: 1 });
 
     const categoriesWithGamesAndProviders = await Promise.all(
       categories.map(async (category) => {
@@ -514,9 +515,9 @@ exports.getCategoriesWithGamesAndProviders = async (req, res) => {
           // games: games, // Include games under the category
         };
       })
-      
+
     );
-// console.log("Games:", categoriesWithGamesAndProviders);
+    // console.log("Games:", categoriesWithGamesAndProviders);
     res.json(categoriesWithGamesAndProviders);
   } catch (error) {
     console.error("Error fetching categories with games and providers:", error);
@@ -557,10 +558,10 @@ exports.ShowGameListById = async (req, res) => {
 
 exports.DeleteGameListByGtype = async (req, res) => {
   try {
-    const {  p_code,p_type} = req.body; // Destructure from body
-    console.log("Deleting games with p_type:", p_code,p_type);
+    const { p_code, p_type } = req.body; // Destructure from body
+    console.log("Deleting games with p_type:", p_code, p_type);
 
-    const result = await GameListTable.deleteMany({ p_code:p_code});
+    const result = await GameListTable.deleteMany({ p_code: p_code });
 
     if (result.deletedCount === 0) {
       return res.status(404).json({ error: "No games found with given p_type" });
@@ -607,40 +608,40 @@ exports.getCategoriesWithProviders = async (req, res) => {
       categories.map(async (category) => {
         // Fetch games for each category
         const games = await GameListTable.aggregate([
-                  {
-                    $lookup: {
-                      from: "categories",
-                      localField: "g_type",
-                      foreignField: "g_type",
-                      as: "matchedCategories",
-                    },
-                  },
-                  {
-                    $match: {
-                      "matchedCategories.category_name": category.category_name, // Match category name
-                    },
-                  },
-                  {
-                    $lookup: {
-                      from: "betprovidertables",
-                      localField: "p_code",
-                      foreignField: "providercode",
-                      as: "providers",
-                    },
-                  },
-                  {
-                    $project: {
-                      g_code: 1,
-                      g_type: 1,
-                      p_code: 1,
-                      p_type: 1,
-                      gameName: 1,
-                      imgFileName: 1,
-                      serial_number: 1,
-                      "providers.providercode": 1,
-                    },
-                  },
-                ]);
+          {
+            $lookup: {
+              from: "categories",
+              localField: "g_type",
+              foreignField: "g_type",
+              as: "matchedCategories",
+            },
+          },
+          {
+            $match: {
+              "matchedCategories.category_name": category.category_name, // Match category name
+            },
+          },
+          {
+            $lookup: {
+              from: "betprovidertables",
+              localField: "p_code",
+              foreignField: "providercode",
+              as: "providers",
+            },
+          },
+          {
+            $project: {
+              g_code: 1,
+              g_type: 1,
+              p_code: 1,
+              p_type: 1,
+              gameName: 1,
+              imgFileName: 1,
+              serial_number: 1,
+              "providers.providercode": 1,
+            },
+          },
+        ]);
 
         const providerSet = new Set();
         games.forEach(game => {
@@ -671,108 +672,236 @@ exports.getCategoriesWithProviders = async (req, res) => {
 
 
 
-exports.getCategoriesWithProvidersGameList = async (req, res) => {
+
+// Update g_type list by providercode & company
+exports.updateGTypeList = async (req, res) => {
   try {
-    let { 
-      provider = [], 
-      category, 
-      page = 1, 
-      gameName = '',
-      sortBy = 'serial_number',
-      sortOrder = 'asc'
-    } = req.query;
+    const { providercode, g_type } = req.body;
 
-    console.log(req.query)
-
-    console.log(provider, category, page, gameName, sortBy, sortOrder);
-    // Validate and parse inputs
-    /* page = parseInt(page); */
-    if (isNaN(page) || page < 1) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "Invalid page number" 
-      });
+    // Check required fields
+    if (!providercode || !g_type) {
+      return res.status(400).json({ success: false, message: "providercode and g_type are required" });
     }
 
-    const limit = 24;
-    const skip = (page - 1) * limit;
-
-    // Check if category exists
-    const categoryData = await Category.findOne({ category_name: category });
-    if (!categoryData) {
-      return res.status(404).json({ 
-        success: false, 
-        message: "Category not found" 
-      });
+    // Find provider by providercode
+    const provider = await BetProviderTable.findOne({ providercode });
+    if (!provider) {
+      return res.status(404).json({ success: false, message: "Provider not found" });
     }
 
-    // Convert single provider to array if not already
-    if (!Array.isArray(provider)) {
-      provider = [provider].filter(Boolean);
+    // Ensure g_type is an array for consistency
+    const newGTypes = Array.isArray(g_type) ? g_type : [g_type];
+
+    // Filter only unique new types not already present
+    const uniqueToAdd = newGTypes.filter(type => !provider.g_type.includes(type));
+
+    if (uniqueToAdd.length === 0) {
+      return res.status(200).json({ success: true, message: "All g_types already exist", g_type: provider.g_type });
     }
 
-    // Build dynamic query
-    const query = {
-      category_name: category,
-      is_active: true,
-    };
+    // Update provider with new g_types
+    provider.g_type.push(...uniqueToAdd);
+    provider.updatetimestamp = new Date();
 
-    // Optional filters
-    if (provider.length > 0) {
-      query.p_code = { $in: provider };
-    }
+    await provider.save();
 
-    if (gameName) {
-      query['$or'] = [
-        { 'gameName.gameName_enus': { $regex: gameName, $options: 'i' } },
-        { 'gameName.gameName_zhcn': { $regex: gameName, $options: 'i' } },
-        { name: { $regex: gameName, $options: 'i' } }
-      ];
-    }
-
-    // Sort options mapping
- 
-
-    // Determine sort
-
-    // Fetch paginated games with sorting
-    const games = await GameListTable.find(query)
-      .skip(skip)
-      .limit(limit);
-
-    // Total count for pagination
-    const total = await GameListTable.countDocuments(query);
-
-    // Get all unique providers for this category
-    const providers = await GameListTable.distinct('p_code', { 
-      category_name: category 
+    res.status(200).json({
+      success: true,
+      message: `Added new g_types: ${uniqueToAdd.join(', ')}`,
+      updatedProvider: provider
     });
 
+  } catch (error) {
+    console.error("Error updating g_type:", error);
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+}
+
+
+
+// exports.getCategoriesWithProvidersGameList = async (req, res) => {
+//   try {
+//     let { 
+//       provider = [], 
+//       category, 
+//       page = 1, 
+//       gameName = '',
+//       sortBy = 'serial_number',
+//       sortOrder = 'asc'
+//     } = req.query;
+
+//     console.log(req.query)
+
+//     console.log(provider, category, page, gameName, sortBy, sortOrder);
+//     // Validate and parse inputs
+//     /* page = parseInt(page); */
+//     if (isNaN(page) || page < 1) {
+//       return res.status(400).json({ 
+//         success: false, 
+//         message: "Invalid page number" 
+//       });
+//     }
+
+//     const limit = 24;
+//     const skip = (page - 1) * limit;
+
+//     // Check if category exists
+//     const categoryData = await Category.findOne({ category_name: category });
+//     if (!categoryData) {
+//       return res.status(404).json({ 
+//         success: false, 
+//         message: "Category not found" 
+//       });
+//     }
+
+//     // Convert single provider to array if not already
+//     if (!Array.isArray(provider)) {
+//       provider = [provider].filter(Boolean);
+//     }
+
+//     // Build dynamic query
+//     const query = {
+//       category_name: category,
+//       is_active: true,
+//     };
+
+//     // Optional filters
+//     if (provider.length > 0) {
+//       query.p_code = { $in: provider };
+//     }
+
+//     if (gameName) {
+//       query['$or'] = [
+//         { 'gameName.gameName_enus': { $regex: gameName, $options: 'i' } },
+//         { 'gameName.gameName_zhcn': { $regex: gameName, $options: 'i' } },
+//         { name: { $regex: gameName, $options: 'i' } }
+//       ];
+//     }
+
+//     // Sort options mapping
+
+
+//     // Determine sort
+
+//     // Fetch paginated games with sorting
+//     const games = await GameListTable.find(query)
+//       .skip(skip)
+//       .limit(limit);
+
+//     // Total count for pagination
+//     const total = await GameListTable.countDocuments(query);
+
+//     // Get all unique providers for this category
+//     const providers = await GameListTable.distinct('p_code', { 
+//       category_name: category 
+//     });
+
+//     res.json({
+//       success: true,
+//       data: games,
+//       pagination: {
+//         page,
+//         limit,
+//         total,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error fetching games:", error);
+//     res.status(500).json({
+//       success: false,
+//       error: "Internal server error",
+//     });
+//   }
+// };
+
+exports.getCategoriesWithProvidersGameList = async (req, res) => {
+  try {
+    let { provider = [], category, page = 1, gameName = '', sortBy = 'serial_number', sortOrder = 'asc' } = req.query;
+
+    page = parseInt(page);
+    if (isNaN(page) || page < 1) page = 1;
+    const limit = 24;
+    const skip = (page - 1) * limit;
+    const sortDirection = sortOrder === 'desc' ? -1 : 1;
+
+    if (!Array.isArray(provider)) provider = [provider].filter(Boolean);
+
+    // --- Step 1: Find category ---
+    const categoryData = await Category.findOne({ category_name: category, id_active: true }).select('g_type category_name');
+    if (!categoryData) return res.status(404).json({ success: false, message: "Category not found" });
+
+    // --- Step 2: Fetch providers from cache ---
+    const providersCacheKey = `providers:category:${category}`;
+    let providersData = await redis.get(providersCacheKey);
+
+    if (providersData) {
+      providersData = JSON.parse(providersData);
+    } else {
+      const providerQuery = { g_type: { $in: categoryData.g_type }, id_active: true };
+      providersData = await BetProviderTable.find(providerQuery).select('_id company g_type name');
+      await redis.set(providersCacheKey, JSON.stringify(providersData), 'EX', 600); // cache 10 min
+    }
+
+    if (!providersData.length) return res.status(404).json({ success: false, message: "No providers found" });
+
+    // Filter providers if user selected specific ones
+    if (provider.length > 0) {
+      providersData = providersData.filter(p => provider.includes(p._id.toString()));
+    }
+
+    if (!providersData.length) return res.status(404).json({ success: false, message: "No matching providers found" });
+
+    // --- Step 3: Collect g_types from providers ---
+    const providerGTypes = providersData.flatMap(p => p.g_type);
+    const matchedGTypes = categoryData.g_type.filter(gt => providerGTypes.includes(gt));
+
+    // --- Step 4: Fetch games from cache ---
+    const gamesCacheKey = `games:category:${category}:providers:${providersData.map(p => p._id).join(',')}:page:${page}:name:${gameName}:sort:${sortBy}:${sortOrder}`;
+    let gamesData = await redis.get(gamesCacheKey);
+
+    if (gamesData) {
+      gamesData = JSON.parse(gamesData);
+    } else {
+      const gameQuery = { g_type: { $in: matchedGTypes }, is_active: true };
+      if (gameName) gameQuery.$text = { $search: gameName };
+
+      const totalGames = await GameListTable.countDocuments(gameQuery);
+
+      const games = await GameListTable.find(gameQuery)
+        .select('g_code g_type gameName imgFileName serial_number')
+        .sort(sortBy === 'gameName' ? { 'gameName.gameName_enus': sortDirection } : { serial_number: sortDirection })
+        .skip(skip)
+        .limit(limit);
+
+      gamesData = { games, totalGames };
+      await redis.set(gamesCacheKey, JSON.stringify(gamesData), 'EX', 300); // cache 5 min
+    }
+
+    // --- Step 5: Send response ---
     res.json({
       success: true,
-      data: games,
+      category: categoryData,
+      providers: providersData,
+      games: gamesData.games,
       pagination: {
         page,
         limit,
-        total,
-      },
+        totalGames: gamesData.totalGames,
+        totalPages: Math.ceil(gamesData.totalGames / limit)
+      }
     });
+
   } catch (error) {
     console.error("Error fetching games:", error);
-    res.status(500).json({
-      success: false,
-      error: "Internal server error",
-    });
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 };
-
-
 
 exports.searchGamesByName = async (req, res) => {
   console.log(req)
   try {
     let { q = '', lang = 'enus' } = req.query;
-console.log(req.query)
+    console.log(req.query)
     if (!q) {
       return res.status(400).json({ success: false, message: 'Query parameter q is required' });
     }
@@ -793,7 +922,7 @@ console.log(req.query)
       [searchField]: regex,
       is_active: true // optional filter to return only active games
     })
-       
+
 
     return res.json({ success: true, count: games.length, data: games });
   } catch (error) {
@@ -818,41 +947,42 @@ exports.moveGamesToAnotherCategory = async (req, res) => {
     // দুই ক্যাটাগরির তথ্য খোঁজা
     const fromCategory = await Category.findOne({ category_name: fromCategoryName });
     const toCategory = await Category.findOne({ category_name: toCategoryName });
-console.log(fromCategory, toCategory)
+    console.log(fromCategory, toCategory)
     if (!fromCategory || !toCategory) {
       return res.status(404).json({ success: false, message: 'ক্যাটাগরি পাওয়া যায়নি।' });
     }
 
     // গেম ফিল্টার করে যেগুলো স্থানান্তর করতে হবে
     const gamesToRemove = new Set(gamesToMove.map(game => game.g_code + game.p_code));
-console.log(gamesToRemove)
+    console.log(gamesToRemove)
     // পুরাতন ক্যাটাগরি থেকে গেম সরানো
     fromCategory.gamelist = fromCategory.gamelist.filter(
       game => !gamesToRemove.has(game.g_code + game.p_code)
     );
-console.log(fromCategory.gamelist)
+    console.log(fromCategory.gamelist)
     // নতুন ক্যাটাগরিতে গেম যোগ করা (ডুপ্লিকেট এড়াতে filter)
     const existingSet = new Set(toCategory.gamelist.map(game => game.g_code + game.p_code));
-    console.log("existingSet",existingSet)
+    console.log("existingSet", existingSet)
     const newGames = gamesToMove.filter(
       game => !existingSet.has(game.g_code + game.p_code)
     );
-    console.log("newGames",newGames)
+    console.log("newGames", newGames)
     toCategory.gamelist.push(...newGames);
 
     // GameListTable আপডেট করা যাতে category_name পরিবর্তিত হয়
     for (let game of gamesToMove) {
-      console.log("GameListTable",game)
+      console.log("GameListTable", game)
       await GameListTable.updateMany(
         { g_code: game.g_code, p_code: game.p_code },
-        { category_name: toCategoryName,
+        {
+          category_name: toCategoryName,
           g_type: toCategory.g_type,
           new_brand: game.g_code,
           new_category_name: toCategoryName,
-         }
+        }
       );
     }
-console.log("GameListTable",toCategory)
+    console.log("GameListTable", toCategory)
     // সংরক্ষণ
     await fromCategory.save();
     await toCategory.save();
@@ -927,3 +1057,15 @@ exports.AddCetagory = async (req, res) => {
 
 
 
+
+
+exports.climReferralBonus = async (req, res) => {
+  try {
+    const userId = req.user.userId; // assuming auth middleware sets req.user
+    const result = await claimDailyReferralCashback(userId);
+    res.json(result);
+  } catch (error) {
+    console.error('❌ /claim-referral-cashback error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+}

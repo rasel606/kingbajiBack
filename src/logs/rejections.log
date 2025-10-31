@@ -25,3 +25,122 @@ ReferenceError: _id is not defined
     at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
     at exports.protect (D:\crickex-Demo\Backend\src\Controllers\AffiliateController.js:181:5)
     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-09-26 22:42:09 [ERROR]: unhandledRejection: firstName is not defined
+ReferenceError: firstName is not defined
+    at CreateService (D:\crickex-Demo\Backend\src\Services\CreateService.js:50:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async exports.CreateAdmin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:42:16)
+ReferenceError: firstName is not defined
+    at CreateService (D:\crickex-Demo\Backend\src\Services\CreateService.js:50:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async exports.CreateAdmin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:42:16)
+2025-09-26 22:43:15 [ERROR]: unhandledRejection: secretOrPrivateKey must have a value
+Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (D:\crickex-Demo\Backend\node_modules\jsonwebtoken\sign.js:111:20)
+    at generateToken (D:\crickex-Demo\Backend\src\Services\CreateService.js:7:14)
+    at CreateService (D:\crickex-Demo\Backend\src\Services\CreateService.js:62:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async exports.CreateAdmin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:42:16)
+Error: secretOrPrivateKey must have a value
+    at module.exports [as sign] (D:\crickex-Demo\Backend\node_modules\jsonwebtoken\sign.js:111:20)
+    at generateToken (D:\crickex-Demo\Backend\src\Services\CreateService.js:7:14)
+    at CreateService (D:\crickex-Demo\Backend\src\Services\CreateService.js:62:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async exports.CreateAdmin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:42:16)
+2025-09-26 22:44:24 [ERROR]: unhandledRejection: User already exists with this email or username
+Error: User already exists with this email or username
+    at CreateService (D:\crickex-Demo\Backend\src\Services\CreateService.js:25:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async exports.CreateAdmin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:42:16)
+Error: User already exists with this email or username
+    at CreateService (D:\crickex-Demo\Backend\src\Services\CreateService.js:25:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async exports.CreateAdmin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:42:16)
+2025-09-26 22:45:45 [ERROR]: unhandledRejection: next is not defined
+ReferenceError: next is not defined
+    at exports.LoginService (D:\crickex-Demo\Backend\src\Services\LoginService.js:28:5)
+    at async exports.AdminLogin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:49:16)
+ReferenceError: next is not defined
+    at exports.LoginService (D:\crickex-Demo\Backend\src\Services\LoginService.js:28:5)
+    at async exports.AdminLogin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:49:16)
+2025-09-26 22:48:29 [ERROR]: unhandledRejection: dataModel.findOne is not a function
+TypeError: dataModel.findOne is not a function
+    at exports.LoginService (D:\crickex-Demo\Backend\src\Services\LoginService.js:17:32)
+    at exports.AdminLogin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:49:22)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at validate (D:\crickex-Demo\Backend\src\MiddleWare\validation.js:12:3)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at middleware (D:\crickex-Demo\Backend\node_modules\express-validator\lib\middlewares\check.js:16:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+TypeError: dataModel.findOne is not a function
+    at exports.LoginService (D:\crickex-Demo\Backend\src\Services\LoginService.js:17:32)
+    at exports.AdminLogin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:49:22)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at validate (D:\crickex-Demo\Backend\src\MiddleWare\validation.js:12:3)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at middleware (D:\crickex-Demo\Backend\node_modules\express-validator\lib\middlewares\check.js:16:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-09-26 22:49:51 [ERROR]: unhandledRejection: dataModel.findOne is not a function
+TypeError: dataModel.findOne is not a function
+    at exports.LoginService (D:\crickex-Demo\Backend\src\Services\LoginService.js:17:32)
+    at exports.AdminLogin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:49:22)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at validate (D:\crickex-Demo\Backend\src\MiddleWare\validation.js:12:3)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at middleware (D:\crickex-Demo\Backend\node_modules\express-validator\lib\middlewares\check.js:16:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+TypeError: dataModel.findOne is not a function
+    at exports.LoginService (D:\crickex-Demo\Backend\src\Services\LoginService.js:17:32)
+    at exports.AdminLogin (D:\crickex-Demo\Backend\src\Controllers\AdminController.js:49:22)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at validate (D:\crickex-Demo\Backend\src\MiddleWare\validation.js:12:3)
+    at Layer.handle [as handle_request] (D:\crickex-Demo\Backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (D:\crickex-Demo\Backend\node_modules\express\lib\router\route.js:149:13)
+    at middleware (D:\crickex-Demo\Backend\node_modules\express-validator\lib\middlewares\check.js:16:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2025-09-26 22:52:35 [ERROR]: unhandledRejection: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+MongoServerError: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+    at InsertOneOperation.execute (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async tryOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:207:20)
+    at async executeOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:75:16)
+    at async Collection.insertOne (D:\crickex-Demo\Backend\node_modules\mongodb\lib\collection.js:157:16)
+MongoServerError: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+    at InsertOneOperation.execute (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async tryOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:207:20)
+    at async executeOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:75:16)
+    at async Collection.insertOne (D:\crickex-Demo\Backend\node_modules\mongodb\lib\collection.js:157:16)
+2025-09-26 22:53:11 [ERROR]: unhandledRejection: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+MongoServerError: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+    at InsertOneOperation.execute (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async tryOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:207:20)
+    at async executeOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:75:16)
+    at async Collection.insertOne (D:\crickex-Demo\Backend\node_modules\mongodb\lib\collection.js:157:16)
+MongoServerError: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+    at InsertOneOperation.execute (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async tryOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:207:20)
+    at async executeOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:75:16)
+    at async Collection.insertOne (D:\crickex-Demo\Backend\node_modules\mongodb\lib\collection.js:157:16)
+2025-09-26 22:53:58 [ERROR]: unhandledRejection: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+MongoServerError: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+    at InsertOneOperation.execute (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async tryOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:207:20)
+    at async executeOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:75:16)
+    at async Collection.insertOne (D:\crickex-Demo\Backend\node_modules\mongodb\lib\collection.js:157:16)
+MongoServerError: E11000 duplicate key error collection: test.adminmodels index: mobile_1 dup key: { mobile: null }
+    at InsertOneOperation.execute (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\insert.js:51:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async tryOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:207:20)
+    at async executeOperation (D:\crickex-Demo\Backend\node_modules\mongodb\lib\operations\execute_operation.js:75:16)
+    at async Collection.insertOne (D:\crickex-Demo\Backend\node_modules\mongodb\lib\collection.js:157:16)

@@ -6,13 +6,13 @@ const addBonusToUser = async ({
     user,
     bonusId,
     amount,
-    turnoverMultiplier = 10,
+    turnoverMultiplier,
     totalBets,
     totalTurnover,
     bonusType,
     referredBy = null,
     message = null,
-    expiryDate = null
+    expiryDate
 }) => {
     try {
         const bonusTitleMap = {
@@ -25,6 +25,8 @@ const addBonusToUser = async ({
         };
 
         const title = bonusTitleMap[bonusType] || "বোনাস";
+
+
 
         // Update user balance
         await User.updateOne(
@@ -41,12 +43,14 @@ const addBonusToUser = async ({
             bonusId,
             amount,
             remainingAmount: 0,
-            turnoverRequirement: turnoverRequirement ? totalTurnover * (turnoverMultiplier / 100): turnoverRequirement,
-            completedTurnover: turnoverRequirement ? 'active': 'completed' ,
-            status: "completed",
+            turnoverRequirement: turnoverRequirement ? totalTurnover * (turnoverMultiplier / 100) : turnoverRequirement,
+            completedTurnover: turnoverRequirement ? 'active' : 'completed',
+            status: "Active",
             referredBy,
             bonusType,
-            expiryDate
+            expiryDate,
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
 
         // Send Notification

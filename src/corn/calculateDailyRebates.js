@@ -9,7 +9,7 @@ const UserBonus = require("../Models/UserBonus");
 const { createNotification } = require("../Controllers/notificationController");
 const Bonus = require("../Models/Bonus");
 const { format } = require("morgan");
-const AffiliateModel = require("../models/AffiliateModel");
+const AffiliateModel = require("../Models/AffiliateModel");
 const { addBonusToUser } = require("../Healper/bonusService");
 const calculateDailyRebates = async () => {
   try {
@@ -21,7 +21,7 @@ const calculateDailyRebates = async () => {
     console.log(`🌀 Daily Rebate Bonus cron started at ${moment(now).format('YYYY-MM-DD HH:mm:ss')}`);
 
     const settings = await RebateSetting.find({ active: true });
-    const bonus = await Bonus.findById("685afbdf7af170ea4dfaf7fc");
+    const bonus = await Bonus.findOne({bonusType : 'dailyRebate'});
 
     if (!bonus) {
       console.log("❌ Bonus config not found");
@@ -51,87 +51,78 @@ const calculateDailyRebates = async () => {
 
       const { totalTurnover, totalBets } = bets[0];
 
-      for (const setting of settings) {
-        if (totalBets >= setting.minTurnover && totalBets <= setting.maxTurnover) {
-          const rebateAmount = parseFloat(((totalTurnover * setting.rebatePercentage) / 100).toFixed(2));
+      for (const user of users) {
+        if (totalBets >= bonus.minTurnover && totalBets <= bonus.maxTurnover) {
+          const rebateAmount = parseFloat(((totalTurnover * minTurnover.percentage) / 100).toFixed(2));
 
           try {
-            // Create rebate log
-            await RebateLog.create({
-              userId: user.userId,
-              totalTurnover,
-              totalBets,
-              rebateAmount,
-              percentageApplied: setting.rebatePercentage,
-              date: moment(now).startOf("day").toDate(),
-              sessionStart,
-              sessionEnd: now,
-            });
-
             // Update user balance
-            await User.updateOne(
-              { userId: user.userId },
-              {
-                $inc: { balance: rebateAmount, totalBonus: rebateAmount },
-                $set: { updatetimestamp: new Date() }
-              }
-            );
+            // await User.updateOne(
+            //   { userId: user.userId },
+            //   {
+            //     $inc: { balance: rebateAmount, totalBonus: rebateAmount },
+            //     $set: { updatetimestamp: new Date() }
+            //   }
+            // );
 
             // Check if user was referred by an affiliate
             if (user.referredBy) {
-              const affiliate = await AffiliateModel.findOne({ referralCode: user.referredBy });
-
-              if (affiliate) {
-                // Calculate affiliate commission (example: 20% of the rebate)
-                const commissionRate = affiliate.settings?.commissionRate || 55;
-                const platformFee = affiliate.settings?.platformFee || 20;
-
-                const commissionAmount = parseFloat((rebateAmount * (commissionRate / 100)).toFixed(2));
-                const afterPlatformFee = parseFloat((commissionAmount * (1 - platformFee / 100)).toFixed(2));
-
-                // Update affiliate's balance and stats
-                await AffiliateModel.updateOne(
-                  { referralCode: user.referredBy },
-                  {
-                    $inc: {
-                      balance: afterPlatformFee,
-                      availableBalance: afterPlatformFee,
-                      totalCommission: afterPlatformFee
+                    const affiliate = await AffiliateModel.findOne({ referralCode: user.referredBy });
+            
+                    if (affiliate) {
+                      const deductionAmount = bonusAmount * (affiliate.settings.platformFee / 100);
+            
+                      // Deduct from affiliate
+                      await AffiliateModel.updateOne(
+                        { _id: affiliate._id },
+                        {
+                          $inc: {
+                            balance: -deductionAmount,
+                            totalCommission: -deductionAmount,
+                            availableBalance: -deductionAmount,
+                          },
+                        }
+                      );
+            
+                      // Record in AffiliateEarnings (monthly)
+                      await AffiliateEarnings.updateOne(
+                        { affiliateId: affiliate._id, period: moment().startOf('month').toDate() },
+                        {
+                          $inc: {
+                            totalBonus: rebateAmount,
+                            totalDeduction: deductionAmount,
+                            netProfit: -deductionAmount,
+                            finalCommission: -deductionAmount,
+                          },
+                        },
+                        { upsert: true }
+                      );
+            
+                      // Add bonus to user
+                      await addBonusToUser({
+                         user: user.userId,
+                      bonusId: bonus._id,
+                      amount: rebateAmount,
+                      bonusType: bonus.bonusType,
+                      referredBy: null,
+                      totalTurnover:rebateAmount,
+                      turnoverMultiplier: bonus.wageringRequirement,
+                      message: `আপনি আজকের রিবেট বোনাস হিসেবে ${rebateAmount}৳ পেয়েছেন!`,
+                      expiryDate: moment().add(7, 'days').toDate()
+                      });
                     }
-                  }
-                );
-
-                // Record in UserBonus for tracking
-                await addBonusToUser({
-                user,
-                bonusId: bonus._id,
-                amount: rebateAmount,
-                totalBets: totalBets,
-                totalTurnover: totalTurnover,
-                bonusType: 'dailyRebate',
-                referredBy: user.referredBy,
-                message: `আপনি আজকের রিবেট বোনাস হিসেবে ${rebateAmount}৳ পেয়েছেন!`
-              });
-                // Create affiliate earnings record
-                await AffiliateEarnings.create({
-                  affiliateId: affiliate._id,
-                  period: new Date(now.getFullYear(), now.getMonth(), 1),
-                  dailyRebate: commissionAmount,
-                  netProfit: afterPlatformFee,
-                  status: 'pending'
-                });
-              }
-            }
-            else {
+                  } else {
               // Record in UserBonus for tracking
               await addBonusToUser({
                 user,
                 bonusId: bonus._id,
                 amount: rebateAmount,
-                totalBets: totalBets,
-                totalTurnover: totalTurnover,
-                bonusType: 'dailyRebate',
-                message: `আপনি আজকের রিবেট বোনাস হিসেবে ${rebateAmount}৳ পেয়েছেন!`
+                bonusType: bonus.bonusType,
+                referredBy: null,
+                totalTurnover: rebateAmount,
+                turnoverMultiplier: bonus.wageringRequirement,
+                message: `আপনি আজকের রিবেট বোনাস হিসেবে ${rebateAmount}৳ পেয়েছেন!`,
+                expiryDate: new Date(now.getFullYear(), now.getMonth() + 1, 1),
               });
             }
 

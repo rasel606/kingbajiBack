@@ -62,17 +62,20 @@ function generateSignature(...args) {
 exports.refreshBalance = async (req, res) => {
 
   try {
-    const { userId, agentId } = req.body;
-    console.log(userId, agentId);
+    // const { userId, agentId } = req.body;
+    const userId = req.user.userId;
+    const agentId = req.user.agentId;
+    console.log("User found", userId);
+    console.log("agentId found", agentId);
     if (!userId) return res.status(400).json({ errCode: 2, errMsg: 'Please Login' });
     console.log(userId);
     const user = await User.findOne({ userId: userId });
     if (!user) return res.status(404).json({ errCode: 2, errMsg: 'User not found' });
     console.log("user.userId:", user.userId);
     let balance = user.balance;
-    if (!user.agentId) return res.status(200).json({ errCode: 1, errMsg: 'agent not found', balance });
+    if (!agentId) return res.status(200).json({ errCode: 1, errMsg: 'agent not found', balance });
     const game = await GameTable.findOne({ userId: user.userId, gameId: user.last_game_id, agentId: user.agentId || "" });
-    console.log("game refresh", game, user.last_game_id, game.agentId);
+    console.log("game refresh------------------------------1", game, user.last_game_id, game.agentId);
 
     if (!game) return res.json({ errCode: 0, errMsg: 'Success', balance });
 
@@ -96,7 +99,7 @@ exports.refreshBalance = async (req, res) => {
       console.log("Fetched Balance:", amount);
 
 
-      if (amount  && balance === 0 && amount !== balance && amount !== null) {
+      if (amount && balance === 0 && amount !== balance && amount !== null) {
         console.log((amount > 0 && balance === 0 && amount !== null));
         balance += amount;
 
@@ -135,6 +138,16 @@ exports.refreshBalance = async (req, res) => {
 
         if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
           console.log("refund.errMsg:", refund.errMsg);
+          const win = parseFloat(amount) - parseFloat(game.betAmount);
+          console.log("Win Amount:", win);
+
+          if (!isNaN(win) && win !== 0 && win !== NaN) {
+            await GameTable.findOneAndUpdate(
+              { gameId: game.gameId },
+              { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+              { new: true }
+            );
+          }
           res.status(500).json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
         }
 
@@ -152,21 +165,21 @@ exports.refreshBalance = async (req, res) => {
         return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
       }
     }, 1000);
-    const win = parseFloat(amount) - parseFloat(game.betAmount);
-    console.log("Win Amount:", win);
+    // const win = parseFloat(amount) - parseFloat(game.betAmount);
+    // console.log("Win Amount:", win);
 
-    if (!isNaN(win) && win !== 0 && win !== NaN) {
-      await GameTable.findOneAndUpdate(
-        { gameId: game.gameId },
-        { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-        { new: true }
-      );
-    }
+    // if (!isNaN(win) && win !== 0 && win !== NaN) {
+    //   await GameTable.findOneAndUpdate(
+    //     { gameId: game.gameId },
+    //     { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+    //     { new: true }
+    //   );
+    // }
 
     // } else {
     // //    await GameTable.deleteOne({ gameId: game.gameId })
     // }
-    console.log("Updated Balance -----------------2 :", balance);
+    // console.log("Updated Balance -----------------2 :", balance);
     // const updatedUser = await User.findOne({ userId: userId });
     // res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
 
@@ -222,21 +235,21 @@ const refreshBalancebefore = async (userId) => {
 
   const username = user.userId;
   let amount = null;
-    setTimeout(async () => {
-  if (balance === 0 && amount === null && amount !== 0) {
-    amount = await fetchBalance(agent, username);
-    if (amount === null) {
+  setTimeout(async () => {
+    if (balance === 0 && amount === null && amount !== 0) {
+      amount = await fetchBalance(agent, username);
+      if (amount === null) {
+        return balance
+      }
+    } else {
       return balance
     }
-  } else {
-    return balance
-  }
 
 
 
 
-  if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
-    
+    if (amount > 0 && balance === 0 && amount !== balance && amount !== null) {
+
 
       balance += amount;
 
@@ -249,11 +262,6 @@ const refreshBalancebefore = async (userId) => {
       console.log("Updated Balance:", balance);
       console.log("Updated Balance:", balance);
 
-      const Kicksignature = crypto
-        .createHash("md5")
-        .update(agent.operatorcode + agent.auth_pass + agent.providercode + user.userId + agent.key)
-        .digest("hex")
-        .toUpperCase();
 
 
       const transId = `${randomStr(3)}${randomStr(3)}${randomStr(3)}`.substring(0, 8).toUpperCase();
@@ -281,33 +289,33 @@ const refreshBalancebefore = async (userId) => {
       try {
 
         setTimeout(async () => {
-        const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
-        console.log("Refund Response:-----------------before", refund.data);
-        console.log("Updated Balance:", balance);
-        if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
-          console.log("refund.errMsg:", refund.errMsg);
-          return balance;
-        }
+          const refund = await axios.get('http://fetch.336699bet.com/makeTransfer.aspx', { params });
+          console.log("Refund Response:-----------------before", refund.data);
+          console.log("Updated Balance:", balance);
+          if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
+            console.log("refund.errMsg:", refund.errMsg);
+            return balance;
+          }
 
-        const win = parseFloat(amount) - parseFloat(game.betAmount);
-        console.log("Win Amount:", win);
+          const win = parseFloat(amount) - parseFloat(game.betAmount);
+          console.log("Win Amount:", win);
 
-        if (!isNaN(win) && win !== 0 && win !== NaN) {
-          await GameTable.findOneAndUpdate(
-            { gameId: game.gameId, },
-            { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-            { new: true }
-          );
-        } else {
-          await GameTable.deleteOne({ gameId: game.gameId })
-        }
+          if (!isNaN(win) && win !== 0 && win !== NaN) {
+            await GameTable.findOneAndUpdate(
+              { gameId: game.gameId, },
+              { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+              { new: true }
+            );
+          } else {
+            await GameTable.deleteOne({ gameId: game.gameId })
+          }
 
-        const updatedUser = await User.findOne({ userId: userId });
-        console.log("Updated Balance:", balance);
-        console.log("updatedUser Balance:", updatedUser.balance);
-        return updatedUser.balance;
+          const updatedUser = await User.findOne({ userId: userId });
+          console.log("Updated Balance:", balance);
+          console.log("updatedUser Balance:", updatedUser.balance);
+          return updatedUser.balance;
 
-      }, 1000);
+        }, 1000);
 
       } catch (transferError) {
         console.log("Transfer API Error:", transferError.message);
@@ -315,10 +323,10 @@ const refreshBalancebefore = async (userId) => {
       }
 
 
-  } else {
-    return balance
-  }
-}, 1000);
+    } else {
+      return balance
+    }
+  }, 1000);
 }
 
 
@@ -370,7 +378,7 @@ const fetchApi = async (endpoint, data = {}) => {
   try {
     const baseURL = "http://gsmd.336699bet.com/"; // Replace with actual API base URL
     const url = `${baseURL}${endpoint}`;
-console.log("url", url);
+    console.log("url", url);
     const config = {
       method: "GET", // Default: POST
       url,
@@ -398,7 +406,10 @@ console.log("url", url);
 
 exports.launchGamePlayer = async (req, res) => {
   try {
-    const { userId, game_id, p_code, p_type } = req.body;
+    const { game_id, p_code } = req.params;
+    console.log("launchGamePlayer game_id", game_id, "p_code", p_code,);
+    const userId = req.user.userId;
+    console.log("launchGamePlayer userId", userId);
     if (!userId) return res.status(400).json({ errCode: 1, errMsg: "User not found." });
 
     const user = await User.findOne({ userId });
@@ -408,7 +419,7 @@ exports.launchGamePlayer = async (req, res) => {
     if (!Newgame) return res.status(404).json({ errCode: 1, errMsg: "Game not found." });
 
     const agent = await GameListTable.aggregate([
-      { $match: { g_code: game_id, p_code } },
+      { $match: { g_code: game_id, p_code: p_code } },
       {
         $lookup: {
           from: "betprovidertables",
@@ -509,7 +520,7 @@ exports.launchGamePlayer = async (req, res) => {
         return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: gameLaunchResponse.gameUrl });
       }
     }
-await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     // Fallback: No transfer, but still try to launch game
     const fallbackGameLaunch = await fetchApi("launchGames.aspx", launchField);
     return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: fallbackGameLaunch.gameUrl });
@@ -556,7 +567,7 @@ exports.GetBettingProvider = async (req, res) => {
 
     const provider = await BetProviderTable.aggregate([
       { $match: { id_active: true } },
-      { $project: { _id: 0, providercode: 1,company:1 } }
+      { $project: { _id: 0, providercode: 1, company: 1 } }
     ]);
 
     if (!provider || provider.length === 0) {
@@ -575,7 +586,7 @@ exports.GetBettingCategory = async (req, res) => {
 
     const provider = await Category.aggregate([
       { $match: { id_active: true } },
-      { $project: { _id: 0, p_type:1,category_name:1 } }
+      { $project: { _id: 0, p_type: 1, category_name: 1 } }
     ]);
 
     if (!provider || provider.length === 0) {

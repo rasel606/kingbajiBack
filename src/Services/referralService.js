@@ -1,6 +1,6 @@
 const User = require('../Models/User');
 const ReferralBonus = require('../Models/ReferralBonus');
-const Turnover = require('../models/Turnover');
+const Turnover = require('../Models/TurnOverModal');
 
 // // Percentage bonuses for each level
 // const REFERRAL_BONUS_PERCENTAGES = {
@@ -122,6 +122,7 @@ const Turnover = require('../models/Turnover');
 // };
 
 // Claim referral bonuses
+
 exports.claimReferralBonuses = async (userId) => {
   try {
     const user = await User.findOne(userId);

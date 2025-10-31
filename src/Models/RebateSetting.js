@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const RebateSettingSchema = new mongoose.Schema({
+  name: { type: String },
   minTurnover: { type: Number, required: true }, // ex: 300
   maxTurnover: { type: Number, required: true }, // ex: 600
   rebatePercentage: { type: Number, required: true }, // 1.4 for 1.4%

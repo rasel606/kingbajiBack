@@ -128,3 +128,25 @@
 // }
 
 // module.exports = ChatService;
+const socketIO = require('socket.io');
+
+let io;
+
+const initializeSocket = (server) => {
+  io = socketIO(server, {
+    cors: {
+      origin: ['http://localhost:3000', 'http://localhost:3001'],
+      methods: ['GET', 'POST'],
+    },
+  });
+
+  io.on('connection', (socket) => {
+    console.log('Socket connected:', socket.id);
+
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected:', socket.id);
+    });
+  });
+};
+
+module.exports = { initializeSocket };
