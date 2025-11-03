@@ -14266,3 +14266,37 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-04 03:43:12 [INFO]: 📊 Socket monitoring available at /api/socket/health
 2025-11-04 03:43:13 [INFO]: ✅ MongoDB Connected
 2025-11-04 03:43:25 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-04 03:44:27 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 03:44:27 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 03:44:27 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 03:44:27 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 03:44:27 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 03:44:27 [INFO]: ✅ MongoDB Connected
+2025-11-04 03:44:33 [INFO]: ::1 - - [03/Nov/2025:21:44:33 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:44:33 [INFO]: ::1 - - [03/Nov/2025:21:44:33 +0000] "GET /api/v1/user_details HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:44:33 [INFO]: ::1 - - [03/Nov/2025:21:44:33 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:44:34 [INFO]: ::1 - - [03/Nov/2025:21:44:34 +0000] "GET /api/v1/user_balance HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:44:35 [INFO]: ::1 - - [03/Nov/2025:21:44:35 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:44:35 [INFO]: ::1 - - [03/Nov/2025:21:44:35 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:45:49 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 03:45:49 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 03:45:49 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 03:45:49 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 03:45:49 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 03:45:50 [INFO]: ✅ MongoDB Connected
+2025-11-04 03:46:03 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 03:46:03 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 03:46:03 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 03:46:03 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 03:46:03 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 03:46:04 [INFO]: ✅ MongoDB Connected
+2025-11-04 03:47:56 [INFO]: ::1 - - [03/Nov/2025:21:47:56 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:56 [INFO]: ::1 - - [03/Nov/2025:21:47:56 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:56 [INFO]: ::1 - - [03/Nov/2025:21:47:56 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:56 [INFO]: ::1 - - [03/Nov/2025:21:47:56 +0000] "GET /api/v1/user_details HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/v1/user_details HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 03:57:34 [INFO]: 📝 SIGINT received. Shutting down
