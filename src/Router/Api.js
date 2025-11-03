@@ -22,7 +22,7 @@ const Refresh_blance = require('../Controllers/Refresh_blance');
 // const messageController = require('../Controllers/messageController');
 // const CreateSubAdmin = require('../Services/CreateSubAdmin');
 const bettingHistoryController = require ("../Controllers/bettingHistoryController")
-const vipController = require('../Controllers/vipBonusesController');
+// const vipBonusesController = require('../Controllers/vipBonusesController');
 
 
 // const Promotion = require('../Models/PromotionSchema');
@@ -41,7 +41,7 @@ const BankController = require('../Controllers/BankController');
 // const SubAdmin = require('../Models/SubAdminModel');
 const {auth} = require('../MiddleWare/auth');
 const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
-const BonusTransactionController = require('../Controllers/vipBonusesController');
+// const BonusTransactionController = require('../Controllers/vipBonusesController');
 const { Console } = require('winston/lib/winston/transports');
 
 
@@ -81,14 +81,14 @@ router.post('/searchTransactionsbyUserId', TransactionController.searchTransacti
 
 
 // VIP Status
-router.get('/status/:userId', vipController.getVipStatus);
-router.post('/convert', vipController.convertPoints);
+// router.get('/status/:userId', vipBonusesController.getVipStatus);
+// router.post('/convert',  vipBonusesController.convertPoints);
 
-// Admin endpoints
-router.post('/adjust', vipController.adjustPoints);
-router.post('/update-level', vipController.updateLevel);
-router.post('/run-daily', vipController.runDailyCalculation);
-router.post('/run-monthly', vipController.runMonthlyProcessing);
+// // Admin endpoints
+// router.post('/adjust',  vipBonusesController.adjustPoints);
+// router.post('/update-level',  vipBonusesController.updateLevel);
+// router.post('/run-daily',  vipBonusesController.runDailyCalculation);
+// router.post('/run-monthly',  vipBonusesController.runMonthlyProcessing);
 
 
 ///////////////////////////////////////SUb Admin    ///////////////////////////////////////////////

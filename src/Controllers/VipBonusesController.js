@@ -5,7 +5,7 @@ const logger = require('../utils/logger');
 // Get user VIP status
 exports.getVipStatus = async (req, res) => {
   try {
-    console.log("getVipStatus",req.params.userId);
+    console.log("getVipStatus", req.params.userId);
     const { error } = validator.getStatusSchema.validate(req.params);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -20,7 +20,7 @@ exports.getVipStatus = async (req, res) => {
 // Convert VIP points to money
 exports.convertPoints = async (req, res) => {
   try {
-    console.log("convertPoints",req.body);
+    console.log("convertPoints", req.body);
     const { error } = validator.convertPointsSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -35,7 +35,7 @@ exports.convertPoints = async (req, res) => {
 // Manually adjust VIP points
 exports.adjustPoints = async (req, res) => {
   try {
-    console.log("adjustPoints",req.body);
+    console.log("adjustPoints", req.body);
     const { error } = validator.adjustPointsSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
@@ -54,7 +54,7 @@ exports.adjustPoints = async (req, res) => {
 // Update VIP level
 exports.updateLevel = async (req, res) => {
   try {
-    console.log("updateLevel",req.body);
+    console.log("updateLevel", req.body);
     const { error } = validator.updateLevelSchema.validate(req.body);
     if (error) return res.status(400).json({ error: error.details[0].message });
 
