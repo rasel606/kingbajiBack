@@ -41,7 +41,7 @@ const BankController = require('../Controllers/BankController');
 // const SubAdmin = require('../Models/SubAdminModel');
 const {auth} = require('../MiddleWare/auth');
 const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
-const VipController = require('../Controllers/VipBonusesController');
+const BonusTransactionController = require('../Controllers/VipBonusesController');
 const { Console } = require('winston/lib/winston/transports');
 
 
