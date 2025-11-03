@@ -14109,3 +14109,25 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-04 03:00:16 [INFO]: 📊 Socket monitoring available at /api/socket/health
 2025-11-04 03:00:16 [INFO]: ✅ MongoDB Connected
 2025-11-04 03:05:44 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-04 03:15:21 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 03:15:21 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 03:15:21 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 03:15:21 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 03:15:21 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 03:15:22 [INFO]: ✅ MongoDB Connected
+2025-11-04 03:15:35 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-04 03:18:12 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 03:18:12 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 03:18:12 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 03:18:12 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 03:18:12 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 03:18:13 [INFO]: ✅ MongoDB Connected
+2025-11-04 03:19:19 [INFO]: ::1 - - [03/Nov/2025:21:19:19 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 200 8245 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:19 [INFO]: ::1 - - [03/Nov/2025:21:19:19 +0000] "GET /api/v1/user_details HTTP/1.1" 200 504 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:19 [INFO]: ::1 - - [03/Nov/2025:21:19:19 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 200 2109 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:21 [INFO]: ::1 - - [03/Nov/2025:21:19:21 +0000] "GET /api/v1/user_balance HTTP/1.1" - - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:22 [INFO]: ::1 - - [03/Nov/2025:21:19:22 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:22 [INFO]: ::1 - - [03/Nov/2025:21:19:22 +0000] "GET /api/v1/user_details HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:22 [INFO]: ::1 - - [03/Nov/2025:21:19:22 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:19:24 [INFO]: ::1 - - [03/Nov/2025:21:19:24 +0000] "GET /api/v1/user_balance HTTP/1.1" 200 78 "http://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+2025-11-04 03:20:10 [INFO]: 📝 SIGINT received. Shutting down
