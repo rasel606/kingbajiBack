@@ -1722,7 +1722,7 @@ exports.getCategoriesWithProviders = async (req, res) => {
   }
 };
 // Get games by category
-exports.getGamesByCategory = async (req, res) => {
+exports.getGamesWithProvidersByCategory = async (req, res) => {
   try {
     const { category_name, page = 0, provider = [], gameName = "" } = req.query;
 console.log("New-Games-with-Providers-By-Category",req.query);
@@ -2177,7 +2177,22 @@ console.log('gameInfo:', gameInfo);
 };
 
 
+exports.GetBettingCategory = async (req, res) => {
+  try {
+    // console.log("GetBettingProvider");
 
+    const Category = await Category.find({});
+
+    if (!Category || Category.length === 0) {
+      return res.status(404).json({ errCode: 404, errMsg: "No providers found.", data: [] });
+    }
+
+    return res.status(200).json({ errCode: 200, errMsg: "Providers retrieved successfully.", data: Category });
+  } catch (error) {
+    console.error("GetBettingProvider Error:", error);
+    return res.status(500).json({ errCode: 500, errMsg: "Internal server error." });
+  }
+};
 
 
 

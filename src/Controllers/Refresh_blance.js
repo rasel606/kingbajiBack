@@ -157,7 +157,7 @@ exports.refreshBalance = async (req, res) => {
         //     console.log("Updated Balance -----------------1:", refund.data);
         //     return res.json({ errCode: 2, errMsg: 'Success user server updated, try again.', balance });
         // }
-        return res.json({ errCode: 2, errMsg: 'Success user server updated, try again.', balance });
+        // return res.json({ errCode: 2, errMsg: 'Success user server updated, try again.', balance });
         // console.log("Refund Response:", refund.data);
         // return true
       } catch (transferError) {

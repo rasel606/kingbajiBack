@@ -11,6 +11,7 @@ const AdminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, default: "Admin", enum: ["Admin", "SubAdmin", "User"] },
   userId: { type: String, unique: true },
+  refeeredBy: { type: String },
   lastLogin: { type: Date } // ✅ added
 }, {
   timestamps: true,

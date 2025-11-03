@@ -40,7 +40,7 @@ const BankController = require('../Controllers/BankController');
 // const Message = require('../Models/Message');
 // const SubAdmin = require('../Models/SubAdminModel');
 const {auth} = require('../MiddleWare/auth');
-const { createBonus,getAllBonuses } = require('../Controllers/BonusController');
+const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
 // const VipController = require('../Controllers/VipController');
 const { Console } = require('winston/lib/winston/transports');
 
@@ -196,8 +196,8 @@ router.get('/get_notifications/:userId',notificationController.getGroupedNotific
 ///////////////////////////////////////////////////// Transaction ///////////////////////////////////////////////
 // router.post('/add_payment_Method_deposit', TransactionController.AddPaymentMethodNumberDeposit);
 // router.post('/add_payment_Method_Widthral', TransactionController.AddPaymentMethodNumberWidthral);
-router.post('/subadmingetwaylist', TransactionController.subAdminGetWayList);
-router.post('/subadmin_getway_list_Widthraw', TransactionController.subAdminGetWayListWidthraw);
+// router.post('/getway_list_dposit', TransactionController.DepositGetWayList);
+// router.post('/getway_list_Widthraw', TransactionController.WidthrawGetWayList);
 router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
 router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
 router.post('/update_deposit_gateway_status', TransactionController.updateDepositGatewayStatus);

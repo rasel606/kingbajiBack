@@ -17,7 +17,7 @@ router.post('/register_admin', [
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long')
-], validate,  AdminController.CreateAdmin);
+], validate,AdminController.CreateAdmin);
 
 router.post('/login_admin', [
   body('email')

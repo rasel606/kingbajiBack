@@ -111,7 +111,7 @@ const Transaction = require('../Models/TransactionModel');
 const Bonus = require('../Models/Bonus');
 const AffiliateModel = require('../Models/AffiliateModel');
 const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-const { addBonusToUser } = require('../Controllers/bonusController');
+const { addBonusToUser } = require('../Controllers/BonusTransactionController');
 
 // Weekly Loss Bonus Cron
 const weeklyLossBonusCrons = async () => {

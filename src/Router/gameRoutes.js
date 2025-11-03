@@ -17,16 +17,16 @@ router.post('/game_g_type_update', ModelBettingController.updateGTypeList);
 router.get('/user_balance',auth,Refresh_blance.refreshBalance)
 
 router.get('/New-table-Games-with-Providers', getPlayerUserGameData.getCategoriesWithProviders);
-// router.get('/game-list-filters', getPlayerUserGameData.getGameListFilters);
+
 router.get('/New-Games-with-Providers-By-Category', getPlayerUserGameData.getGamesWithProvidersByCategory);
+router.get('/get-games-by-category', getPlayerUserGameData.getGamesWithProvidersByCategory);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// router.get('/New-table-Games-with-Providers', GameListControllers.getCategoriesWithProviders);
+
 router.get('/game-list-filters', GameListControllers.getGameListFilters);
+router.get('/game-cetagory', GameListControllers.GetBettingCategory);
 
 
-// // Games by category with filters
-// router.get('/New-Games-with-Providers-By-Category', GameListControllers.getGamesByCategory);
 
 
 

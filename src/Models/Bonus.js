@@ -27,6 +27,8 @@ const BonusSchema = new mongoose.Schema({
     p_code: String,
     g_type: String,
   }], // Game categories
+
+  cetegory:[],
   isActive: { type: Boolean, default: true },
   startDate: { type: Date, default: Date.now },
   endDate: { type: Date },

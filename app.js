@@ -325,6 +325,8 @@ const userRoutes = require('./src/Router/userRoutes');
 const gameRoutes = require('./src/Router/gameRoutes');
 const mainAdminRoutes = require('./src/Router/mainAdminRoutes');
 const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
+const turnoverRoutes = require('./src/Router/turnoverRoutes');
+const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
 
 // Import Live Chat Routes
 const chatRoutes = require('./src/Router/chatRoutes');
@@ -386,6 +388,8 @@ app.use('/api/subadmin', subAdminRoutes);
 app.use('/api/Admin', mainAdminRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/phone', phoneVerificationRoute);
+app.use('/api/turnover', turnoverRoutes);
+app.use('/api/promotions', promotionsServiceRoutes);
 
 // Live Chat Routes
 app.use('/api/live-chat', chatRoutes);

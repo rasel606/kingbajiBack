@@ -243,6 +243,7 @@ const createUser = async (req, dataModel) => {
     mobile,
     password: hashedPassword, // safe
     referredCode,
+    refeeredBy
   });
 
   // Return response object
@@ -255,6 +256,7 @@ const createUser = async (req, dataModel) => {
       referredCode: newUser.referredCode,
       token: generateToken(newUser.email),
     },
+    success: true,
     
   };
 };

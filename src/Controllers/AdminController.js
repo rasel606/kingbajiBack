@@ -4,6 +4,8 @@ const crypto = require("crypto");
 
 const AdminModel = require('../Models/AdminModel')
 const CreateService = require('../Services/CreateService')
+const PaymentGateWayTable = require("../Models/PaymentGateWayTable");
+const WidthralPaymentGateWayTable = require("../Models/WidthralPaymentGateWayTable");
 
 const updateOne = require('../Services/ProfileUpdateService')
 const BetProviderTable = require('../Models/BetProviderTable')
@@ -40,19 +42,114 @@ const { AdminProfile } = require('../Services/LoginService');
 const { getUserListServices } = require('../Services/getUserListServices');
 const { getReferralData } = require('../Services/getReferralOwnerService');
 const { processTransaction } = require('../Services/processTransactionService');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//-------------------------------------------CreateGateWayService-------------------------------------//
+
+const CreateGateWayService = async (user) => {
+        const defaultGateways = [
+      {
+        gateway_name: "Bkash",
+        image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+      {
+        gateway_name: "Nagad",
+        image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+      {
+        gateway_name: "Rocket",
+        image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+      {
+        gateway_name: "Upay",
+        image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
+        payment_type: "Cashout",
+        gateway_Number: "01700000000",
+      },
+    ];
+
+    const timestamp = new Date();
+
+    // Create entries for both payment gateway tables
+    const gatewayPayload = defaultGateways.map((gateway) => ({
+      user_role: user.user_role,
+      email: user.email,
+      gateway_name: gateway.gateway_name,
+      gateway_Number: gateway.gateway_Number,
+      payment_type: gateway.payment_type,
+      image_url: gateway.image_url,
+      referredBy: user.referralCode,
+      start_time: null,
+      end_time: null,
+      minimum_amount: 0,
+      maximum_amount: 0,
+      is_active: true,
+      timestamp,
+      updatetime: timestamp,
+    }));
+
+    await PaymentGateWayTable.insertMany(gatewayPayload);
+    await WidthralPaymentGateWayTable.insertMany(gatewayPayload);
+
+    return { success: true, message: "Gateways created successfully" };
+}
+//-------------------------------------------CreateGateWayService-------------------------------------//
+
+
+
+
 // const SportsBet = require('../Models/OddSportsTable')
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
   try {
-    
+
     let dataModel = AdminModel;
     let data = req.body
     const result = await CreateService.createUser(req, dataModel);
-    console.log(result)
-    res.json({ data: result.data, message: result.message, success: result.success });
+    if (result.success) {
+      // Step 2: Initialize gateway service
+      const gatewayResponse = await CreateGateWayService(req, result.data);
+
+      console.log("✅ Admin created:", result.data);
+      console.log("✅ Gateway response:", gatewayResponse);
+
+      // Step 3: Return final response
+      res.status(201).json({
+        data: result.data,
+        gateway: gatewayResponse,
+        message: result.message,
+        success: true,
+      });
+    }
   } catch (err) {
     next(err);
   }
 });
+
+
 exports.AdminLogin = catchAsync(async (req, res, next) => {
   try {
     console.log(req.body)
@@ -706,7 +803,7 @@ exports.processTransactionForALL = async (req, res) => {
     const { userId, action, transactionID } = req.body;
     const referraledUsers = req.user;
     console.log("userId", userId, "action", action, "transactionID", transactionID);
-        const result = await processTransaction({
+    const result = await processTransaction({
       userId,
       action,
       transactionID,
@@ -723,7 +820,7 @@ exports.processTransactionForALL = async (req, res) => {
 
 exports.getTransactionList = async (req, res) => {
   try {
-    const {  page = 1, limit = 100 } = req.query;
+    const { page = 1, limit = 100 } = req.query;
     const skip = (page - 1) * limit;
     const user = req.user;
     const role = user.role.toLowerCase();
@@ -733,7 +830,7 @@ exports.getTransactionList = async (req, res) => {
       case "admin":
         break; // admin sees all
       case "subAdmin":
-        filter = { subAdminId: req.user?.referralCode }; 
+        filter = { subAdminId: req.user?.referralCode };
         break;
       case "affiliate":
         filter = { affiliateId: req.user?.referralCode };
@@ -1382,7 +1479,7 @@ exports.getPendingDepositTransactions = async (req, res) => {
     //   });
     // }
 
-    const SubAdminuser = await AdminModel.findOne({  email: user. email});
+    const SubAdminuser = await AdminModel.findOne({ email: user.email });
     console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
     if (!SubAdminuser) {
       return res.status(404).json({
@@ -1390,8 +1487,8 @@ exports.getPendingDepositTransactions = async (req, res) => {
         message: 'Sub-admin not found'
       });
     }
-     console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
-    let query = { };
+    console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
+    let query = {};
     console.log("query", query);
     // Add optional filters
     if (userId) query.userId = userId;
@@ -1446,7 +1543,7 @@ exports.getPendingWidthrawalTransactions = async (req, res) => {
     //     message: 'Referral code not found for this user' 
     //   });
     // }
- const SubAdminuser = await AdminModel.findOne({  email: user. email});
+    const SubAdminuser = await AdminModel.findOne({ email: user.email });
     console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
     if (!SubAdminuser) {
       return res.status(404).json({
@@ -1454,8 +1551,8 @@ exports.getPendingWidthrawalTransactions = async (req, res) => {
         message: 'Sub-admin not found'
       });
     }
-     console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
-    let query = { };
+    console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
+    let query = {};
     console.log("query", query);
     // Add optional filters
     if (userId) query.userId = userId;
@@ -1649,7 +1746,7 @@ exports.updateDepositStatus = async (req, res) => {
   try {
     const { transactionId } = req.query;
     const { status, userId } = req.body;
-console.log("updateDepositStatus",transactionId,userId,status)
+    console.log("updateDepositStatus", transactionId, userId, status)
     // Find and update transaction
     const transaction = await TransactionModel.findOneAndUpdate(
       { transactionID: transactionId, userId },
