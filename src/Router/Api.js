@@ -22,7 +22,7 @@ const Refresh_blance = require('../Controllers/Refresh_blance');
 // const messageController = require('../Controllers/messageController');
 // const CreateSubAdmin = require('../Services/CreateSubAdmin');
 const bettingHistoryController = require ("../Controllers/bettingHistoryController")
-const vipController = require('../controllers/vipController');
+const vipController = require('../Controllers/VipBonusesController');
 
 
 // const Promotion = require('../Models/PromotionSchema');
@@ -41,7 +41,7 @@ const BankController = require('../Controllers/BankController');
 // const SubAdmin = require('../Models/SubAdminModel');
 const {auth} = require('../MiddleWare/auth');
 const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
-const VipController = require('../Controllers/VipController');
+const VipController = require('../Controllers/VipBonusesController');
 const { Console } = require('winston/lib/winston/transports');
 
 

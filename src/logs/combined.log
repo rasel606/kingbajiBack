@@ -14299,3 +14299,22 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/v1/user_details HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
 2025-11-04 03:47:57 [INFO]: ::1 - - [03/Nov/2025:21:47:57 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
 2025-11-04 03:57:34 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-04 03:58:14 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 03:58:14 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 03:58:14 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 03:58:14 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 03:58:14 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 03:58:14 [INFO]: ✅ MongoDB Connected
+2025-11-04 04:48:38 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 04:48:38 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 04:48:38 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 04:48:38 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 04:48:38 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 04:48:40 [INFO]: ✅ MongoDB Connected
+2025-11-04 04:53:45 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 04:53:45 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 04:53:45 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 04:53:45 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 04:53:45 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 04:53:46 [INFO]: ✅ MongoDB Connected
+2025-11-04 04:53:50 [INFO]: 📝 SIGINT received. Shutting down
