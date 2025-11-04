@@ -14458,3 +14458,69 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-04 05:44:09 [INFO]: ::1 - - [03/Nov/2025:23:44:09 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
 2025-11-04 05:44:10 [INFO]: ::1 - - [03/Nov/2025:23:44:10 +0000] "GET /api/v1/user_balance HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
 2025-11-04 05:49:57 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-04 06:00:31 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:00:31 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:00:31 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:00:31 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:00:31 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:00:32 [INFO]: ✅ MongoDB Connected
+2025-11-04 06:00:34 [INFO]: ::1 - - [04/Nov/2025:00:00:34 +0000] "GET /api/promotions/bonuses? HTTP/1.1" 200 1880 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 06:00:34 [INFO]: ::1 - - [04/Nov/2025:00:00:34 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 06:00:35 [INFO]: ::1 - - [04/Nov/2025:00:00:35 +0000] "GET /api/v1/user_details HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 06:00:35 [INFO]: ::1 - - [04/Nov/2025:00:00:35 +0000] "GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 06:00:36 [INFO]: ::1 - - [04/Nov/2025:00:00:36 +0000] "GET /api/v1/user_balance HTTP/1.1" 304 - "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-04 06:32:41 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:32:41 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:32:41 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:32:41 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:32:41 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:32:42 [INFO]: ✅ MongoDB Connected
+2025-11-04 06:33:13 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:33:13 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:33:13 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:33:13 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:33:13 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:33:14 [INFO]: ✅ MongoDB Connected
+2025-11-04 06:33:20 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:33:20 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:33:20 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:33:20 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:33:20 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:33:20 [INFO]: ✅ MongoDB Connected
+2025-11-04 06:34:44 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:34:44 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:34:44 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:34:44 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:34:44 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:34:45 [INFO]: ✅ MongoDB Connected
+2025-11-04 06:38:06 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:38:06 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:38:06 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:38:06 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:38:06 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:38:07 [INFO]: ✅ MongoDB Connected
+2025-11-04 06:38:15 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 06:38:15 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 06:38:15 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 06:38:15 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 06:38:15 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 06:38:16 [INFO]: ✅ MongoDB Connected
+2025-11-04 20:39:07 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 20:39:07 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 20:39:07 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 20:39:07 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 20:39:07 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 20:39:08 [INFO]: ✅ MongoDB Connected
+2025-11-04 20:39:30 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 20:39:30 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 20:39:30 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 20:39:30 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 20:39:30 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 20:39:31 [INFO]: ✅ MongoDB Connected
+2025-11-04 20:40:12 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 20:40:12 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 20:40:12 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 20:40:12 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 20:40:12 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 20:40:13 [INFO]: ✅ MongoDB Connected
+2025-11-04 20:44:46 [INFO]: 📝 SIGINT received. Shutting down

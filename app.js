@@ -23,6 +23,7 @@ const userRoutes = require('./src/Router/userRoutes');
 const gameRoutes = require('./src/Router/gameRoutes');
 const mainAdminRoutes = require('./src/Router/mainAdminRoutes');
 const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
+// const emailVerificationService = require('./src/Router/emailVerificationRoutes');
 const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
 
@@ -86,6 +87,7 @@ app.use('/api/subadmin', subAdminRoutes);
 app.use('/api/Admin', mainAdminRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/phone', phoneVerificationRoute);
+// app.use('/api/email', emailVerificationService);
 app.use('/api/turnover', turnoverRoutes);
 app.use('/api/promotions', promotionsServiceRoutes);
 

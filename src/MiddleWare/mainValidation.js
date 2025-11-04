@@ -28,6 +28,24 @@ const validateVerificationCode = [
   handleValidationErrors
 ];
 
+
+const validateEmail = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please provide a valid email address'),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: errors.array()[0].msg
+      });
+    }
+    next();
+  }
+];
+
 const validateRegistration = [
   body('username')
     .isLength({ min: 3, max: 30 })
@@ -47,5 +65,6 @@ const validateRegistration = [
 module.exports = {
   validatePhoneNumber,
   validateVerificationCode,
-  validateRegistration
+  validateRegistration,
+  validateEmail
 };
