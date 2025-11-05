@@ -38,10 +38,6 @@
 //   logger.info('📝 SIGINT received. Server closing...');
 //   server.close(() => process.exit(0));
 // });
-
-
-
-// index.js
 require('dotenv').config();
 const { server } = require('./app');
 const connectDB = require('./src/Config/db');
@@ -51,21 +47,17 @@ const logger = require('./src/utils/logger');
 // Debug info
 console.log('🚀 Starting server...');
 console.log('Node version:', process.version);
-console.log('ENV PORT:', process.env.PORT);
-console.log('ENV NODE_ENV:', process.env.NODE_ENV);
 
-// Connect to MongoDB
+// Connect MongoDB
 connectDB();
 
 // Start server
 const PORT = process.env.PORT || config.port || 5000;
-const HOST = '0.0.0.0'; // Render/Heroku compatible
-
+const HOST = '0.0.0.0'; // Railway requirement
 server.listen(PORT, HOST, () => {
   console.log(`✅ Server running on http://${HOST}:${PORT} (${process.env.NODE_ENV || config.environment} mode)`);
-  logger.info(`✅ Server running on http://${HOST}:${PORT} (${process.env.NODE_ENV || config.environment} mode)`);
+  logger.info(`✅ Server running on http://${HOST}:${PORT}`);
 });
-
 
 // Graceful shutdown
 const shutdown = (signal) => {
@@ -76,13 +68,5 @@ const shutdown = (signal) => {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
-
-process.on('unhandledRejection', (err) => {
-  logger.error('❌ Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
-});
-
-process.on('uncaughtException', (err) => {
-  logger.error('❌ Uncaught Exception:', err);
-  server.close(() => process.exit(1));
-});
+process.on('unhandledRejection', (err) => { logger.error('❌ Unhandled Rejection:', err); server.close(() => process.exit(1)); });
+process.on('uncaughtException', (err) => { logger.error('❌ Uncaught Exception:', err); server.close(() => process.exit(1)); });

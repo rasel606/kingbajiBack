@@ -247,10 +247,6 @@
 // console.log('✅ Express app setup completed');
 
 // module.exports = { app, server };
-
-
-
-// app.js
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
@@ -289,10 +285,8 @@ app.set('io', io);
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+  origin: ['http://localhost:3000'], // Add your frontend domain
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'socket-id']
 }));
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(morgan('combined', { stream: logger.stream }));
@@ -303,10 +297,10 @@ app.use(cookieHandler);
 app.use(mongoSanitize());
 app.set('trust proxy', 1);
 
-// Static files
+// Static
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// API Routes
 app.use("/api/v1", router);
 app.use('/api/auth', subAdminAurth);
 app.use('/api/transactions', transactionRoutes);
@@ -322,40 +316,23 @@ app.use('/api/live-chat', chatRoutes);
 
 // Socket monitoring endpoints
 app.get('/api/socket/health', (req, res) => res.json({ status: 'OK', ...getConnectionStats() }));
-app.get('/api/socket/user/:userId', (req, res) => {
-  const { userId } = req.params;
-  const connections = getUserConnections(userId);
-  res.json({ userId, connections, totalConnections: connections.length });
-});
+app.get('/api/socket/user/:userId', (req, res) => res.json({ userId: req.params.userId, connections: getUserConnections(req.params.userId) }));
 app.get('/api/socket/room/:roomId', (req, res) => {
   const roomInfo = getRoomInfo(req.params.roomId);
   if (!roomInfo) return res.status(404).json({ error: 'Room not found' });
   res.json(roomInfo);
 });
 
-// Health check
-app.get('/health', (req, res) => res.json({
-  status: 'OK',
-  timestamp: new Date().toISOString(),
-  uptime: process.uptime(),
-  environment: process.env.NODE_ENV || 'development'
-}));
+// Default route
+app.get('/', (req, res) => res.json({ message: "API is working 🚀" }));
 
-// Root route
-app.get('/', (req, res) => res.json({
-  message: "API is working 🚀",
-  version: "1.0.0",
-  socket: "Socket.io active",
-  timestamp: new Date().toISOString()
-}));
-
-// 404
+// 404 handler
 app.use("*", (req, res) => res.status(404).json({ message: "Route not found", path: req.originalUrl }));
 
-// Global error handler
+// Global error
 app.use((err, req, res, next) => {
   logger.error('[Global Error]', err);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
+  res.status(500).json({ message: 'Internal server error' });
 });
 
 module.exports = { app, server };
