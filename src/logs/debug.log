@@ -14558,3 +14558,12 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-04 21:33:32 [INFO]: 📊 Socket monitoring available at /api/socket/health
 2025-11-04 21:33:33 [INFO]: ✅ MongoDB Connected
 2025-11-04 21:34:00 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-04 21:34:57 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-04 21:34:57 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-04 21:34:57 [INFO]: 💬 Live Chat System is initialized
+2025-11-04 21:34:57 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-04 21:34:57 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-04 21:34:58 [INFO]: ✅ MongoDB Connected
+2025-11-05 15:46:38 [INFO]: ✅ Server running on port 5000 in development mode
+2025-11-05 15:46:39 [INFO]: ✅ MongoDB Connected
+2025-11-05 15:46:46 [INFO]: 📝 SIGINT received. Shutting down
