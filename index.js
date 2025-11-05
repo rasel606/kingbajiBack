@@ -9,11 +9,14 @@ const logger = require('./src/utils/logger');
 connectDB();
 
 // Start server
-const PORT = config.port || process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT} (${config.environment} mode)`);
-  logger.info(`✅ Server running on port ${PORT} (${config.environment} mode)`);
+const PORT = process.env.PORT || config.port || 5000;
+const HOST = '0.0.0.0'; // ✅ Render/Heroku এর জন্য প্রয়োজন হলে host আলাদা করে রাখো
+
+server.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
+  logger.info(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
 });
+
 
 // Graceful shutdown
 process.on('unhandledRejection', (err) => {
