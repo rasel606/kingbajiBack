@@ -4,6 +4,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const mongoose = require('mongoose');
 const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const cookieParser = require('cookie-parser');
@@ -26,19 +27,7 @@ const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
 // const emailVerificationService = require('./src/Router/emailVerificationRoutes');
 const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
-const connectDB = async () => {
-  try {
-    await mongoose.connect("mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    logger.info('✅ MongoDB Connected Successfully');
-  } catch (error) {
-    logger.error('❌ MongoDB Connection Failed:', error);
-    process.exit(1);
-  }
-};
-connectDB();
+
 // Import Live Chat Routes
 const chatRoutes = require('./src/Router/chatRoutes');
 
@@ -82,9 +71,13 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(cookieParser());
 app.use(cookieHandler);
 app.use(mongoSanitize());
+// app.use(mongoose());
 
 // Required if you're using express-rate-limit or have proxy in front
 app.set('trust proxy', 1);
+mongoose.connect("mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0")
+  .then(() => console.log('✅ MongoDB Connected'))
+  .catch(err => console.error('❌ MongoDB Error:', err));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

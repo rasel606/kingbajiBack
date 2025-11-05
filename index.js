@@ -213,7 +213,7 @@ require('dotenv').config();
 const { server } = require('./app');
 const config = require('./src/Config/env');
 const logger = require('./src/utils/logger');
-// const connectDB = require('./src/Config/db');
+const connectDB = require('./src/Config/db');
 
 console.log('🚀 Starting server...', {
   environment: config.environment,
@@ -224,7 +224,7 @@ console.log('🚀 Starting server...', {
 
 // Connect to DB
 console.log('🔗 Connecting to database...');
-// connectDB();
+connectDB();
 const port = process.env.PORT || 5000;
 const host = '0.0.0.0';
 // Start server
