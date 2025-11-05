@@ -14636,3 +14636,58 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-05 18:25:56 [INFO]: ✅ Server running on http://0.0.0.0:5000
 2025-11-05 18:25:57 [INFO]: ✅ MongoDB Connected Successfully
 2025-11-05 18:26:05 [INFO]: 📝 SIGINT received. Closing server...
+2025-11-05 18:33:00 [INFO]: ✅ Server running on http://0.0.0.0:5000
+2025-11-05 18:33:02 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 18:35:49 [INFO]: 📝 SIGINT received. Closing server...
+2025-11-05 18:35:53 [INFO]: ✅ Server running on http://0.0.0.0:5000
+2025-11-05 18:35:54 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 18:39:04 [INFO]: 📝 SIGINT received. Closing server...
+2025-11-05 19:07:35 [INFO]: ✅ Server running on http://0.0.0.0:5000
+2025-11-05 19:07:37 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:09:52 [INFO]: 📝 SIGINT received. Closing server...
+2025-11-05 19:11:35 [INFO]: ✅ Server running on http://0.0.0.0:5000 (development mode)
+2025-11-05 19:11:37 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:12:57 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-05 19:12:57 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 19:12:57 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 19:12:57 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 19:12:57 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 19:12:59 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:15:52 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-05 19:15:52 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 19:15:52 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 19:15:52 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 19:15:52 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 19:15:53 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:17:24 [ERROR]: [Global Error] User not found
+Error: User not found
+    at exports.loginUser (D:\crickex-Demo\Backend\src\Services\LoginService.js:21:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\crickex-Demo\Backend\src\Controllers\AdminController.js:156:20
+2025-11-05 19:17:24 [INFO]: ::1 - - [05/Nov/2025:13:17:24 +0000] "POST /api/auth/login_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:17:28 [ERROR]: [Global Error] User not found
+Error: User not found
+    at exports.loginUser (D:\crickex-Demo\Backend\src\Services\LoginService.js:21:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\crickex-Demo\Backend\src\Controllers\AdminController.js:156:20
+2025-11-05 19:17:28 [INFO]: ::1 - - [05/Nov/2025:13:17:28 +0000] "POST /api/auth/login_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:17:36 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-05 19:17:40 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-05 19:17:40 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 19:17:40 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 19:17:40 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 19:17:40 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 19:17:41 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:17:43 [ERROR]: [Global Error] User not found
+Error: User not found
+    at exports.loginUser (D:\crickex-Demo\Backend\src\Services\LoginService.js:21:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\crickex-Demo\Backend\src\Controllers\AdminController.js:156:20
+2025-11-05 19:17:43 [INFO]: ::1 - - [05/Nov/2025:13:17:43 +0000] "POST /api/auth/login_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:19:24 [INFO]: ::1 - - [05/Nov/2025:13:19:24 +0000] "GET /v1/user_details HTTP/1.1" 404 110 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:19:24 [INFO]: ::1 - - [05/Nov/2025:13:19:24 +0000] "GET /v1/user_details HTTP/1.1" 404 110 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:19:45 [INFO]: ::1 - - [05/Nov/2025:13:19:45 +0000] "GET /api/v1/user_details HTTP/1.1" 401 47 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:19:45 [INFO]: ::1 - - [05/Nov/2025:13:19:45 +0000] "GET /api/v1/user_details HTTP/1.1" 401 47 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:20:05 [INFO]: ::1 - - [05/Nov/2025:13:20:05 +0000] "POST /api/v1/login_user HTTP/1.1" 500 26 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:20:08 [INFO]: ::1 - - [05/Nov/2025:13:20:08 +0000] "POST /api/v1/login_user HTTP/1.1" 500 26 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:20:48 [INFO]: 📝 SIGINT received. Shutting down

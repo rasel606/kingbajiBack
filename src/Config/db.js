@@ -22,7 +22,7 @@ const logger = require('../utils/logger');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || "mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
+    await mongoose.connect("mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
