@@ -226,8 +226,9 @@ console.log('🚀 Starting server...', {
 console.log('🔗 Connecting to database...');
 // connectDB();
 const port = process.env.PORT || 5000;
+const host = '0.0.0.0';
 // Start server
-server.listen(port, () => {
+server.listen(port, host, () => {
   console.log('🎉 Server started successfully:', {
     port,
     environment: config.environment,
