@@ -14691,3 +14691,57 @@ Error: User not found
 2025-11-05 19:20:05 [INFO]: ::1 - - [05/Nov/2025:13:20:05 +0000] "POST /api/v1/login_user HTTP/1.1" 500 26 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
 2025-11-05 19:20:08 [INFO]: ::1 - - [05/Nov/2025:13:20:08 +0000] "POST /api/v1/login_user HTTP/1.1" 500 26 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
 2025-11-05 19:20:48 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-05 19:24:02 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-05 19:24:02 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 19:24:02 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 19:24:02 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 19:24:02 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 19:24:04 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:24:06 [INFO]: ::1 - - [05/Nov/2025:13:24:06 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 200 36 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:24:45 [ERROR]: [Global Error] User not found
+Error: User not found
+    at exports.loginUser (D:\crickex-Demo\Backend\src\Services\LoginService.js:21:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\crickex-Demo\Backend\src\Controllers\AdminController.js:156:20
+2025-11-05 19:24:45 [INFO]: ::1 - - [05/Nov/2025:13:24:45 +0000] "POST /api/auth/login_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:25:38 [INFO]: ::1 - - [05/Nov/2025:13:25:38 +0000] "POST /api/v1/login_user HTTP/1.1" 500 26 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:29:53 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-05 19:29:53 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 19:29:53 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 19:29:53 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 19:29:53 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 19:29:54 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:30:05 [ERROR]: [Global Error] User not found
+Error: User not found
+    at exports.loginUser (D:\crickex-Demo\Backend\src\Services\LoginService.js:21:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\crickex-Demo\Backend\src\Controllers\AdminController.js:156:20
+2025-11-05 19:30:05 [INFO]: ::1 - - [05/Nov/2025:13:30:05 +0000] "POST /api/auth/login_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:30:08 [ERROR]: [Global Error] User not found
+Error: User not found
+    at exports.loginUser (D:\crickex-Demo\Backend\src\Services\LoginService.js:21:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async D:\crickex-Demo\Backend\src\Controllers\AdminController.js:156:20
+2025-11-05 19:30:08 [INFO]: ::1 - - [05/Nov/2025:13:30:08 +0000] "POST /api/auth/login_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:37:20 [ERROR]: [Global Error] PaymentGateWayTable validation failed: user_role: Path `user_role` is required., email: Path `email` is required., referredBy: Path `referredBy` is required.
+ValidationError: PaymentGateWayTable validation failed: user_role: Path `user_role` is required., email: Path `email` is required., referredBy: Path `referredBy` is required.
+    at Document.invalidate (D:\crickex-Demo\Backend\node_modules\mongoose\lib\document.js:3219:32)
+    at D:\crickex-Demo\Backend\node_modules\mongoose\lib\document.js:3012:17
+    at D:\crickex-Demo\Backend\node_modules\mongoose\lib\schematype.js:1368:9
+    at process.processTicksAndRejections (node:internal/process/task_queues:77:11)
+2025-11-05 19:37:20 [INFO]: ::1 - - [05/Nov/2025:13:37:20 +0000] "POST /api/auth/register_admin HTTP/1.1" 500 87 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:37:28 [INFO]: ::1 - - [05/Nov/2025:13:37:28 +0000] "POST /api/auth/login_admin HTTP/1.1" 200 294 "-" "PostmanRuntime/7.49.1"
+2025-11-05 19:37:57 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-05 19:41:38 [INFO]: 🚀 Server running in development mode on port 5000
+2025-11-05 19:41:38 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 19:41:38 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 19:41:38 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 19:41:38 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 19:41:38 [INFO]: ::1 - - [05/Nov/2025:13:41:38 +0000] "GET /api/ HTTP/1.1" 404 99 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+2025-11-05 19:41:39 [INFO]: ::1 - - [05/Nov/2025:13:41:39 +0000] "GET /favicon.ico HTTP/1.1" 404 106 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+2025-11-05 19:41:39 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 19:41:47 [INFO]: ::1 - - [05/Nov/2025:13:41:47 +0000] "GET / HTTP/1.1" 200 388 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+2025-11-05 19:42:14 [INFO]: ::1 - - [05/Nov/2025:13:42:14 +0000] "POST /api/v1/login_user HTTP/1.1" 500 26 "http://localhost:3000/" "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
+2025-11-05 19:43:45 [INFO]: ::1 - - [05/Nov/2025:13:43:45 +0000] "GET /api/games//New-table-Games-with-Providers HTTP/1.1" 200 36 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+2025-11-05 19:43:52 [INFO]: ::1 - - [05/Nov/2025:13:43:52 +0000] "GET /api/games/New-table-Games-with-Providers HTTP/1.1" 200 36 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+2025-11-05 19:44:03 [INFO]: ::1 - - [05/Nov/2025:13:44:03 +0000] "GET /api/games/New-Games-with-Providers-By-Category HTTP/1.1" 200 102 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"

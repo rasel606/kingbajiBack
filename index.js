@@ -213,7 +213,7 @@ require('dotenv').config();
 const { server } = require('./app');
 const config = require('./src/Config/env');
 const logger = require('./src/utils/logger');
-const connectDB = require('./src/Config/db');
+// const connectDB = require('./src/Config/db');
 
 console.log('🚀 Starting server...', {
   environment: config.environment,
@@ -224,17 +224,16 @@ console.log('🚀 Starting server...', {
 
 // Connect to DB
 console.log('🔗 Connecting to database...');
-connectDB();
-
+// connectDB();
+const port = process.env.PORT || 5000;
 // Start server
-server.listen(config.port, () => {
+server.listen(port, () => {
   console.log('🎉 Server started successfully:', {
-    port: config.port,
+    port,
     environment: config.environment,
     timestamp: new Date().toISOString()
   });
-  
-  logger.info(`🚀 Server running in ${config.environment} mode on port ${config.port}`);
+  logger.info(`🚀 Server running in ${port} mode on port ${port}`);
   logger.info(`🔌 Socket.io is ready for real-time connections`);
   logger.info(`💬 Live Chat System is initialized`);
   logger.info(`🌐 CORS enabled for: http://localhost:3000, http://localhost:3001`);

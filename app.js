@@ -26,7 +26,19 @@ const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
 // const emailVerificationService = require('./src/Router/emailVerificationRoutes');
 const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
-
+const connectDB = async () => {
+  try {
+    await mongoose.connect("mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    logger.info('✅ MongoDB Connected Successfully');
+  } catch (error) {
+    logger.error('❌ MongoDB Connection Failed:', error);
+    process.exit(1);
+  }
+};
+connectDB();
 // Import Live Chat Routes
 const chatRoutes = require('./src/Router/chatRoutes');
 
