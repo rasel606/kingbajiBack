@@ -105,41 +105,64 @@
 
 
 
-// index.js
+// // index.js
+// require('dotenv').config();
+// const { server } = require('./app');
+// const connectDB = require('./src/Config/db');
+// const config = require('./src/Config/env');
+// const logger = require('./src/utils/logger');
+
+// console.log('🚀 Starting server setup...');
+
+// // Connect to DB
+// connectDB();
+
+// // Start server
+// server.listen(config.port, () => {
+//   console.log(`✅ Server running on port ${config.port} in ${config.environment} mode`);
+//   logger.info(`✅ Server running on port ${config.port} in ${config.environment} mode`);
+// });
+
+// // Graceful shutdown handlers
+// process.on('unhandledRejection', (err) => {
+//   logger.error('❌ Unhandled Rejection:', err);
+//   server.close(() => process.exit(1));
+// });
+
+// process.on('uncaughtException', (err) => {
+//   logger.error('❌ Uncaught Exception:', err);
+//   server.close(() => process.exit(1));
+// });
+
+// process.on('SIGTERM', () => {
+//   logger.info('📝 SIGTERM received. Shutting down gracefully');
+//   server.close(() => process.exit(0));
+// });
+
+// process.on('SIGINT', () => {
+//   logger.info('📝 SIGINT received. Shutting down');
+//   server.close(() => process.exit(0));
+// });
+
+
+console.log('🟢 Starting index.js...');
 require('dotenv').config();
+
+console.log('✅ Loaded environment variables:', {
+  PORT: process.env.PORT,
+  MONGO_URI: process.env.MONGO_URI ? '✅ Present' : '❌ Missing',
+  NODE_ENV: process.env.NODE_ENV
+});
+
 const { server } = require('./app');
+console.log('✅ App imported successfully');
+
 const connectDB = require('./src/Config/db');
+console.log('✅ DB Config imported');
+
 const config = require('./src/Config/env');
-const logger = require('./src/utils/logger');
+console.log('✅ Env Config imported:', config);
 
-console.log('🚀 Starting server setup...');
-
-// Connect to DB
 connectDB();
+console.log('🔗 Attempting to connect DB...');
 
-// Start server
-server.listen(config.port, () => {
-  console.log(`✅ Server running on port ${config.port} in ${config.environment} mode`);
-  logger.info(`✅ Server running on port ${config.port} in ${config.environment} mode`);
-});
-
-// Graceful shutdown handlers
-process.on('unhandledRejection', (err) => {
-  logger.error('❌ Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
-});
-
-process.on('uncaughtException', (err) => {
-  logger.error('❌ Uncaught Exception:', err);
-  server.close(() => process.exit(1));
-});
-
-process.on('SIGTERM', () => {
-  logger.info('📝 SIGTERM received. Shutting down gracefully');
-  server.close(() => process.exit(0));
-});
-
-process.on('SIGINT', () => {
-  logger.info('📝 SIGINT received. Shutting down');
-  server.close(() => process.exit(0));
-});
