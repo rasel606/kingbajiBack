@@ -1,3 +1,46 @@
+// // index.js
+// require('dotenv').config();
+// const { server } = require('./app');
+// const connectDB = require('./src/Config/db');
+// const config = require('./src/Config/env');
+// const logger = require('./src/utils/logger');
+
+// // Connect DB
+// connectDB();
+
+// // Start server
+// const PORT = process.env.PORT || config.port || 5000;
+// const HOST = '0.0.0.0'; // ✅ Render/Heroku এর জন্য প্রয়োজন হলে host আলাদা করে রাখো
+
+// server.listen(PORT, HOST, () => {
+//   console.log(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
+//   logger.info(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
+// });
+
+
+// // Graceful shutdown
+// process.on('unhandledRejection', (err) => {
+//   logger.error('❌ Unhandled Rejection:', err);
+//   server.close(() => process.exit(1));
+// });
+
+// process.on('uncaughtException', (err) => {
+//   logger.error('❌ Uncaught Exception:', err);
+//   server.close(() => process.exit(1));
+// });
+
+// process.on('SIGTERM', () => {
+//   logger.info('📝 SIGTERM received. Shutting down gracefully...');
+//   server.close(() => process.exit(0));
+// });
+
+// process.on('SIGINT', () => {
+//   logger.info('📝 SIGINT received. Server closing...');
+//   server.close(() => process.exit(0));
+// });
+
+
+
 // index.js
 require('dotenv').config();
 const { server } = require('./app');
@@ -5,36 +48,36 @@ const connectDB = require('./src/Config/db');
 const config = require('./src/Config/env');
 const logger = require('./src/utils/logger');
 
-// Connect DB
-connectDB();
+(async () => {
+  try {
+    // Connect to MongoDB
+    await connectDB();
+    console.log('✅ MongoDB Connected Successfully');
 
-// Start server
-const PORT = process.env.PORT || config.port || 5000;
-const HOST = '0.0.0.0'; // ✅ Render/Heroku এর জন্য প্রয়োজন হলে host আলাদা করে রাখো
+    // Start server
+    const PORT = process.env.PORT || config.port || 5000;
+    const HOST = '0.0.0.0';
+    server.listen(PORT, HOST, () => {
+      console.log(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
+      logger.info(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
+    });
 
-server.listen(PORT, HOST, () => {
-  console.log(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
-  logger.info(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
-});
-
+  } catch(err) {
+    console.error('❌ Server failed to start:', err);
+    process.exit(1);
+  }
+})();
 
 // Graceful shutdown
-process.on('unhandledRejection', (err) => {
-  logger.error('❌ Unhandled Rejection:', err);
-  server.close(() => process.exit(1));
-});
-
-process.on('uncaughtException', (err) => {
-  logger.error('❌ Uncaught Exception:', err);
-  server.close(() => process.exit(1));
-});
-
-process.on('SIGTERM', () => {
-  logger.info('📝 SIGTERM received. Shutting down gracefully...');
-  server.close(() => process.exit(0));
-});
-
-process.on('SIGINT', () => {
-  logger.info('📝 SIGINT received. Server closing...');
-  server.close(() => process.exit(0));
-});
+['unhandledRejection','uncaughtException'].forEach(event =>
+  process.on(event, err => {
+    logger.error(`❌ ${event}:`, err);
+    server.close(() => process.exit(1));
+  })
+);
+['SIGTERM','SIGINT'].forEach(signal =>
+  process.on(signal, () => {
+    logger.info(`📝 ${signal} received. Shutting down gracefully...`);
+    server.close(() => process.exit(0));
+  })
+);
