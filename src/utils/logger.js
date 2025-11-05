@@ -1,89 +1,56 @@
+// src/utils/logger.js
 const winston = require('winston');
-const path = require('path');
-const { combine, timestamp, printf, colorize, errors } = winston.format;
 const DailyRotateFile = require('winston-daily-rotate-file');
-const fs = require('fs');
-const config = require('../Config/env');
+const path = require('path');
 
-// Resolve logs directory path
-const logDir = path.resolve(__dirname, '../logs');
+// Define log format
+const logFormat = winston.format.combine(
+  winston.format.timestamp({
+    format: 'YYYY-MM-DD HH:mm:ss'
+  }),
+  winston.format.errors({ stack: true }),
+  winston.format.json()
+);
 
-// Create logs directory if it doesn't exist
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
-
-// Custom log format
-const customFormat = printf(({ level, message, timestamp, stack }) => {
-  const logMessage = `${timestamp} [${level.toUpperCase()}]: ${message}`;
-  return stack ? `${logMessage}\n${stack}` : logMessage;
-});
-
-// Base logger configuration
+// Create logger instance
 const logger = winston.createLogger({
-  level: config.logLevel,
-  format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    errors({ stack: true }),
-    customFormat
-  ),
+  level: process.env.LOG_LEVEL || 'info',
+  format: logFormat,
+  defaultMeta: { service: 'bajicrick-api' },
   transports: [
-    // Console transport (colorized)
-    new winston.transports.Console({
-      format: combine(
-        colorize(),
-        customFormat
-      )
-    })
+    // Write all logs with importance level of `error` or less to `error.log`
+    new DailyRotateFile({
+      filename: path.join(__dirname, '../../logs/error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      level: 'error',
+      maxSize: '20m',
+      maxFiles: '14d'
+    }),
+    // Write all logs with importance level of `info` or less to `combined.log`
+    new DailyRotateFile({
+      filename: path.join(__dirname, '../../logs/combined-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '20m',
+      maxFiles: '14d'
+    }),
   ],
-  exceptionHandlers: [
-    new winston.transports.File({
-      filename: path.join(logDir, 'exceptions.log')
-    })
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({
-      filename: path.join(logDir, 'rejections.log')
-    })
-  ]
 });
 
-// Environment-specific file transports
-if (config.environment === 'production') {
-  logger.add(new winston.transports.File({
-    filename: path.join(logDir, 'error.log'),
-    level: 'error',
-    maxsize: 5 * 1024 * 1024, // 5MB
-    maxFiles: 14 // keep 14 days
-  }));
-  
-  logger.add(new DailyRotateFile({
-    filename: path.join(logDir, 'application-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '30d'
-  }));
-} else {
-  logger.add(new winston.transports.File({
-    filename: path.join(logDir, 'debug.log'),
-    level: 'debug',
-    maxsize: 5 * 1024 * 1024,
-    maxFiles: 3
-  }));
-  
-  logger.add(new winston.transports.File({
-    filename: path.join(logDir, 'combined.log'),
-    maxsize: 10 * 1024 * 1024,
-    maxFiles: 7
+// Add console transport for non-production environments
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple()
+    )
   }));
 }
 
-// Create a stream for morgan HTTP logging
+// Create a stream object for Morgan
 logger.stream = {
   write: (message) => {
     logger.info(message.trim());
-  }
+  },
 };
 
 module.exports = logger;

@@ -13,7 +13,7 @@ const generateToken = (email) => {
 
 exports.loginUser = async (req, dataModel) => {
   const { email, password } = req.body;
-console.log("email",email,password)
+console.log("loginUser email",email,password)
   // 1. Find user
   const user = await dataModel.findOne({ email }).select('+password');
   console.log("loginUser",user);

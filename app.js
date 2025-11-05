@@ -1,5 +1,3 @@
-
-
 // app.js
 const express = require('express');
 const morgan = require('morgan');
@@ -24,7 +22,6 @@ const userRoutes = require('./src/Router/userRoutes');
 const gameRoutes = require('./src/Router/gameRoutes');
 const mainAdminRoutes = require('./src/Router/mainAdminRoutes');
 const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
-// const emailVerificationService = require('./src/Router/emailVerificationRoutes');
 const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
 
@@ -51,8 +48,25 @@ app.set('io', io);
 console.log('✅ Socket.io stored in app context');
 
 // Enhanced CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000', 
+  'http://localhost:3001', 
+  'http://localhost:3002', 
+  'http://127.0.0.1:3000',
+  process.env.FRONTEND_URL // For production
+].filter(Boolean);
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3000'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'socket-id']
@@ -61,28 +75,51 @@ app.use(cors({
 // Handle preflight requests
 app.options('*', cors());
 
-// Middleware
-app.use(morgan('combined', { stream: logger.stream }));
+// Security Middleware
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false // You can configure this based on your needs
 }));
+
+// Body parsing middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Additional middleware
 app.use(cookieParser());
 app.use(cookieHandler);
 app.use(mongoSanitize());
-// app.use(mongoose());
 
-// Required if you're using express-rate-limit or have proxy in front
+// Trust proxy for rate limiting behind proxies
 app.set('trust proxy', 1);
-mongoose.connect("mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0")
-  .then(() => console.log('✅ MongoDB Connected'))
-  .catch(err => console.error('❌ MongoDB Error:', err));
+
+// MongoDB Connection
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('✅ MongoDB Connected Successfully');
+  } catch (error) {
+    console.error('❌ MongoDB Connection Failed:', error);
+    process.exit(1);
+  }
+};
+
+connectDB();
+
+// Logging middleware
+app.use(morgan('combined', { 
+  stream: { 
+    write: (message) => logger.info(message.trim()) 
+  } 
+}));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// API Routes
 app.use("/api/v1", router);
 app.use('/api/auth', subAdminAurth);
 app.use('/api/transactions', transactionRoutes);
@@ -92,7 +129,6 @@ app.use('/api/subadmin', subAdminRoutes);
 app.use('/api/Admin', mainAdminRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/phone', phoneVerificationRoute);
-// app.use('/api/email', emailVerificationService);
 app.use('/api/turnover', turnoverRoutes);
 app.use('/api/promotions', promotionsServiceRoutes);
 
@@ -100,14 +136,13 @@ app.use('/api/promotions', promotionsServiceRoutes);
 app.use('/api/live-chat', chatRoutes);
 
 // Socket monitoring routes
-
-// Socket monitoring routes
 app.get('/api/socket/health', (req, res) => {
   const stats = getConnectionStats();
   res.json({
     status: 'OK',
     socketEnabled: true,
-    ...stats
+    ...stats,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -117,7 +152,8 @@ app.get('/api/socket/user/:userId', (req, res) => {
   res.json({
     userId,
     connections,
-    totalConnections: connections.length
+    totalConnections: connections.length,
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -127,37 +163,15 @@ app.get('/api/socket/room/:roomId', (req, res) => {
   if (roomInfo) {
     res.json(roomInfo);
   } else {
-    res.status(404).json({ error: 'Room not found' });
-  }
-});
-
-app.post('/api/socket/broadcast/:roomId', (req, res) => {
-  const { roomId } = req.params;
-  const { event, message, data } = req.body;
-  
-  if (!event || !message) {
-    return res.status(400).json({ error: 'Event and message are required' });
-  }
-
-  const success = require('./src/socket/socketServer').sendToRoom(roomId, event, { 
-    message, 
-    ...data,
-    broadcastAt: new Date().toISOString()
-  });
-  
-  if (success) {
-    res.json({ 
-      success: true, 
-      message: `Event ${event} sent to room ${roomId}`,
+    res.status(404).json({ 
+      error: 'Room not found',
       roomId,
-      event 
+      timestamp: new Date().toISOString()
     });
-  } else {
-    res.status(500).json({ error: 'Failed to send message' });
   }
 });
 
-// Enhanced health check endpoint
+// Health check endpoints
 app.get('/health', (req, res) => {
   const health = {
     status: 'OK',
@@ -171,7 +185,6 @@ app.get('/health', (req, res) => {
     }
   };
   
-  console.log('🏥 Health check requested:', health);
   res.json(health);
 });
 
@@ -188,25 +201,27 @@ app.get('/health/detailed', (req, res) => {
       enabled: true,
       ...getConnectionStats()
     },
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     routes: [
       '/health',
       '/health/detailed',
       '/api/socket/health',
       '/api/socket/user/:userId',
-      '/api/socket/room/:roomId',
-      '/api/socket/broadcast/:roomId'
+      '/api/socket/room/:roomId'
     ]
   };
   
   res.json(health);
 });
 
+// Root endpoint
 app.get('/', (req, res) => {
   res.json({ 
-    message: "API is working!",
+    message: "BajiCrick API Server is running!",
     version: "1.0.0",
     socket: "Socket.io is integrated and running",
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
     endpoints: {
       health: '/health',
       healthDetailed: '/health/detailed',
@@ -222,7 +237,6 @@ app.get('/', (req, res) => {
 
 // 404 handler
 app.use("*", (req, res) => {
-  console.log('❌ 404 - Route not found:', req.originalUrl);
   res.status(404).json({ 
     status: "Fail", 
     message: "Route not found",
@@ -233,7 +247,9 @@ app.use("*", (req, res) => {
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error('❌ Global error handler:', {
+  console.error('❌ Global error handler:', err);
+  
+  logger.error('Global Error Handler', {
     error: err.message,
     stack: err.stack,
     url: req.originalUrl,
@@ -241,10 +257,10 @@ app.use((err, req, res, next) => {
     timestamp: new Date().toISOString()
   });
   
-  logger.error('[Global Error]', err);
-  res.status(500).json({ 
-    errCode: 500, 
-    errMsg: 'Internal server error',
+  res.status(err.status || 500).json({ 
+    status: 'error',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
     timestamp: new Date().toISOString()
   });
 });

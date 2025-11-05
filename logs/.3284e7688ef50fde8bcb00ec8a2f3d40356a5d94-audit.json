@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "D:\\crickex-Demo\\Backend\\logs\\.3284e7688ef50fde8bcb00ec8a2f3d40356a5d94-audit.json",
+    "files": [
+        {
+            "date": 1762360454745,
+            "name": "D:\\crickex-Demo\\Backend\\logs\\combined-2025-11-05.log",
+            "hash": "dac53e7480b256ff8c47b08345693c0288cb433bb0eadfaa4d9306fafb0f8931"
+        },
+        {
+            "date": 1762366908100,
+            "name": "D:\\crickex-Demo\\Backend\\logs\\combined-2025-11-06.log",
+            "hash": "381ebb3bc716de6cfcd2df2c68d0e2329c77b3b5e9115b1512941defb4847937"
+        }
+    ],
+    "hashType": "sha256"
+}

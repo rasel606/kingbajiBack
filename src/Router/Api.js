@@ -52,7 +52,7 @@ router.post('/createUser', CreateUserService.register);
 // router.post('/login_user', CreateUserService.loginUser);
 router.post('/login_user',(req,res)=>{
   const { userId, password } = req.body;
- console.log(req.body);
+ console.log("login_user",req.body);
 
   CreateUserService.loginUser(req, res);
 })

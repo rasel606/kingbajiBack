@@ -314,69 +314,120 @@ console.log("apiSuccess", apiSuccess)
 
   exports.loginUser = async (req, res) => {
     const { userId, password } = req.body;
-    console.log(req.body);
-    try {
-      if (!userId) {
-        return res.status(400).json({ message: "User Not Found, Please Login Or Sign Up" });
-      }
+  
+  console.log("🔐 Login attempt received:", { 
+    userId, 
+    passwordLength: password ? password.length : 0,
+    timestamp: new Date().toISOString() 
+  });
 
-      const user = await User.findOne({ userId });
-          console.log(user.userId);
-      if (!user) return res.status(404).json({ message: "User not found" });
-
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log(
-        "isPasswordValid",isPasswordValid);
-
-
-
-      if (!isPasswordValid) {
-        return res.status(401).json({ message: "Invalid password" });
-      }
-
-
-
-      //  const clientIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-      //   console.log(" clientIp", clientIp)
-      //   // Update last login IP and time
-      //   user.lastLoginIp = clientIp;
-      //   user.lastLoginTime = new Date();
-      //   await user.save();
-      //   console.log(" clientIp user", user)
-
-      const response = await User.aggregate([
-        { $match: { userId } },
-        {
-          $project: {
-            userId: 1,
-            name: 1,
-            phone: 1,
-            balance: 1,
-            referredBy: 1,
-            referredLink: 1,
-            referralCode: 1,
-            timestamp: 1,
-            birthday: 1,
-            username: 1,
-            countryCode: 1,
-            isVerified: 1,
-            isNameVerified: 1,
-            
-            // referredbysubAdmin: 1,
-            levelOneReferrals: 1,
-            levelTwoReferrals: 1,
-            levelThreeReferrals: 1
-          }
-        }
-      ]);
-
-      const token = jwt.sign({ userId: user.userId }, JWT_SECRET, { expiresIn: "2d" });
-
-      res.status(200).json({ token, user, response });
-    } catch (error) {
-      res.status(500).json({ message: "Server error" });
+  try {
+    if (!userId || !password) {
+      console.log("❌ Missing credentials");
+      return res.status(400).json({ 
+        success: false,
+        message: "User ID and password are required" 
+      });
     }
-  };
+
+    console.log("🔍 Searching for user with identifier:", userId);
+
+    // Try multiple search methods with detailed logging
+    let user = await User.findOne({ userId: userId });
+    console.log(`🔍 Search by userId '${userId}':`, user ? `FOUND - ${user.userId}` : 'NOT FOUND');
+
+    if (!user) {
+      user = await User.findOne({ email: userId });
+      console.log(`🔍 Search by email '${userId}':`, user ? `FOUND - ${user.email}` : 'NOT FOUND');
+    }
+    
+    if (!user) {
+      user = await User.findOne({ "phone.number": userId });
+      console.log(`🔍 Search by phone '${userId}':`, user ? `FOUND - ${user.phone[0]?.number}` : 'NOT FOUND');
+    }
+
+    if (!user) {
+      console.log("❌ No user found with any identifier");
+      
+      // Log all available users for debugging
+      const allUsers = await User.find({}).select('userId email name').limit(5);
+      console.log("📋 Available users in database:", allUsers.map(u => ({
+        userId: u.userId,
+        email: u.email,
+        name: u.name
+      })));
+      
+      return res.status(404).json({ 
+        success: false,
+        message: "User not found. Please check your User ID or register first.",
+        availableUsers: allUsers.map(u => u.userId) // Show available user IDs
+      });
+    }
+
+    console.log("✅ User found:", user.userId);
+    console.log("🔐 Comparing password...");
+
+    // Check if account is locked
+    if (user.isLocked) {
+      console.log("🔒 Account is locked for user:", user.userId);
+      return res.status(423).json({
+        success: false,
+        message: "Account temporarily locked. Try again in 30 minutes."
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    console.log("🔐 Password validation result:", isPasswordValid);
+
+    if (!isPasswordValid) {
+      console.log("❌ Invalid password for user:", user.userId);
+      await user.incrementLoginAttempts();
+      
+      const attemptsLeft = 5 - user.loginAttempts;
+      return res.status(401).json({
+        success: false,
+        message: `Invalid password. ${attemptsLeft > 0 ? attemptsLeft + ' attempts left' : 'Account locked for 30 minutes'}`
+      });
+    }
+
+    console.log("✅ Password valid, resetting login attempts");
+    await user.resetLoginAttempts();
+
+    // Update login info
+    const clientIp = req.ip || req.connection.remoteAddress;
+    user.lastLoginIp = clientIp;
+    user.lastLoginTime = new Date();
+    user.onlinestatus = new Date();
+    await user.save();
+
+    // Generate token
+    const token = user.generateAuthToken();
+    console.log("✅ Login successful for user:", user.userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        balance: user.balance,
+        referralCode: user.referralCode
+      }
+    });
+
+  } catch (error) {
+    console.error("💥 Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during login",
+      error: error.message
+    });
+  }
+}
 
   exports.verify = async (req, res) => {
     const authHeader = req.header("Authorization");
@@ -451,7 +502,7 @@ console.log("apiSuccess", apiSuccess)
             },
           },
         ]);
-        console.log( "details",details );
+        console.log( { message: "User balance", user: details[0] });
         res.status(200).json({ message: "User balance", user: details[0] });
       } else {
         res.status(200).json({ message: "User game balance is 0", user: details[0] });

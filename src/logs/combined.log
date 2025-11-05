@@ -14794,3 +14794,20 @@ MongooseError: The `uri` parameter to `openUri()` must be a string, got "undefin
 2025-11-05 21:40:07 [INFO]: 📊 Socket monitoring available at /api/socket/health
 2025-11-05 21:40:07 [INFO]: ✅ MongoDB Connected Successfully
 2025-11-05 21:40:27 [INFO]: 📝 SIGINT received. Shutting down
+2025-11-05 22:15:42 [INFO]: 🚀 Server running in 5000 mode on port 5000
+2025-11-05 22:15:42 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 22:15:42 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 22:15:42 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 22:15:42 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 22:15:42 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 22:24:48 [INFO]: 🚀 Server running in 5000 mode on port 5000
+2025-11-05 22:24:48 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 22:24:48 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 22:24:48 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 22:24:48 [INFO]: 📊 Socket monitoring available at /api/socket/health
+2025-11-05 22:24:48 [INFO]: ✅ MongoDB Connected
+2025-11-05 22:25:01 [INFO]: 🚀 Server running in 5000 mode on port 5000
+2025-11-05 22:25:01 [INFO]: 🔌 Socket.io is ready for real-time connections
+2025-11-05 22:25:01 [INFO]: 💬 Live Chat System is initialized
+2025-11-05 22:25:01 [INFO]: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+2025-11-05 22:25:01 [INFO]: 📊 Socket monitoring available at /api/socket/health

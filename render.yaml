@@ -1,21 +1,18 @@
 services:
   - type: web
-    name: kingbaji-backend
+    name: bajicrick-backend
     env: node
     plan: free
-    branch: main
     buildCommand: npm install
-    startCommand: node index.js
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
-      - key: MONGO_URI
-        value: "your_mongodb_connection_string_here"
+      - key: MONGODB_URI
+        fromDatabase:
+          name: bajicrick-mongodb
+          property: connectionString
       - key: JWT_SECRET
-        value: "your_jwt_secret_here"
-      - key: CLIENT_URL
-        value: "https://your-render-frontend.onrender.com"
-    autoDeploy: true
-    pullRequestPreviewsEnabled: false
+        generateValue: true
+      - key: FRONTEND_URL
+        # value: https://your-frontend-app.onrender.com
