@@ -14610,3 +14610,17 @@ TypeError: Cannot read properties of undefined (reading 'userId')
 2025-11-05 16:30:28 [INFO]: ✅ MongoDB Connected Successfully
 2025-11-05 16:30:28 [INFO]: ✅ Server running on http://0.0.0.0:5000 (development mode)
 2025-11-05 16:36:02 [INFO]: 📝 SIGINT received. Shutting down gracefully...
+2025-11-05 16:41:38 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 16:41:38 [INFO]: ✅ Server running on http://0.0.0.0:5000 (development mode)
+2025-11-05 16:42:46 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 16:42:46 [INFO]: ✅ Server running on http://0.0.0.0:5000 (development mode)
+2025-11-05 16:44:41 [INFO]: 📝 SIGINT received. Shutting down gracefully...
+2025-11-05 16:47:02 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 16:47:02 [INFO]: ✅ Server running on http://0.0.0.0:5000 (development mode)
+2025-11-05 16:48:45 [INFO]: 📝 SIGINT received. Shutting down gracefully...
+2025-11-05 16:48:48 [INFO]: ✅ Server running on port 5000
+2025-11-05 16:48:49 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 16:50:33 [INFO]: 📝 SIGINT received. Closing server...
+2025-11-05 16:55:47 [INFO]: ✅ Server running on http://0.0.0.0:5000 (development mode)
+2025-11-05 16:55:48 [INFO]: ✅ MongoDB Connected Successfully
+2025-11-05 16:55:57 [INFO]: 📝 SIGINT received. Closing server...

@@ -48,36 +48,41 @@ const connectDB = require('./src/Config/db');
 const config = require('./src/Config/env');
 const logger = require('./src/utils/logger');
 
-(async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
-    console.log('✅ MongoDB Connected Successfully');
+// Debug info
+console.log('🚀 Starting server...');
+console.log('Node version:', process.version);
+console.log('ENV PORT:', process.env.PORT);
+console.log('ENV NODE_ENV:', process.env.NODE_ENV);
 
-    // Start server
-    const PORT = process.env.PORT || config.port || 5000;
-    const HOST = '0.0.0.0';
-    server.listen(PORT, HOST, () => {
-      console.log(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
-      logger.info(`✅ Server running on http://${HOST}:${PORT} (${config.environment} mode)`);
-    });
+// Connect to MongoDB
+connectDB();
 
-  } catch(err) {
-    console.error('❌ Server failed to start:', err);
-    process.exit(1);
-  }
-})();
+// Start server
+const PORT = process.env.PORT || config.port || 5000;
+const HOST = '0.0.0.0'; // Render/Heroku compatible
+
+server.listen(PORT, HOST, () => {
+  console.log(`✅ Server running on http://${HOST}:${PORT} (${process.env.NODE_ENV || config.environment} mode)`);
+  logger.info(`✅ Server running on http://${HOST}:${PORT} (${process.env.NODE_ENV || config.environment} mode)`);
+});
+
 
 // Graceful shutdown
-['unhandledRejection','uncaughtException'].forEach(event =>
-  process.on(event, err => {
-    logger.error(`❌ ${event}:`, err);
-    server.close(() => process.exit(1));
-  })
-);
-['SIGTERM','SIGINT'].forEach(signal =>
-  process.on(signal, () => {
-    logger.info(`📝 ${signal} received. Shutting down gracefully...`);
-    server.close(() => process.exit(0));
-  })
-);
+const shutdown = (signal) => {
+  console.log(`📝 ${signal} received. Closing server...`);
+  logger.info(`📝 ${signal} received. Closing server...`);
+  server.close(() => process.exit(0));
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+
+process.on('unhandledRejection', (err) => {
+  logger.error('❌ Unhandled Rejection:', err);
+  server.close(() => process.exit(1));
+});
+
+process.on('uncaughtException', (err) => {
+  logger.error('❌ Uncaught Exception:', err);
+  server.close(() => process.exit(1));
+});
