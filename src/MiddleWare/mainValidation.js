@@ -45,26 +45,53 @@ const validateEmail = [
     next();
   }
 ];
+const validateRegistration = (data) => {
+  const errors = [];
 
-const validateRegistration = [
-  body('username')
-    .isLength({ min: 3, max: 30 })
-    .withMessage('Username must be between 3 and 30 characters')
-    .isAlphanumeric()
-    .withMessage('Username can only contain letters and numbers'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-  body('email')
-    .optional()
-    .isEmail()
-    .withMessage('Please provide a valid email'),
-  handleValidationErrors
-];
+  if (!data.userId || data.userId.length < 3) {
+    errors.push('User ID must be at least 3 characters long');
+  }
+
+  if (!data.phone || !/^\d{10,15}$/.test(data.phone)) {
+    errors.push('Valid phone number is required');
+  }
+
+  if (!data.password || data.password.length < 6) {
+    errors.push('Password must be at least 6 characters long');
+  }
+
+  if (!data.countryCode || !/^\+\d{1,4}$/.test(data.countryCode)) {
+    errors.push('Valid country code is required');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+const validateLogin = (data) => {
+  const errors = [];
+
+  if (!data.userId) {
+    errors.push('User ID is required');
+  }
+
+  if (!data.password) {
+    errors.push('Password is required');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
 
 module.exports = {
   validatePhoneNumber,
   validateVerificationCode,
   validateRegistration,
+  validateLogin,
   validateEmail
 };
