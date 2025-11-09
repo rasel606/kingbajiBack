@@ -42,6 +42,7 @@ const { AdminProfile } = require('../Services/LoginService');
 const { getUserListServices } = require('../Services/getUserListServices');
 const { getReferralData } = require('../Services/getReferralOwnerService');
 const { processTransaction } = require('../Services/processTransactionService');
+const CreateGateWayService = require('../Services/CreateGateWayService');
 
 
 
@@ -62,91 +63,72 @@ const { processTransaction } = require('../Services/processTransactionService');
 
 
 
-//-------------------------------------------CreateGateWayService-------------------------------------//
 
-const CreateGateWayService = async (user) => {
-        const defaultGateways = [
-      {
-        gateway_name: "Bkash",
-        image_url: "https://i.ibb.co/0RtD1j9C/bkash.png",
-        payment_type: "Cashout",
-        gateway_Number: "01700000000",
-      },
-      {
-        gateway_name: "Nagad",
-        image_url: "https://i.ibb.co/2YqVLj1C/nagad-1.png",
-        payment_type: "Cashout",
-        gateway_Number: "01700000000",
-      },
-      {
-        gateway_name: "Rocket",
-        image_url: "https://i.ibb.co/Rp5QFcm9/rocket.png",
-        payment_type: "Cashout",
-        gateway_Number: "01700000000",
-      },
-      {
-        gateway_name: "Upay",
-        image_url: "https://i.ibb.co/5WX9H0Tw/upay.png",
-        payment_type: "Cashout",
-        gateway_Number: "01700000000",
-      },
-    ];
-
-    const timestamp = new Date();
-
-    // Create entries for both payment gateway tables
-    const gatewayPayload = defaultGateways.map((gateway) => ({
-      user_role: user.user_role,
-      email: user.email,
-      gateway_name: gateway.gateway_name,
-      gateway_Number: gateway.gateway_Number,
-      payment_type: gateway.payment_type,
-      image_url: gateway.image_url,
-      referredBy: user.referralCode,
-      start_time: null,
-      end_time: null,
-      minimum_amount: 0,
-      maximum_amount: 0,
-      is_active: true,
-      timestamp,
-      updatetime: timestamp,
-    }));
-
-    await PaymentGateWayTable.insertMany(gatewayPayload);
-    await WidthralPaymentGateWayTable.insertMany(gatewayPayload);
-
-    return { success: true, message: "Gateways created successfully" };
-}
-//-------------------------------------------CreateGateWayService-------------------------------------//
 
 
 
 
 // const SportsBet = require('../Models/OddSportsTable')
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
-  try {
+    try {
+        console.log("📥 Creating admin with data:", req.body);
+        
+        let dataModel = AdminModel;
+        const result = await CreateService.createUser(req, dataModel);
+        
+        if (result.success) {
+            // Create payment gateways for the new admin
+            const gatewayResponse = await CreateGateWayService(result.data);
 
-    let dataModel = AdminModel;
-    let data = req.body
-    const result = await CreateService.createUser(req, dataModel);
-    if (result.success) {
-      // Step 2: Initialize gateway service
-      const gatewayResponse = await CreateGateWayService(req, result.data);
+            console.log("✅ Admin created successfully");
+            console.log("✅ Gateway creation:", gatewayResponse.message);
 
-      console.log("✅ Admin created:", result.data);
-      console.log("✅ Gateway response:", gatewayResponse);
-
-      // Step 3: Return final response
-      res.status(201).json({
-        data: result.data,
-        gateway: gatewayResponse,
-        message: result.message,
-        success: true,
-      });
+            res.status(201).json({
+                data: result.data,
+                gateway: gatewayResponse,
+                message: result.message,
+                success: true,
+            });
+        } else {
+            // If user creation failed, pass to error handler
+            return next(new AppError(result.message, 400));
+        }
+    } catch (err) {
+        console.error("❌ Error in CreateAdmin:", err);
+        next(err);
     }
-  } catch (err) {
-    next(err);
-  }
+});
+
+// Check if admin exists endpoint
+exports.CheckAdminExists = catchAsync(async (req, res, next) => {
+    try {
+        const existingAdmin = await AdminModel.findOne({ 
+            $or: [
+                { email: req.body.email },
+                { mobile: req.body.mobile },
+                { userId: req.body.userId }
+            ]
+        });
+
+        if (existingAdmin) {
+            return res.status(200).json({
+                exists: true,
+                message: "Admin already exists with this email, mobile, or userId",
+                data: {
+                    email: existingAdmin.email,
+                    mobile: existingAdmin.mobile,
+                    userId: existingAdmin.userId
+                }
+            });
+        }
+
+        res.status(200).json({
+            exists: false,
+            message: "No admin found with these credentials"
+        });
+    } catch (error) {
+        next(error);
+    }
 });
 
 

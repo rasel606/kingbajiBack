@@ -41,8 +41,114 @@ const validateLogin = (data) => {
     errors
   };
 };
+const validateFullName = (name) => {
+  const errors = [];
+  
+  if (!name || typeof name !== 'string') {
+    errors.push('দয়া করে আপনার সম্পূর্ণ নাম লিখুন');
+    return { isValid: false, errors };
+  }
+
+  const trimmedName = name.trim();
+  
+  if (trimmedName.length < 2) {
+    errors.push('নামটি কমপক্ষে ২ অক্ষরের হতে হবে');
+  }
+  
+  if (trimmedName.length > 100) {
+    errors.push('নামটি ১০০ অক্ষরের বেশি হতে পারবে না');
+  }
+  
+  // Check for valid Bengali/English characters and spaces
+  const nameRegex = /^[a-zA-Z\u0980-\u09FF\s\.\-]+$/;
+  if (!nameRegex.test(trimmedName)) {
+    errors.push('নামে শুধুমাত্র বাংলা, ইংরেজি অক্ষর, স্পেস এবং ড্যাশ ব্যবহার করা যাবে');
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+const validateBirthday = (dateString) => {
+  const errors = [];
+  
+  if (!dateString) {
+    errors.push('দয়া করে আপনার জন্মদিন নির্বাচন করুন');
+    return { isValid: false, errors };
+  }
+
+  const selectedDate = new Date(dateString);
+  const today = new Date();
+  const minDate = new Date();
+  minDate.setFullYear(today.getFullYear() - 100); // 100 years ago
+  const maxDate = new Date();
+  maxDate.setFullYear(today.getFullYear() - 18); // Must be at least 18 years old
+
+  // Check if date is valid
+  if (isNaN(selectedDate.getTime())) {
+    errors.push('অবৈধ তারিখ নির্বাচন করা হয়েছে');
+    return { isValid: false, errors };
+  }
+
+  // Check if user is at least 18 years old
+  if (selectedDate > maxDate) {
+    errors.push('আপনার বয়স কমপক্ষে ১৮ বছর হতে হবে');
+  }
+
+  // Check if date is not more than 100 years ago
+  if (selectedDate < minDate) {
+    errors.push('জন্মদিন ১০০ বছরের বেশি পুরানো হতে পারবে না');
+  }
+
+  // Check if date is not in the future
+  if (selectedDate > today) {
+    errors.push('ভবিষ্যতের তারিখ নির্বাচন করা যাবে না');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+const validatePassword = (password) => {
+  const errors = [];
+  
+  if (!password || typeof password !== 'string') {
+    errors.push('পাসওয়ার্ড প্রদান করুন');
+    return { isValid: false, errors };
+  }
+
+  // Check length
+  if (password.length < 6 || password.length > 20) {
+    errors.push('পাসওয়ার্ড ৬~২০ অক্ষরের মধ্যে হতে হবে');
+  }
+
+  // Check for uppercase letter
+  if (!/[A-Z]/.test(password)) {
+    errors.push('পাসওয়ার্ডে অন্তত একটি বড় হাতের বর্ণমালা থাকতে হবে');
+  }
+
+  // Check for number
+  if (!/[0-9]/.test(password)) {
+    errors.push('পাসওয়ার্ডে কমপক্ষে একটি সংখ্যা থাকতে হবে');
+  }
+
+  // Check for special characters (optional, but allowed)
+  // Special characters are allowed but not required
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
 
 module.exports = {
+  validateFullName,
   validateRegistration,
-  validateLogin
+  validateLogin,
+  validateBirthday,
+  validatePassword
 };

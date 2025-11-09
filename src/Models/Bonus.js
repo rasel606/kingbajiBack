@@ -4,11 +4,11 @@ const mongoose = require('mongoose');
 const BonusSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  bonusType: { 
+  bonusType: [{ 
     type: String, 
     enum: ['deposit', 'dailyRebate', 'weeklyBonus', 'vip', 'referral', 'other','referralRebate', 'normalDeposit','signup','birthday'], 
     required: true 
-  },
+  }],
 
   level1Percent: Number,            // e.g., 0.2
   level2Percent: Number,            // e.g., 0.07

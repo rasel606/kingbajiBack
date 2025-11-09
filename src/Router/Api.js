@@ -58,7 +58,7 @@ router.post('/login_user', authController.loginUser)
 
 //   CreateUserService.loginUser(req, res);
 // })
-// router.get('/user_details', auth, CreateUserService.userDetails);
+router.get('/user_details', auth, CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);

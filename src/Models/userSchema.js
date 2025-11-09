@@ -236,6 +236,11 @@ const userSchema = new mongoose.Schema({
         trim: true,
         maxlength: 100
     },
+
+    isNameVerified: {
+        type: Boolean,
+        default: false
+    },
     // Email সম্পূর্ণ optional - no validation, no unique
     email: { 
         type: String, 
@@ -288,7 +293,10 @@ const userSchema = new mongoose.Schema({
     // User profile
     vipPoints: { type: Number, default: 0, min: 0 },
     birthday: { type: Date },
-    isBirthdayVerified: { type: Boolean, default: false },
+    isBirthdayVerified: {
+        type: Boolean,
+        default: false
+    },
     
     // Gaming data
     last_game_id: { type: String },
