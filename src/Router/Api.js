@@ -41,7 +41,7 @@ const BankController = require('../Controllers/BankController');
 // const SubAdmin = require('../Models/SubAdminModel');
 const {auth} = require('../MiddleWare/auth');
 const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
-const authController = require('../Controllers/authController');
+const {register,loginUser} = require('../Controllers/authController');
 // const BonusTransactionController = require('../Controllers/vipBonusesController');
 const { Console } = require('winston/lib/winston/transports');
 
@@ -49,8 +49,8 @@ const { Console } = require('winston/lib/winston/transports');
 
 
 
-router.post('/createUser', authController.register);
-router.post('/login_user', authController.loginUser)
+router.post('/createUser', register);
+router.post('/login_user', loginUser);
 // router.post('/login_user', CreateUserService.loginUser);
 // router.post('/login_user',(req,res)=>{
 //   const { userId, password } = req.body;
