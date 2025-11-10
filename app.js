@@ -25,6 +25,7 @@ const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
 const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
 const userProfileRoutes = require('./src/Router/userProfileRoutes');
+const paymentMethod = require('./src/Router/paymentMethod');
 
 // Import Live Chat Routes
 const chatRoutes = require('./src/Router/chatRoutes');
@@ -96,16 +97,21 @@ app.set('trust proxy', 1);
 
 // MongoDB Connection
 const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('✅ MongoDB Connected Successfully');
-  } catch (error) {
-    console.error('❌ MongoDB Connection Failed:', error);
-    process.exit(1);
-  }
+  // try {
+  //   await mongoose.connect(process.env.MONGODB_URI || "mongodb+srv://bajicrick247:bajicrick24@cluster0.jy667.mongodb.net/bajicrick247?retryWrites=true&w=majority&appName=Cluster0", {
+  //     useNewUrlParser: true,
+  //     useUnifiedTopology: true,
+  //   });
+  //   console.log('✅ MongoDB Connected Successfully');
+  // } catch (error) {
+  //   console.error('❌ MongoDB Connection Failed:', error);
+  //   process.exit(1);
+  // }
+
+  mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("✅ MongoDB connected successfully"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 };
 
 connectDB();
@@ -133,6 +139,7 @@ app.use('/api/phone', phoneVerificationRoute);
 app.use('/api/turnover', turnoverRoutes);
 app.use('/api/promotions', promotionsServiceRoutes);
 app.use('/api/profile', userProfileRoutes);
+app.use('/api/payment-methods', paymentMethod);
 
 // Live Chat Routes
 app.use('/api/live-chat', chatRoutes);

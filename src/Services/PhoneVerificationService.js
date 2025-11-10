@@ -327,24 +327,27 @@ class PhoneVerificationService {
   // Send verification code
   async sendVerificationCode(req, res) {
     try {
-      const { phone_number } = req.body;
+      const { phone_number, countryCode } = req.body;
       const ipAddress = req.ip;
-
-      console.log(req.body);
+const userId = req.user.userId;
+      console.log("sendVerificationCode",req.body);
 
       // Validate phone number format
-      if (!validatePhoneNumber(phone_number)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid phone number format. Please use a valid Bangladeshi number.'
-        });
-      }
+      // if (!validatePhoneNumber(phone_number)) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: 'Invalid phone number format. Please use a valid Bangladeshi number.'
+      //   });
+      // }
 
       // Check if phone number is already verified by another user
       const existingUser = await User.findOne({ 
-        phoneNumber: phone_number,
-        isPhoneVerified: true 
-      });
+      $or: [
+        // { userId: userId.toLowerCase() },
+        // { email: userId.toLowerCase() },
+        { "phone.number": phone_number }
+      ]
+    });
 
       console.log("existingUser",existingUser);
 
@@ -361,7 +364,7 @@ class PhoneVerificationService {
 
       // Create or update verification record
       await PhoneVerification.findOneAndUpdate(
-        { phoneNumber: phone_number },
+        { phone: phone_number },
         {
           verificationCode,
           expiresAt,
@@ -373,7 +376,8 @@ class PhoneVerificationService {
       );
 
       // Send SMS
-      const smsResult =await sendSms(maskPhoneNumber(phone_number), `Your verification code is ${verificationCode}`);
+      const smsResult = await sendSms(maskPhoneNumber(phone_number), `Your verification code is ${verificationCode}`);
+      console.log("smsResult",smsResult);
       // if (!smsResult.success) {
       //   return res.status(500).json({
       //     success: false,
