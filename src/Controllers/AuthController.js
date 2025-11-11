@@ -1,5 +1,5 @@
 const User = require('../Models/User');
-const authService = require('../services/authService');
+const AuthService = require('../Services/AuthService');
 const userService = require('../Services/userService');
 const apiService = require('../services/apiService');
 const { validateRegistration, validateLogin } = require('../utils/validators');
@@ -20,7 +20,7 @@ exports.register = async (req, res) => {
     }
 
     // Check for existing user
-    const existingUser = await authService.checkExistingUser(userId, phone);
+    const existingUser = await AuthService.checkExistingUser(userId, phone);
     if (existingUser.exists) {
       return res.status(409).json({
         success: false,
@@ -66,7 +66,7 @@ exports.register = async (req, res) => {
 
     // Handle referral system
     if (referredBy) {
-      await authService.handleReferralSystem(newUser, referredBy);
+      await AuthService.handleReferralSystem(newUser, referredBy);
     }
 
     // Generate token
@@ -125,7 +125,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // Find user
-    const user = await authService.findUserByIdentifier(userId);
+    const user = await AuthService.findUserByIdentifier(userId);
     if (!user) {
       return res.status(404).json({
         success: false,
