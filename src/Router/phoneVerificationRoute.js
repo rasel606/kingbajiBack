@@ -3,7 +3,7 @@ const express = require('express');
 
 const phoneVerificationService = require('../Services/PhoneVerificationService');
 const {auth} = require('../MiddleWare/auth');
-const { validatePhoneNumber, validateVerificationCode } = require('../middleware/mainValidation');
+const { validatePhoneNumber, validateVerificationCode } = require('../MiddleWare/mainValidation');
 
 // All routes are protected
 const router = express.Router();
