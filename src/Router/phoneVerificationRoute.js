@@ -2,7 +2,7 @@
 const express = require('express');
 
 const phoneVerificationService = require('../Services/PhoneVerificationService');
-const {auth} = require('../middleware/auth');
+const {auth} = require('../MiddleWare/auth');
 const { validatePhoneNumber, validateVerificationCode } = require('../middleware/mainValidation');
 
 // All routes are protected
