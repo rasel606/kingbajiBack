@@ -180,8 +180,8 @@ exports.refreshBalance = async (req, res) => {
     // //    await GameTable.deleteOne({ gameId: game.gameId })
     // }
     // console.log("Updated Balance -----------------2 :", balance);
-    // const updatedUser = await User.findOne({ userId: userId });
-    // res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
+    const updatedUser = await User.findOne({ userId: userId });
+    res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
 
   } catch (error) {
     console.log("Error:", error.message);

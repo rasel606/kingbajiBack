@@ -32,7 +32,7 @@ const CreateGateWayService = async (user) => {
         ];
 
         const timestamp = new Date();
-
+console.log(user);
         const gatewayPayload = defaultGateways.map((gateway) => ({
             user_role: user.role,
             email: user.email,

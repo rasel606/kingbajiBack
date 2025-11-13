@@ -255,6 +255,7 @@ const createUser = async (req, dataModel) => {
       mobile: newUser.mobile,
       referredCode: newUser.referredCode,
       token: generateToken(newUser.email),
+      role: newUser.role
     },
     success: true,
     
