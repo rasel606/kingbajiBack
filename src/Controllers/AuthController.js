@@ -1,7 +1,7 @@
 const User = require('../Models/User');
 const AuthService = require('../Services/authService');
-const userService = require('../Services/userService');
-const apiService = require('../Services/apiService');
+const UserService = require('../Services/userService');
+const ApiService = require('../Services/apiService');
 const { validateRegistration, validateLogin } = require('../utils/validators');
 
 exports.register = async (req, res) => {
@@ -29,7 +29,7 @@ exports.register = async (req, res) => {
     }
 
     // Create user
-    const newUser = await userService.createUser({
+    const newUser = await UserService.createUser({
       userId,
       phone,
       password,
@@ -42,7 +42,7 @@ exports.register = async (req, res) => {
 
     // API Verification
     try {
-      const apiSuccess = await apiService.verifyUserWithRetry(newUser.userId);
+      const apiSuccess = await ApiService.verifyUserWithRetry(newUser.userId);
       
       if (apiSuccess) {
         newUser.apiVerified = true;
@@ -73,7 +73,7 @@ exports.register = async (req, res) => {
     const token = newUser.generateAuthToken();
 
     // Prepare response
-    const userResponse = await userService.getUserProfile(newUser.userId);
+    const userResponse = await UserService.getUserProfile(newUser.userId);
 
     res.status(201).json({
       success: true,
