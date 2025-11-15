@@ -1,5 +1,7 @@
 // controllers/paymentMethodController.js
 
+const { getPaymentMethodsForUser } = require('../utils/getPaymentMethods');
+
 const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
 const User = require('../Models/User');
 const { 
@@ -15,15 +17,17 @@ exports.GetPaymentMethodsUser = async (req, res) => {
         const { userId } = req.body;
 
         const user = await User.findOne({ userId });
+        console.log("User Found:", user);
         if (!user) return res.status(404).json({ message: "User not found" });
 
         const gatewayOwnersData = await getUserWithReferralLevels(user.referredBy);
-        
+        console.log("Gateway Owners Data:", gatewayOwnersData);
         if (!gatewayOwnersData.length) {
             return res.status(404).json({ message: "No Payment Gateway Owner found" });
         }
 
         const referredByList = gatewayOwnersData.map(o => o.referralCode);
+        console.log("Referred By List:", referredByList);
         const now = new Date();
         const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
 
@@ -35,7 +39,7 @@ exports.GetPaymentMethodsUser = async (req, res) => {
         }).select(
             "gateway_name gateway_Number payment_type image_url start_time end_time is_active minimun_amount maximum_amount referredBy"
         );
-
+        console.log("Payment Methods Found:", paymentMethods);
         // Add owner info to each payment method
         const paymentMethodsWithOwner = paymentMethods.map(method => {
             const owner = gatewayOwnersData.find(owner => owner.referralCode === method.referredBy);
@@ -45,7 +49,7 @@ exports.GetPaymentMethodsUser = async (req, res) => {
                 ownerLevel: owner?.level || 0
             };
         });
-
+console.log("Payment Methods with Owner:", paymentMethodsWithOwner);
         const referrals = await getReferralOwner(user);
 
         return res.status(200).json({
@@ -229,3 +233,19 @@ console.log("Level one referral codes:", levelOneReferralCodes);
         });
     }
 };
+
+
+exports.getPaymentMethodsController = async (req, res) =>{
+    try {
+        const user = req.user;
+        console.log("Received userId:", req.user);
+        if (!user.userId) return res.status(400).json({ error: "UserId required" });
+
+        const gateways = await getPaymentMethodsForUser(user.userId);
+        res.status(200).json({ success: true, gateways });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+}

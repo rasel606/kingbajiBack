@@ -1,5 +1,5 @@
 const User = require('../Models/User');
-const AuthService = require('../Services/authService');
+const AuthService = require('../Services/AuthService');
 const UserService = require('../Services/userService');
 const ApiService = require('../Services/apiService');
 const { validateRegistration, validateLogin } = require('../utils/validators');
@@ -117,6 +117,7 @@ exports.loginUser = async (req, res) => {
 
     // Validate input
     const validation = validateLogin(req.body);
+    console.log("🔍 Login validation result:", validation);
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
@@ -126,6 +127,7 @@ exports.loginUser = async (req, res) => {
 
     // Find user
     const user = await AuthService.findUserByIdentifier(userId);
+    console.log("🔍 User lookup result:", user ? "User found" : "User not found");
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -169,11 +171,11 @@ exports.loginUser = async (req, res) => {
     console.log("✅ Password valid, resetting login attempts");
     
     // Use try-catch for save operations
-    try {
-      await user.resetLoginAttempts();
-    } catch (saveError) {
-      console.error("⚠️ Error resetting login attempts:", saveError);
-    }
+    // try {
+    //   await user.resetLoginAttempts();
+    // } catch (saveError) {
+    //   console.error("⚠️ Error resetting login attempts:", saveError);
+    // }
 
     // Update login info
     const clientIp = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -190,7 +192,7 @@ exports.loginUser = async (req, res) => {
     console.log("✅ Login successful for user:", user.userId);
 
     // Get user profile
-    const userProfile = await userService.getUserProfile(user.userId);
+    const userProfile = await UserService.getUserProfile(user.userId);
 
     res.status(200).json({
       success: true,

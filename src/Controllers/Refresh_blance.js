@@ -150,6 +150,9 @@ exports.refreshBalance = async (req, res) => {
           }
           res.status(500).json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
         }
+          const updatedUser = await User.findOne({ userId: userId });
+    res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
+
 
         // if (refund.innerCode === null && errMsg=== 'SUCCESS') {
         //     console.log("refund.innerCode:", refund.innerCode);
@@ -180,8 +183,8 @@ exports.refreshBalance = async (req, res) => {
     // //    await GameTable.deleteOne({ gameId: game.gameId })
     // }
     // console.log("Updated Balance -----------------2 :", balance);
-    const updatedUser = await User.findOne({ userId: userId });
-    res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
+    // const updatedUser = await User.findOne({ userId: userId });
+    // res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
 
   } catch (error) {
     console.log("Error:", error.message);

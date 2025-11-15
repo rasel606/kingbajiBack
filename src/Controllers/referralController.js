@@ -86,3 +86,167 @@
 // cron.schedule('* * * * *', runDailyCashback); // 03:00 BD Time (GMT+6)
 
 // module.exports = runDailyCashback;
+const { getReferralOwner } = require('../utils/referralUtils');
+const User = require('../models/User');
+const SubAdmin = require('../models/SubAdmin');
+const AffiliateModel = require('../models/AffiliateModel');
+const AdminModel = require('../models/AdminModel');
+
+class ReferralController {
+    // Get referral owner information
+    static async getReferralOwnerInfo(req, res) {
+        try {
+            const { referralCode } = req.params;
+
+            const ownerInfo = await getReferralOwner(referralCode);
+            
+            if (!ownerInfo) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Referral owner not found'
+                });
+            }
+
+            res.json({
+                success: true,
+                data: ownerInfo
+            });
+        } catch (error) {
+            console.error('Get referral owner error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Server error'
+            });
+        }
+    }
+
+    // Get referral statistics
+    static async getReferralStats(req, res) {
+        try {
+            const { userId } = req.params;
+
+            const user = await User.findOne({ userId });
+            if (!user) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            const levelOneCount = await User.countDocuments({ referredBy: user.referralCode });
+            
+            const levelTwoUsers = await User.find({ referredBy: user.referralCode });
+            let levelTwoCount = 0;
+            
+            for (const levelOneUser of levelTwoUsers) {
+                const count = await User.countDocuments({ referredBy: levelOneUser.referralCode });
+                levelTwoCount += count;
+            }
+
+            let levelThreeCount = 0;
+            for (const levelOneUser of levelTwoUsers) {
+                const levelTwoRefs = await User.find({ referredBy: levelOneUser.referralCode });
+                for (const levelTwoUser of levelTwoRefs) {
+                    const count = await User.countDocuments({ referredBy: levelTwoUser.referralCode });
+                    levelThreeCount += count;
+                }
+            }
+
+            const stats = {
+                levelOne: levelOneCount,
+                levelTwo: levelTwoCount,
+                levelThree: levelThreeCount,
+                totalReferrals: levelOneCount + levelTwoCount + levelThreeCount,
+                totalCommission: user.totalBonus || 0
+            };
+
+            res.json({
+                success: true,
+                data: stats
+            });
+        } catch (error) {
+            console.error('Get referral stats error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Server error'
+            });
+        }
+    }
+
+    // Get top referrers
+    static async getTopReferrers(req, res) {
+        try {
+            const { limit = 10 } = req.query;
+
+            const topReferrers = await User.aggregate([
+                {
+                    $project: {
+                        userId: 1,
+                        name: 1,
+                        referralCode: 1,
+                        totalReferrals: {
+                            $add: [
+                                { $size: '$levelOneReferrals' },
+                                { $size: '$levelTwoReferrals' },
+                                { $size: '$levelThreeReferrals' }
+                            ]
+                        },
+                        totalBonus: 1
+                    }
+                },
+                { $sort: { totalReferrals: -1, totalBonus: -1 } },
+                { $limit: parseInt(limit) }
+            ]);
+
+            res.json({
+                success: true,
+                data: topReferrers
+            });
+        } catch (error) {
+            console.error('Get top referrers error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Server error'
+            });
+        }
+    }
+
+    // Validate referral code
+    static async validateReferralCode(req, res) {
+        try {
+            const { referralCode } = req.params;
+
+            // Check in all models
+            const [user, subAdmin, affiliate, admin] = await Promise.all([
+                User.findOne({ referralCode }),
+                SubAdmin.findOne({ referralCode }),
+                AffiliateModel.findOne({ referralCode }),
+                AdminModel.findOne({ referralCode })
+            ]);
+
+            const isValid = !!(user || subAdmin || affiliate || admin);
+            let ownerInfo = null;
+
+            if (user) ownerInfo = { type: 'user', name: user.name, userId: user.userId };
+            else if (subAdmin) ownerInfo = { type: 'subAdmin', name: subAdmin.name };
+            else if (affiliate) ownerInfo = { type: 'affiliate', name: `${affiliate.firstName} ${affiliate.lastName}` };
+            else if (admin) ownerInfo = { type: 'admin', name: admin.firstName };
+
+            res.json({
+                success: true,
+                data: {
+                    isValid,
+                    ownerInfo
+                }
+            });
+        } catch (error) {
+            console.error('Validate referral code error:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Server error'
+            });
+        }
+    }
+}
+
+module.exports = ReferralController;

@@ -26,6 +26,7 @@ const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
 const userProfileRoutes = require('./src/Router/userProfileRoutes');
 const paymentMethod = require('./src/Router/paymentMethod');
+const hierarchicalGatewayRoutes = require('./src/Router/hierarchicalGatewayRoutes');
 
 // Import Live Chat Routes
 const chatRoutes = require('./src/Router/chatRoutes');
@@ -55,6 +56,8 @@ const allowedOrigins = [
   'http://localhost:3001', 
   'http://localhost:3002', 
   'http://127.0.0.1:3000',
+  'http://127.0.0.1:3000',
+  'http://png71.live/login',
   process.env.FRONTEND_URL // For production
 ].filter(Boolean);
 
@@ -140,6 +143,7 @@ app.use('/api/turnover', turnoverRoutes);
 app.use('/api/promotions', promotionsServiceRoutes);
 app.use('/api/profile', userProfileRoutes);
 app.use('/api/payment-methods', paymentMethod);
+app.use('/api/payment', hierarchicalGatewayRoutes);
 
 // Live Chat Routes
 app.use('/api/live-chat', chatRoutes);

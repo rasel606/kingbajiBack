@@ -86,6 +86,10 @@ module.exports = function addUserMethods(userSchema) {
     return this.save();
   };
 
+  userSchema.methods.isLocked = function() {
+    return this.lockUntil && this.lockUntil > Date.now();
+  };
+
   userSchema.methods.resetLoginAttempts = async function() {
     this.loginAttempts = 0;
     this.lockUntil = undefined;
