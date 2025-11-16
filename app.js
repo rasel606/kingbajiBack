@@ -51,7 +51,6 @@ app.set('io', io);
 console.log('✅ Socket.io stored in app context');
 
 // Enhanced CORS configuration
-// Enhanced CORS configuration
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
@@ -62,36 +61,75 @@ const allowedOrigins = [
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
-// CORS middleware
+// app.use(cors({
+//   origin: function (origin, callback) {
+//     // Allow requests with no origin (like mobile apps or curl requests)
+//     if (!origin) return callback(null, true);
+    
+//     if (allowedOrigins.indexOf(origin) === -1) {
+//       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+//       return callback(new Error(msg), false);
+//     }
+//     return callback(null, true);
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'socket-id']
+// }));
+
+// Handle preflight requests
+// app.options('*', cors());
+
+// Security Middleware
+
+
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error("CORS blocked: " + origin), false);
+    }
+
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "socket-id"
+  ]
+}));
+
+// app.js এ CORS কনফিগারেশন আপডেট করুন
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, postman)
     if (!origin) return callback(null, true);
     
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:3001", 
+      "http://127.0.0.1:3000",
+      "http://png71.live",
+      "https://png71.live",
+      "https://api.png71.live"
+    ];
+    
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
-      console.log('🚫 CORS Blocked Origin:', origin);
-      return callback(new Error(`CORS policy: Origin ${origin} not allowed`), false);
+      console.log('CORS blocked origin:', origin);
+      // Production এ strict না করে allow করে দিন
+      return callback(null, true);
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'socket-id',
-    'Accept',
-    'Origin',
-    'X-API-Key'
-  ],
-  exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 hours
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
-
-// Handle preflight requests explicitly
-app.options('*', cors());
 
 
 
