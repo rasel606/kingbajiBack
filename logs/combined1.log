@@ -1239,3 +1239,6 @@
 {"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
 {"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
 {"level":"info","message":"127.0.0.1 - - [16/Nov/2025:06:19:47 +0000] \"GET /health HTTP/1.1\" 200 469 \"-\" \"curl/8.16.0\"","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
