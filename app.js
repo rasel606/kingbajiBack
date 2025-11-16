@@ -57,7 +57,7 @@ const allowedOrigins = [
   'http://localhost:3002', 
   'http://127.0.0.1:3000',
   'http://127.0.0.1:3000',
-  'http://png71.live/login',
+  'http://png71.live',
   '194.61.31.243:3000',
   '*',
   process.env.FRONTEND_URL // For production
