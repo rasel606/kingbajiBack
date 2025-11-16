@@ -52,15 +52,13 @@ console.log('✅ Socket.io stored in app context');
 
 // Enhanced CORS configuration
 const allowedOrigins = [
-  'http://localhost:3000', 
-  'http://localhost:3001', 
-  'http://localhost:3002', 
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:3000',
-  'http://png71.live',
-  '194.61.31.243:3000',
-  '*',
-  process.env.FRONTEND_URL // For production
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://png71.live",
+  "https://png71.live",
+  "https://api.png71.live",
+  process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
