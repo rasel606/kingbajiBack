@@ -11,7 +11,7 @@ class RedisClient {
   async init() {
     try {
       this.client = createClient({
-        url: process.env.REDIS_URL || 'redis://localhost:3000',
+        url: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
         password: process.env.REDIS_PASSWORD || undefined,
         database: parseInt(process.env.REDIS_DB) || 0,
         socket: {

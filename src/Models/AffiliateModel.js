@@ -53,4 +53,7 @@ AffiliateModelSchema.methods.comparePassword = async function (candidatePassword
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+
+AffiliateModelSchema.index({ status: 1 });
+
 module.exports = mongoose.models.AffiliateModel || mongoose.model('AffiliateModel', AffiliateModelSchema);

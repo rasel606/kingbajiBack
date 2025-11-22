@@ -138,20 +138,20 @@ exports.refreshBalance = async (req, res) => {
 
         if (refund.errMsg === "NOT_ALLOW_TO_MAKE_TRANSFER_WHILE_IN_GAME") {
           console.log("refund.errMsg:", refund.errMsg);
-          const win = parseFloat(amount) - parseFloat(game.betAmount);
-          console.log("Win Amount:", win);
+          // const win = parseFloat(amount) - parseFloat(game.betAmount);
+          // console.log("Win Amount:", win);
 
-          if (!isNaN(win) && win !== 0 && win !== NaN) {
-            await GameTable.findOneAndUpdate(
-              { gameId: game.gameId },
-              { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-              { new: true }
-            );
-          }
+          // if (!isNaN(win) && win !== 0 && win !== NaN) {
+          //   await GameTable.findOneAndUpdate(
+          //     { gameId: game.gameId },
+          //     { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+          //     { new: true }
+          //   );
+          // }
           res.status(500).json({ errCode: 0, errMsg: "Transaction not allowed while in game. Try again later.", balance });
         }
-          const updatedUser = await User.findOne({ userId: userId });
-    res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
+        const updatedUser = await User.findOne({ userId: userId });
+        res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
 
 
         // if (refund.innerCode === null && errMsg=== 'SUCCESS') {
@@ -168,23 +168,23 @@ exports.refreshBalance = async (req, res) => {
         return res.status(500).json({ errCode: 2, errMsg: 'Transfer API Error', balance });
       }
     }, 1000);
-    // const win = parseFloat(amount) - parseFloat(game.betAmount);
-    // console.log("Win Amount:", win);
+    const win = parseFloat(amount) - parseFloat(game.betAmount);
+    console.log("Win Amount:", win);
 
-    // if (!isNaN(win) && win !== 0 && win !== NaN) {
-    //   await GameTable.findOneAndUpdate(
-    //     { gameId: game.gameId },
-    //     { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
-    //     { new: true }
-    //   );
-    // }
+    if (!isNaN(win) && win !== 0 && win !== NaN) {
+      await GameTable.findOneAndUpdate(
+        { gameId: game.gameId },
+        { $set: { winAmount: win, returnId: transId, status: win < 0 ? 2 : 1 } },
+        { new: true }
+      );
+    }
 
     // } else {
     // //    await GameTable.deleteOne({ gameId: game.gameId })
     // }
     // console.log("Updated Balance -----------------2 :", balance);
-    // const updatedUser = await User.findOne({ userId: userId });
-    // res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
+    const updatedUser = await User.findOne({ userId: userId });
+    res.json({ errCode: 0, errMsg: 'Success user updated', balance: updatedUser.balance });
 
   } catch (error) {
     console.log("Error:", error.message);
@@ -447,7 +447,7 @@ exports.launchGamePlayer = async (req, res) => {
 
     const provider = agent[0];
     const amount = user.balance;
-
+    const balanceProviderTransfarb = false
     if (user.last_game_id) {
       await refreshBalancebefore(user.userId, agent); // optional validation
     }
@@ -473,7 +473,7 @@ exports.launchGamePlayer = async (req, res) => {
       )
     };
 
-    if (amount > 0) {
+    if (amount >= 0) {
       const transferSignature = generateSignature(
         amount.toString(),
         provider.operatorcode,
@@ -512,21 +512,22 @@ exports.launchGamePlayer = async (req, res) => {
           { userId: user.userId },
           { balance: 0, last_game_id: Newgame.g_code, agentId: provider.providercode }
         );
-
+        balanceProviderTransfarb = true;
         await new Promise(resolve => setTimeout(resolve, 1000));
         const gameLaunchResponse = await fetchApi("launchGames.aspx", launchField);
         console.log("gameLaunchResponse", gameLaunchResponse);
         if (gameLaunchResponse.errCode !== "0") {
-          return res.status(400).json({ errCode: gameLaunchResponse.errCode, errMsg: gameLaunchResponse.errMsg });
+           res.status(400).json({ errCode: gameLaunchResponse.errCode, errMsg: gameLaunchResponse.errMsg });
         }
 
-        return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: gameLaunchResponse.gameUrl });
+         res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: gameLaunchResponse.gameUrl });
       }
     }
     await new Promise(resolve => setTimeout(resolve, 1500));
     // Fallback: No transfer, but still try to launch game
     const fallbackGameLaunch = await fetchApi("launchGames.aspx", launchField);
-    return res.status(200).json({ errCode: 0, errMsg: "Success", gameUrl: fallbackGameLaunch.gameUrl });
+    console.log("fallbackGameLaunch", fallbackGameLaunch);
+    res.status(200).json({ errCode: 1, errMsg: "launch game fallback", gameUrl: fallbackGameLaunch.gameUrl });
 
   } catch (error) {
     console.error("Launch Game Error:", error);

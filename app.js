@@ -27,7 +27,14 @@ const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
 const userProfileRoutes = require('./src/Router/userProfileRoutes');
 const paymentMethod = require('./src/Router/paymentMethod');
 const hierarchicalGatewayRoutes = require('./src/Router/hierarchicalGatewayRoutes');
-
+const affiliateEarningsRoutes = require('./src/Router/affiliateEarnings');
+const kycRoutes = require('./src/Router/kyc');
+const links = require('./src/Router/links');
+const affiliateLinkRoutes = require('./src/Router/links');
+const withdrawalRoutes = require('./src/Router/withdrawals');
+const profileRoutes = require('./src/Router/affiliateProfile');
+const affiliateDashboardRoute = require('./src/Router/affiliateDashboardRoute');
+const AffiliateAuthRoute = require('./src/Router/AffiliateAuthRoute');
 // Import Live Chat Routes
 const chatRoutes = require('./src/Router/chatRoutes');
 
@@ -128,6 +135,13 @@ app.use('/api/profile', userProfileRoutes);
 app.use('/api/payment-methods', paymentMethod);
 app.use('/api/payment', hierarchicalGatewayRoutes);
 
+app.use('/api/affiliate', AffiliateAuthRoute);
+app.use('/api/affiliate/dashboard', affiliateDashboardRoute);
+app.use('/api/affiliate/profile', profileRoutes);
+app.use('/api/affiliate/earnings', affiliateEarningsRoutes);
+app.use('/api/affiliate/links', affiliateLinkRoutes);
+app.use('/api/kyc', kycRoutes);
+app.use('/api/withdrawals', withdrawalRoutes);
 // Live Chat Routes
 app.use('/api/live-chat', chatRoutes);
 

@@ -12,7 +12,9 @@ const protectAffiliate = asyncHandler(async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await AffiliateModel.findById(decoded.id).select('-password');
+      console.log('Decoded JWT:', decoded);
+      req.user = await AffiliateModel.findOne({ userId: decoded.userId }).select('-password');
+      console.log('Authenticated Affiliate:', req.user);
       if (!req.user) {
         res.status(401);
         throw new Error('Not authorized, affiliate not found');

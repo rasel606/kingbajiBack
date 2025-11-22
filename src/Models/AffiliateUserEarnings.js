@@ -8,8 +8,8 @@ const GameTypeSchema = new mongoose.Schema({
 
 const AffiliateUserEarningsSchema = new mongoose.Schema({
   affiliateId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'Affiliate', 
+    type: String, 
+    ref: 'AffiliateModel', 
     required: true 
   },
   period: { type: Date, required: true }, // Start of the month

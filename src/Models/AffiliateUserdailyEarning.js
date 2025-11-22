@@ -12,6 +12,43 @@ const AffiliateUserdailyEarningSchema = new mongoose.Schema({
     ref: 'Affiliate', 
     required: true 
   },
+    period: {
+    type: Date,
+    required: true
+  },
+  totalRevenue: {
+    type: Number,
+    default: 0
+  },
+  totalBonus: {
+    type: Number,
+    default: 0
+  },
+  totalTurnover: {
+    type: Number,
+    default: 0
+  },
+  commissionRate: {
+    type: Number,
+    default: 0.25
+  },
+  calculatedCommission: {
+    type: Number,
+    default: 0
+  },
+  adjustments: {
+    type: Number,
+    default: 0
+  },
+  finalCommission: {
+    type: Number,
+    default: 0
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'paid'],
+    default: 'pending'
+  },
 
   todayTotalProfitLoss: { type: Number, default: 0 },
   todayJackpot: { type: Number, default: 0 },

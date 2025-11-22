@@ -1,11 +1,11 @@
 const Affiliate = require('../Models/AffiliateModel');
 const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-const User = require('../Models/User');
-const Transaction = require('../Models/TransactionModel');
+const User = require('../Models/User'); 
 const BettingHistory = require('../Models/BettingHistory');
+const TransactionModel = require('../Models/TransactionModel');
 const UserBonus = require('../Models/UserBonus');
 const moment = require('moment');
-const mongoose = require('mongoose');
+const { getPeriodDates } = require('../utils/periodUtils');
 const catchAsync = require('../utils/catchAsync');
 // Custom error class for application errors
 class AppError extends Error {
@@ -54,7 +54,7 @@ const getTurnoverStats = async (referredUserIds, startDate, endDate = null) => {
 // Get dashboard data for affiliate
 exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
   const { userId } = req.user;
-  
+  console.log('Fetching dashboard for affiliate userId:', userId);
   // Input validation
   if (!userId) {
     return next(new AppError('Valid user ID is required', 400));
@@ -77,6 +77,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
   try {
     // Get affiliate data
     const affiliate = await Affiliate.findOne({ userId: userId });
+    console.log('Affiliate data:', affiliate);
     if (!affiliate) {
       return next(new AppError('Affiliate not found', 404));
     }
@@ -196,7 +197,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       // First deposit stats
       (async () => {
         // Find first deposits by getting the earliest deposit for each user
-        const firstDeposits = await Transaction.aggregate([
+        const firstDeposits = await TransactionModel.aggregate([
           {
             $match: {
               userId: { $in: referredUserIds },
@@ -296,7 +297,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       
       // Deposit stats (current period)
       (async () => {
-        const deposits = await Transaction.aggregate([
+        const deposits = await TransactionModel.aggregate([
           {
             $match: {
               userId: { $in: referredUserIds },
@@ -319,7 +320,7 @@ exports.getAffiliateDashboard = catchAsync(async (req, res, next) => {
       
       // Withdrawal stats (current period)
       (async () => {
-        const withdrawals = await Transaction.aggregate([
+        const withdrawals = await TransactionModel.aggregate([
           {
             $match: {
               userId: { $in: referredUserIds },
@@ -481,7 +482,7 @@ exports.getPlayerStats = catchAsync(async (req, res, next) => {
       referredUsers.map(async (user) => {
         const [deposits, withdrawals, turnover, bonuses] = await Promise.all([
           // Total deposits
-          Transaction.aggregate([
+          TransactionModel.aggregate([
             {
               $match: {
                 userId: user.userId,
@@ -498,7 +499,7 @@ exports.getPlayerStats = catchAsync(async (req, res, next) => {
           ]),
           
           // Total withdrawals
-          Transaction.aggregate([
+          TransactionModel.aggregate([
             {
               $match: {
                 userId: user.userId,
@@ -624,50 +625,50 @@ exports.getCommissionHistory = catchAsync(async (req, res, next) => {
 });
 
 // Helper function to get period dates
-function getPeriodDates() {
-  const now = new Date();
+// function getPeriodDates() {
+//   const now = new Date();
   
-  // Use UTC dates for consistency
-  const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-  const lastPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+//   // Use UTC dates for consistency
+//   const currentPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+//   const lastPeriodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
   
-  // Today in UTC
-  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const todayEnd = new Date(todayStart);
-  todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
+//   // Today in UTC
+//   const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+//   const todayEnd = new Date(todayStart);
+//   todayEnd.setUTCDate(todayEnd.getUTCDate() + 1);
   
-  // Yesterday in UTC
-  const yesterdayStart = new Date(todayStart);
-  yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
-  const yesterdayEnd = new Date(todayStart);
+//   // Yesterday in UTC
+//   const yesterdayStart = new Date(todayStart);
+//   yesterdayStart.setUTCDate(yesterdayStart.getUTCDate() - 1);
+//   const yesterdayEnd = new Date(todayStart);
   
-  // Week calculations in UTC
-  const startOfWeek = new Date(now);
-  startOfWeek.setUTCDate(now.getUTCDate() - now.getUTCDay());
-  startOfWeek.setUTCHours(0, 0, 0, 0);
+//   // Week calculations in UTC
+//   const startOfWeek = new Date(now);
+//   startOfWeek.setUTCDate(now.getUTCDate() - now.getUTCDay());
+//   startOfWeek.setUTCHours(0, 0, 0, 0);
   
-  const startOfLastWeek = new Date(startOfWeek);
-  startOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 7);
+//   const startOfLastWeek = new Date(startOfWeek);
+//   startOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 7);
   
-  const endOfLastWeek = new Date(startOfWeek);
-  endOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 1);
-  endOfLastWeek.setUTCHours(23, 59, 59, 999);
+//   const endOfLastWeek = new Date(startOfWeek);
+//   endOfLastWeek.setUTCDate(startOfWeek.getUTCDate() - 1);
+//   endOfLastWeek.setUTCHours(23, 59, 59, 999);
   
-  // Month calculations
-  const nextMonthStart = new Date(currentPeriodStart);
-  nextMonthStart.setUTCMonth(nextMonthStart.getUTCMonth() + 1);
+//   // Month calculations
+//   const nextMonthStart = new Date(currentPeriodStart);
+//   nextMonthStart.setUTCMonth(nextMonthStart.getUTCMonth() + 1);
   
-  return {
-    currentPeriodStart,
-    currentPeriodEnd: nextMonthStart,
-    lastPeriodStart,
-    lastPeriodEnd: currentPeriodStart,
-    todayStart,
-    todayEnd,
-    yesterdayStart,
-    yesterdayEnd,
-    startOfWeek,
-    startOfLastWeek,
-    endOfLastWeek
-  };
-}
+//   return {
+//     currentPeriodStart,
+//     currentPeriodEnd: nextMonthStart,
+//     lastPeriodStart,
+//     lastPeriodEnd: currentPeriodStart,
+//     todayStart,
+//     todayEnd,
+//     yesterdayStart,
+//     yesterdayEnd,
+//     startOfWeek,
+//     startOfLastWeek,
+//     endOfLastWeek
+//   };
+// }
