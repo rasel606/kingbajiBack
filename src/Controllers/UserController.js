@@ -20,15 +20,15 @@ exports.GetRefferralUserList = async (req, res) => {
         }
 
         // Check if SubAdmin exists
-        const subAdminExists = await SubAdmin.findOne({ referralCode: user.referralCode });
-        console.log("subAdminExists", subAdminExists)
+        const AdminExists = await AdminModel.findOne({ referralCode: user.referralCode });
+        console.log("subAdminExists", AdminExists)
 
         // only user's deposits
 
         if (!subAdminExists) {
             return res.status(404).json({ message: 'SubAdmin not found' });
         }
-        const filters = { referredBy: subAdminExists.referralCode };
+        const filters = { referredBy: AdminExists.referralCode };
 
 
 

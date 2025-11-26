@@ -421,3 +421,358 @@ exports.getFeaturedGames = async (req, res) => {
     });
   }
 };
+
+// Get all games
+exports.getAllGames = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      search = '',
+      category,
+      provider,
+      is_active 
+    } = req.query;
+console.log(req.query);
+    const query = {};
+    
+    if (search) {
+      query.$or = [
+        { 'gameName.gameName_enus': { $regex: search, $options: 'i' } },
+        { 'gameName.gameName_zhcn': { $regex: search, $options: 'i' } },
+        { 'gameName.gameName_zhtw': { $regex: search, $options: 'i' } },
+        { gameNameTrial: { $regex: search, $options: 'i' } },
+        { g_code: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    if (category) query.category_name = category;
+    if (provider) query.p_code = provider;
+    if (is_active !== undefined) query.is_active = is_active === 'true';
+
+    const games = await GameListTable.find(query)
+      .sort({ serial_number: 1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .lean();
+
+    const total = await GameListTable.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: games,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching games:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching games',
+      error: error.message
+    });
+  }
+};
+
+// Get game by ID
+exports.getGameById = async (req, res) => {
+  try {
+    const game = await GameListTable.findById(req.params.id);
+    if (!game) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: game
+    });
+  } catch (error) {
+    console.error('Error fetching game:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching game',
+      error: error.message
+    });
+  }
+};
+
+// Create new game
+exports.createGame = async (req, res) => {
+  try {
+    const gameData = req.body;
+
+    // Check if game already exists
+    const existingGame = await GameListTable.findOne({
+      g_code: gameData.g_code,
+      p_code: gameData.p_code
+    });
+
+    if (existingGame) {
+      return res.status(400).json({
+        success: false,
+        message: 'Game with this code and provider already exists'
+      });
+    }
+
+    const game = new GameListTable(gameData);
+    await game.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Game created successfully',
+      data: game
+    });
+  } catch (error) {
+    console.error('Error creating game:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating game',
+      error: error.message
+    });
+  }
+};
+
+// Update game
+exports.updateGame = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updatetimestamp: new Date() };
+
+    const game = await GameListTable.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!game) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Game updated successfully',
+      data: game
+    });
+  } catch (error) {
+    console.error('Error updating game:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating game',
+      error: error.message
+    });
+  }
+};
+
+// Delete game
+exports.deleteGame = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const game = await GameListTable.findByIdAndDelete(id);
+
+    if (!game) {
+      return res.status(404).json({
+        success: false,
+        message: 'Game not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Game deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting game:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting game',
+      error: error.message
+    });
+  }
+};
+
+
+// Get all categories
+exports.getAllCategories = async (req, res) => {
+  try {
+    console.log(req.query);
+    const { page = 1, limit = 10, search = '' } = req.query;
+    
+    const query = {};
+    if (search) {
+      query.$or = [
+        { category_name: { $regex: search, $options: 'i' } },
+        { category_code: { $regex: search, $options: 'i' } },
+        { g_type: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const categories = await Category.find(query)
+      .sort({ category_name: 1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .lean();
+
+    const total = await Category.countDocuments(query);
+
+    res.json({
+      success: true,
+      data: categories,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching categories',
+      error: error.message
+    });
+  }
+};
+
+// Get category by ID
+exports.getCategoryById = async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id);
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Category not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: category
+    });
+  } catch (error) {
+    console.error('Error fetching category:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching category',
+      error: error.message
+    });
+  }
+};
+
+// Create new category
+exports.createCategory = async (req, res) => {
+  try {
+    const { category_name, category_code, g_type, image, id_active = true } = req.body;
+
+    // Check if category already exists
+    const existingCategory = await Category.findOne({
+      $or: [
+        { category_name },
+        { category_code }
+      ]
+    });
+
+    if (existingCategory) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category with this name or code already exists'
+      });
+    }
+
+    const category = new Category({
+      category_name,
+      category_code,
+      g_type,
+      image,
+      id_active
+    });
+
+    await category.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Category created successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Error creating category:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating category',
+      error: error.message
+    });
+  }
+};
+
+// Update category
+exports.updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updatetimestamp: new Date() };
+
+    const category = await Category.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Category not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Category updated successfully',
+      data: category
+    });
+  } catch (error) {
+    console.error('Error updating category:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating category',
+      error: error.message
+    });
+  }
+};
+
+// Delete category
+exports.deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const category = await Category.findByIdAndDelete(id);
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Category not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Category deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting category',
+      error: error.message
+    });
+  }
+};

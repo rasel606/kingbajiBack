@@ -1,265 +1,132 @@
-// // // var jwt = require('jsonwebtoken');
-// // // const CreateService = async (req, dataModel) => {
-// // //     let reqBody = req.body;
-
-// // // console.log(reqBody)
-// // //     let datas = await dataModel.findOne({ email: req.body.email })
-
-
-// // //     if (!datas) {
-
-// // //         const { userId, phone, password ,countryCode,referredbyCode} = req.body;
-// // //     console.log(req.body)
-// // //     try {
-        
-// // //         // const hashedPassword = await bcrypt.hash(password, 10);
-// // //       const referredCode = Math.random().toString(36).substring(2, 8);
-// // //       const newUser = await dataModel.create({
-// // //         userId,
-// // //         phone,
-// // //         countryCode,
-// // //         password, // Hash this in production
-// // //         referredbyCode: referredbyCode || null,
-// // //         referredCode,
-// // //         referredLink: `http://localhost:3000/${referredCode}`,
-// // //       });
-
-      
-// // //      console.log("newUser",newUser)
-// // //      if(!newUser){
-// // //         const user =  await dataModel.aggregate([
-// // //             { $match: { userId } },
-// // //             {
-// // //               $project: {
-// // //                 userId: 1,
-// // //                 name: 1,
-// // //                 phone: 1,
-// // //                 countryCode:1,
-// // //                 balance: 1,
-// // //                 referredbyCode:1,
-// // //                 referredLink:1,
-// // //                 referredCode:1
-// // //               },
-// // //             },
-// // //           ]);
-
-
-
-// // //           console.log(user[0].userId);
-// // //           const token = jwt.sign({ id: user[0].userId }, "Kingbaji", { expiresIn: '1h' });
-// // //           console.log(token)
-// // //           return res.status(201).json({message: "Ac created successfully",token,user: user[0],
-            
-// // //           });
-// // //      }else{
-// // //           return  res.status(500).json({ error: error.message });
-// // //      }
-
-      
-
-
-
-      
-
-// // //     //   const token = jwt.sign({ id: user[0].userId }, "Kingbaji", { expiresIn: '1h' });
-
-// // //     //   res.status(201).json({
-// // //     //     message: "User created successfully",
-// // //     //     token,
-// // //     //     user: user[0],
-        
-// // //     //   });
-// // //     } catch (error) {
-// // //       res.status(500).json({ error: error.message });
-// // //     }
-// // //   }
-
-// // // }
-// // // module.exports = CreateService 
-
-
-// // const bcrypt = require('bcryptjs');
-// // const jwt = require('jsonwebtoken');
-// // const AppError = require('../utils/appError');
-
-// // const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-
-// // const generateToken = (userId) => {
-// //   return jwt.sign({ userId }, JWT_SECRET, {
-// //     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
-// //   });
-// // };
-
-// // const CreateService = async (req, dataModel) => {
-// //   const { userId, email, mobile, password} = req.body;
-
-// //   // 1. Check if user exists
-// //   const existingUser = await dataModel.findOne({
-// //     $or: [{ email }, { userId }]
-// //   });
-
-// //   if (existingUser) {
-// //     throw new AppError('User already exists with this email or userId', 400);
-// //   }
-
-// //   // 2. Hash password (schema pre-save hook is better, but we’ll hash here if not used)
-// //   const hashedPassword = await bcrypt.hash(password, 10);
-
-// //   // 3. Generate unique referral code
-// //   let referredCode;
-// //   let isUnique = false;
-// //   while (!isUnique) {
-// //     referredCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-// //     const exists = await dataModel.findOne({ referredCode });
-// //     if (!exists) isUnique = true;
-// //   }
-
-// //   // 4. Create user
-// //   const newUser = await dataModel.create({
-// //     userId,
-// //     email,
-// //     phone,
-// //     countryCode,
-// //     password: hashedPassword,
-// //     referredbyCode: referredbyCode || null,
-// //     referredCode,
-// //     referredLink: `http://localhost:3000/${referredCode}`,
-// //   });
-
-// //   // 5. Return user data + token
-// //   return {
-// //     userId: newUser.userId,
-// //     email: newUser.email,
-// //     phone: newUser.phone,
-// //     countryCode: newUser.countryCode,
-// //     referredCode: newUser.referredCode,
-// //     referredLink: newUser.referredLink,
-// //     token: generateToken(newUser.userId),
-// //   };
-// // };
-
-// // module.exports = { CreateService };
-
-
-// const bcrypt = require('bcryptjs');
-// const jwt = require('jsonwebtoken');
-// const AppError = require('../utils/appError');
-
-// const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-
-// const generateToken = (userId) => {
-//   return jwt.sign({ userId }, JWT_SECRET, {
-//     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
-//   });
-// };
-
-// const CreateService = async (req, dataModel) => {
-//   const { userId, email, mobile, password } = req.body;
-
-//   // 1. Check if user exists
-//   const existingUser = await dataModel.findOne({
-//     $or: [{ email }, { userId }]
-//   });
-
-//   if (existingUser) {
-//     throw new AppError('User already exists with this email or userId', 400);
-//   }
-
-//   // 2. Hash password (schema pre-save hook is better, but we’ll hash here if not used)
-//   const hashedPassword = await bcrypt.hash(password, 10);
-
-//   // 3. Generate unique referral code
-//   let referredCode;
-//   let isUnique = false;
-//   while (!isUnique) {
-//     referredCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-//     const exists = await dataModel.findOne({ referredCode });
-//     if (!exists) isUnique = true;
-//   }
-
-//   // 4. Create user
-//   const newUser = await dataModel.create({
-//     userId,
-//     email,
-//     mobile,
-//     countryCode,
-//     password: hashedPassword,
-//     referredCode,
-
-//   });
-
-//   // 5. Return user data + token
-//   return {
-//     userId: newUser.userId,
-//     email: newUser.email,
-//     mobile: newUser.mobile,
-//     token: generateToken(newUser.userId),
-//   };
-// };
-
-// module.exports = { CreateService };
-
-
-
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const AppError = require('../utils/appError');
+const crypto = require('crypto');
 
-const JWT_SECRET =  "Kingbaji";
+const JWT_SECRET = "Kingbaji";
 
-const generateToken = (email) => {
-  return jwt.sign({ email }, JWT_SECRET, {
+// ডিভাইস ID জেনারেট করার ফাংশন
+const generateDeviceId = (req) => {
+  return crypto.createHash('md5')
+    .update(req.ip + req.headers['user-agent'])
+    .digest('hex');
+};
+
+// টোকেন জেনারেট ফাংশন (ডিভাইস ID সহ)
+const generateToken = (email, deviceId) => {
+  return jwt.sign({ email, deviceId }, JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   });
 };
 
-const createUser = async (req, dataModel) => {
-  const { userId, email, password, mobile,refeeredBy } = req.body;
+// const createUser = async (req, dataModel) => {
+//   const { email, password, phone, referredBy, userId, } = req.body;
+
+//   // Check if user exists
+//   const existingUser = await dataModel.findOne({ $or: [{ email }, { phone }, { userId }] });
+//   if (existingUser) {
+//     throw new AppError("User already exists with this email or mobile", 400);
+//   }
+
+//   // Generate unique userId and referralCode
+//   let referralCode;
+//   let unique = false;
+//   while (!unique) {
+//     referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+//     const exists = await dataModel.findOne({ referralCode });
+//     if (!exists) unique = true;
+//   }
+
+//   // ডিভাইস ID জেনারেট করুন (লগিনের জন্য প্রস্তুত)
+//   const deviceId = generateDeviceId(req);
+
+//   // Create new user (pre-save hook will hash password)
+//   const newUser = await dataModel.create({
+//     email,
+//     phone,
+//     password, // raw password, hook will hash
+//     userId: userId || referralCode, // যদি userId দেয়া না থাকে তাহলে referralCode ব্যবহার করুন
+//     referralCode,
+//     referredBy,
+    
+//     // সেশন ডাটা (ইনিশিয়ালি খালি)
+//     currentSession: null,
+//     isLoggedIn: false
+//   });
+
+//   // Generate token (লগিনের জন্য প্রস্তুত)
+//   const token = generateToken(newUser.email, deviceId);
+
+//   return {
+//     success: true,
+//     message: "User created successfully",
+//     data: {
+//       role: newUser.role,
+//       user: newUser,
+//       token, // ক্লায়েন্ট লগিন করতে এই টোকেন ব্যবহার করতে পারে
+//       deviceId // ক্লায়েন্ট স্টোর করার জন্য
+//     }
+//   };
+// };
+
+const createUser = async (req, dataModel, userType) => {
+  const { email, password, firstName, mobile, referredBy, userId, lastName, permissions } = req.body;
 
   // Check if user exists
-  const existingUser = await dataModel.findOne({ $or: [{ email }, { userId }] });
-  console.log(existingUser);
-  if (existingUser) {
-    throw new AppError("User already exists with this email or userId", 400);
-  }
-
-  // Hash password (schema pre-save will do it if implemented)
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Generate unique referral code
-  let referredCode;
-  let isUnique = false;
-  while (!isUnique) {
-    referredCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const exists = await dataModel.findOne({ referredCode });
-    if (!exists) isUnique = true;
-  }
-
-    
-  // Create user
-  const newUser = await dataModel.create({
-    userId:referredCode,
-    email,
-    mobile,
-    password: hashedPassword, // safe
-    referredCode,
-    refeeredBy
+  const existingUser = await dataModel.findOne({ 
+    $or: [{ email }, { userId }, { mobile }] 
   });
+  
+  if (existingUser) {
+    throw new AppError(`${userType} already exists with this email, mobile or userId`, 400);
+  }
 
-  // Return response object
+  // Generate unique userId if not provided
+  let finalUserId = userId;
+  if (!finalUserId) {
+    let isUnique = false;
+    while (!isUnique) {
+      const prefix = userType === 'Admin' ? 'ADM' : userType === 'SubAdmin' ? 'SUB' : 'AFF';
+      finalUserId = prefix + Math.random().toString(36).substring(2, 8).toUpperCase();
+      const exists = await dataModel.findOne({ userId: finalUserId });
+      if (!exists) isUnique = true;
+    }
+  }
+
+  // Create user data object
+  const userData = {
+    email,
+    password,
+    firstName,
+    mobile,
+    userId: finalUserId,
+    referredBy
+  };
+
+  // Add optional fields
+  if (lastName) userData.lastName = lastName;
+  if (permissions) userData.permissions = permissions;
+  if (userType === 'SubAdmin' && req.admin) {
+    userData.createdBy = req.admin._id;
+  }
+
+  // Create new user
+  const newUser = await dataModel.create(userData);
+  const CreatedUser = await dataModel.findOne({ _id: newUser.createdBy }) || 'Self-registered';
+  console.log(`${userType} created: ${newUser.email} by ${CreatedUser}`);
+  // Generate token (লগিনের জন্য প্রস্তুত)
+  const deviceId = generateDeviceId(req);
+  const token = generateToken(newUser.email, deviceId, newUser.role);
+
   return {
-    message: "User created successfully",
-    data: {
-      userId: newUser.userId,
-      email: newUser.email,
-      mobile: newUser.mobile,
-      referredCode: newUser.referredCode,
-      token: generateToken(newUser.email),
-      role: newUser.role
-    },
     success: true,
-    
+    message: `${userType} created successfully`,
+    data: {
+      user: CreatedUser,
+      token,
+      deviceId
+    }
   };
 };
 
-module.exports = { createUser };
+module.exports = { createUser, generateToken, generateDeviceId };

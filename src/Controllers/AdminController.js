@@ -1,5 +1,5 @@
-const bcrypt = require('bcryptjs');
-
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
 const AdminModel = require('../Models/AdminModel')
@@ -37,7 +37,15 @@ const SubAdmin = require('../Models/SubAdminModel');
 const Category = require('../Models/Category');
 const SocialLink = require('../Models/SocialLink');
 const BettingHistory = require('../Models/BettingHistory');
-const { loginUser } = require('../Services/LoginService');
+const {
+  loginUser,
+  getUserProfile,
+  verifyUserSession,
+  logoutUser,
+  forceLogoutUser,
+  getActiveSessions,
+  requestPasswordReset,
+  resetUserPassword } = require('../Services/LoginService');
 const { AdminProfile } = require('../Services/LoginService');
 const { getUserListServices } = require('../Services/getUserListServices');
 const { getReferralData } = require('../Services/getReferralOwnerService');
@@ -68,85 +76,213 @@ const CreateGateWayService = require('../Services/CreateGateWayService');
 
 
 
-// const SportsBet = require('../Models/OddSportsTable')
+
+
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
-    try {
-        console.log("📥 Creating admin with data:", req.body);
-        
-        let dataModel = AdminModel;
-        const result = await CreateService.createUser(req, dataModel);
-        
-        if (result.success) {
-            // Create payment gateways for the new admin
-            const gatewayResponse = await CreateGateWayService(result.data);
-
-            console.log("✅ Admin created successfully");
-            console.log("✅ Gateway creation:", gatewayResponse.message);
-
-            res.status(201).json({
-                data: result.data,
-                gateway: gatewayResponse,
-                message: result.message,
-                success: true,
-            });
-        } else {
-            // If user creation failed, pass to error handler
-            return next(new AppError(result.message, 400));
-        }
-    } catch (err) {
-        console.error("❌ Error in CreateAdmin:", err);
-        next(err);
-    }
-});
-
-// Check if admin exists endpoint
-exports.CheckAdminExists = catchAsync(async (req, res, next) => {
-    try {
-        const existingAdmin = await AdminModel.findOne({ 
-            $or: [
-                { email: req.body.email },
-                { mobile: req.body.mobile },
-                { userId: req.body.userId }
-            ]
-        });
-
-        if (existingAdmin) {
-            return res.status(200).json({
-                exists: true,
-                message: "Admin already exists with this email, mobile, or userId",
-                data: {
-                    email: existingAdmin.email,
-                    mobile: existingAdmin.mobile,
-                    userId: existingAdmin.userId
-                }
-            });
-        }
-
-        res.status(200).json({
-            exists: false,
-            message: "No admin found with these credentials"
-        });
-    } catch (error) {
-        next(error);
-    }
-});
-
-
-exports.AdminLogin = catchAsync(async (req, res, next) => {
   try {
-    console.log(req.body)
-    const result = await loginUser(req, AdminModel);
-    console.log(result)
-    res.json({ data: result.data, message: result.message, success: result.success });
+    console.log("📥 Creating admin with data:", req.body);
+    
+    const result = await createUser(req, AdminModel, 'Admin');
+    
+    if (result.success) {
+      console.log("✅ Admin created successfully");
+
+      // Set cookies
+      res.cookie('adminToken', result.data.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000
+      });
+
+      res.cookie('adminDeviceId', result.data.deviceId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000
+      });
+
+      res.status(201).json({
+        data: result.data,
+        message: result.message,
+        success: true,
+      });
+    }
   } catch (err) {
     next(err);
   }
 });
-exports.GetAdminProfile = catchAsync(async (req, res, next) => {
-  let dataModel = AdminModel;
-  let result = await AdminProfile(req, dataModel);
-  res.json({ data: result.data, message: result.message, success: result.success });
+
+// Check if admin exists endpoint
+// exports.CheckAdminExists = catchAsync(async (req, res, next) => {
+//   try {
+//     const existingAdmin = await AdminModel.findOne({
+//       $or: [
+//         { email: req.body.email },
+//         { mobile: req.body.mobile },
+//         { userId: req.body.userId }
+//       ]
+//     });
+
+//     if (existingAdmin) {
+//       return res.status(200).json({
+//         exists: true,
+//         message: "Admin already exists with this email, mobile, or userId",
+//         data: {
+//           email: existingAdmin.email,
+//           mobile: existingAdmin.mobile,
+//           userId: existingAdmin.userId
+//         }
+//       });
+//     }
+
+//     res.status(200).json({
+//       exists: false,
+//       message: "No admin found with these credentials"
+//     });
+//   } catch (error) {
+//     next(error);
+//   }
+// });
+
+
+// Admin login
+exports.AdminLogin = catchAsync(async (req, res, next) => {
+  try {
+    console.log("📥 Login admin with data:", req.body);
+    
+    const result = await loginUser(req, AdminModel, 'Admin');
+    console.log("📥 Login admin with data after:",result)
+    // Set cookies
+    res.cookie('adminToken', result.data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    res.cookie('adminDeviceId', result.data.deviceId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    console.log("✅ Admin login successful for device:", result.data.deviceId);
+    res.json({ 
+      data: result.data, 
+      message: result.message, 
+      success: result.success 
+    });
+  } catch (err) {
+    next(err);
+  }
 });
+
+
+// Admin logout
+exports.AdminLogout = catchAsync(async (req, res, next) => {
+  try {
+    const result = await logoutUser(req, AdminModel, 'Admin');
+    
+    // Clear cookies
+    res.clearCookie('adminToken');
+    res.clearCookie('adminDeviceId');
+    
+    res.json({ 
+      message: result.message, 
+      success: result.success 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.GetAdminProfile = catchAsync(async (req, res, next) => {
+  try {
+    await verifyUserSession(req, AdminModel, 'Admin');
+    const result = await getUserProfile(req, AdminModel, 'Admin');
+    
+    res.json({ 
+      data: result.data, 
+      message: result.message, 
+      success: result.success 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get active sessions (Admin only)
+exports.GetActiveAdminSessions = catchAsync(async (req, res, next) => {
+  try {
+    const result = await getActiveSessions(AdminModel, 'Admin');
+    
+    res.json({ 
+      data: result.data, 
+      count: result.count,
+      message: result.message, 
+      success: result.success 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// Force logout users
+exports.ForceLogoutAdmin = catchAsync(async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const result = await forceLogoutUser(userId, AdminModel, 'Admin');
+    
+    res.json({ 
+      message: result.message, 
+      previousDevice: result.previousDevice,
+      success: result.success 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// Check if user exists
+exports.CheckAdminExists = catchAsync(async (req, res, next) => {
+  try {
+    const existingAdmin = await AdminModel.findOne({ 
+      $or: [
+        { email: req.body.email },
+        { mobile: req.body.mobile },
+        { userId: req.body.userId }
+      ]
+    });
+
+    if (existingAdmin) {
+      return res.status(200).json({
+        exists: true,
+        message: "Admin already exists with this email, mobile, or userId",
+        data: {
+          email: existingAdmin.email,
+          mobile: existingAdmin.mobile,
+          userId: existingAdmin.userId
+        }
+      });
+    }
+
+    res.status(200).json({
+      exists: false,
+      message: "No admin found with these credentials"
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+
+
+
 exports.AdminUpdate = async (req, res) => {
   let dataModel = AdminModel;
   let result = await CreateService.updateAdminProfile(req, dataModel);

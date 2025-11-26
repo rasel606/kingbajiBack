@@ -7,26 +7,15 @@ const validate = require('../MiddleWare/validation');
 
 const router = express.Router();
 
-router.post('/register', [
-  body('username')
-    .isLength({ min: 3 })
-    .withMessage('Username must be at least 3 characters long'),
-  body('email')
-    .isEmail()
-    .withMessage('Please enter a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
-  body('firstName')
-    .notEmpty()
-    .withMessage('First name is required'),
-  body('lastName')
-    .notEmpty()
-    .withMessage('Last name is required'),
-  body('dateOfBirth')
-    .isDate()
-    .withMessage('Valid date of birth is required')
-], validate, register);
+router.post('/register',  validate,
+(req, res, next) => {
+  console.log("req",req.body)
+
+  
+  next();
+}
+,
+register);
 
 router.post('/login', [
   body('userId')

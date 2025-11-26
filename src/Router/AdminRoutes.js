@@ -5,7 +5,7 @@ const { body, query, validationResult } = require('express-validator');
 const SubAdminControllers = require('../Controllers/SubAdminControllers');
 const AdminController = require('../Controllers/AdminController');
 const AgentController = require('../Controllers/AgentController');
-const auth = require('../MiddleWare/subAdminAuth');
+const auth = require('../MiddleWare/AdminAuth');
 const validate = require('../MiddleWare/validation');
 
 const router = express.Router();
