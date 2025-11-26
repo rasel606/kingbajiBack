@@ -134,11 +134,11 @@ const generateToken = (email, deviceId) => {
 // Register new user
 exports.register = catchAsync(async (req, res, next) => {
   console.log("req.body", req.body);
-  const { username, email, password, firstName, lastName, dateOfBirth, referredBy } = req.body;
+  const { userId , email, password, firstName, lastName, dateOfBirth, referredBy } = req.body;
 
   // Check if user exists
   const existingUser = await AffiliateModel.findOne({
-    $or: [{ email }, { userId: username }]
+    $or: [{ email }, { userId: userId }]
   });
 
   if (existingUser) {
@@ -164,7 +164,7 @@ exports.register = catchAsync(async (req, res, next) => {
 
   // Create affiliate user
   const user = await AffiliateModel.create({
-    userId: username,
+    userId,
     email,
     password,
     firstName,

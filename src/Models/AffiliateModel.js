@@ -143,30 +143,42 @@ AffiliateModelSchema.virtual('fullName').get(function () {
 
 // Password hashing middleware
 AffiliateModelSchema.pre('save', async function(next) {
-  if (!this.userId) {
-    let isUnique = false;
-    while (!isUnique) {
-      const newUserId = 'ADM' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const exists = await mongoose.model('AffiliateModel').findOne({ userId: newUserId });
-      if (!exists) {
-        this.userId = newUserId;
-        isUnique = true;
+  try {
+    // Generate unique userId if missing
+    if (!this.userId) {
+      let isUnique = false;
+      while (!isUnique) {
+        const newUserId = 'ADM' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const exists = await mongoose.model('AffiliateModel').findOne({ userId: newUserId });
+        if (!exists) {
+          this.userId = newUserId;
+          isUnique = true;
+        }
       }
     }
-  }
-  
-  if (!this.referralCode) {
-    let isUnique = false;
-    while (!isUnique) {
-      const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const exists = await mongoose.model('AffiliateModel').findOne({ referralCode });
-      if (!exists) {
-        this.referralCode = referralCode;
-        isUnique = true;
+
+    // Generate unique referralCode if missing
+    if (!this.referralCode) {
+      let isUnique = false;
+      while (!isUnique) {
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const exists = await mongoose.model('AffiliateModel').findOne({ referralCode: code });
+        if (!exists) {
+          this.referralCode = code;
+          isUnique = true;
+        }
       }
     }
+
+    // Hash password if modified
+    if (this.isModified('password')) {
+      this.password = await bcrypt.hash(this.password, 12);
+    }
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 
@@ -290,7 +302,7 @@ AffiliateModelSchema.methods.updateLogoutHistory = function (deviceId) {
 
 // Indexes for better performance
 AffiliateModelSchema.index({ email: 1, unique: true, sparse: true });
-AffiliateModelSchema.index({ userId: 1 , unique: true, sparse: true });
+AffiliateModelSchema.index({ userId: 1 , unique: true });
 AffiliateModelSchema.index({ referralCode: 1 , unique: true, sparse: true });
 AffiliateModelSchema.index({ referredBy: 1 });
 AffiliateModelSchema.index({ directAdmin: 1 });
