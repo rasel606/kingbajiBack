@@ -2,9 +2,9 @@
 const User = require('../Models/User');
 const Affiliate = require('../Models/AffiliateModel');
 const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
-const { getPeriodDates } = require('../utils/periodUtils');
+const AppError = require('../Utils/appError');
+const catchAsync = require('../Utils/catchAsync');
+const { getPeriodDates } = require('../Utils/periodUtils');
 
 // Get user profile
 exports.getProfile = catchAsync(async (req, res, next) => {

@@ -5,8 +5,8 @@ const BettingHistory = require('../Models/BettingHistory');
 const TransactionModel = require('../Models/TransactionModel');
 const UserBonus = require('../Models/UserBonus');
 const moment = require('moment');
-const { getPeriodDates } = require('../utils/periodUtils');
-const catchAsync = require('../utils/catchAsync');
+const { getPeriodDates } = require('../Utils/periodUtils');
+const catchAsync = require('../Utils/catchAsync');
 // Custom error class for application errors
 class AppError extends Error {
   constructor(message, statusCode) {

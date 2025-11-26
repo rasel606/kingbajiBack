@@ -296,7 +296,7 @@ require('dotenv').config();
 // Import routes
 const router = require('./src/Router/Api');
 const cookieHandler = require('./src/MiddleWare/cookieMiddleware');
-const logger = require('./src/utils/logger');
+const logger = require('./src/Utils/logger');
 const AdminAurth = require('./src/Router/AdminAurth');
 const transactionRoutes = require('./src/Router/transactionRoutes');
 const subAdminRoutes = require('./src/Router/subAdminRoutes');

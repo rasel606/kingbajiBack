@@ -1,6 +1,6 @@
 // controllers/paymentMethodController.js
 
-const { getPaymentMethodsForUser } = require('../utils/getPaymentMethods');
+const { getPaymentMethodsForUser } = require('../Utils/getPaymentMethods');
 
 const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
 const User = require('../Models/User');
@@ -9,7 +9,7 @@ const {
     getPaymentMethodsByLevel,
     getReferralOwner,
     getUserWithReferralLevels
-} = require('../utils/paymentMethodUtils');
+} = require('../Utils/paymentMethodUtils');
 
 // Get payment methods for deposit (user perspective)
 exports.GetPaymentMethodsUser = async (req, res) => {

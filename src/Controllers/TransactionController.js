@@ -15,7 +15,7 @@ const BettingHistory = require('../Models/BettingHistory');
 const AffiliateModel = require('../Models/AffiliateModel');
 const AdminModel = require('../Models/AdminModel');
 const { getUserWithReferralLevels, getReferralOwner }= require('../Services/getReferralOwner');
-const catchAsync = require('../utils/catchAsync');
+const catchAsync = require('../Utils/catchAsync');
 // exports.addTransaction = async (req, res) => {
 //   try {
 //     const { userId, amount, type } = req.body;

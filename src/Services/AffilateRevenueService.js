@@ -1,8 +1,8 @@
 const BettingHistory = require('../Models/BettingHistory');
 const User = require('../Models/User');
 const Affiliate = require('../Models/AffiliateModel');
-const { getPeriodDates } = require('../utils/periodUtils');
-const redisClient = require('../utils/redisClient');
+const { getPeriodDates } = require('../Utils/periodUtils');
+const redisClient = require('../Utils/redisClient');
 const AffiliateEarningsService = require('../Services/AffiliateEarningsService');
 
 // Cache configuration

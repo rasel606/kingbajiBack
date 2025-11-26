@@ -28,8 +28,8 @@ const AffiliateUserEarnings = require('../Models/AffiliateUserEarnings');
 const { ref } = require('joi');
 const VIPConfig = require('../Models/VIPConfig');
 const VipPointTransaction = require('../Models/VipPointTransaction');
-const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
+const catchAsync = require('../Utils/catchAsync');
+const AppError = require('../Utils/appError');
 
 const TransactionModel = require('../Models/TransactionModel');
 const notificationController = require('../Controllers/notificationController');

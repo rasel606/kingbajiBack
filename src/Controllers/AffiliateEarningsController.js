@@ -1,7 +1,7 @@
 const EarningsService = require('../Services/AffiliateEarningsService');
 const AffiliateRevenueService = require('../Services/AffilateRevenueService');
-const catchAsync = require('../utils/catchAsync');
-const AppError = require('../utils/appError');
+const catchAsync = require('../Utils/catchAsync');
+const AppError = require('../Utils/appError');
 const CommissionService = require('../services/CommissionService');
 exports.getEarningsData = catchAsync(async (req, res, next) => {
   const { userId } = req.user;

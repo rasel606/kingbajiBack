@@ -4,8 +4,8 @@ const BettingHistory = require('../Models/BettingHistory');
 const UserBonus = require('../Models/UserBonus');
 const Transaction = require('../Models/TransactionModel');
 const User = require('../Models/User');
-const { getPeriodDates } = require('../utils/periodUtils');
-const redisClient = require('../utils/redisClient');
+const { getPeriodDates } = require('../Utils/periodUtils');
+const redisClient = require('../Utils/redisClient');
 
 // Cache configuration
 const CACHE_TTL = process.env.CACHE_TTL || 300; // 5 minutes in seconds

@@ -1,6 +1,6 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const AppError = require('../utils/appError');
+const AppError = require('../Utils/appError');
 const AdminModel = require('../Models/AdminModel');
 
 const JWT_SECRET = "Kingbaji";

@@ -1,5 +1,5 @@
 const KYCModal = require('../Models/KYCModal');
-const { uploadToImageBB } = require('../utils/imageUpload');
+const { uploadToImageBB } = require('../Utils/imageUpload');
 
 // Get KYC data for a user
 const getKYCData = async (req, res) => {

@@ -1,7 +1,7 @@
 // controllers/linkController.js
 const Link = require('../Models/LinkModal');
 // const Domain = require('../Models/DomainModal');
-const { generateShortCode, generateAffiliateLink, getLandingPageName } = require('../utils/helpers');
+const { generateShortCode, generateAffiliateLink, getLandingPageName } = require('../Utils/helpers');
 // const generateQRCode = require('../utils/generateQR');
 const QRCode = require('qrcode'); // Add this import at the top
 // Get all links for affiliate

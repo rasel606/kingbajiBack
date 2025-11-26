@@ -5,7 +5,7 @@ const express = require('express');
 const User = require("../Models/User");
 const SubAdmin = require('../Models/SubAdminModel');
 const AdminModel = require('../Models/AdminModel');
-const catchAsync = require('../utils/catchAsync');
+const catchAsync = require('../Utils/catchAsync');
 
 exports.GetRefferralUserList = async (req, res) => {
 

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const AppError = require('../utils/appError');
+const AppError = require('../Utils/appError');
 const crypto = require('crypto');
 
 const JWT_SECRET = "Kingbaji";

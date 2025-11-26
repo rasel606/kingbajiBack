@@ -2,8 +2,8 @@
 const Withdrawal = require('../Models/AffiliateWithdrawal');
 const Affiliate = require('../Models/AffiliateModel');
 const Transaction = require('../Models/TransactionModel');
-const AppError = require('../utils/appError');
-const catchAsync = require('../utils/catchAsync');
+const AppError = require('../Utils/appError');
+const catchAsync = require('../Utils/catchAsync');
 
 // Get withdrawal history
 exports.getWithdrawalHistory = catchAsync(async (req, res, next) => {

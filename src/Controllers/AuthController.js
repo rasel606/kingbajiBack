@@ -2,7 +2,7 @@ const User = require('../Models/User');
 const AuthService = require('../Services/AuthService');
 const UserService = require('../Services/userService');
 const ApiService = require('../Services/apiService');
-const { validateRegistration, validateLogin } = require('../utils/validators');
+const { validateRegistration, validateLogin } = require('../Utils/validators');
 
 exports.register = async (req, res) => {
   try {

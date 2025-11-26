@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const AdminController = require('../Controllers/AdminController');
 const auth = require('../MiddleWare/AdminAuth');
 const validate = require('../MiddleWare/validation');
-const AppError = require('../utils/appError');
+const AppError = require('../Utils/appError');
 const router = express.Router();
 
 router.post('/register_admin', [
