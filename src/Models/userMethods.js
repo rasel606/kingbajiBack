@@ -147,6 +147,18 @@ module.exports = function addUserMethods(userSchema) {
     this.balance -= amount;
     return this.save();
   };
+  // In your User model (likely in models/User.js), ensure you have:
+UserSchema.methods.incrementLoginAttempts = function() {
+    this.login_attempts += 1;
+    this.last_attempt = new Date();
+    return this.save();
+};
+
+UserSchema.methods.updateLoginInfo = function() {
+    this.last_login = new Date();
+    this.login_attempts = 0; // Reset attempts on successful login
+    return this.save();
+};
 
   // Update login info
   userSchema.methods.updateLoginInfo = function(ipAddress) {
