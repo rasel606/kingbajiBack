@@ -245,7 +245,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
   // Reset login attempts on successful login
   if (user.incrementLoginAttempts) {
-    await dataModel.updateOne(
+    await AffiliateModel.updateOne(
       { _id: user._id }, 
       { $set: { loginAttempts: 0 }, $unset: { lockUntil: 1 } }
     );

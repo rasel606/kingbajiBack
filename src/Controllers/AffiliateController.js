@@ -267,7 +267,7 @@ exports.getProfile = async (req, res) => {
 
   console.log("user get",req.body)
   try {
-    const user = await AffiliateModel.find(req.body.user);
+    const user = await AffiliateModel.findOne({userId:req.user});
     
     if (!user) {
       return res.status(404).json({ status: 'fail', message: 'User not found' });
