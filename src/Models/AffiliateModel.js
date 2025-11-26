@@ -143,42 +143,19 @@ AffiliateModelSchema.virtual('fullName').get(function () {
 
 // Password hashing middleware
 AffiliateModelSchema.pre('save', async function(next) {
-  try {
-    // Generate unique userId if missing
-    if (!this.userId) {
-      let isUnique = false;
-      while (!isUnique) {
-        const newUserId = 'ADM' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        const exists = await mongoose.model('AffiliateModel').findOne({ userId: newUserId });
-        if (!exists) {
-          this.userId = newUserId;
-          isUnique = true;
-        }
+
+  if (!this.referralCode) {
+    let isUnique = false;
+    while (!isUnique) {
+      const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const exists = await mongoose.model('AffiliateModel').findOne({ referralCode });
+      if (!exists) {
+        this.referralCode = referralCode;
+        isUnique = true;
       }
     }
-
-    // Generate unique referralCode if missing
-    if (!this.referralCode) {
-      let isUnique = false;
-      while (!isUnique) {
-        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        const exists = await mongoose.model('AffiliateModel').findOne({ referralCode: code });
-        if (!exists) {
-          this.referralCode = code;
-          isUnique = true;
-        }
-      }
-    }
-
-    // Hash password if modified
-    if (this.isModified('password')) {
-      this.password = await bcrypt.hash(this.password, 12);
-    }
-
-    next();
-  } catch (err) {
-    next(err);
   }
+  next();
 });
 
 
