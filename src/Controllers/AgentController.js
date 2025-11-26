@@ -282,7 +282,7 @@ const { ref } = require('joi');
 const VIPConfig = require('../Models/VIPConfig');
 const VipPointTransaction = require('../Models/VipPointTransaction');
 const catchAsync = require('../Utils/catchAsync');
-const AppError = require('../Utils/appError');
+const AppError = require('../Utils/AppError');
 
 const TransactionModel = require('../Models/TransactionModel');
 const notificationController = require('../Controllers/notificationController');

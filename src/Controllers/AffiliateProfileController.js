@@ -2,7 +2,7 @@
 const User = require('../Models/User');
 const Affiliate = require('../Models/AffiliateModel');
 const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-const AppError = require('../Utils/appError');
+const AppError = require('../Utils/AppError');
 const catchAsync = require('../Utils/catchAsync');
 const { getPeriodDates } = require('../Utils/periodUtils');
 
