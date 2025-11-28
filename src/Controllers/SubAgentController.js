@@ -4,12 +4,13 @@ const axios = require("axios");
 const crypto = require("crypto");
 const SubAgentModel = require("../Models/SubAgentModel");
 // const User = require("../Models/User");
-
+const catchAsync = require('../Utils/catchAsync');
+const AppError = require('../Utils/AppError');
 
 const saltRounds = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
-exports.AgentRegister  = async (req, res) => {
+exports.AgentRegister  = catchAsync(async (req, res, next)=> {
   try {
      console.log("📥 Creating admin with data:", req.body);
  
@@ -44,7 +45,7 @@ exports.AgentRegister  = async (req, res) => {
    } catch (err) {
      next(err);
    }
-};
+});
 
 
 
