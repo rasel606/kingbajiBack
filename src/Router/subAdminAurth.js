@@ -7,7 +7,7 @@ const validate = require('../MiddleWare/validation');
 
 const router = express.Router();
 
-router.post('/register_admin', [
+router.post('/register_Sub_admin', [
   body('username')
     .isLength({ min: 3 })
     .withMessage('Username must be at least 3 characters long'),

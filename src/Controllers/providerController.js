@@ -3,7 +3,7 @@ const BetProviderTable = require('../Models/BetProviderTable');
 // Get all providers
 exports.getAllProviders = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search = '', g_type } = req.query;
+    const {  search = '', g_type } = req.query;
     
     const query = {};
     if (search) {
@@ -18,23 +18,23 @@ exports.getAllProviders = async (req, res) => {
       query.g_type = { $in: [g_type] };
     }
 
-    const providers = await BetProviderTable.find(query)
-      .sort({ name: 1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .lean();
+    const providers = await BetProviderTable.find({})
+    //   .sort({ name: 1 })
+    //   .limit(limit * 1)
+    //   .skip((page - 1) * limit)
+    //   .lean();
 
-    const total = await BetProviderTable.countDocuments(query);
-
+    const total = await BetProviderTable.countDocuments();
+console.log(total);
     res.json({
       success: true,
       data: providers,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        pages: Math.ceil(total / limit)
-      }
+    //   pagination: {
+    //     page: parseInt(page),
+    //     limit: parseInt(limit),
+    //     total,
+    //     pages: Math.ceil(total / limit)
+    //   }
     });
   } catch (error) {
     console.error('Error fetching providers:', error);

@@ -22,6 +22,7 @@ router.get('/New-table-Games-with-Providers', getPlayerUserGameData.getCategorie
 
 router.get('/New-Games-with-Providers-By-Category', getPlayerUserGameData.getGamesWithProvidersByCategory);
 router.get('/get-games-by-category', getPlayerUserGameData.getGamesWithProvidersByCategory);
+router.get('/get-games', getPlayerUserGameData.getAllGames);
 router.post('/move-games', GameMovementController.moveGamesToAnotherCategoryAndUpdateProviderList);
 
 // GET /api/categories - Get all categories

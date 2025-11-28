@@ -14,7 +14,7 @@ const AffiliateModelSchema = new mongoose.Schema({
 
   // Referral System
   referralCode: { type: String },
-  referredBy: { type: String },
+  referredBy: { type: String, default:null },
 
   // Status & Verification
   status: { type: String, default: 'Active', enum: ['Active', 'Inactive', 'Suspended', 'Pending'] },

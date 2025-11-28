@@ -286,7 +286,7 @@ const AppError = require('../Utils/AppError');
 
 const TransactionModel = require('../Models/TransactionModel');
 const notificationController = require('../Controllers/notificationController');
-const SubAdmin = require('../Models/SubAdminModel');
+// const AgentModel = require('../Models/AgentModel');
 const Category = require('../Models/Category');
 const SocialLink = require('../Models/SocialLink');
 const BettingHistory = require('../Models/BettingHistory');
@@ -296,14 +296,38 @@ const { getUserListServices } = require('../Services/getUserListServices');
 const { getReferralData } = require('../Services/getReferralOwnerService');
 const { processTransaction } = require('../Services/processTransactionService');
 // const SportsBet = require('../Models/OddSportsTable')
-exports.CreateAdmin = catchAsync(async (req, res, next) => {
-  try {
-    console.log(req.body)
-    let dataModel = AdminModel;
-    let data = req.body
-    const result = await CreateService.createUser(req, dataModel);
-    console.log(result)
-    res.json({ data: result.data, message: result.message, success: result.success });
+exports.AgentRegister = catchAsync(async (req, res, next) => {
+ try {
+    console.log("📥 Creating admin with data:", req.body);
+
+    const result = await createUser(req, AgentModel, 'Admin');
+
+    if (result.success) {
+      console.log("✅ Admin created successfully", result);
+      const getway = await CreateGateWayService(result.data.user);
+
+      // Set cookies
+      res.cookie('adminToken', result.data.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000
+      });
+
+      res.cookie('adminDeviceId', result.data.deviceId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 24 * 60 * 60 * 1000
+      });
+
+      res.status(201).json({
+        data: result.data,
+        message: result.message,
+        success: getway.message,
+        success: true,
+      });
+    }
   } catch (err) {
     next(err);
   }

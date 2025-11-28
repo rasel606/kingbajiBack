@@ -9,6 +9,8 @@ const { getUserWithReferralLevels, getReferralOwner } = require("./getReferralOw
 // ✅ Process Transaction (Deposit / Withdraw / Reject) with Affiliate bonus deduction
 const processTransaction = async ({ userId, action, transactionID, referralUser }) => {
     // 1️⃣ User & Referral Validation
+
+    console.log("processTransaction", userId, action, transactionID, referralUser);
     const user = await getUserWithReferralLevels(userId);
     if (!user) throw new Error("User not found or referral mismatch");
 
@@ -47,7 +49,7 @@ const processTransaction = async ({ userId, action, transactionID, referralUser 
     }
 
     // ✅ Deposit Transaction
-    if (parseInt(type) === 0) {
+    if (parseInt(type) === 1) {
         let bonusAmount = 0,
             bonusId = null,
             turnoverRequirement = 0;
@@ -129,36 +131,36 @@ const processTransaction = async ({ userId, action, transactionID, referralUser 
             "approved",
             { amount: transaction.amount, transactionID }
         );
-
+consolt.log({ status: 1, message: "has been approvedtransaction", transaction })
         return { status: 1, transaction };
     }
 
     // ✅ Withdraw Transaction
-    if (parseInt(type) === 1) {
-        if (user.balance < baseAmount) throw new Error("User balance insufficient");
+//     if (parseInt(type) === 2) {
+//         if (user.balance < baseAmount) throw new Error("User balance insufficient");
 
-        user.balance -= baseAmount;
-        paymentOwner.balance += baseAmount;
+//         user.balance -= baseAmount;
+//         paymentOwner.balance += baseAmount;
 
-        transaction = await TransactionModel.findOneAndUpdate(
-            { transactionID },
-            { status: 1 },
-            { new: true }
-        );
+//         transaction = await TransactionModel.findOneAndUpdate(
+//             { transactionID },
+//             { status: 1 },
+//             { new: true }
+//         );
 
-        await User.findOneAndUpdate({ userId: user.userId }, { balance: user.balance });
-        await paymentOwner.save();
+//         await User.findOneAndUpdate({ userId: user.userId }, { balance: user.balance });
+//         await paymentOwner.save();
 
-        await notificationController.createNotification(
-            `Withdrawal Approved (${transactionID})`,
-            user.userId,
-            `Withdrawal of ${transaction.amount} has been approved.`,
-            "approved",
-            { amount: transaction.amount, transactionID }
-        );
-
-        return { status: 1, transaction };
-    }
+//         await notificationController.createNotification(
+//             `Withdrawal Approved (${transactionID})`,
+//             user.userId,
+//             `Withdrawal of ${transaction.amount} has been approved.`,
+//             "approved",
+//             { amount: transaction.amount, transactionID }
+//         );
+// consolt.log({ status: 1, message: "has been approvedtransaction", transaction })
+//         return { status: 1, transaction };
+//     }
 
     throw new Error("Invalid transaction type");
 };

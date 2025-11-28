@@ -120,17 +120,17 @@ exports.getGroupedNotifications = async (req, res) => {
 
 
 
-// Mark notifications as read
-exports.markAsRead = async (notificationIds) => {
-  try {
-    return await Notification.updateMany(
-      { _id: { $in: notificationIds } },
-      { $set: { read: true } }
-    );
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
+// // Mark notifications as read
+// exports.markAsRead = async (notificationIds) => {
+//   try {
+//     return await Notification.updateMany(
+//       { _id: { $in: notificationIds } },
+//       { $set: { read: true } }
+//     );
+//   } catch (error) {
+//     throw new Error(error.message);
+//   }
+// };
 
 // router.get("/:userId", async (req, res) => {
 //   try {
@@ -153,3 +153,124 @@ exports.markAsRead = async (notificationIds) => {
 //     res.status(500).json({ error: error.message });
 //   }
 // });
+
+
+exports.markAllAsRead = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    await Notification.updateMany(
+      { userId, read: false },
+      { 
+        read: true, 
+        readAt: new Date() 
+      }
+    );
+    
+    res.json({ success: true, message: 'All notifications marked as read' });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.deleteNotification = async (req, res) => {
+  try {
+    const { notificationId } = req.params;
+    
+    const notification = await Notification.findByIdAndDelete(notificationId);
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    
+    res.json({ success: true, message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.getPreferences = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const user = await UserModel.findById(userId).select('notificationPreferences');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    res.json({ 
+      success: true, 
+      data: user.notificationPreferences || getDefaultPreferences() 
+    });
+  } catch (error) {
+    console.error('Error fetching preferences:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.updatePreferences = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const preferences = req.body;
+    
+    const user = await UserModel.findByIdAndUpdate(
+      userId,
+      { notificationPreferences: preferences },
+      { new: true }
+    ).select('notificationPreferences');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    res.json({ success: true, data: user.notificationPreferences });
+  } catch (error) {
+    console.error('Error updating preferences:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+exports.sendPushNotification = async (req, res) => {
+  try {
+    const { userIds, title, message, type, data } = req.body;
+    
+    // Create notifications for each user
+    const notifications = userIds.map(userId => ({
+      userId,
+      title,
+      message,
+      type: type || 'system',
+      data: data || {}
+    }));
+    
+    await Notification.insertMany(notifications);
+    
+    // Here you would integrate with actual push notification services
+    // like Firebase Cloud Messaging, OneSignal, etc.
+    
+    res.json({ 
+      success: true, 
+      message: `Notification sent to ${userIds.length} users` 
+    });
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Helper function for default preferences
+function getDefaultPreferences() {
+  return {
+    email: true,
+    push: true,
+    sms: false,
+    depositAlerts: true,
+    withdrawalAlerts: true,
+    bonusAlerts: true,
+    systemAlerts: true,
+    marketing: false
+  };
+}

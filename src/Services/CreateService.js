@@ -112,7 +112,7 @@ const createUser = async (req, dataModel, userType) => {
 
   // Create new user
   const newUser = await dataModel.create(userData);
-  const CreatedUser = await dataModel.findOne({ _id: newUser.createdBy }) || 'Self-registered';
+  const CreatedUser = await dataModel.findOne({ _id: newUser._id }) || 'Self-registered';
   console.log(`${userType} created: ${newUser.email} by ${CreatedUser}`);
   // Generate token (লগিনের জন্য প্রস্তুত)
   const deviceId = generateDeviceId(req);

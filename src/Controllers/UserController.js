@@ -11,8 +11,8 @@ exports.GetRefferralUserList = async (req, res) => {
 
 
     try {
-
-        const { page = 1, limit = 10, userId, email, phone } = req.body;
+console.log("GetRefferralUserList")
+        const { page = 1, limit = 10, userId, email, phone } = req.query;
         const user = req.user
 
         if (!user) {
@@ -25,10 +25,10 @@ exports.GetRefferralUserList = async (req, res) => {
 
         // only user's deposits
 
-        if (!subAdminExists) {
+        if (!AdminExists) {
             return res.status(404).json({ message: 'SubAdmin not found' });
         }
-        const filters = { referredBy: AdminExists.referralCode };
+        const filters = { referredBy: null };
 
 
 

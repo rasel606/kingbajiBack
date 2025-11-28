@@ -5,9 +5,17 @@ const { body, query, validationResult } = require('express-validator');
 const SubAdminControllers = require('../Controllers/SubAdminControllers');
 const AdminController = require('../Controllers/AdminController');
 const AgentController = require('../Controllers/AgentController');
+const ModelBettingController = require('../Controllers/ModelBettingController');
+const GameListControllers = require('../Controllers/GameListControllers');
+const GameMovementController = require('../Controllers/GameMovementController');
+const getPlayerUserGameData = require('../Services/getPlayerUserGameData');
+const ProviderController = require('../Controllers/providerController');
+const Refresh_blance = require('../Controllers/Refresh_blance');
 const auth = require('../MiddleWare/AdminAuth');
 const validate = require('../MiddleWare/validation');
-
+const CreateUserService = require("../Services/CreateUserService");
+const {register, loginUser} = require('../Controllers/AuthController');
+const UpdateProfile = require('../Controllers/UpdateProfile');
 const router = express.Router();
 
 // Search transactions
@@ -24,6 +32,10 @@ router.get('/get_categories_with_providers_and_games', validate, auth, AdminCont
 router.get('/dashboard/overview',validate, auth, AdminController.getAdminDashboardStats);
 router.get('/dashboard/social_link',validate, auth, AdminController.getSocialLinks);
 router.post('/dashboard/update_social_link',validate, auth, AdminController.updateAndCreateSocialLinks);
+router.get('/user_details', auth, CreateUserService.userDetails);
+router.post('/update-name', UpdateProfile.updateName);
+router.post('/update-birthday', UpdateProfile.verifyBirthday);
+router.post('/createUser', register);
 
 
 
@@ -32,8 +44,11 @@ router.get('/dashboard_stats', auth, SubAdminControllers.getDashboardData);
 
 
 
+router.get('/get-games', getPlayerUserGameData.getAllGames);
+router.get('/New-table-Games-with-Category-with-Providers', getPlayerUserGameData.getCategoriesWithProviders);
 
-
+router.get('/New-Games-with-Providers-By-Category', getPlayerUserGameData.getGamesWithProvidersByCategory);
+router.get('/categories', getPlayerUserGameData.getAllCategories);
 
 
 

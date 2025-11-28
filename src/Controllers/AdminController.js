@@ -3,6 +3,10 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
 const AdminModel = require('../Models/AdminModel')
+const SubAdminModel = require('../Models/SubAdminModel')
+
+const SubAgentModel = require('../Models/SubAgentModel')
+
 const CreateService = require('../Services/CreateService')
 const PaymentGateWayTable = require("../Models/PaymentGateWayTable");
 const WidthralPaymentGateWayTable = require("../Models/WidthralPaymentGateWayTable");
@@ -46,13 +50,14 @@ const {
   getActiveSessions,
   requestPasswordReset,
   resetUserPassword } = require('../Services/LoginService');
+
 const { AdminProfile } = require('../Services/LoginService');
 const { getUserListServices } = require('../Services/getUserListServices');
 const { getReferralData } = require('../Services/getReferralOwnerService');
 const { processTransaction } = require('../Services/processTransactionService');
 const CreateGateWayService = require('../Services/CreateGateWayService');
 
-
+const { createUser } = require('../Services/CreateService');
 
 
 
@@ -81,11 +86,12 @@ const CreateGateWayService = require('../Services/CreateGateWayService');
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
   try {
     console.log("📥 Creating admin with data:", req.body);
-    
+
     const result = await createUser(req, AdminModel, 'Admin');
-    
+
     if (result.success) {
-      console.log("✅ Admin created successfully");
+      console.log("✅ Admin created successfully", result);
+      const getway = await CreateGateWayService(result.data.user);
 
       // Set cookies
       res.cookie('adminToken', result.data.token, {
@@ -105,6 +111,7 @@ exports.CreateAdmin = catchAsync(async (req, res, next) => {
       res.status(201).json({
         data: result.data,
         message: result.message,
+        success: getway.message,
         success: true,
       });
     }
@@ -150,9 +157,9 @@ exports.CreateAdmin = catchAsync(async (req, res, next) => {
 exports.AdminLogin = catchAsync(async (req, res, next) => {
   try {
     console.log("📥 Login admin with data:", req.body);
-    
+
     const result = await loginUser(req, AdminModel, 'Admin');
-    console.log("📥 Login admin with data after:",result)
+    console.log("📥 Login admin with data after:", result)
     // Set cookies
     res.cookie('adminToken', result.data.token, {
       httpOnly: true,
@@ -169,10 +176,10 @@ exports.AdminLogin = catchAsync(async (req, res, next) => {
     });
 
     console.log("✅ Admin login successful for device:", result.data.deviceId);
-    res.json({ 
-      data: result.data, 
-      message: result.message, 
-      success: result.success 
+    res.json({
+      data: result.data,
+      message: result.message,
+      success: result.success
     });
   } catch (err) {
     next(err);
@@ -184,14 +191,14 @@ exports.AdminLogin = catchAsync(async (req, res, next) => {
 exports.AdminLogout = catchAsync(async (req, res, next) => {
   try {
     const result = await logoutUser(req, AdminModel, 'Admin');
-    
+
     // Clear cookies
     res.clearCookie('adminToken');
     res.clearCookie('adminDeviceId');
-    
-    res.json({ 
-      message: result.message, 
-      success: result.success 
+
+    res.json({
+      message: result.message,
+      success: result.success
     });
   } catch (err) {
     next(err);
@@ -202,11 +209,11 @@ exports.GetAdminProfile = catchAsync(async (req, res, next) => {
   try {
     await verifyUserSession(req, AdminModel, 'Admin');
     const result = await getUserProfile(req, AdminModel, 'Admin');
-    
-    res.json({ 
-      data: result.data, 
-      message: result.message, 
-      success: result.success 
+
+    res.json({
+      data: result.data,
+      message: result.message,
+      success: result.success
     });
   } catch (err) {
     next(err);
@@ -217,12 +224,12 @@ exports.GetAdminProfile = catchAsync(async (req, res, next) => {
 exports.GetActiveAdminSessions = catchAsync(async (req, res, next) => {
   try {
     const result = await getActiveSessions(AdminModel, 'Admin');
-    
-    res.json({ 
-      data: result.data, 
+
+    res.json({
+      data: result.data,
       count: result.count,
-      message: result.message, 
-      success: result.success 
+      message: result.message,
+      success: result.success
     });
   } catch (err) {
     next(err);
@@ -235,11 +242,11 @@ exports.ForceLogoutAdmin = catchAsync(async (req, res, next) => {
   try {
     const { userId } = req.params;
     const result = await forceLogoutUser(userId, AdminModel, 'Admin');
-    
-    res.json({ 
-      message: result.message, 
+
+    res.json({
+      message: result.message,
       previousDevice: result.previousDevice,
-      success: result.success 
+      success: result.success
     });
   } catch (err) {
     next(err);
@@ -250,7 +257,7 @@ exports.ForceLogoutAdmin = catchAsync(async (req, res, next) => {
 // Check if user exists
 exports.CheckAdminExists = catchAsync(async (req, res, next) => {
   try {
-    const existingAdmin = await AdminModel.findOne({ 
+    const existingAdmin = await AdminModel.findOne({
       $or: [
         { email: req.body.email },
         { mobile: req.body.mobile },
@@ -918,6 +925,7 @@ exports.getUserList = async (req, res) => {
 
 exports.processTransactionForALL = async (req, res) => {
   try {
+    console.log(req.body);
     const { userId, action, transactionID } = req.body;
     const referraledUsers = req.user;
     console.log("userId", userId, "action", action, "transactionID", transactionID);
@@ -927,6 +935,7 @@ exports.processTransactionForALL = async (req, res) => {
       transactionID,
       referralUser: referraledUsers,
     });
+    console.log(result)
     res.json({ success: true, ...result });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -1238,21 +1247,21 @@ exports.deleteBonus = async (req, res) => {
 
 
 
-// exports.getUsersByReferral = async (req, res) => {
-//   try {
+exports.getUsersByReferral = async (req, res) => {
+  try {
 
-// console.log("getUsersByReferral called");
-//     const users = await User.find({});
-//     console.log("users", users);
-//     const filteredUsers = users.filter(u => u.referredBy !== null);
-//     const uniqueUsers = new Set(filteredUsers.map(u => u.referredBy));
-//     const AffiliateUser = await AffiliateUser.find({referralCode: { $in: Array.from(uniqueUsers) }});
-//     res.json(filteredUsers);
+    console.log("getUsersByReferral called");
+    const users = await User.find({});
+    console.log("users", users);
+    const filteredUsers = users.filter(u => u.referredBy !== null);
+    const uniqueUsers = new Set(filteredUsers.map(u => u.referredBy));
+    const AffiliateUser = await AffiliateUser.find({ referralCode: { $in: Array.from(uniqueUsers) } });
+    res.json(filteredUsers);
 
-//   } catch (err) {
-//     res.status(500).json({ message: err.message });
-//   }
-// };
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
 // exports.getUsersByReferral = async (req, res) => {
 //   try {
@@ -1539,7 +1548,7 @@ exports.processTransactionForALL = async (req, res) => {
       transactionID,
       referralUser: referraledUsers,
     });
-    res.json({ success: true, ...result });
+    res.status(201).json({ success: true, ...result });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
@@ -1587,91 +1596,30 @@ exports.getPendingDepositTransactions = async (req, res) => {
   try {
     const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
     console.log("Pending deposit transactions query:", req.query);
-    // Get the authenticated user's referral code
-    const user = req.user;
-    // console.log("getPendingDepositTransactions -----=========user", user);
-    // if (!referredBy) {
-    //   return res.status(400).json({ 
-    //     success: false, 
-    //     message: 'Referral code not found for this user' 
-    //   });
-    // }
-
-    const SubAdminuser = await AdminModel.findOne({ email: user.email });
-    console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
-    if (!SubAdminuser) {
-      return res.status(404).json({
-        success: false,
-        message: 'Sub-admin not found'
-      });
-    }
-    console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
-    let query = {};
-    console.log("query", query);
-    // Add optional filters
-    if (userId) query.userId = userId;
-    if (amount) query.base_amount = { $gte: parseFloat(amount) };
-    if (gateway_name) query.gateway_name = gateway_name;
-    if (status !== undefined && !isNaN(status) && status !== "") {
-      query.status = parseInt(status);
-    }
-
-    // Date filtering
-    if (startDate && endDate) {
-      query.datetime = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
-    } else if (startDate) {
-      query.datetime = { $gte: new Date(startDate) };
-    }
-
-    const transactions = await TransactionModel.find({ ...query, type: parseInt(0), status: parseInt(0) }).sort({ datetime: -1 });
-    console.log("transactions", transactions);
-    const totalDeposit = await TransactionModel.aggregate([
-      { $match: query },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]);
-
-    const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
-
-    res.json({
-      success: true,
-      transactions,
-      total
-    });
-  } catch (error) {
-    console.error("Error searching transactions:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-  }
-}
-exports.getPendingWidthrawalTransactions = async (req, res) => {
-  try {
-    const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
-    console.log("Pending deposit transactions query:", req.query);
+    
     // Get the authenticated user's referral code
     const user = req.user;
     console.log("user", user);
-    // if (!referredBy) {
-    //   return res.status(400).json({ 
-    //     success: false, 
-    //     message: 'Referral code not found for this user' 
+    
+    const ParentUser = await AdminModel.findOne({ email: user.email }) || 
+                       await SubAdminModel.findOne({ email: user.email }) ||
+                       await AgentModel.findOne({ email: user.email }) ||
+                       await SubAgentModel.findOne({ email: user.email });
+    
+    // console.log("getPendingDepositTransactions -----=========user", ParentUser);
+    
+    // if (!ParentUser) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: 'User not found'
     //   });
-    // }
-    const SubAdminuser = await AdminModel.findOne({ email: user.email });
-    console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
-    if (!SubAdminuser) {
-      return res.status(404).json({
-        success: false,
-        message: 'Sub-admin not found'
-      });
-    }
-    console.log("getPendingDepositTransactions -----=========user", SubAdminuser);
+   // }
+    
+    console.log("getPendingDepositTransactions -----=========user", ParentUser.role);
+    
     let query = {};
     console.log("query", query);
+    
     // Add optional filters
     if (userId) query.userId = userId;
     if (amount) query.base_amount = { $gte: parseFloat(amount) };
@@ -1690,10 +1638,40 @@ exports.getPendingWidthrawalTransactions = async (req, res) => {
       query.datetime = { $gte: new Date(startDate) };
     }
 
-    const transactions = await TransactionModel.find({ ...query, type: parseInt(1), status: parseInt(0) }).sort({ datetime: -1 });
+    // Handle referredBy based on user role
+    let referredByFilter = {};
+    
+    if (ParentUser.role === 'Admin') {
+      // If user is Admin, get transactions with referredBy as null or undefined
+      referredByFilter = { 
+        $or: [
+          { referredBy: null },
+          // { referredBy: { $exists: false } }
+        ]
+      };
+    } else {
+      // For other roles, use their referral code
+      referredByFilter = { referredBy: ParentUser.referralCode };
+    }
+console.log("referredByFilter", referredByFilter);
+    const transactions = await TransactionModel.find({ 
+      ...referredByFilter,
+      ...query, 
+      type: parseInt(0), 
+      status: parseInt(1),
+    }).sort({ datetime: -1 });
+    
     console.log("transactions", transactions);
+    
     const totalDeposit = await TransactionModel.aggregate([
-      { $match: query },
+      { 
+        $match: { 
+          ...query, 
+          type: parseInt(1), 
+          status: parseInt(0),
+          ...referredByFilter 
+        } 
+      },
       { $group: { _id: null, total: { $sum: "$amount" } } }
     ]);
 
@@ -1712,7 +1690,104 @@ exports.getPendingWidthrawalTransactions = async (req, res) => {
     });
   }
 };
+exports.getPendingWidthrawalTransactions = async (req, res) => {
+  try {
+    const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
+    // console.log("Pending deposit transactions query:", req.query);
+    
+    // Get the authenticated user's referral code
+    const user = req.user;
+    console.log("user", user.email,user.role);
+    
+    const ParentUser = await AdminModel.findOne({ email: user.email }) || 
+                       await SubAdminModel.findOne({ email: user.email }) ||
+                       await AgentModel.findOne({ email: user.email }) ||
+                       await SubAgentModel.findOne({ email: user.email });
+    
+    // console.log("getPendingDepositTransactions -----=========user", ParentUser);
+    
+    // if (!ParentUser) {
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: 'User not found'
+    //   });
+    // }
+    
+    console.log("getPendingDepositTransactions -----=========ParentUser.role", ParentUser.role);
+    
+    let query = {};
+    console.log("query", query);
+    
+    // Add optional filters
+    if (userId) query.userId = userId;
+    if (amount) query.base_amount = { $gte: parseFloat(amount) };
+    if (gateway_name) query.gateway_name = gateway_name;
+    if (status !== undefined && !isNaN(status) && status !== "") {
+      query.status = parseInt(status);
+    }
 
+    // Date filtering
+    if (startDate && endDate) {
+      query.datetime = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate),
+      };
+    } else if (startDate) {
+      query.datetime = { $gte: new Date(startDate) };
+    }
+
+    // Handle referredBy based on user role
+    let referredByFilter = {};
+    
+    if (ParentUser.role === 'Admin') {
+      // If user is Admin, get transactions with referredBy as null or undefined
+      referredByFilter = { 
+        $or: [
+          { referredBy: null },
+          { referredBy: { $exists: false } }
+        ]
+      };
+    } else {
+      // For other roles, use their referral code
+      referredByFilter = { referredBy: ParentUser.referralCode };
+    }
+
+    const transactions = await TransactionModel.find({ 
+      ...query, 
+      type: parseInt(1), 
+      status: parseInt(0),
+      ...referredByFilter 
+    }).sort({ datetime: -1 });
+    
+    console.log("transactions", transactions);
+    
+    const totalDeposit = await TransactionModel.aggregate([
+      { 
+        $match: { 
+          ...query, 
+          type: parseInt(1), 
+          status: parseInt(0),
+          ...referredByFilter 
+        } 
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } }
+    ]);
+
+    const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
+
+    res.json({
+      success: true,
+      transactions,
+      total
+    });
+  } catch (error) {
+    console.error("Error searching transactions:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
 exports.getApprovedWithdrawalTransactions = async (req, res) => {
   try {
     const { referredBy, userId, amount, gateway_name, startDate, endDate, status = 0 } = req.query;

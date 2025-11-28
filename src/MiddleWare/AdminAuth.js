@@ -25,7 +25,7 @@ console.log(decoded)
     if (!user) {
       return next(new AppError('Token is not valid.', 401));
     }
-console.log(user)
+
     req.user = user;
     next();
   } catch (error) {

@@ -300,6 +300,7 @@ const logger = require('./src/Utils/logger');
 const AdminAurth = require('./src/Router/AdminAurth');
 const transactionRoutes = require('./src/Router/transactionRoutes');
 const subAdminRoutes = require('./src/Router/subAdminRoutes');
+const subAdminAurth = require('./src/Router/subAdminAurth');
 const dashboardRoutes = require('./src/Router/dashboardRoutes');
 const userRoutes = require('./src/Router/userRoutes');
 const gameRoutes = require('./src/Router/gameRoutes');
@@ -405,6 +406,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 app.use("/api/v1", router);
 app.use('/api/admin/auth', AdminAurth);
+app.use('/api/sub_admin/auth', subAdminAurth);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/user', userRoutes);

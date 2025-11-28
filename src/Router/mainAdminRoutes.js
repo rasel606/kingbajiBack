@@ -7,11 +7,20 @@ const AdminController = require('../Controllers/AdminController');
 const AgentController = require('../Controllers/AgentController');
 const auth = require('../MiddleWare/subAdminAuth');
 const validate = require('../MiddleWare/validation');
-
+const ModelBettingController = require('../Controllers/ModelBettingController');
+const GameListControllers = require('../Controllers/GameListControllers');
+const GameMovementController = require('../Controllers/GameMovementController');
+const getPlayerUserGameData = require('../Services/getPlayerUserGameData');
+const ProviderController = require('../Controllers/providerController');
+const Refresh_blance = require('../Controllers/Refresh_blance');
+const UserControllers = require('../Controllers/UserController');
 const router = express.Router();
 
 // Search transactions
 
+router.get('/New-table-categories-with-Providers', getPlayerUserGameData.getCategoriesWithProviders);
+
+router.get('/New-Games-with-Providers-By-Category', getPlayerUserGameData.getGamesWithProvidersByCategory);
 router.get('/get_admin_affiliateList', validate, auth, AdminController.AffiliateModeladmin);
 router.get('/affiliate_get_commissionSettings', validate, auth, AdminController.affiliate_get_commissionSettings);
 // router.get('/get_rebate_settings', validate, auth, AdminController.getRebateSettings);
@@ -27,6 +36,7 @@ router.get('/get_sub_admin_affiliateList', validate, auth, AdminController.getAf
 router.get('/get_admin_AgentList', validate, auth, AdminController.GetAgentList);
 router.get('/get_admin_UserList', validate, auth, AdminController.getUserList);
 router.get('/get_user_list_by_role', validate, auth, AdminController.getTransactionList);
+router.get('/get_userList', validate, auth, UserControllers.GetRefferralUserList);
 // router.get('/dashboard_stats', auth, AdminController.getDashboardData);
 router.post(
   '/get_users_verify-email/:userId',
