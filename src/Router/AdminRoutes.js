@@ -23,6 +23,7 @@ router.get('/get_sub_adminList', validate, auth, SubAdminControllers.GetSubAdmin
 router.get('/get_sub_admin_affiliateList', validate, auth, SubAdminControllers.GetSubAdminAffiliateList);
 router.get('/get_admin_affiliateList', validate, auth, AdminController.AffiliateModeladmin);
 router.get('/get_admin_AgentList', validate, auth, AgentController.GetAgentAdmin);
+router.get('/get_Sub_admin_userList', validate, auth, AgentController.GetSubAdminUserList);
 router.get('/affiliate_get_commissionSettings', validate, auth, AdminController.affiliate_get_commissionSettings);
 // router.get('/get_rebate_settings', validate, auth, AdminController.getRebateSettings);
 router.get('/get_bonus_list', validate, auth, AdminController.getBonuses);
@@ -55,36 +56,16 @@ router.get('/categories', getPlayerUserGameData.getAllCategories);
 
 
 
-router.post('/register_admin', [
-  body('username')
-    .isLength({ min: 3 })
-    .withMessage('Username must be at least 3 characters long'),
-  body('email')
-    .isEmail()
-    .withMessage('Please enter a valid email'),
-  body('password')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long'),
+router.post('/register_admin',  validate,  AdminController.CreateAdmin);
 
-], validate,  AdminController.CreateAdmin);
-
-router.post('/login_admin', [
-  body('email')
-    .notEmpty()
-    .withMessage('Email is required'),
-  body('password')
-    .notEmpty()
-    .withMessage('Password is required')
-], validate,  AdminController.AdminLogin
+router.post('/login_admin',  validate,  AdminController.AdminLogin
 
 );
 
 router.get('/main_admin',
   auth,
   (req, res, next) => {
-    if (!req.user) {
-      return next(new AppError('User not found', 404));
-    }
+console.log("req",req.user)
     next();
   },
    AdminController.GetAdminProfile);

@@ -412,85 +412,9 @@ const updatePassword = asyncHandler(async (req, res) => {
   await user.save();
   res.status(201).json(user.bankAccounts);
 });
-// exports.getProfile = async (req, res) => {
-
-//   console.log("user get",req.body)
-//   try {
-//     const user = await AffiliateModel.find(req.body.user);
-    
-//     if (!user) {
-//       return res.status(404).json({ status: 'fail', message: 'User not found' });
-//     }
- 
-//     const getUser = user[0]
-
-    
-//     res.status(200).json({
-//       status: 'success',
-//       data: {
-//         user : getUser
-//       }
-//     });
-//   } catch (err) {
-//     res.status(400).json({
-//       status: 'fail',
-//       message: err.message
-//     });
-//   }
-// };
 
 
-// exports.updateProfile = async (req, res) => {
-//   try {
-//     const { firstName, lastName, dob, contactInfo } = req.body;
-    
-//     const user = await User.findByIdAndUpdate(
-//       req.user._id,
-//       { firstName, lastName, dob, contactInfo },
-//       { new: true, runValidators: true }
-//     );
 
-//     res.status(200).json({
-//       status: 'success',
-//       data: {
-//         user
-//       }
-//     });
-//   } catch (err) {
-//     res.status(400).json({
-//       status: 'fail',
-//       message: err.message
-//     });
-//   }
-// };
-
-// exports.updatePassword = async (req, res) => {
-//   try {
-//     const { currentPassword, newPassword } = req.body;
-    
-//     const user = await User.findById(req.user._id).select('+password');
-    
-//     if (!(await user.comparePassword(currentPassword))) {
-//       return res.status(401).json({
-//         status: 'fail',
-//         message: 'Your current password is wrong.'
-//       });
-//     }
-
-//     user.password = newPassword;
-//     await user.save();
-
-//     res.status(200).json({
-//       status: 'success',
-//       message: 'Password updated successfully!'
-//     });
-//   } catch (err) {
-//     res.status(400).json({
-//       status: 'fail',
-//       message: err.message
-//     });
-//   }
-// };
 
 
 
@@ -506,6 +430,11 @@ exports.logout = (req, res) => {
 
   res.status(200).json({ status: 'success' });
 };
+
+
+
+
+
 
 // // 🤖 Generate Captcha (basic)
 // exports.generateCaptcha = (req, res) => {

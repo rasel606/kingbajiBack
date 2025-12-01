@@ -1,16 +1,18 @@
-
-
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const SubAdminModelSchema = new mongoose.Schema({
   // Basic Information
-  email: { type: String, required: true,lowercase: true },
+  email: { type: String, required: true, lowercase: true, unique: true }, // Added unique
   firstName: { type: String, required: true },
   lastName: { type: String },
   mobile: { type: String },
   countryCode: { type: String, default: '+880' },
   password: { type: String, required: true, select: false },
+  
+  // Identification
+  userId: { type: String, unique: true }, // Added unique
+  referralCode: { type: String, unique: true }, // ADDED THIS FIELD
   
   // Role & Permissions
   role: { type: String, default: "SubAdmin", enum: ["SubAdmin"] },
@@ -28,9 +30,6 @@ const SubAdminModelSchema = new mongoose.Schema({
     approve: { type: Boolean, default: false }
   }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'AdminModel' },
-  
-  // Identification
-  userId: { type: String },
   
   // Session Management
   currentSession: { 
@@ -75,8 +74,6 @@ const SubAdminModelSchema = new mongoose.Schema({
     used: { type: Boolean, default: false },
     usedAt: Date
   }],
-  loginAttempts: { type: Number, default: 0 },
-  lockUntil: Date,
   securityQuestions: [{
     question: String,
     answer: String
@@ -101,20 +98,43 @@ SubAdminModelSchema.pre('save', async function(next) {
   next();
 });
 
-// Generate userId if not exists
+// Generate userId and referralCode if not exists
 SubAdminModelSchema.pre('save', async function(next) {
-  if (!this.userId) {
-    let isUnique = false;
-    while (!isUnique) {
-      const newUserId = 'SUB' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const exists = await mongoose.model('SubAdminModel').findOne({ userId: newUserId });
-      if (!exists) {
-        this.userId = newUserId;
-        isUnique = true;
+  try {
+    // Generate referral code if not exists
+    if (!this.referralCode) {
+      let isUnique = false;
+      let referralCode;
+      
+      while (!isUnique) {
+        referralCode = 'SUB' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const exists = await this.constructor.findOne({ referralCode });
+        if (!exists) {
+          isUnique = true;
+        }
       }
+      this.referralCode = referralCode;
     }
+    
+    // Generate userId if not exists
+    if (!this.userId) {
+      let isUnique = false;
+      let newUserId;
+      
+      while (!isUnique) {
+        newUserId = 'SUB' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const exists = await this.constructor.findOne({ userId: newUserId });
+        if (!exists) {
+          isUnique = true;
+        }
+      }
+      this.userId = newUserId;
+    }
+    
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 });
 
 // Password comparison method
@@ -189,6 +209,24 @@ SubAdminModelSchema.methods.updateLogoutHistory = function(deviceId) {
     session.logoutTime = new Date();
   }
 };
+
+// Generate 2FA backup codes
+SubAdminModelSchema.methods.generateBackupCodes = function() {
+  const crypto = require('crypto');
+  const codes = [];
+  
+  for (let i = 0; i < 10; i++) {
+    const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+    codes.push({
+      code,
+      used: false
+    });
+  }
+  
+  this.twoFactorBackupCodes = codes;
+  return codes;
+};
+
 // Create 2FA secret
 SubAdminModelSchema.methods.create2FASecret = function() {
   const speakeasy = require('speakeasy');
@@ -220,9 +258,25 @@ SubAdminModelSchema.methods.isIPAllowed = function(ip) {
   return this.allowedIPs.includes(ip);
 };
 
+// Verify backup code
+SubAdminModelSchema.methods.verifyBackupCode = function(code) {
+  const backupCode = this.twoFactorBackupCodes.find(
+    bc => bc.code === code && !bc.used
+  );
+  
+  if (backupCode) {
+    backupCode.used = true;
+    backupCode.usedAt = new Date();
+    return true;
+  }
+  
+  return false;
+};
+
 // Indexes
-SubAdminModelSchema.index({ email: 1, unique: true, sparse: true });
-SubAdminModelSchema.index({ userId: 1, unique: true, sparse: true });
+SubAdminModelSchema.index({ email: 1 }, { unique: true });
+SubAdminModelSchema.index({ userId: 1 }, { unique: true });
+SubAdminModelSchema.index({ referralCode: 1 }, { unique: true }); // Added index
 SubAdminModelSchema.index({ role: 1 });
 SubAdminModelSchema.index({ status: 1 });
 SubAdminModelSchema.index({ isLoggedIn: 1 });

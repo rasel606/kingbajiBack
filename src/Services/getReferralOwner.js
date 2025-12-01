@@ -1,15 +1,20 @@
 
+// module.exports = { getUserWithReferralLevels, getReferralOwner };
 const SubAdmin = require("../Models/SubAdminModel");
-
 const AffiliateModel = require("../Models/AffiliateModel");
 const AdminModel = require("../Models/AdminModel");
+const AgentModel = require("../Models/AgentModel");
+const SubAgentModel = require("../Models/SubAgentModel");
 const User = require("../Models/User");
 
-// ✅ Get user with referral levels
+// ===================================================================
+// GET USER WITH REFERRAL LEVELS
+// ===================================================================
 const getUserWithReferralLevels = async (userId) => {
   console.log(" getUserWithReferralLevels userId", userId);
-  let user = await User.findOne({ userId : userId });
+  let user = await User.findOne({ userId: userId });
   console.log("getUserWithReferralLevels  user", user);
+
   if (!user) return null;
 
   const levelOneReferrals = await User.find({ referredBy: user.referralCode });
@@ -34,32 +39,78 @@ const getUserWithReferralLevels = async (userId) => {
   };
 };
 
-// ✅ Get referral owner (SubAdmin / Affiliate / Admin)
+// ===================================================================
+// GET REFERRAL OWNER (Admin / SubAdmin / Affiliate / Agent / SubAgent)
+// ===================================================================
 const getReferralOwner = async (referralCode) => {
-    console.log("referralCode", referralCode);
-//   if (!referralCode) return null;
+  console.log("referralCode", referralCode);
 
-  const subAdmin = await SubAdmin.findOne({ referralCode });
+
+  const subAdmin = await SubAdmin.findOne({ referralCode: referralCode });
   if (subAdmin) {
-    return { owner: subAdmin, role: "subadmin", referralCode: subAdmin.referralCode };
+    return {
+      owner: subAdmin,
+      role: "subadmin",
+      referralCode: subAdmin.referralCode,
+      parent: null,
+    };
   }
+  console.log("referralCode subAdmin", subAdmin);
 
-  const affiliate = await AffiliateModel.findOne({ referralCode });
+  const affiliate = await AffiliateModel.findOne({ referralCode: referralCode });
   if (affiliate) {
-    let subAdminOwner = null;
-    if (affiliate.referredBy) {
-      subAdminOwner = await SubAdmin.findOne({ referralCode: affiliate.referredBy });
+    const subAdminOwner = affiliate.referredBy
+      ? await SubAdmin.findOne({ referralCode: affiliate.referredBy })
+      : null;
+
+    return {
+      owner: affiliate,
+      role: "affiliate",
+      referralCode: affiliate.referralCode,
+      parent: subAdminOwner,
+    };
+  }
+  console.log("referralCode affiliate", affiliate);
+
+  const agent = await AgentModel.findOne({ referralCode: referralCode });
+  if (agent) {
+    return {
+      owner: agent,
+      role: "agent",
+      referralCode: agent.referralCode,
+    };
+  }
+  console.log("referralCode agent", agent);
+
+  const subAgent = await SubAgentModel.findOne({ referralCode: referralCode });
+  if (subAgent) {
+
+    let parent = null;
+    if (subAgent.referredBy) {
+      parent = await AgentModel.findOne({ referralCode: subAgent.referredBy })
+
+
+      return {
+        owner: subAgent,
+        role: "subagent",
+        referralCode: subAgent.referralCode,
+        parent,
+      };
     }
-    return { owner: affiliate, subAdmin: subAdminOwner, role: "affiliate", referralCode: affiliate.referralCode };
+
+
+    const admin = await AdminModel.findOne({ referredBy: null });
+    if (admin) {
+      return {
+        owner: admin,
+        role: "admin",
+        referralCode: admin.referralCode,
+        parent: null,
+      };
+    }
+
+    return null;
   }
+}
 
-  const admin = await AdminModel.findOne({ referredCode: null });
-  if (admin) {
-    return { owner: admin, role: "admin", referralCode: admin.referralCode };
-  }
-
-  return null;
-};
-
-
-module.exports = { getUserWithReferralLevels, getReferralOwner };
+  module.exports = { getUserWithReferralLevels, getReferralOwner };

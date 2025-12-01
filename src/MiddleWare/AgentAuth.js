@@ -1,7 +1,7 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
 const AppError = require('../Utils/AppError');
-const SubAdminModel = require('../Models/SubAdminModel');
+const AgentModel = require('../Models/AgentModel');
 
 const JWT_SECRET = "Kingbaji";
 
@@ -18,10 +18,10 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-console.log("admin by email",decoded)
+console.log(decoded)
     // Find user/admin by email
-    const user = await SubAdminModel.findOne({ email: decoded.email }).select('-password');
-console.log(user)
+    const user = await AgentModel.findOne({ email: decoded.email }).select('-password');
+
     if (!user) {
       return next(new AppError('Token is not valid.', 401));
     }

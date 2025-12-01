@@ -16,7 +16,7 @@ const auth = async (req, res, next) => {
     if (!token) {
       return next(new AppError('Access denied. No token provided.', 401));
     }
-
+console.log(token)
     const decoded = jwt.verify(token, JWT_SECRET);
 console.log(decoded)
     // Find user/admin by email

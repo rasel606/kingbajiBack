@@ -1,306 +1,46 @@
-// const bcrypt = require('bcryptjs');
-// const jwt = require("jsonwebtoken");
-// const axios = require("axios");
-// const crypto = require("crypto");
-// // const Agent = require("../Models/AgentModel");
-// const Agent = require("../Models/AgentModel");
-// // const User = require("../Models/User");
-
-
-// const saltRounds = 12;
-// const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-
-// exports.registerAgent  = async (req, res) => {
-//   try {
-//     const { email, phone, password, countryCode, referredbyCode } = req.body;
-//     if (!email || !phone || !password || !countryCode) {
-//       return res.status(400).json({ success: false, message: "Please enter all fields" });
-//     }
-// console.log("referredbyCode",email, phone, password, countryCode, referredbyCode )
-//     const hashedPassword = await bcrypt.hash(password, saltRounds);
-//     const referredCode = Math.random().toString(36).substring(2, 9);
-//     const referrUserCode = Math.random().toString(36).substring(2, 9);
-//     if (referredbyCode) {
-//       const referredbyUser = await Agent.findOne({ referredCode: referredCode });
-//       const referrUser = await Agent.findOneAndDelete({ referredCode: referredCode });
-//       if(referrUser){
-//         return res.status(400).json({ success: false, message: "Invalid referred code" });
-//       }
-//     }
-
-//     const AgentId = Math.random().toString(36).substring(2, 9);
-
-
-
-
-//     const existingUser = await Agent.findOne({ email:email });
-//     if (existingUser) {
-//       return res.status(400).json({ success: false, message: "User already exists" });
-//     }
-
-
-
-
-//     const newUser = await Agent.create({
-//       email,
-//       phone,
-//       countryCode,
-//       referredbyCode,
-//       referredCode:referrUserCode || referredCode,
-//       password: hashedPassword,
-//       balance: 0,
-//       AgentId: AgentId,
-//       isActive: true,
-//       user_referredLink: `http:/localhost:3000/${referredCode || referrUserCode}`,
-//       agent_referredLink: `http:/localhost:3000/agent/${referredCode || referrUserCode}`,
-//       affiliate_referredLink: `http:/localhost:3000/affiliate/${referredCode || referrUserCode}`,
-//     });
-
-//     console.log("newUser",newUser)
-//     if (!newUser) {
-//       return res.status(500).json({ success: false, message: "Failed to create user" });
-//     }
-
-   
-
-//     const response = await Agent.aggregate([
-//         { $match: { email: newUser.email } },
-//         {
-//           $project: {
-//             email: 1,
-//             name: 1,
-//             phone: 1,
-//             countryCode: 1,
-//             balance: 1,
-//             referralByCode: 1,
-//             // referredLink: 1,
-//             user_referredLink: 1,
-//             agent_referredLink: 1,
-//             affiliate_referredLink: 1,
-//             referralCode: 1,
-//             user_role:1,
-//           },
-//         },
-//       ]);
-
-
-
-
-
-//     // ✅ Step 2: Generate JWT Token (Send Response Immediately)
-//     const userDetails = response[0];
-//     console.log("userDetails",userDetails)
-//     console.log(" response[0]", response[0])
-
-//     const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "2h" });
-// console.log("token",token)
-
-
-// res.status(201).json({
-//   success: true,
-
-//   token,
-//   userDetails
-// });
-
-//   } catch (error) {
-//     console.error("❌ Error in register function:", error);
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// };
-
-
-
-
-// ///////////////////////////////////////////    login   //////////////////////////////////////////////////
-
-// exports.loginAgent = async (req, res) => {
-//   const { email, password } = req.body;
-
-//   try {
-//     console.log(req.body);
-//     if (!email) return res.status(400).json({ message: "Email is required" });
-
-//     const user = await Agent.findOne({ email:email });
-//     console.log("user",user)
-//     if (!user) return res.status(404).json({ message: "User not found" });
-
-//     const isPasswordValid = await bcrypt.compare(password, user.password);
-//     if (!isPasswordValid) return res.status(401).json({ message: "Invalid password" });
-
-
-    
-//     const response = await Agent.aggregate([
-//         { $match: { email: user.email } },
-//         {
-//           $project: {
-//             email: 1,
-//             name: 1,
-//             phone: 1,
-//             countryCode: 1,
-//             balance: 1,
-//             referralByCode: 1,
-//             // referredLink: 1,
-//             user_referredLink: 1,
-//             agent_referredLink: 1,
-//             affiliate_referredLink: 1,
-//             referralCode: 1,
-//             user_role:1,
-//             _id:0
-//           },
-//         },
-//       ]);
-      
-//       if (!response.length) return res.status(500).json({ message: "Error fetching user data" });
-
-//       const userDetails = response[0];
-//       console.log("userDetails",userDetails)
-//       const token = jwt.sign({ email: userDetails.email, user_role: userDetails.user_role }, JWT_SECRET, { expiresIn: "2h" });
-//       console.log("userDetails",userDetails)
-    
-//       res.status(201).json({
-//         success: true,
-  
-//         token,
-//         userDetails
-//       });
-  
-//   } catch (error) {
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
-
-
-
-// ///////////////////////////////////////////////////////////    verify   //////////////////////////////////////////////////
-
-// exports.verifyAgent = async (req, res) => {
-//   try {
-//     const authHeader = req.header("Authorization");
-//     const token = authHeader?.split(" ")[1];
-    
-//     if (!token) return res.status(401).json({ message: "Token missing!" });
-
-//     const decoded = jwt.verify(token, JWT_SECRET);
-//     console.log("Decoded Token:", decoded);
-
-//     const decodedEmail = decoded?.email;
-//     const decodedRole = decoded?.user_role; // Fix role field
-
-//     if (!decodedEmail || !decodedRole) {
-//       return res.status(400).json({ message: "Invalid token payload!" });
-//     }
-
-//     const response = await Agent.aggregate([
-//       { $match: { email: decodedEmail, user_role: decodedRole } },
-//       {
-//         $project: {
-//           email: 1,
-//           name: 1,
-//           phone: 1,
-//           countryCode: 1,
-//           balance: 1,
-//           referredbyCode: 1,
-//           referredLink: 1,
-//           referredCode: 1,
-//           user_role: 1,
-//           isActive: 1,
-//         },
-//       },
-//     ]);
-
-//     const userDetails = response[0];
-
-//     if (userDetails.length === 0) return res.status(404).json({ message: "User not found" });
-
-
-
-//     res.status(200).json({
-//       success: true,
-//       token,
-//       userDetails,
-//     });
-
-//   } catch (error) {
-//     console.error("Token verification error:", error);
-//     res.status(400).json({ message: "Invalid token!" });
-//   }
-// };
-
-
-
-
-
-// exports.GetAgentAdmin = async (req, res) => {
-//   try {
-//     const user = req.user;
-//     console.log("GetAgentAdminuser",user)
-//     if (!user) {
-//       return res.status(400).json({ message: "Data is required" });
-//     }
-//     console.log("GetAgentAdmin", user);
-//       const affiliates = await Agent.find({});
-//       console.log("affiliates",affiliates)
-//       res.json(affiliates);
-//   } catch (error) {
-//       res.status(500).json({ message: error.message });
-//   }
-// };
-
-// ///////////////////////////////////////////////////////////       //////////////////////////////////////////////////
-
-
 
 
 
 const bcrypt = require('bcryptjs');
 
 const crypto = require("crypto");
-
-const AdminModel = require('../Models/AdminModel')
-const CreateService = require('../Services/CreateService')
-
-const updateOne = require('../Services/ProfileUpdateService')
-const BetProviderTable = require('../Models/BetProviderTable')
-const RebateSetting = require("../Models/RebateSetting");
-const GameTypeTable = require('../Models/GameTypeTable')
-const GameListTable = require('../Models/GameListTable')
-const OddSportsTable = require('../Models/OddSportsTable')
-const Bonus = require('../Models/Bonus');
-const BettingTable = require('../Models/BettingTable')
-const bankTable = require('../Models/BankTable')
-const SportsCategoryTable = require('../Models/SportsCategoryTable')
-const GameTypeList = require('../Models/GameTypeTable')
-const { default: axios } = require('axios')
-// const { LoginService, loginUser,Profile } = require('../Services/LoginService')
-const AffiliateModel = require('../Models/AffiliateModel')
-const AgentModel = require('../Models/AgentModel')
-const UserModel = require('../Models/User')
-const AffiliateCommissionModal = require('../Models/AffiliateCommissionModal')
-const AffiliateUserEarnings = require('../Models/AffiliateUserEarnings');
-const { ref } = require('joi');
-const VIPConfig = require('../Models/VIPConfig');
-const VipPointTransaction = require('../Models/VipPointTransaction');
-const catchAsync = require('../Utils/catchAsync');
 const AppError = require('../Utils/AppError');
+const { default: axios } = require('axios')
+const {
+  loginUser,
+  getUserProfile,
+  verifyUserSession,
+  logoutUser,
+  forceLogoutUser,
+  getActiveSessions,
+  requestPasswordReset,
+  resetUserPassword } = require('../Services/LoginService');
 
-const TransactionModel = require('../Models/TransactionModel');
-const notificationController = require('../Controllers/notificationController');
-// const AgentModel = require('../Models/AgentModel');
-const Category = require('../Models/Category');
-const SocialLink = require('../Models/SocialLink');
-const BettingHistory = require('../Models/BettingHistory');
-const { loginUser } = require('../Services/LoginService');
-const { AdminProfile } = require('../Services/LoginService');
+const AgentModel = require('../Models/AgentModel')
+const PaymentGateWayTable = require('../Models/PaymentGateWayTable')
+const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable')
+const SubAgentModel = require('../Models/SubAgentModel')
+const UserModel = require('../Models/User')
+
+
+
+const { createUser } = require('../Services/CreateService');
+const catchAsync = require('../Utils/catchAsync');
+const CreateGateWayService = require('../Services/CreateGateWayService');
+const UserController = require('../Controllers/UserController');
+const GetWayControllers = require('../Controllers/GetWayControllers');
+const paymentMethodController = require('../Controllers/paymentMethodController');
 const { getUserListServices } = require('../Services/getUserListServices');
 const { getReferralData } = require('../Services/getReferralOwnerService');
 const { processTransaction } = require('../Services/processTransactionService');
+const User = require('../Models/User');
+const TransactionModel = require('../Models/TransactionModel');
 // const SportsBet = require('../Models/OddSportsTable')
 exports.AgentRegister = catchAsync(async (req, res, next) => {
- try {
+  try {
     console.log("📥 Creating admin with data:", req.body);
 
-    const result = await createUser(req, AgentModel, 'Admin');
+    const result = await createUser(req, AgentModel, 'Agent');
 
     if (result.success) {
       console.log("✅ Admin created successfully", result);
@@ -332,75 +72,657 @@ exports.AgentRegister = catchAsync(async (req, res, next) => {
     next(err);
   }
 });
-exports.AdminLogin = catchAsync(async (req, res, next) => {
+exports.Login = catchAsync(async (req, res, next) => {
   try {
-    const result = await loginUser(req, AdminModel);
-    console.log(result)
-    res.json({ data: result.data, message: result.message, success: result.success });
+    console.log("📥 Login admin with data:", req.body);
+
+    const result = await loginUser(req, AgentModel, 'Agent');
+    console.log("📥 Login admin with data after:", result)
+    // Set cookies
+    res.cookie('adminToken', result.data.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    res.cookie('adminDeviceId', result.data.deviceId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    console.log("✅ Admin login successful for device:", result.data.deviceId);
+    res.json({
+      data: result.data,
+      message: result.message,
+      success: result.success
+    });
   } catch (err) {
     next(err);
   }
 });
-exports.GetAdminProfile = catchAsync(async (req, res, next) => {
-  let dataModel = AdminModel;
-  let result = await AdminProfile(req, dataModel);
-  res.json({ data: result.data, message: result.message, success: result.success });
+
+
+// Admin logout
+exports.Logout = catchAsync(async (req, res, next) => {
+  try {
+    const result = await logoutUser(req, AgentModel, 'Agent');
+
+    // Clear cookies
+    res.clearCookie('adminToken');
+    res.clearCookie('adminDeviceId');
+
+    res.json({
+      message: result.message,
+      success: result.success
+    });
+  } catch (err) {
+    next(err);
+  }
 });
-exports.AdminUpdate = async (req, res) => {
-  let dataModel = AdminModel;
-  let result = await CreateService.updateAdminProfile(req, dataModel);
+
+exports.GetProfile = catchAsync(async (req, res, next) => {
+  try {
+    await verifyUserSession(req, AgentModel, 'Agent');
+    const result = await getUserProfile(req, AgentModel, 'Agent');
+
+    res.json({
+      data: result.data,
+      message: result.message,
+      success: result.success
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Get active sessions (Admin only)
+exports.GetActiveSessions = catchAsync(async (req, res, next) => {
+  try {
+    const result = await getActiveSessions(req, AgentModel, 'Agent');
+
+    res.json({
+      data: result.data,
+      count: result.count,
+      message: result.message,
+      success: result.success
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// Force logout users
+exports.ForceLogout = catchAsync(async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    const result = await forceLogoutUser(userId, AgentModel, 'Agent');
+
+    res.json({
+      message: result.message,
+      previousDevice: result.previousDevice,
+      success: result.success
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+// Check if user exists
+exports.CheckExists = catchAsync(async (req, res, next) => {
+  try {
+    const existingAdmin = await AgentModel.findOne({
+      $or: [
+        { email: req.body.email },
+        { mobile: req.body.mobile },
+        { userId: req.body.userId }
+      ]
+    });
+
+    if (existingAdmin) {
+      return res.status(200).json({
+        exists: true,
+        message: "Admin already exists with this email, mobile, or userId",
+        data: {
+          email: existingAdmin.email,
+          mobile: existingAdmin.mobile,
+          userId: existingAdmin.userId
+        }
+      });
+    }
+
+    res.status(200).json({
+      exists: false,
+      message: "No admin found with these credentials"
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+exports.RequestPasswordResetUser = catchAsync(async (req, res, next) => {
+  let dataModel = AgentModel;
+  let result = await requestPasswordReset(req.email, dataModel, 'Agent');
   res.status(result.status).json({ status: result.status, data: result.data })
-}
+})
+exports.ResetPasswordUser = catchAsync(async (req, res, next) => {
+  let dataModel = AgentModel;
+  let result = await resetUserPassword(req.token, req.newPassword, dataModel, 'Agent');
+  res.status(result.status).json({ status: result.status, data: result.data })
+})
+
+
+
+// exports.Update = async (req, res) => {
+//   let dataModel = AgentModel;
+//   let result = await CreateService.updateAdminProfile(req, dataModel);
+//   res.status(result.status).json({ status: result.status, data: result.data })
+// }
 
 
 
 
-exports.GetSubAdminList = async (req, res) => {
 
 
+
+
+exports.GetAllUserList = catchAsync(async (req, res) => {
+  try {
+    const dataModel = AgentModel;
+    const user = req.user; // Assuming user is available in request
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const result = await UserController.GetUserList(req, res, dataModel, user);
+    // Note: GetUserList already sends the response, so we don't need to send again
+
+  } catch (err) {
+    console.error("GetAllUserList Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+exports.GetAgentList = catchAsync(async (req, res) => {
+  try {
+    const dataModel = SubAgentModel;
+    const parentModel = AgentModel;
+    const user = req.user; // Assuming user is available in request
+    const queryParams = req.params
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const result = await UserController.GetFromUserList(parentModel, dataModel, user, queryParams, res);
+    // Note: GetUserList already sends the response, so we don't need to send again
+
+  } catch (err) {
+    console.error("GetAllUserList Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+exports.GetAgentUserById_detaills = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = SubAgentModel;
+    const user = req.user; // Assuming user is available in request
+
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.getUserById_detaills(req, res, dataModel, user);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.GetUserById_detaills = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = User;
+    const user = req.user; // Assuming user is available in request
+
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.getUserById_detaills(req, res, dataModel, user);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+exports.getListSubAgentUsers = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
+
+    const result = await UserController.GetDirectDownlineTree(
+      AgentModel,       // parent model
+      SubAgentModel,    // child model
+      UserModel,        // sub-child model
+      req.user          // logged-in user
+    );
+    console.log("Full Downline Result:", result.resultChildren);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result.resultChildren,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.updateUserProfileById = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = User;
+    const user = req.user; // Assuming user is available in request
+    console.log("updateUserProfileById user:", req.body);
+    console.log("updateUserProfileById user:", user);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.updateUserProfileById(req, res, dataModel, user);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+exports.verifyUserEmail = catchAsync((req, res, next) => {
+  try {
+    const dataModel = User;
+    const user = req.user; // Assuming user is available in request
+    console.log("updateUserProfileById user:", req.params.userId);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = UserController.verifyEmail(req, dataModel, next);
+    console.log("updateUserProfileById user:", userDetails);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      // data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+exports.verifyUserPhone = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = User;
+    const user = req.user; // Assuming user is available in request
+    console.log("updateUserProfileById user:", req.params.userId);
+    console.log("updateUserProfileById user:", req.params.userId);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.verifyPhone(req, dataModel, res);
+    console.log("updateUserProfileById user:", userDetails);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      // data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+
+exports.DepositGetWayList = catchAsync(async (req, res, next) => {
   try {
 
-    let dataModel = SubAdmin;
-    let result = await getUserListServices(req, dataModel);
-    res.json({ data: result.data, message: result.message, success: result.success });
+    const dataModel = PaymentGateWayTable; // Your deposit/transaction model
+
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+    const result = await GetWayControllers.GetWayList(req, dataModel);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    console.log("DepositGetWayList result:", result);
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: result.deposits,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("GetAllUserList Error:", err);
+    next(err);
   }
-};
-
-
-exports.GetSubAdminAffiliateList = async (req, res) => {
+})
+exports.WidthralGetWayList = catchAsync(async (req, res, next) => {
   try {
 
-    let dataModel = AffiliateModel;
-    let result = await getUserListServices(req, dataModel);
-    res.json({ data: result.data, message: result.message, success: result.success });
+    const dataModel = WidthralPaymentGateWayTable; // Your deposit/transaction model
+
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+    const result = await GetWayControllers.GetWayList(req, dataModel);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    console.log("DepositGetWayList result:", result);
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: result.deposits,
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("GetAllUserList Error:", err);
+    next(err);
   }
-};
-exports.GetAgentList = async (req, res) => {
+})
+
+
+exports.getPendingAgentDepositTransactions = catchAsync(async (req, res, next) => {
   try {
 
-    let dataModel = AgentModel;
-    let result = await getUserListServices(req, dataModel);
-    res.json({ data: result.data, message: result.message, success: result.success });
+    const dataModel = TransactionModel; // Your deposit/transaction model
+    const ParentUserModel = AgentModel;       // Your User model
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Call the service function (the long function you created earlier)
+    const userDetails = await GetWayControllers.getPendingDepositTransactions(
+      req,
+      res,
+      user,
+      dataModel,
+      ParentUserModel,
+      parseInt(0),
+    );
+
+    console.log("Pending Deposit Result:", userDetails);
+
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    next(err);
   }
-};
-exports.GetUserList = async (req, res) => {
+});
+exports.getPendingAgentWidthralTransactions = catchAsync(async (req, res, next) => {
   try {
 
-    let dataModel = UserModel;
-    let result = await getUserListServices(req, dataModel);
-    res.json({ data: result.data, message: result.message, success: result.success });
+    const dataModel = TransactionModel; // Your deposit/transaction model
+    const ParentUserModel = AgentModel;       // Your User model
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Call the service function (the long function you created earlier)
+    const userDetails = await GetWayControllers.getPendingDepositTransactions(
+      req,
+      res,
+      user,
+      dataModel,
+      ParentUserModel,
+      parseInt(1),
+    );
+
+    console.log("Pending Deposit Result:", userDetails);
+
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    next(err);
   }
-};
+});
+
+
+exports.getPendingSubAgentDepositTransactions = catchAsync(async (req, res, next) => {
+  try {
+
+    const TransactionModel = TransactionModel; // Your deposit/transaction model
+    const ParentModel = AgentModel;
+    const ChildModel = SubAgentModel;
+    const SubChildModel = UserModel;      // Your User model
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 0,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+    // Call the service function (the long function you created earlier)
+    const userDetails = await paymentMethodController.GetDirectDownlineTransactions(
+      ParentModel,
+      ChildModel,
+      SubChildModel,
+      TransactionModel,
+      user,
+      query
+    );
+
+    console.log("Pending Deposit Result:", userDetails);
+
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.getPendingSubAgentWidthrowTransactions = catchAsync(async (req, res, next) => {
+  try {
+
+    const TransactionModel = TransactionModel; // Your deposit/transaction model
+    const ParentModel = AgentModel;
+    const ChildModel = SubAgentModel;
+    const SubChildModel = UserModel;      // Your User model
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 1,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+    // Call the service function (the long function you created earlier)
+    const userDetails = await paymentMethodController.GetDirectDownlineTransactions(
+      ParentModel,
+      ChildModel,
+      SubChildModel,
+      TransactionModel,
+      user,
+      query
+    );
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+
+exports.getAllTransactions = catchAsync(async (req, res, next) => {
+    try {
+        const user = req.user;
+        const query = {
+            status: req.query.status || 0,
+            type: req.query.type || 0,
+            limit: req.query.limit || 50,
+            page: req.query.page || 1,
+            userId: req.query.userId || null
+        };
+
+        const result = await paymentMethodController.GetParentAndDownlineTransactions(
+            AgentModel,      // ParentModel
+            SubAgentModel,   // ChildModel
+            UserModel,       // SubChildModel
+            TransactionModel, // TransactionModel
+            user,
+            query
+        );
+
+        if (!result.success) {
+            return res.status(400).json({ success: false, message: result.message });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Pending deposit transactions fetched successfully",
+            transactions: result.transactions,
+            total: result.total,
+            page: result.page,
+            limit: result.limit
+        });
+
+    } catch (err) {
+        next(err);
+    }
+});
 

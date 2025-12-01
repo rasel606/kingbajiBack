@@ -317,6 +317,10 @@ const links = require('./src/Router/links');
 const affiliateLinkRoutes = require('./src/Router/links');
 const withdrawalRoutes = require('./src/Router/withdrawals');
 const profileRoutes = require('./src/Router/affiliateProfile');
+const agentRoutes = require('./src/Router/agentRoutes');
+const agentDashboard = require('./src/Router/agentDashboard');
+const SubAdminDashboard = require('./src/Router/SubAdminDashboard');
+const subAgentRoutes = require('./src/Router/subAgentRoutes');
 const affiliateDashboardRoute = require('./src/Router/affiliateDashboardRoute');
 const AffiliateAuthRoute = require('./src/Router/AffiliateAuthRoute');
 // Import Live Chat Routes
@@ -406,12 +410,25 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 app.use("/api/v1", router);
 app.use('/api/admin/auth', AdminAurth);
-app.use('/api/sub_admin/auth', subAdminAurth);
+app.use('/api/admin', mainAdminRoutes);
+
+
+
+
+////////////////SubAdmin////////////////////////////////
+app.use('/api/subadmin/auth', subAdminAurth);
+app.use('/api/subadmin/dashboard', SubAdminDashboard);
+app.use('/api/subadmin', subAdminRoutes);
+////////////////agent////////////////////////////////
+app.use('/api/agent', agentRoutes);
+app.use('/api/agent_dashboard', agentDashboard);
+app.use('/api/sub_agent', subAgentRoutes);
+
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/user', userRoutes);
-app.use('/api/subadmin', subAdminRoutes);
-app.use('/api/Admin', mainAdminRoutes);
+
+
 app.use('/api/games', gameRoutes);
 app.use('/api/phone', phoneVerificationRoute);
 app.use('/api/turnover', turnoverRoutes);

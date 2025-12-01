@@ -5,8 +5,8 @@ const jwt = require('jsonwebtoken');
 const AppError = require('../Utils/AppError');
 const crypto = require('crypto');
 
-const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const JWT_SECRET = "Kingbaji";
+const JWT_EXPIRES_IN =  '1d';
 
 // ডিভাইস ID জেনারেট করার ফাংশন
 const generateDeviceId = (req) => {
@@ -201,11 +201,11 @@ const generateToken = (email, deviceId) => {
 // };
 // ইউনিভার্সাল লগিন সার্ভিস
 exports.loginUser = async (req, dataModel, userType) => {
-  const { email, password, twoFactorToken } = req.body;
-
+  const { email,userId,mobile, password, twoFactorToken } = req.body;
+console.log(dataModel);
   // ইউজার খুঁজে বের করুন (পাসওয়ার্ড সহ)
-  const user = await dataModel.findOne({ email }).select('+password');
-  
+  const user = await dataModel.findOne({ $or: [{ email }, { mobile }, { userId }] }).select('+password');
+  console.log(user);
   if (!user) {
     throw new AppError(`${userType} not found`, 404);
   }

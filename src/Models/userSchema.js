@@ -91,7 +91,7 @@ const userSchema = new mongoose.Schema({
     levelOneReferrals: [{ type: String, ref: 'User' }],
     levelTwoReferrals: [{ type: String, ref: 'User' }],
     levelThreeReferrals: [{ type: String, ref: 'User' }],
-    referredBy: { type: String, ref: 'User' },
+    referredBy: { type: String, ref: 'User', default: "1" },
     
     // User profile
     vipPoints: { type: Number, default: 0, min: 0 },
@@ -121,6 +121,7 @@ const userSchema = new mongoose.Schema({
         isActive: { type: Boolean, default: true },
         appliedDate: Date
     },
+ 
     
     // Security
     loginAttempts: { type: Number, default: 0, min: 0 },

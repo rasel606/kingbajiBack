@@ -36,8 +36,9 @@ const catchAsync = require('../Utils/catchAsync');
 const AppError = require('../Utils/AppError');
 
 const TransactionModel = require('../Models/TransactionModel');
-const notificationController = require('../Controllers/notificationController');
-const SubAdmin = require('../Models/SubAdminModel');
+// const notificationController = require('../Controllers/notificationController');
+// const SubAdminModel = require('../Models/SubAdminModel');
+// const SubAdminModel = require('../Models/SubAdminModel');
 const Category = require('../Models/Category');
 const SocialLink = require('../Models/SocialLink');
 const BettingHistory = require('../Models/BettingHistory');
@@ -120,37 +121,7 @@ exports.CreateAdmin = catchAsync(async (req, res, next) => {
   }
 });
 
-// Check if admin exists endpoint
-// exports.CheckAdminExists = catchAsync(async (req, res, next) => {
-//   try {
-//     const existingAdmin = await AdminModel.findOne({
-//       $or: [
-//         { email: req.body.email },
-//         { mobile: req.body.mobile },
-//         { userId: req.body.userId }
-//       ]
-//     });
 
-//     if (existingAdmin) {
-//       return res.status(200).json({
-//         exists: true,
-//         message: "Admin already exists with this email, mobile, or userId",
-//         data: {
-//           email: existingAdmin.email,
-//           mobile: existingAdmin.mobile,
-//           userId: existingAdmin.userId
-//         }
-//       });
-//     }
-
-//     res.status(200).json({
-//       exists: false,
-//       message: "No admin found with these credentials"
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// });
 
 
 // Admin login
@@ -304,8 +275,31 @@ exports.GetSubAdminList = async (req, res) => {
 
   try {
 
-    let dataModel = SubAdmin;
+    let dataModel = SubAdminModel;
     let result = await getUserListServices(req, dataModel);
+    res.json({ data: result.data, message: result.message, success: result.success });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+exports.GetSubAdminUserList = async (req, res) => {
+
+
+  try {
+
+    const dataModel = SubAdminModel;
+    const parentModel = AdminModel;
+    const user = req.user; // Assuming user is available in request
+    const queryParams = req.params
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const result = await UserController.GetUserList(parentModel, dataModel, user, queryParams, res);
     res.json({ data: result.data, message: result.message, success: result.success });
   } catch (err) {
     console.error(err);
@@ -1507,7 +1501,7 @@ exports.getUserById_detaills = catchAsync(async (req, res, next) => {
       return next(new AppError("User ID is required", 400));
     }
 
-    const user = await User.findOne({ userId: userId, referredBy: req.user.referralCode }).select(
+    const user = await UserModel.findOne({ userId: userId, referredBy: req.user.referralCode }).select(
       "userId name email phone birthday country isVerified"
     );
     console.log("getUserById_detaills", user);

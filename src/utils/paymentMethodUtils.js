@@ -273,7 +273,8 @@
 
 const PaymentGateWayTable = require("../Models/PaymentGateWayTable");
 const User = require("../Models/User");
-
+const AgentModel = require("../Models/AgentModel");
+const SubAgentModel = require("../Models/SubAgentModel");
 // Get payment methods for a specific user level
 const getPaymentMethodsForUserLevel = async (user, level) => {
     try {
@@ -327,7 +328,79 @@ const getUserWithReferralLevels = async (referralCode, maxLevel = 3) => {
 };
 
 // Get referral owner data
-const getReferralOwner = async (user) => {
+// const getReferralOwner = async (user) => {
+//     const result = {
+//         levelOneUsers: [],
+//         levelTwoUsers: [],
+//         levelThreeUsers: [],
+//         levelOneGateways: 0,
+//         levelTwoGateways: 0,
+//         levelThreeGateways: 0
+//     };
+
+//     try {
+//         // Level 1 - Direct referrals
+//         const levelOneUsers = await User.find({ referredBy: user.referralCode });
+//         result.levelOneUsers = levelOneUsers;
+
+//         // Get level 1 gateways
+//         for (const levelOneUser of levelOneUsers) {
+//             const gateways = await PaymentGateWayTable.countDocuments({
+//                 referredBy: levelOneUser.referralCode,
+//                 is_active: true
+//             });
+//             result.levelOneGateways += gateways;
+//         }
+
+//         // Level 2 - Referrals of referrals
+//         if (levelOneUsers.length > 0) {
+//             const levelOneReferralCodes = levelOneUsers.map(u => u.referralCode);
+//             const levelTwoUsers = await User.find({
+//                 referredBy: { $in: levelOneReferralCodes }
+//             });
+//             result.levelTwoUsers = levelTwoUsers;
+
+//             // Get level 2 gateways
+//             for (const levelTwoUser of levelTwoUsers) {
+//                 const gateways = await PaymentGateWayTable.countDocuments({
+//                     referredBy: levelTwoUser.referralCode,
+//                     is_active: true
+//                 });
+//                 result.levelTwoGateways += gateways;
+//             }
+
+//             // Level 3
+//             if (levelTwoUsers.length > 0) {
+//                 const levelTwoReferralCodes = levelTwoUsers.map(u => u.referralCode);
+//                 const levelThreeUsers = await User.find({
+//                     referredBy: { $in: levelTwoReferralCodes }
+//                 });
+//                 result.levelThreeUsers = levelThreeUsers;
+
+//                 // Get level 3 gateways
+//                 for (const levelThreeUser of levelThreeUsers) {
+//                     const gateways = await PaymentGateWayTable.countDocuments({
+//                         referredBy: levelThreeUser.referralCode,
+//                         is_active: true
+//                     });
+//                     result.levelThreeGateways += gateways;
+//                 }
+//             }
+//         }
+
+//         return result;
+//     } catch (error) {
+//         console.error("Error getting referral owner:", error);
+//         return result;
+//     }
+// };
+
+// Reusable Referral Owner Summary Generator
+const getReferralOwner = async (user, models) => {
+    // models = { UserModel, AgentModel, SubAgentModel }
+
+    const { UserModel, AgentModel, SubAgentModel } = models;
+
     const result = {
         levelOneUsers: [],
         levelTwoUsers: [],
@@ -338,61 +411,70 @@ const getReferralOwner = async (user) => {
     };
 
     try {
-        // Level 1 - Direct referrals
-        const levelOneUsers = await User.find({ referredBy: user.referralCode });
+        // Detect user group (user / agent / subagent)
+        const userGroup = user.userGroup?.toLowerCase();
+
+        // Step 1: Select search model based on user type
+        let currentModel = UserModel; // default
+
+        if (userGroup === "agent") currentModel = AgentModel;
+        if (userGroup === "subagent") currentModel = SubAgentModel;
+
+        // ------- LEVEL 1 -------
+        const levelOneUsers = await currentModel.find({
+            referredBy: user.referralCode
+        });
+
         result.levelOneUsers = levelOneUsers;
 
-        // Get level 1 gateways
-        for (const levelOneUser of levelOneUsers) {
-            const gateways = await PaymentGateWayTable.countDocuments({
-                referredBy: levelOneUser.referralCode,
-                is_active: true
-            });
-            result.levelOneGateways += gateways;
-        }
+        // Count level 1 gateways
+        const levelOneReferralCodes = levelOneUsers.map(u => u.referralCode);
 
-        // Level 2 - Referrals of referrals
+        result.levelOneGateways = await PaymentGateWayTable.countDocuments({
+            referredBy: { $in: levelOneReferralCodes },
+            is_active: true
+        });
+
+        // ------- LEVEL 2 -------
         if (levelOneUsers.length > 0) {
-            const levelOneReferralCodes = levelOneUsers.map(u => u.referralCode);
-            const levelTwoUsers = await User.find({
+            const levelTwoUsers = await currentModel.find({
                 referredBy: { $in: levelOneReferralCodes }
             });
+
             result.levelTwoUsers = levelTwoUsers;
 
-            // Get level 2 gateways
-            for (const levelTwoUser of levelTwoUsers) {
-                const gateways = await PaymentGateWayTable.countDocuments({
-                    referredBy: levelTwoUser.referralCode,
-                    is_active: true
-                });
-                result.levelTwoGateways += gateways;
-            }
+            const levelTwoReferralCodes = levelTwoUsers.map(u => u.referralCode);
 
-            // Level 3
+            result.levelTwoGateways = await PaymentGateWayTable.countDocuments({
+                referredBy: { $in: levelTwoReferralCodes },
+                is_active: true
+            });
+
+            // ------- LEVEL 3 -------
             if (levelTwoUsers.length > 0) {
-                const levelTwoReferralCodes = levelTwoUsers.map(u => u.referralCode);
-                const levelThreeUsers = await User.find({
+                const levelThreeUsers = await currentModel.find({
                     referredBy: { $in: levelTwoReferralCodes }
                 });
+
                 result.levelThreeUsers = levelThreeUsers;
 
-                // Get level 3 gateways
-                for (const levelThreeUser of levelThreeUsers) {
-                    const gateways = await PaymentGateWayTable.countDocuments({
-                        referredBy: levelThreeUser.referralCode,
-                        is_active: true
-                    });
-                    result.levelThreeGateways += gateways;
-                }
+                const levelThreeReferralCodes = levelThreeUsers.map(u => u.referralCode);
+
+                result.levelThreeGateways = await PaymentGateWayTable.countDocuments({
+                    referredBy: { $in: levelThreeReferralCodes },
+                    is_active: true
+                });
             }
         }
 
         return result;
+
     } catch (error) {
-        console.error("Error getting referral owner:", error);
+        console.error("Error in getReferralOwner:", error);
         return result;
     }
 };
+
 
 // Get payment methods for all levels
 const getPaymentMethodsForAllLevels = async (user) => {

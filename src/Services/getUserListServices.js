@@ -13,7 +13,7 @@ exports.getUserListServices = async (req, dataModel) => {
     const filters = {};
     if (userId) filters.userId = userId;
     if (email) filters.email = email;
-    if (req.referralCode) filters.referredBy = requstedUser.referralCode;
+    if (req.referralCode) filters.referredBy = null;
 
     const users = await dataModel.find(filters)
         .select('userId name phone balance referredBy referralCode email country countryCode isVerified timestamp isActive birthday last_game_id')
