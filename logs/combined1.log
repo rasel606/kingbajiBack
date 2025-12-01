@@ -8704,3 +8704,29 @@
 {"level":"info","message":"127.0.0.1 - - [01/Dec/2025:19:35:57 +0000] \"GET /api/subadmin/get_userList?userId=&email=&phone= HTTP/1.1\" 304 - \"http://localhost:3000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36\"","service":"bajicrick-api"}
 {"level":"info","message":"127.0.0.1 - - [01/Dec/2025:19:35:58 +0000] \"GET /api/subadmin/get_agent_List?userId=&email=&phone= HTTP/1.1\" 304 - \"http://localhost:3000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36\"","service":"bajicrick-api"}
 {"level":"info","message":"SIGINT received. Shutting down gracefully","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"127.0.0.1 - - [01/Dec/2025:19:55:25 +0000] \"POST /api/subadmin/auth/login_sub_admin HTTP/1.1\" 200 4198 \"-\" \"PostmanRuntime/7.49.1\"","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"SIGINT received. Shutting down gracefully","service":"bajicrick-api"}

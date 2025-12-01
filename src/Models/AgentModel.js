@@ -3,17 +3,17 @@ const bcrypt = require('bcryptjs');
 
 const AgentModelSchema = new mongoose.Schema({
   // Basic Information
-  userId: { type: String, required: true, unique: true },
+  userId: { type: String, required: true },
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
+  email: { type: String, required: true, lowercase: true },
   phone: { type: String },
   whatsapp: { type: String },
   password: { type: String, required: true, select: false },
   dateOfBirth: { type: Date },
 
   // Referral System
-  referralCode: { type: String, unique: true },
+  referralCode: { type: String },
   referredBy: { type: String, default: null },
 
   // Agent Specific Fields
@@ -237,9 +237,9 @@ AgentModelSchema.methods.addAffiliate = function(affiliateId) {
 };
 
 // Indexes
-AgentModelSchema.index({ email: 1 });
-AgentModelSchema.index({ userId: 1 });
-AgentModelSchema.index({ referralCode: 1 });
+AgentModelSchema.index({ email: 1, unique: true });
+AgentModelSchema.index({ userId: 1, unique: true });
+AgentModelSchema.index({ referralCode: 1, unique: true });
 AgentModelSchema.index({ referredBy: 1 });
 AgentModelSchema.index({ status: 1 });
 AgentModelSchema.index({ 'hierarchy.upline': 1 });

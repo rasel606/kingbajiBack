@@ -22,7 +22,7 @@ const AdminModelSchema = new mongoose.Schema({
   
   // Referral System
   userId: { type: String,},
-  referralCode: { type: String, unique: true },
+  referralCode: { type: String },
   referredBy: { type: String },
   
   // Session Management
@@ -193,6 +193,8 @@ AdminModelSchema.methods.updateLogoutHistory = function(deviceId) {
 // Indexes
 AdminModelSchema.index({ email: 1,unique: true, sparse: true });
 AdminModelSchema.index({ userId: 1, unique: true, sparse: true });
+AdminModelSchema.index({ referralCode: 1, unique: true, sparse: true });
+AdminModelSchema.index({ referredBy: 1 });
 AdminModelSchema.index({ role: 1 });
 AdminModelSchema.index({ status: 1 });
 

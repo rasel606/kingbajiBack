@@ -13,7 +13,7 @@ const SubAgentModelSchema = new mongoose.Schema({
   dateOfBirth: { type: Date },
 
   // Referral System
-  referralCode: { type: String, unique: true },
+  referralCode: { type: String },
   referredBy: { type: String, default: null },
 
   // Agent Relationship
@@ -221,8 +221,8 @@ SubAgentModelSchema.methods.createPasswordResetToken = function() {
 
 // Indexes
 SubAgentModelSchema.index({ email: 1 , unique: true});
-SubAgentModelSchema.index({ userId: 1 , unique: true,});
-SubAgentModelSchema.index({ referralCode: 1 });
+SubAgentModelSchema.index({ userId: 1 , unique: true});
+SubAgentModelSchema.index({ referralCode: 1,unique: true });
 SubAgentModelSchema.index({ referredBy: 1 });
 SubAgentModelSchema.index({ parentAgent: 1 });
 SubAgentModelSchema.index({ status: 1 });

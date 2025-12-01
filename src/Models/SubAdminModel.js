@@ -274,9 +274,9 @@ SubAdminModelSchema.methods.verifyBackupCode = function(code) {
 };
 
 // Indexes
-SubAdminModelSchema.index({ email: 1 }, { unique: true });
-SubAdminModelSchema.index({ userId: 1 }, { unique: true });
-SubAdminModelSchema.index({ referralCode: 1 }, { unique: true }); // Added index
+SubAdminModelSchema.index({ email: 1 ,unique: true });
+SubAdminModelSchema.index({ userId: 1 ,unique: true });
+SubAdminModelSchema.index({ referralCode: 1 ,unique: true }); // Added index
 SubAdminModelSchema.index({ role: 1 });
 SubAdminModelSchema.index({ status: 1 });
 SubAdminModelSchema.index({ isLoggedIn: 1 });
