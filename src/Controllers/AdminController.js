@@ -37,6 +37,8 @@ const AppError = require('../Utils/AppError');
 
 const TransactionModel = require('../Models/TransactionModel');
 // const notificationController = require('../Controllers/notificationController');
+const UserController = require('../Controllers/UserController');
+const paymentMethodController = require('../Controllers/paymentMethodController');
 // const SubAdminModel = require('../Models/SubAdminModel');
 // const SubAdminModel = require('../Models/SubAdminModel');
 const Category = require('../Models/Category');
@@ -283,31 +285,30 @@ exports.GetSubAdminList = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-exports.GetSubAdminUserList = async (req, res) => {
-
-
+exports.GetSubAdminUserList = catchAsync(async (req, res, next) => {
   try {
+    const user = req.user;
+    console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
 
-    const dataModel = SubAdminModel;
-    const parentModel = AdminModel;
-    const user = req.user; // Assuming user is available in request
-    const queryParams = req.params
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required'
-      });
-    }
+    const result = await UserController.GetDirectDownlineTree(
+      AdminModel,       // parent model
+      SubAdminModel,    // child model
+      UserModel,        // sub-child model
+      req.user          // logged-in user
+    );
+    console.log("Full Downline Result:", result.resultChildren);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result.resultChildren,
 
-    const result = await UserController.GetUserList(parentModel, dataModel, user, queryParams, res);
-    res.json({ data: result.data, message: result.message, success: result.success });
+    });
+
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    next(err);
   }
-};
-
-
+});
 exports.GetSubAdminAffiliateList = async (req, res) => {
   try {
 
@@ -319,17 +320,17 @@ exports.GetSubAdminAffiliateList = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-exports.GetAgentList = async (req, res) => {
-  try {
+// exports.GetAgentList = async (req, res) => {
+//   try {
 
-    let dataModel = AgentModel;
-    let result = await getUserListServices(req, dataModel);
-    res.json({ data: result.data, message: result.message, success: result.success });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+//     let dataModel = AgentModel;
+//     let result = await getUserListServices(req, dataModel);
+//     res.json({ data: result.data, message: result.message, success: result.success });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// };
 exports.GetUserList = async (req, res) => {
   try {
 
@@ -859,7 +860,220 @@ exports.getSubAdminList = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+exports.getSubAdminUserList = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
 
+    const result = await UserController.GetDirectDownlineTree(
+      AdminModel,       // parent model
+      SubAdminModel,    // child model
+      UserModel,        // sub-child model
+      req.user          // logged-in user
+    );
+    console.log("Full Downline Result:", result.resultChildren);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result.resultChildren,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
+exports.getSubAdminUserDepositList = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 0,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+
+    const result = await paymentMethodController.GetDirectDownlineTransactions(
+      AdminModel,       // parent model
+      SubAdminModel,
+      UserModel,        // child model
+      TransactionModel,        // sub-child model
+      req.user,
+      query
+    );
+    console.log("Full Downline Result:", result);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
+exports.getSubAdminUserWithdrawList = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 1,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+
+    const result = await paymentMethodController.GetDirectDownlineTransactions(
+      AdminModel,       // parent model
+      SubAdminModel,
+      UserModel,        // child model
+      TransactionModel,        // sub-child model
+      req.user,
+      query
+    );
+    console.log("Full Downline Result:", result);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+/////////////////////////////////////////////////////////////
+exports.getAdminAgentList = async (req, res) => {
+  try {
+
+    const result = await UserController.GetRefferralList(req, res, AdminModel, AgentModel);
+    return res.json({
+      success: true,
+      data: {Users:result.user},
+      total: result.total
+
+    });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+exports.getAdminAgentUserList = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
+
+    const result = await UserController.GetDirectDownlineTree(
+      AdminModel,       // parent model
+      SubAdminModel,    // child model
+      UserModel,        // sub-child model
+      req.user          // logged-in user
+    );
+    console.log("Full Downline Result:", result.resultChildren);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result.resultChildren,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
+exports.getAdminAgentUserDepositList = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 0,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+
+    const result = await paymentMethodController.GetDirectDownlineTransactions(
+      AdminModel,       // parent model
+      SubAdminModel,
+      UserModel,        // child model
+      TransactionModel,        // sub-child model
+      req.user,
+      query
+    );
+    console.log("Full Downline Result:", result);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
+exports.getAdminAgentUserWithdrawList = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+
+    console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 1,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+
+    const result = await paymentMethodController.GetDirectDownlineTransactions(
+      AdminModel,       // parent model
+      SubAdminModel,
+      UserModel,        // child model
+      TransactionModel,        // sub-child model
+      req.user,
+      query
+    );
+    console.log("Full Downline Result:", result);
+    // 4️⃣ Response
+    return res.json({
+      success: true,
+      data: result,
+
+    });
+
+
+
+
+  } catch (err) {
+    next(err);
+  }
+});
 // 🟢 Affiliate List
 exports.getAffiliateList = async (req, res) => {
   try {
@@ -1257,105 +1471,6 @@ exports.getUsersByReferral = async (req, res) => {
   }
 };
 
-// exports.getUsersByReferral = async (req, res) => {
-//   try {
-//     console.log("getUsersByReferral called");
-
-//     const { page = 1, limit = 10, search = "" } = req.query;
-//     const skip = (parseInt(page) - 1) * parseInt(limit);
-
-//     // Get exact MongoDB collection names
-//     const userCollection = User.collection.name;           // "users"
-//     const affiliateCollection = AffiliateModel.collection.name; // "affiliatemodels"
-
-//     // Build search filter
-//     const matchFilter = {
-//       referredBy: { $ne: null },
-//       $or: [
-//         { name: { $regex: search, $options: "i" } },
-//         { email: { $regex: search, $options: "i" } },
-//         { "phone.number": { $regex: search, $options: "i" } }
-//       ]
-//     };
-
-//     // Aggregation pipeline
-//     const pipeline = [
-//       { $match: matchFilter },
-
-//       // Lookup affiliate info
-//       {
-//         $lookup: {
-//           from: affiliateCollection,
-//           localField: "referredBy",
-//           foreignField: "referralCode",
-//           as: "affiliateInfo"
-//         }
-//       },
-//       { $unwind: { path: "$affiliateInfo", preserveNullAndEmptyArrays: true } },
-
-//       // Lookup referred user info
-//       {
-//         $lookup: {
-//           from: userCollection,
-//           localField: "referredBy",
-//           foreignField: "referralCode",
-//           as: "referredUserInfo"
-//         }
-//       },
-//       { $unwind: { path: "$referredUserInfo", preserveNullAndEmptyArrays: true } },
-
-//       // Count how many users this user referred
-//       {
-//         $lookup: {
-//           from: userCollection,
-//           localField: "referralCode",
-//           foreignField: "referredBy",
-//           as: "referrals"
-//         }
-//       },
-//       {
-//         $addFields: {
-//           referralCount: { $size: "$referrals" }
-//         }
-//       },
-//       { $project: { referrals: 0 } }, // remove raw array
-
-//       // Sort by referralCount descending
-//       { $sort: { referralCount: -1 } },
-
-//       // Pagination
-//       { $skip: skip },
-//       { $limit: parseInt(limit) }
-//     ];
-
-//     // Execute aggregation
-//     const enrichedUsers = await User.aggregate(pipeline);
-
-//     // Total count for pagination
-//     const totalUsers = await User.countDocuments(matchFilter);
-//     const totalPages = Math.ceil(totalUsers / parseInt(limit));
-
-//     res.json({
-//       status: true,
-//       message: "Users by referral fetched successfully",
-//       data: {
-//         page: parseInt(page),
-//         limit: parseInt(limit),
-//         totalUsers,
-//         totalPages,
-//         hasNext: page < totalPages,
-//         hasPrev: page > 1,
-//         enrichedUsers
-//       }
-//     });
-
-//   } catch (err) {
-//     console.error("Error in getUsersByReferral (aggregation):", err);
-//     res.status(500).json({ status: false, message: err.message });
-//   }
-// };
-
-
 
 exports.changeUserPassword = async (req, res) => {
   try {
@@ -1586,202 +1701,316 @@ exports.getTransactionList = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-exports.getPendingDepositTransactions = async (req, res) => {
+
+exports.getPendingDepositTransactions = catchAsync(async (req, res, next) => {
   try {
-    const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
-    console.log("Pending deposit transactions query:", req.query);
     
-    // Get the authenticated user's referral code
-    const user = req.user;
-    console.log("user", user);
-    
-    const ParentUser = await AdminModel.findOne({ email: user.email }) || 
-                       await SubAdminModel.findOne({ email: user.email }) ||
-                       await AgentModel.findOne({ email: user.email }) ||
-                       await SubAgentModel.findOne({ email: user.email });
-    
-    // console.log("getPendingDepositTransactions -----=========user", ParentUser);
-    
-    // if (!ParentUser) {
-    //   return res.status(404).json({
+    const Transaction = TransactionModel; // Your deposit/transaction model
+    const ParentModel = AdminModel;
+    const ChildModel = AffiliateModel;
+    const SubChildModel = UserModel; 
+    const childUserModel = UserModel;     // Your User model
+    const user = req.user;              // Logged in user
+console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    // if (req.user.length > 0 ) {
+    //   return res.status(401).json({
     //     success: false,
-    //     message: 'User not found'
-    //   });
-   // }
-    
-    console.log("getPendingDepositTransactions -----=========user", ParentUser.role);
-    
-    let query = {};
-    console.log("query", query);
-    
-    // Add optional filters
-    if (userId) query.userId = userId;
-    if (amount) query.base_amount = { $gte: parseFloat(amount) };
-    if (gateway_name) query.gateway_name = gateway_name;
-    if (status !== undefined && !isNaN(status) && status !== "") {
-      query.status = parseInt(status);
-    }
-
-    // Date filtering
-    if (startDate && endDate) {
-      query.datetime = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
-    } else if (startDate) {
-      query.datetime = { $gte: new Date(startDate) };
-    }
-
-    // Handle referredBy based on user role
-    let referredByFilter = {};
-    
-    if (ParentUser.role === 'Admin') {
-      // If user is Admin, get transactions with referredBy as null or undefined
-      referredByFilter = { 
-        $or: [
-          { referredBy: null },
-          // { referredBy: { $exists: false } }
-        ]
-      };
-    } else {
-      // For other roles, use their referral code
-      referredByFilter = { referredBy: ParentUser.referralCode };
-    }
-console.log("referredByFilter", referredByFilter);
-    const transactions = await TransactionModel.find({ 
-      ...referredByFilter,
-      ...query, 
-      type: parseInt(0), 
-      status: parseInt(1),
-    }).sort({ datetime: -1 });
-    
-    console.log("transactions", transactions);
-    
-    const totalDeposit = await TransactionModel.aggregate([
-      { 
-        $match: { 
-          ...query, 
-          type: parseInt(1), 
-          status: parseInt(0),
-          ...referredByFilter 
-        } 
-      },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]);
-
-    const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
-
-    res.json({
-      success: true,
-      transactions,
-      total
-    });
-  } catch (error) {
-    console.error("Error searching transactions:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
-  }
-};
-exports.getPendingWidthrawalTransactions = async (req, res) => {
-  try {
-    const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
-    // console.log("Pending deposit transactions query:", req.query);
-    
-    // Get the authenticated user's referral code
-    const user = req.user;
-    console.log("user", user.email,user.role);
-    
-    const ParentUser = await AdminModel.findOne({ email: user.email }) || 
-                       await SubAdminModel.findOne({ email: user.email }) ||
-                       await AgentModel.findOne({ email: user.email }) ||
-                       await SubAgentModel.findOne({ email: user.email });
-    
-    // console.log("getPendingDepositTransactions -----=========user", ParentUser);
-    
-    // if (!ParentUser) {
-    //   return res.status(404).json({
-    //     success: false,
-    //     message: 'User not found'
+    //     message: "Authentication required"
     //   });
     // }
-    
-    console.log("getPendingDepositTransactions -----=========ParentUser.role", ParentUser.role);
-    
-    let query = {};
-    console.log("query", query);
-    
-    // Add optional filters
-    if (userId) query.userId = userId;
-    if (amount) query.base_amount = { $gte: parseFloat(amount) };
-    if (gateway_name) query.gateway_name = gateway_name;
-    if (status !== undefined && !isNaN(status) && status !== "") {
-      query.status = parseInt(status);
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 0,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+    // Call the service function (the long function you created earlier)
+    const userDetails = await paymentMethodController.GetParentAndDownlineTransactions(
+      ParentModel,
+      ChildModel,
+      SubChildModel,
+      childUserModel,
+      Transaction,
+      user,
+      query
+    );
+
+    console.log("Pending Deposit Result:", userDetails);
+
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
     }
 
-    // Date filtering
-    if (startDate && endDate) {
-      query.datetime = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate),
-      };
-    } else if (startDate) {
-      query.datetime = { $gte: new Date(startDate) };
-    }
-
-    // Handle referredBy based on user role
-    let referredByFilter = {};
-    
-    if (ParentUser.role === 'Admin') {
-      // If user is Admin, get transactions with referredBy as null or undefined
-      referredByFilter = { 
-        $or: [
-          { referredBy: null },
-          { referredBy: { $exists: false } }
-        ]
-      };
-    } else {
-      // For other roles, use their referral code
-      referredByFilter = { referredBy: ParentUser.referralCode };
-    }
-
-    const transactions = await TransactionModel.find({ 
-      ...query, 
-      type: parseInt(1), 
-      status: parseInt(0),
-      ...referredByFilter 
-    }).sort({ datetime: -1 });
-    
-    console.log("transactions", transactions);
-    
-    const totalDeposit = await TransactionModel.aggregate([
-      { 
-        $match: { 
-          ...query, 
-          type: parseInt(1), 
-          status: parseInt(0),
-          ...referredByFilter 
-        } 
-      },
-      { $group: { _id: null, total: { $sum: "$amount" } } }
-    ]);
-
-    const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
-
-    res.json({
+    return res.status(200).json({
       success: true,
-      transactions,
-      total
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
     });
-  } catch (error) {
-    console.error("Error searching transactions:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+
+  } catch (err) {
+    next(err);
   }
-};
+});
+
+
+exports.getPendingWidthrawalTransactions = catchAsync(async (req, res, next) => {
+  try {
+
+    const Transaction = TransactionModel; // Your deposit/transaction model
+    const ParentModel = AdminModel;
+    const ChildModel = AgentModel;
+    const SubChildModel = UserModel;      // Your User model
+    const user = req.user;              // Logged in user
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+    const query = {
+      status: req.query.status || 0,
+      type: req.query.type || 1,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+    // Call the service function (the long function you created earlier)
+    const userDetails = await paymentMethodController.GetDirectDownlineTransactions(
+      ParentModel,
+      ChildModel,
+      SubChildModel,
+      Transaction,
+      user,
+      query
+    );
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+
+
+
+
+
+
+// exports.getPendingDepositTransactions = async (req, res) => {
+//   try {
+//     const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
+//     console.log("Pending deposit transactions query:", req.query);
+
+//     // Get the authenticated user's referral code
+//     const user = req.user;
+//     console.log("user", user);
+
+//     const ParentUser = await AdminModel.findOne({ email: user.email }) ||
+//       await SubAdminModel.findOne({ email: user.email }) ||
+//       await AgentModel.findOne({ email: user.email }) ||
+//       await SubAgentModel.findOne({ email: user.email });
+
+//     // console.log("getPendingDepositTransactions -----=========user", ParentUser);
+
+//     // if (!ParentUser) {
+//     //   return res.status(404).json({
+//     //     success: false,
+//     //     message: 'User not found'
+//     //   });
+//     // }
+
+//     console.log("getPendingDepositTransactions -----=========user", ParentUser.role);
+
+//     let query = {};
+//     console.log("query", query);
+
+//     // Add optional filters
+//     if (userId) query.userId = userId;
+//     if (amount) query.base_amount = { $gte: parseFloat(amount) };
+//     if (gateway_name) query.gateway_name = gateway_name;
+//     if (status !== undefined && !isNaN(status) && status !== "") {
+//       query.status = parseInt(status);
+//     }
+
+//     // Date filtering
+//     if (startDate && endDate) {
+//       query.datetime = {
+//         $gte: new Date(startDate),
+//         $lte: new Date(endDate),
+//       };
+//     } else if (startDate) {
+//       query.datetime = { $gte: new Date(startDate) };
+//     }
+
+//     // Handle referredBy based on user role
+//     let referredByFilter = {};
+
+//     if (ParentUser.role === 'Admin') {
+//       // If user is Admin, get transactions with referredBy as null or undefined
+//       referredByFilter = {
+//         $or: [
+//           { referredBy: null },
+//           // { referredBy: { $exists: false } }
+//         ]
+//       };
+//     } else {
+//       // For other roles, use their referral code
+//       referredByFilter = { referredBy: ParentUser.referralCode };
+//     }
+//     console.log("referredByFilter", referredByFilter);
+//     const transactions = await TransactionModel.find({
+//       ...referredByFilter,
+//       ...query,
+//       type: parseInt(0),
+//       status: parseInt(1),
+//     }).sort({ datetime: -1 });
+
+//     console.log("transactions", transactions);
+
+//     const totalDeposit = await TransactionModel.aggregate([
+//       {
+//         $match: {
+//           ...query,
+//           type: parseInt(1),
+//           status: parseInt(0),
+//           ...referredByFilter
+//         }
+//       },
+//       { $group: { _id: null, total: { $sum: "$amount" } } }
+//     ]);
+
+//     const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
+
+//     res.json({
+//       success: true,
+//       transactions,
+//       total
+//     });
+//   } catch (error) {
+//     console.error("Error searching transactions:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Server error"
+//     });
+//   }
+// };
+// exports.getPendingWidthrawalTransactions = async (req, res) => {
+//   try {
+//     const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
+//     // console.log("Pending deposit transactions query:", req.query);
+
+//     // Get the authenticated user's referral code
+//     const user = req.user;
+//     console.log("user", user.email, user.role);
+
+//     const ParentUser = await AdminModel.findOne({ email: user.email }) ||
+//       await SubAdminModel.findOne({ email: user.email }) ||
+//       await AgentModel.findOne({ email: user.email }) ||
+//       await SubAgentModel.findOne({ email: user.email });
+
+//     // console.log("getPendingDepositTransactions -----=========user", ParentUser);
+
+//     // if (!ParentUser) {
+//     //   return res.status(404).json({
+//     //     success: false,
+//     //     message: 'User not found'
+//     //   });
+//     // }
+
+//     console.log("getPendingDepositTransactions -----=========ParentUser.role", ParentUser.role);
+
+//     let query = {};
+//     console.log("query", query);
+
+//     // Add optional filters
+//     if (userId) query.userId = userId;
+//     if (amount) query.base_amount = { $gte: parseFloat(amount) };
+//     if (gateway_name) query.gateway_name = gateway_name;
+//     if (status !== undefined && !isNaN(status) && status !== "") {
+//       query.status = parseInt(status);
+//     }
+
+//     // Date filtering
+//     if (startDate && endDate) {
+//       query.datetime = {
+//         $gte: new Date(startDate),
+//         $lte: new Date(endDate),
+//       };
+//     } else if (startDate) {
+//       query.datetime = { $gte: new Date(startDate) };
+//     }
+
+//     // Handle referredBy based on user role
+//     let referredByFilter = {};
+
+//     if (ParentUser.role === 'Admin') {
+//       // If user is Admin, get transactions with referredBy as null or undefined
+//       referredByFilter = {
+//         $or: [
+//           { referredBy: null },
+//           { referredBy: { $exists: false } }
+//         ]
+//       };
+//     } else {
+//       // For other roles, use their referral code
+//       referredByFilter = { referredBy: ParentUser.referralCode };
+//     }
+
+//     const transactions = await TransactionModel.find({
+//       ...query,
+//       type: parseInt(1),
+//       status: parseInt(0),
+//       ...referredByFilter
+//     }).sort({ datetime: -1 });
+
+//     console.log("transactions", transactions);
+
+//     const totalDeposit = await TransactionModel.aggregate([
+//       {
+//         $match: {
+//           ...query,
+//           type: parseInt(1),
+//           status: parseInt(0),
+//           ...referredByFilter
+//         }
+//       },
+//       { $group: { _id: null, total: { $sum: "$amount" } } }
+//     ]);
+
+//     const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
+
+//     res.json({
+//       success: true,
+//       transactions,
+//       total
+//     });
+//   } catch (error) {
+//     console.error("Error searching transactions:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Server error"
+//     });
+//   }
+// };
 exports.getApprovedWithdrawalTransactions = async (req, res) => {
   try {
     const { referredBy, userId, amount, gateway_name, startDate, endDate, status = 0 } = req.query;

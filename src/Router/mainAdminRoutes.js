@@ -14,6 +14,7 @@ const getPlayerUserGameData = require('../Services/getPlayerUserGameData');
 const ProviderController = require('../Controllers/providerController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 const UserControllers = require('../Controllers/UserController');
+const MainTransactinController = require('../Controllers/MainTransactinController');
 const router = express.Router();
 
 // Search transactions
@@ -31,9 +32,22 @@ router.get('/get_categories_with_providers_and_games', validate, auth, AdminCont
 router.get('/dashboard/overview',validate, auth, AdminController.getAdminDashboardStats);
 router.get('/dashboard/social_link',validate, auth, AdminController.getSocialLinks);
 router.post('/dashboard/update_social_link',validate, auth, AdminController.updateAndCreateSocialLinks);
+
+//////////////////////Sub Admin Routes////////////////////////
+
 router.get('/get_sub_adminList', validate, auth, AdminController.getSubAdminList);
+router.get('/get_sub_admin_user_list', validate, auth, AdminController.GetSubAdminUserList);
+router.get('/get_sub_admin_pending_deposit_user_list', validate, auth, AdminController.getSubAdminUserDepositList);
+router.get('/get_sub_admin_withdraw_deposit_user_list', validate, auth, AdminController.getSubAdminUserWithdrawList);
+//////////////////////Admin Agent Routes////////////////////////
+
+router.get('/get_admin_agent_list', validate, auth, AdminController.getAdminAgentList);
+router.get('/get_admin_agent_user_list', validate, auth, AdminController.getAdminAgentUserList);
+router.get('/get_admin_agent_user_pending_deposit_user_list', validate, auth, AdminController.getAdminAgentUserDepositList);
+router.get('/get_admin_agent_user_withdraw__user_list', validate, auth, AdminController.getAdminAgentUserWithdrawList);
+
 router.get('/get_sub_admin_affiliateList', validate, auth, AdminController.getAffiliateList);
-router.get('/get_admin_AgentList', validate, auth, AdminController.GetAgentList);
+// router.get('/get_admin_AgentList', validate, auth, AdminController.GetAgentList);
 router.get('/get_admin_UserList', validate, auth, AdminController.getUserList);
 router.get('/get_user_list_by_role', validate, auth, AdminController.getTransactionList);
 router.get('/get_userList', validate, auth, UserControllers.GetRefferralUserList);

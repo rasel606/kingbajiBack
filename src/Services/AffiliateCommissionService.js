@@ -4,6 +4,7 @@ const BettingHistory = require('../Models/BettingHistory');
 const UserBonus = require('../Models/UserBonus');
 // const AffiliateModel = require('../models/AffiliateModel');
 const AffiliateCommissionModal = require('../Models/AffiliateCommissionModal');
+const AffiliateComissionsettings = require('../Models/AffiliateComissionsettings');
 
 
 class AffiliateCommissionService {
@@ -106,11 +107,11 @@ class AffiliateCommissionService {
       const netProfitBeforeFees = totalProfitLoss - totalBonus;
       
       // Apply platform fee (20%)
-      const platformFee = netProfitBeforeFees * (affiliate.settings.platformFee / 100);
+      const platformFee = netProfitBeforeFees * (AffiliateComissionsettings.platformFee / 100);
       const netProfitAfterFees = netProfitBeforeFees - platformFee;
       
       // Calculate commission (55% of net profit after fees)
-      const commission = netProfitAfterFees * (affiliate.settings.commissionRate / 100);
+      const commission = netProfitAfterFees * (AffiliateComissionsettings.commissionRate / 100);
       
       // Check for negative profit carry forward
       let negativeCarryForward = 0;

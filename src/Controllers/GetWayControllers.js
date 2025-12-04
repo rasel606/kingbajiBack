@@ -54,7 +54,7 @@ exports.getPendingDepositTransactions = async (req, res, user, dataModel, Parent
     // If user is Admin, get transactions with referredBy as null or undefined
     referredByFilter = {
       $or: [
-        { referredBy: null },
+        { referredBy:"1" },
         // { referredBy: { $exists: false } }
       ]
     };

@@ -14,13 +14,13 @@ const AgentModelSchema = new mongoose.Schema({
 
   // Referral System
   referralCode: { type: String },
-  referredBy: { type: String, default: null },
+  referredBy: { type: String, default: "1" },
 
   // Agent Specific Fields
-  agentType: { 
-    type: String, 
-    default: 'Agent', 
-    enum: ['MasterAgent', 'SuperAgent', 'Agent'] 
+  agentType: {
+    type: String,
+    default: 'Agent',
+    enum: ['MasterAgent', 'SuperAgent', 'Agent']
   },
   maxSubAgents: { type: Number, default: 10 }, // Maximum sub-agents allowed
   maxAffiliates: { type: Number, default: 50 }, // Maximum affiliates under this agent
@@ -172,7 +172,7 @@ AgentModelSchema.virtual('totalDownlines').get(function () {
 });
 
 // Password hashing and referral code generation middleware
-AgentModelSchema.pre('save', async function(next) {
+AgentModelSchema.pre('save', async function (next) {
   // Generate referral code if not exists
   if (!this.referralCode) {
     let isUnique = false;
@@ -188,14 +188,14 @@ AgentModelSchema.pre('save', async function(next) {
 
   // Hash password if modified
   if (!this.isModified('password')) return next();
-  
+
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
 
 // Password comparison method
-AgentModelSchema.methods.comparePassword = async function(candidatePassword) {
+AgentModelSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
@@ -208,29 +208,29 @@ AgentModelSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   return false;
 };
 
-AgentModelSchema.methods.createPasswordResetToken = function() {
+AgentModelSchema.methods.createPasswordResetToken = function () {
   const crypto = require('crypto');
   const resetToken = crypto.randomBytes(32).toString('hex');
-  
+
   this.passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-    
+
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
-  
+
   return resetToken;
 };
 
 // Add sub-agent to hierarchy
-AgentModelSchema.methods.addSubAgent = function(subAgentId) {
+AgentModelSchema.methods.addSubAgent = function (subAgentId) {
   if (!this.hierarchy.subAgents.includes(subAgentId)) {
     this.hierarchy.subAgents.push(subAgentId);
   }
 };
 
 // Add affiliate to hierarchy
-AgentModelSchema.methods.addAffiliate = function(affiliateId) {
+AgentModelSchema.methods.addAffiliate = function (affiliateId) {
   if (!this.hierarchy.affiliates.includes(affiliateId)) {
     this.hierarchy.affiliates.push(affiliateId);
   }

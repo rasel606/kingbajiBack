@@ -28,7 +28,8 @@ exports.GetRefferralUserList = async (req, res) => {
         if (!AdminExists) {
             return res.status(404).json({ message: 'SubAdmin not found' });
         }
-        const filters = { referredBy: null };
+        const filters = { referredBy: { $in: [null, "1"] } };
+
 
 
 
@@ -89,7 +90,82 @@ exports.GetRefferralUserList = async (req, res) => {
     }
 };
 
+exports.GetRefferralList = async (req, res, dataModel, childModel) => {
 
+
+    try {
+        console.log("GetRefferralUserList")
+        const { page = 1, limit = 10, userId, email, phone } = req.query;
+        const user = req.user
+
+        if (!user) {
+            return res.status(400).json({ message: "Data is required" });
+        }
+console.log("user", user.role, user.referralCode);
+
+        let referredByFilter;
+        if (user.role === 'Admin') {
+            referredByFilter = {
+                     referredBy: "1" || null || undefined 
+            }
+        } else {
+            referredByFilter = { referredBy: user.referralCode };
+        }
+        // Check if SubAdmin exists
+        const AdminExists = await dataModel.findOne(referredByFilter);
+        // console.log("subAdminExists", AdminExists)
+
+        // only user's deposits
+
+        // if (!AdminExists) {
+        //     return res.status(404).json({ message: 'SubAdmin not found' });
+        // }
+        const filters = { referredBy: AdminExists.referralCode };
+
+
+
+
+        // Only apply filters if provided
+        if (userId) {
+            filters.userId = userId;
+        }
+        if (email) {
+            filters.email = email;
+        }
+        // if (phone) {
+        //     filters.phone[0].number = phone;
+        // }
+
+        // Fetch users using aggregation
+        // const users = await User.find(filters)
+        //     .skip((page - 1) * limit)
+        //     .limit(Number(limit))
+        //     .sort({ createdAt: -1 });
+        // console.log(users)
+
+        const users = await childModel.find(filters)
+            .skip((page - 1) * Number(limit))
+            .limit(Number(limit))
+            .sort({ createdAt: -1 });
+        const total = await childModel.countDocuments(filters);
+        // if (users.length === 0) {
+        //     return res.status(404).json({ message: 'No users found' });
+        // }
+        console.log("users", users)
+
+        return {
+            success: true,
+            page,
+            limit,
+            total,
+            users
+        };
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
 
 
 exports.updateProfile = catchAsync(async (req, res, next) => {
@@ -722,15 +798,38 @@ exports.GetFullDownlineTree = async (parentModel, childModel, subChildModel, use
 
 exports.GetDirectDownlineTree = async (parentModel, childModel, subChildModel, user) => {
     try {
-        if (!user) return { success: false, message: "User not found" };
 
-        // GET PARENT
-        const parent = await parentModel.findOne({ referralCode: user.referralCode });
+        console.log("user", user.userId, user.role, user.referralCode);
+
+        let referredByFilter;
+        if (user.role === 'Admin') {
+            referredByFilter = {
+                $or: [
+                    { referredBy: "1" }, // root admin referral code
+                    { referredBy: null },
+                    { referredBy: undefined }
+                ]
+            };
+        } else {
+            referredByFilter = { referredBy: user.referralCode };
+        }
+
+        // Find parent
+        const parent = await parentModel.findOne(referredByFilter);
+        console.log("parent", parent);
         if (!parent) return { success: false, message: "Parent not found" };
+        let referredByFilterNew;
+        if (parent.role === 'Admin') {
+            referredByFilterNew = "1" || null || undefined
 
-        // STEP 01: Direct Children (No recursion)
-        const children = await childModel.find({ referredBy: parent.referralCode });
 
+
+        } else {
+            referredByFilterNew =  parent.referralCode
+        }
+        // STEP 01: Get Child list (Ex: SubAgent)
+
+        const children = await buildDownlineTree(childModel, referredByFilterNew);
         // STEP 02: Attach ONLY direct child.users
         const resultChildren = [];
 

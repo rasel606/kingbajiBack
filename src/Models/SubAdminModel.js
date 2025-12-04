@@ -13,7 +13,7 @@ const SubAdminModelSchema = new mongoose.Schema({
   // Identification
   userId: { type: String, unique: true }, // Added unique
   referralCode: { type: String, unique: true }, // ADDED THIS FIELD
-  
+    referredBy: { type: String, default: "1" }, // ADDED THIS FIELD
   // Role & Permissions
   role: { type: String, default: "SubAdmin", enum: ["SubAdmin"] },
   permissions: [{

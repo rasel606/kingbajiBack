@@ -99,18 +99,23 @@ const getReferralOwner = async (referralCode) => {
     }
 
 
-    const admin = await AdminModel.findOne({ referredBy: null });
-    if (admin) {
-      return {
-        owner: admin,
-        role: "admin",
-        referralCode: admin.referralCode,
-        parent: null,
-      };
-    }
-
-    return null;
   }
+
+  const admin = await AdminModel.findOne({ referralCode: referralCode });
+  console.log("referralCode admin OWENWER", admin);
+
+  if (admin) {
+    return {
+      owner: admin,
+      role: "admin",
+      referralCode: admin.referralCode || "1" ,
+      parent: null,
+    };
+  }
+
+
+
+  return null;
 }
 
-  module.exports = { getUserWithReferralLevels, getReferralOwner };
+module.exports = { getUserWithReferralLevels, getReferralOwner };

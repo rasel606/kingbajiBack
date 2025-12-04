@@ -43,9 +43,11 @@
 const express = require('express');
 const { body,query } = require('express-validator');
 const AdminController = require('../Controllers/AdminController');
+const newTransactionController = require('../Controllers/newTransactionController');
+const paymentMethodController = require('../Controllers/paymentMethodController');
 const auth = require('../MiddleWare/AdminAuth');
 const validate = require('../MiddleWare/validation');
-
+const MainTransactinController = require('../Controllers/MainTransactinController');
 const router = express.Router();
 
 // // Search transactions
@@ -54,7 +56,8 @@ router.get('/search_Widthrawal_transactions', validate, auth, AdminController.ge
 router.get('/search_deposit_getways', validate, auth, AdminController.subAdminGetWayList);
 router.get('/search_widthrawal_getways', validate, auth, AdminController.WidthrawalGetWayList);
 // Update deposit status
-router.post('/update-deposit-Widthrowal', validate, auth, AdminController.processTransactionForALL);
+router.post('/update-deposit-Widthrowal', validate, auth, newTransactionController.approveDeposit);
+router.post('/submit-transaction', validate, newTransactionController.submitTransaction);
 
 // Get deposit totals
 router.get('/deposit-totals', [

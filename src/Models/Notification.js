@@ -1,44 +1,100 @@
-const mongoose = require("mongoose");
+// const mongoose = require("mongoose");
+
+// const notificationSchema = new mongoose.Schema({
+//   title: {
+//     type: String,
+//     required: true
+//   },
+//   userId: { 
+//     type: String, 
+//     required: true, 
+//     ref: 'User' 
+//   },
+//   content: { 
+//     type: String, 
+     
+//   },
+//   type: {
+//     type: String,
+
+//     required: true
+//   },
+//   read: { 
+//     type: Boolean, 
+//     default: false 
+//   },
+//   metaData: {
+//     amount: Number,
+//     transactionId: String
+//   },
+//   createdAt: { 
+//     type: Date, 
+//     default: Date.now 
+//   },
+//   timeZone: {
+//     type: String,
+//     default: 'GMT+6'
+//   }
+// });
+
+// // Index for faster queries
+// notificationSchema.index({ userId: 1, read: 1 });
+
+// const Notification = mongoose.model("Notification", notificationSchema);
+// module.exports = Notification;
+
+
+// Models/Notification.js
+const mongoose = require('mongoose');
 
 const notificationSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true
   },
-  userId: { 
-    type: String, 
-    required: true, 
-    ref: 'User' 
+  userId: {
+    type: String,
+    required: true
   },
-  content: { 
-    type: String, 
-     
+  content: {
+    type: String,
+    required: true
   },
   type: {
     type: String,
-    enum: ['approved', 'rejected', 'processed', 'request' , 'withdrawal_processed', 'withdrawal_rejected', 'withdrawal_accepted' , 'withdrawal_request', 'balance_added', 'general'],
-    required: true
-  },
-  read: { 
-    type: Boolean, 
-    default: false 
+
+    default: 'system'
   },
   metaData: {
-    amount: Number,
-    transactionId: String
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
+  read: {
+    type: Boolean,
+    default: false
   },
-  timeZone: {
-    type: String,
-    default: 'GMT+6'
+  readAt: {
+    type: Date
+  },
+  // Push notification related fields
+  pushSent: {
+    type: Boolean,
+    default: false
+  },
+  pushSentAt: {
+    type: Date
+  },
+  // Web push subscription (for storing user's push subscription)
+  subscription: {
+    type: mongoose.Schema.Types.Mixed
   }
+}, {
+  timestamps: true
 });
 
-// Index for faster queries
-notificationSchema.index({ userId: 1, read: 1 });
+// Indexes for better performance
+notificationSchema.index({ userId: 1, createdAt: -1 });
+notificationSchema.index({ read: 1 });
+notificationSchema.index({ type: 1 });
 
-const Notification = mongoose.model("Notification", notificationSchema);
-module.exports = Notification;
+module.exports = mongoose.model('Notification', notificationSchema);

@@ -1,7 +1,7 @@
 const { ref } = require("joi");
 const mongoose = require("mongoose");
 
-const transactionSchema = new mongoose.Schema({
+const transactionModelSchema = new mongoose.Schema({
     userId: { type: String, ref: "User", required: true },
     transactionID: { type: String, required: true },
     base_amount: { type: Number, required: true },
@@ -46,8 +46,8 @@ const transactionSchema = new mongoose.Schema({
     expiryDate: { type: Date }, // For bonus expiry
     is_commission: { type: Boolean, default: false },
     referredBy: { type: String },
-    paymentGatewayOwner: { type: String,  enum: ['User', 'SubAdmin', 'Agent', "Admin"] },
-    referredbysubAdmin: { type: String, ref: 'SubAdmin' },
+    paymentGatewayOwner: { type: String,  enum: ['SubAdmin', 'Agent', "Admin"] },
+    // referredbysubAdmin: { type: String, ref: 'SubAdmin' },
     datetime: { type: Date, default: Date.now },
     updatetime: { type: Date, default: Date.now },
     
@@ -59,4 +59,4 @@ const transactionSchema = new mongoose.Schema({
 // Enable virtuals in JSON and Object output
 // transactionSchema.set("toObject", { virtuals: true });
 // transactionSchema.set("toJSON", { virtuals: true });
-module.exports = mongoose.model("Transaction", transactionSchema);
+module.exports = mongoose.model("TransactionModel", transactionModelSchema);

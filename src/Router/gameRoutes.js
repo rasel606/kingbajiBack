@@ -11,6 +11,15 @@ const Refresh_blance = require('../Controllers/Refresh_blance');
 const{ auth }= require('../MiddleWare/auth');
 const router = express.Router();
 
+const betController = require('../Controllers/betController');
+
+// newBetData (joined bet history + game + provider + category)
+router.get('/new-bet-data', betController.createNewBetData);
+router.get('/category-providers', betController.getCategoryWithUniqueProviders);
+router.get('/rebate-summary', betController.getRebateSummary);
+router.get('/rebate-report', betController.getDetailedRebateReport);
+router.get('/rebate-dashboard/:userId', betController.getUserRebateDashboard);
+
 // API 1: Get all game data (categories, providers, games, featured, hot games)
 // router.get('/game-data', gameController.getCompleteGameData);
 router.post('/game_g_type_update', ModelBettingController.updateGTypeList);
@@ -67,7 +76,7 @@ router.delete('/provider/:id', ProviderController.deleteProvider);
 
 
 
-router.get('/betting-history',auth, GameListControllers.getBettingRecords);
+router.get('/betting-history', GameListControllers.getBettingRecords);
 // router.get('/betting-records/:id',auth, authenticate, GameListControllers.getBettingRecordDetails);
 //--------------------------------------------------------------------------------------------------------------//
 

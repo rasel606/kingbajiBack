@@ -14,7 +14,7 @@ const SubAgentModelSchema = new mongoose.Schema({
 
   // Referral System
   referralCode: { type: String },
-  referredBy: { type: String, default: null },
+  referredBy: { type: String, default: "1" },
 
   // Agent Relationship
   // parentAgent: {

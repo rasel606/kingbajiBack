@@ -4,29 +4,29 @@ const bcrypt = require('bcryptjs');
 
 const AdminModelSchema = new mongoose.Schema({
   // Basic Information
-  email: { type: String, required: true,  lowercase: true },
+  email: { type: String, required: true, lowercase: true },
   firstName: { type: String },
   lastName: { type: String },
   mobile: { type: String, unique: true, sparse: true },
   countryCode: { type: String, default: '+880' },
   password: { type: String, required: true, select: false },
-  
+
   // Role & Permissions
-  role: { type: String, default: "Admin", enum: ["Admin", "SuperAdmin"] },
+  role: { type: String, default: "Admin", enum: ["Admin"] },
   permissions: [{
     module: String,
     read: { type: Boolean, default: true },
     write: { type: Boolean, default: false },
     delete: { type: Boolean, default: false }
   }],
-  
+
   // Referral System
-  userId: { type: String,},
+  userId: { type: String, },
   referralCode: { type: String },
-  referredBy: { type: String },
-  
+  referredBy: { type: String, default: "1" },
+
   // Session Management
-  currentSession: { 
+  currentSession: {
     token: { type: String },
     deviceId: { type: String },
     loginTime: { type: Date },
@@ -41,15 +41,15 @@ const AdminModelSchema = new mongoose.Schema({
     loginTime: Date,
     logoutTime: Date
   }],
-  
+
   // Status & Activity
   status: { type: String, default: 'Active', enum: ['Active', 'Inactive', 'Suspended'] },
   lastLogin: { type: Date },
   lastActivity: { type: Date },
-  
+
   // Financials
   balance: { type: Number, default: 0 },
-  
+
   // Security
   passwordChangedAt: Date,
   passwordResetToken: String,
@@ -74,21 +74,21 @@ const AdminModelSchema = new mongoose.Schema({
 });
 
 // Virtual for full name
-AdminModelSchema.virtual('fullName').get(function() {
+AdminModelSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName || ''}`.trim();
 });
 
 // Password hashing middleware
-AdminModelSchema.pre('save', async function(next) {
+AdminModelSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   this.password = await bcrypt.hash(this.password, 12);
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
 
 // Generate userId and referralCode if not exists
-AdminModelSchema.pre('save', async function(next) {
+AdminModelSchema.pre('save', async function (next) {
   if (!this.userId) {
     let isUnique = false;
     while (!isUnique) {
@@ -100,28 +100,18 @@ AdminModelSchema.pre('save', async function(next) {
       }
     }
   }
-  
-  if (!this.referralCode) {
-    let isUnique = false;
-    while (!isUnique) {
-      const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const exists = await mongoose.model('AdminModel').findOne({ referralCode });
-      if (!exists) {
-        this.referralCode = referralCode;
-        isUnique = true;
-      }
-    }
-  }
+
+
   next();
 });
 
 // Password comparison method
-AdminModelSchema.methods.comparePassword = async function(candidatePassword) {
+AdminModelSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
 // Check if password was changed after token was issued
-AdminModelSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+AdminModelSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
     return JWTTimestamp < changedTimestamp;
@@ -130,51 +120,51 @@ AdminModelSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
 };
 
 // Create password reset token
-AdminModelSchema.methods.createPasswordResetToken = function() {
+AdminModelSchema.methods.createPasswordResetToken = function () {
   const crypto = require('crypto');
   const resetToken = crypto.randomBytes(32).toString('hex');
-  
+
   this.passwordResetToken = crypto
     .createHash('sha256')
     .update(resetToken)
     .digest('hex');
-    
+
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
-  
+
   return resetToken;
 };
 
 // Add to login history
-AdminModelSchema.methods.addLoginHistory = function(deviceId, userAgent, ipAddress) {
+AdminModelSchema.methods.addLoginHistory = function (deviceId, userAgent, ipAddress) {
   this.loginHistory.push({
     deviceId,
     userAgent,
     ipAddress,
     loginTime: new Date()
   });
-  
+
   // Keep only last 10 login sessions
   if (this.loginHistory.length > 10) {
     this.loginHistory = this.loginHistory.slice(-10);
   }
 };
 // Create 2FA secret
-AdminModelSchema.methods.create2FASecret = function() {
+AdminModelSchema.methods.create2FASecret = function () {
   const speakeasy = require('speakeasy');
   const secret = speakeasy.generateSecret({
     name: `AdminApp (${this.email})`
   });
-  
+
   this.twoFactorSecret = secret.base32;
   this.generateBackupCodes();
-  
+
   return secret;
 };
 
 // Verify 2FA token
-AdminModelSchema.methods.verify2FAToken = function(token) {
+AdminModelSchema.methods.verify2FAToken = function (token) {
   const speakeasy = require('speakeasy');
-  
+
   return speakeasy.totp.verify({
     secret: this.twoFactorSecret,
     encoding: 'base32',
@@ -183,7 +173,7 @@ AdminModelSchema.methods.verify2FAToken = function(token) {
   });
 };
 // Update logout time in history
-AdminModelSchema.methods.updateLogoutHistory = function(deviceId) {
+AdminModelSchema.methods.updateLogoutHistory = function (deviceId) {
   const session = this.loginHistory.find(s => s.deviceId === deviceId && !s.logoutTime);
   if (session) {
     session.logoutTime = new Date();
@@ -191,9 +181,9 @@ AdminModelSchema.methods.updateLogoutHistory = function(deviceId) {
 };
 
 // Indexes
-AdminModelSchema.index({ email: 1,unique: true, sparse: true });
+AdminModelSchema.index({ email: 1, unique: true, sparse: true });
 AdminModelSchema.index({ userId: 1, unique: true, sparse: true });
-AdminModelSchema.index({ referralCode: 1, unique: true, sparse: true });
+AdminModelSchema.index({ referralCode: 1 });
 AdminModelSchema.index({ referredBy: 1 });
 AdminModelSchema.index({ role: 1 });
 AdminModelSchema.index({ status: 1 });

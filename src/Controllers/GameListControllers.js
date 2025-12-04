@@ -1947,12 +1947,12 @@ exports.getBettingRecords = async (req, res) => {
       limit = 2000,
       dateOption = 'last7days' // Add dateOption parameter
     } = req.query;
-
+ const userId = req.body.userId;
     console.log('Betting records request:', {
       startDate, endDate, platforms, gameTypes, settlement, page, limit, dateOption
     });
 
-    const member = req.user?.userId || 'demo_user';
+    const member = userId;
 
     // Build filter query
     let filterQuery = { member };
