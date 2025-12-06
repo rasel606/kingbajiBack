@@ -1,21 +1,21 @@
-const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
-const Transaction = require('../Models/TransactionModel');
-const User = require('../Models/User');
-const SubAdmin = require('../Models/SubAdminModel');
+const PaymentGateWayTable = require('../models/PaymentGateWayTable');
+const Transaction = require('../models/TransactionModel');
+const User = require('../models/User');
+const SubAdmin = require('../models/SubAdminModel');
 const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-const TransactionModel = require('../Models/TransactionModel');
+const TransactionModel = require('../models/TransactionModel');
 const notificationController = require('../Controllers/notificationController');
-const generateReferralCode = require('../Services/generateReferralCode');
-const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable');
-const Bonus = require('../Models/Bonus');
-const UserBonus = require('../Models/UserBonus');
-const BettingHistory = require('../Models/BettingHistory');
-const AffiliateModel = require('../Models/AffiliateModel');
-const AdminModel = require('../Models/AdminModel');
-const { getUserWithReferralLevels, getReferralOwner }= require('../Services/getReferralOwner');
-const catchAsync = require('../Utils/catchAsync');
+const generateReferralCode = require('../services/generateReferralCode');
+const WidthralPaymentGateWayTable = require('../models/WidthralPaymentGateWayTable');
+const Bonus = require('../models/Bonus');
+const UserBonus = require('../models/UserBonus');
+const BettingHistory = require('../models/BettingHistory');
+const AffiliateModel = require('../models/AffiliateModel');
+const AdminModel = require('../models/AdminModel');
+const { getUserWithReferralLevels, getReferralOwner }= require('../services/getReferralOwner');
+const catchAsync = require('../utils/catchAsync');
 // exports.addTransaction = async (req, res) => {
 //   try {
 //     const { userId, amount, type } = req.body;

@@ -230,8 +230,8 @@
 
 
 // src/Services/AuthService.js
-const User = require('../Models/User');
-const ReferralBonus = require('../Models/ReferralBonus');
+const User = require('../models/User');
+const ReferralBonus = require('../models/ReferralBonus');
 
 class AuthService {
   

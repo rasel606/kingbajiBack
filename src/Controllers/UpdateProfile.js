@@ -1,5 +1,5 @@
-const OTP = require('../Models/Opt');
-const User = require('../Models/User');
+const OTP = require('../models/Opt');
+const User = require('../models/User');
 
 
 exports.updateName = async (req, res) => {

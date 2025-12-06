@@ -1,4 +1,4 @@
-const BetProviderTable = require('../Models/BetProviderTable');
+const BetProviderTable = require('../models/BetProviderTable');
 
 // Get all providers
 exports.getAllProviders = async (req, res) => {

@@ -316,9 +316,9 @@
 
 
 // controllers/phoneVerificationController.js
-const PhoneVerification = require('../Models/PhoneVerification');
-const User = require('../Models/User');
-const { generateVerificationCode, generateExpiryTime } = require('../Utils/generateCode');
+const PhoneVerification = require('../models/PhoneVerification');
+const User = require('../models/User');
+const { generateVerificationCode, generateExpiryTime } = require('../utils/generateCode');
 const { maskPhoneNumber, validatePhoneNumber } = require('../Healper/maskPhoneNumberHelper');
 const { sendSms }  = require('./sendSms');
 

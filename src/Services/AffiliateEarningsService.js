@@ -1,11 +1,11 @@
-const AffiliateModel = require('../Models/AffiliateModel');
-const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-const BettingHistory = require('../Models/BettingHistory');
-const UserBonus = require('../Models/UserBonus');
-const Transaction = require('../Models/TransactionModel');
-const User = require('../Models/User');
-const { getPeriodDates } = require('../Utils/periodUtils');
-const redisClient = require('../Utils/redisClient');
+const AffiliateModel = require('../models/AffiliateModel');
+const AffiliateEarnings = require('../models/AffiliateUserEarnings');
+const BettingHistory = require('../models/BettingHistory');
+const UserBonus = require('../models/UserBonus');
+const Transaction = require('../models/TransactionModel');
+const User = require('../models/User');
+const { getPeriodDates } = require('../utils/periodUtils');
+const redisClient = require('../utils/redisClient');
 
 // Cache configuration
 const CACHE_TTL = process.env.CACHE_TTL || 300; // 5 minutes in seconds

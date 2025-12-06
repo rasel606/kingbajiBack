@@ -1,6 +1,6 @@
-const Commission = require('../Models/AffiliateUserEarnings');
-const AffiliateModel = require('../Models/AffiliateModel');
-const { getPeriodDates } = require('../Utils/periodUtils');
+const Commission = require('../models/AffiliateUserEarnings');
+const AffiliateModel = require('../models/AffiliateModel');
+const { getPeriodDates } = require('../utils/periodUtils');
 
 class CommissionService {
   async getCommissions(affiliateId, filters = {}) {

@@ -1,5 +1,5 @@
 
-const Bonus = require('../Models/Bonus');
+const Bonus = require('../models/Bonus');
 
 
 // Create a new bonus

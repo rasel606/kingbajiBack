@@ -1,6 +1,6 @@
 const axios = require('axios');
-const Category  = require('../Models/Category');
-const Games  = require('../Models/Games');
+const Category  = require('../models/Category');
+const Games  = require('../models/Games');
 
 
 

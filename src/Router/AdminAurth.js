@@ -9,7 +9,7 @@ const AffiliateAuthControllers = require('../Controllers/AffiliateAuthController
 const auth = require('../MiddleWare/AdminAuth');
 const {register, loginUser} = require('../Controllers/AuthController');
 const validate = require('../MiddleWare/validation');
-const AppError = require('../Utils/AppError');
+const AppError = require('../utils/AppError');
 const router = express.Router();
 
 router.post('/register_admin', validate, AdminController.CreateAdmin);

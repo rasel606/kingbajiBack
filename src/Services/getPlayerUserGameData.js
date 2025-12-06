@@ -1,6 +1,6 @@
-const GameListTable = require('../Models/GameListTable');
-const Category = require('../Models/Category');
-const Provider = require('../Models/BetProviderTable');
+const GameListTable = require('../models/GameListTable');
+const Category = require('../models/Category');
+const Provider = require('../models/BetProviderTable');
 
 // Cache setup
 let cache = { data: null, timestamp: 0 };

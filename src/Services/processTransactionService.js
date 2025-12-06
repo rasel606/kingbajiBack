@@ -1,8 +1,8 @@
 
-const TransactionModel = require("../Models/TransactionModel");
-const User = require("../Models/User");
-const Bonus = require("../Models/Bonus");
-const UserBonus = require("../Models/UserBonus");
+const TransactionModel = require("../models/TransactionModel");
+const User = require("../models/User");
+const Bonus = require("../models/Bonus");
+const UserBonus = require("../models/UserBonus");
 const notificationController = require("../Controllers/notificationController");
 const { getUserWithReferralLevels, getReferralOwner } = require("./getReferralOwner");
 

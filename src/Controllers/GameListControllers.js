@@ -1519,12 +1519,12 @@
 
 const crypto = require("crypto");
 const axios = require('axios');
-const User = require('../Models/User');
-const GameTable = require('../Models/GameTable');
-const BetProviderTable = require('../Models/BetProviderTable');
-const GameListTable = require('../Models/GameListTable');
-const Category = require('../Models/Category');
-const BettingHistory = require("../Models/BettingHistory");
+const User = require('../models/User');
+const GameTable = require('../models/GameTable');
+const BetProviderTable = require('../models/BetProviderTable');
+const GameListTable = require('../models/GameListTable');
+const Category = require('../models/Category');
+const BettingHistory = require("../models/BettingHistory");
 
 // Utility functions
 function randomStr() {

@@ -15,6 +15,7 @@ const auth = require('../MiddleWare/AdminAuth');
 const validate = require('../MiddleWare/validation');
 const CreateUserService = require("../Services/CreateUserService");
 const {register, loginUser} = require('../Controllers/AuthController');
+const apiIntregationsController = require('../Controllers/apiIntregationsController');
 const UpdateProfile = require('../Controllers/UpdateProfile');
 const router = express.Router();
 
@@ -37,7 +38,7 @@ router.get('/user_details', auth, CreateUserService.userDetails);
 router.post('/update-name', UpdateProfile.updateName);
 router.post('/update-birthday', UpdateProfile.verifyBirthday);
 router.post('/createUser', register);
-
+router.get('/update-admin-balance', validate, auth, apiIntregationsController.updateAdminBalance);
 
 
 router.get('/dashboard_stats', auth, SubAdminControllers.getDashboardData);

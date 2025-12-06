@@ -10,11 +10,12 @@ const validate = require('../MiddleWare/validation');
 const ModelBettingController = require('../Controllers/ModelBettingController');
 const GameListControllers = require('../Controllers/GameListControllers');
 const GameMovementController = require('../Controllers/GameMovementController');
-const getPlayerUserGameData = require('../Services/getPlayerUserGameData');
+const getPlayerUserGameData = require('../services/getPlayerUserGameData');
 const ProviderController = require('../Controllers/providerController');
 const Refresh_blance = require('../Controllers/Refresh_blance');
 const UserControllers = require('../Controllers/UserController');
 const MainTransactinController = require('../Controllers/MainTransactinController');
+const apiIntregationsController = require('../Controllers/apiIntregationsController');
 const router = express.Router();
 
 // Search transactions
@@ -40,7 +41,7 @@ router.get('/get_sub_admin_user_list', validate, auth, AdminController.GetSubAdm
 router.get('/get_sub_admin_pending_deposit_user_list', validate, auth, AdminController.getSubAdminUserDepositList);
 router.get('/get_sub_admin_withdraw_deposit_user_list', validate, auth, AdminController.getSubAdminUserWithdrawList);
 //////////////////////Admin Agent Routes////////////////////////
-
+router.get('/update-admin-balance', validate, auth, apiIntregationsController.updateAdminBalance);
 router.get('/get_admin_agent_list', validate, auth, AdminController.getAdminAgentList);
 router.get('/get_admin_agent_user_list', validate, auth, AdminController.getAdminAgentUserList);
 router.get('/get_admin_agent_user_pending_deposit_user_list', validate, auth, AdminController.getAdminAgentUserDepositList);

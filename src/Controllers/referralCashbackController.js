@@ -1,6 +1,6 @@
-const User = require('../Models/User');
-const UserBonus = require('../Models/UserBonus');
-const ReferralBonus = require('../Models/ReferralBonus');
+const User = require('../models/User');
+const UserBonus = require('../models/UserBonus');
+const ReferralBonus = require('../models/ReferralBonus');
 const { createNotification } = require('./notificationController');
 
 // Claim daily referral cashback

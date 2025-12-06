@@ -4,53 +4,53 @@ const bcrypt = require('bcryptjs');
 
 const crypto = require("crypto");
 
-const SubAdminModel = require('../Models/SubAdminModel')
-const CreateService = require('../Services/CreateService')
+const SubAdminModel = require('../models/SubAdminModel')
+const CreateService = require('../services/CreateService')
 
-const updateOne = require('../Services/ProfileUpdateService')
-const BetProviderTable = require('../Models/BetProviderTable')
-const RebateSetting = require("../Models/RebateSetting");
-const GameTypeTable = require('../Models/GameTypeTable')
-const GameListTable = require('../Models/GameListTable')
-const OddSportsTable = require('../Models/OddSportsTable')
-const Bonus = require('../Models/Bonus');
-const BettingTable = require('../Models/BettingTable')
-const bankTable = require('../Models/BankTable')
-const SportsCategoryTable = require('../Models/SportsCategoryTable')
-const GameTypeList = require('../Models/GameTypeTable')
+const updateOne = require('../services/ProfileUpdateService')
+const BetProviderTable = require('../models/BetProviderTable')
+const RebateSetting = require("../models/RebateSetting");
+const GameTypeTable = require('../models/GameTypeTable')
+const GameListTable = require('../models/GameListTable')
+const OddSportsTable = require('../models/OddSportsTable')
+const Bonus = require('../models/Bonus');
+const BettingTable = require('../models/BettingTable')
+const bankTable = require('../models/BankTable')
+const SportsCategoryTable = require('../models/SportsCategoryTable')
+const GameTypeList = require('../models/GameTypeTable')
 const { default: axios } = require('axios')
 // const { LoginService, loginUser,Profile } = require('../Services/LoginService')
-const AffiliateModel = require('../Models/AffiliateModel')
-const AgentModel = require('../Models/AgentModel')
-const UserModel = require('../Models/User')
-const AffiliateCommissionModal = require('../Models/AffiliateCommissionModal')
-const AffiliateUserEarnings = require('../Models/AffiliateUserEarnings');
+const AffiliateModel = require('../models/AffiliateModel')
+const AgentModel = require('../models/AgentModel')
+const UserModel = require('../models/User')
+const AffiliateCommissionModal = require('../models/AffiliateCommissionModal')
+const AffiliateUserEarnings = require('../models/AffiliateUserEarnings');
 const { ref } = require('joi');
-const VIPConfig = require('../Models/VIPConfig');
+const VIPConfig = require('../models/VIPConfig');
 
-const catchAsync = require('../Utils/catchAsync');
-const AppError = require('../Utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/AppError');
 
-const TransactionModel = require('../Models/TransactionModel');
+const TransactionModel = require('../models/TransactionModel');
 const notificationController = require('../Controllers/notificationController');
 
 
-const BettingHistory = require('../Models/BettingHistory');
+const BettingHistory = require('../models/BettingHistory');
 
-const { loginUser, getUserProfile, verifyUserSession, logoutUser, forceLogoutUser, getActiveSessions, requestPasswordReset, resetUserPassword, AdminProfile } = require('../Services/LoginService');
-const { getUserListServices } = require('../Services/getUserListServices');
-const { getReferralData } = require('../Services/getReferralOwnerService');
-const { processTransaction } = require('../Services/processTransactionService');
+const { loginUser, getUserProfile, verifyUserSession, logoutUser, forceLogoutUser, getActiveSessions, requestPasswordReset, resetUserPassword, AdminProfile } = require('../services/LoginService');
+const { getUserListServices } = require('../services/getUserListServices');
+const { getReferralData } = require('../services/getReferralOwnerService');
+const { processTransaction } = require('../services/processTransactionService');
 
 
 
-const CreateGateWayService = require('../Services/CreateGateWayService');
+const CreateGateWayService = require('../services/CreateGateWayService');
 const UserController = require('../Controllers/UserController');
 const GetWayControllers = require('../Controllers/GetWayControllers');
 const paymentMethodController = require('../Controllers/paymentMethodController');
-const SubAgentModel = require('../Models/SubAgentModel');
+const SubAgentModel = require('../models/SubAgentModel');
 // const SportsBet = require('../Models/OddSportsTable')
-const { createUser } = require('../Services/CreateService');
+const { createUser } = require('../services/CreateService');
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
  try {
     console.log("📥 Creating admin with data:", req.body);

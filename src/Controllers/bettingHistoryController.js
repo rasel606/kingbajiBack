@@ -1,6 +1,6 @@
-const BettingHistory = require('../Models/BettingHistory');
-const Category = require('../Models/Category');
-const GameListTable = require('../Models/GameListTable');
+const BettingHistory = require('../models/BettingHistory');
+const Category = require('../models/Category');
+const GameListTable = require('../models/GameListTable');
 
 // Get betting records summary (grouped by date)
 // router.get('/betting-records/summary',

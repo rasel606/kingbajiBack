@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const AdminController = require("../Controllers/AdminController")
-const CreateUserService = require("../Services/CreateUserService");
+const CreateUserService = require("../services/CreateUserService");
 const UpdateProfile = require('../Controllers/UpdateProfile');
 // const  authMiddleware  = require('../MiddleWare/AuthVerifyMiddleWare');
 // const multer = require('multer');
@@ -28,7 +28,7 @@ const bettingHistoryController = require ("../Controllers/bettingHistoryControll
 // const Promotion = require('../Models/PromotionSchema');
 // const PromotionController = require('../Controllers/PromotionController');
 // const AuthVerifyMiddleWare = require('../MiddleWare/AuthVerifyMiddleWare');
-const GetAllUser= require('../Services/GetAllUser');
+const GetAllUser= require('../services/GetAllUser');
 // const { Transaction } = require('mongodb');
 const { getDailyWager } = require('../Controllers/MyController');
 const blank= require('../Controllers/blank');

@@ -1,5 +1,5 @@
-const User = require('../Models/User');
-const { validateFullName } = require('../Utils/validators');
+const User = require('../models/User');
+const { validateFullName } = require('../utils/validators');
 
 exports.updateFullName = async (req, res) => {
   try {

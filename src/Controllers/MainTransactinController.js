@@ -2,8 +2,8 @@
 // TransactionController.js (Optimized)
 // -------------------------------------
 
-const Transaction = require('../Models/TransactionModel');
-const HierarchyService = require('../Services/hierarchyService');
+const Transaction = require('../models/TransactionModel');
+const HierarchyService = require('../services/hierarchyService');
 
 class TransactionController {
 

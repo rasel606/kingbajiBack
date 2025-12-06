@@ -1,7 +1,7 @@
 const { default: axios } = require("axios");
-const BetProviderTable = require("../Models/BetProviderTable");
-const Category = require("../Models/Category");
-const GameListTable = require("../Models/GameListTable");
+const BetProviderTable = require("../models/BetProviderTable");
+const Category = require("../models/Category");
+const GameListTable = require("../models/GameListTable");
 const crypto = require('crypto');
 const { claimDailyReferralCashback } = require("./referralCashbackController");
 

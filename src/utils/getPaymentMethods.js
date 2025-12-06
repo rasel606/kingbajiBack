@@ -1,8 +1,8 @@
-const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
-const User = require('../Models/User');
-const Affiliate = require('../Models/AffiliateModel');
-const SubAdmin = require('../Models/SubAdminModel');
-const AdminModel = require('../Models/AdminModel');
+const PaymentGateWayTable = require('../models/PaymentGateWayTable');
+const User = require('../models/User');
+const Affiliate = require('../models/AffiliateModel');
+const SubAdmin = require('../models/SubAdminModel');
+const AdminModel = require('../models/AdminModel');
 
 async function getPaymentMethodsForUser(userId) {
     // 1️⃣ User খুঁজে বের করা

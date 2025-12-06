@@ -1,8 +1,8 @@
-const BetProviderTable = require('../Models/BetProviderTable')
-const GameTypeTable = require('../Models/GameTypeTable')
-const GameListTable = require('../Models/GameListTable');
-const BetHistoryTable = require('../Models/BetHistoryTable'); // Import the model
-const BettingTable = require('../Models/BettingTable');
+const BetProviderTable = require('../models/BetProviderTable')
+const GameTypeTable = require('../models/GameTypeTable')
+const GameListTable = require('../models/GameListTable');
+const BetHistoryTable = require('../models/BetHistoryTable'); // Import the model
+const BettingTable = require('../models/BettingTable');
 
 
 

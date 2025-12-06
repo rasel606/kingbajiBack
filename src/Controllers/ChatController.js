@@ -1624,9 +1624,9 @@
 
 
 // src/Controllers/ChatController.js
-const ChatRoom = require('../Models/Chat');
-const FixedReply = require('../Models/FixedReply');
-const User = require('../Models/User');
+const ChatRoom = require('../models/Chat');
+const FixedReply = require('../models/FixedReply');
+const User = require('../models/User');
 const upload = require('../MiddleWare/upload');
 const { sendToRoom, notifyAdmins, notifyUser, isUserOnline } = require('../socket/socketServer');
 const fs = require('fs');

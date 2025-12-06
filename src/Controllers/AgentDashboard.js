@@ -1,7 +1,7 @@
-const User = require('../Models/User');
-const Agent = require('../Models/AgentModel');
-const SubAgent = require('../Models/SubAgentModel');
-const Transaction = require('../Models/TransactionModel');
+const User = require('../models/User');
+const Agent = require('../models/AgentModel');
+const SubAgent = require('../models/SubAgentModel');
+const Transaction = require('../models/TransactionModel');
 const { ObjectId } = require('mongodb');
 
 

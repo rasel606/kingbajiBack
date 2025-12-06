@@ -1,8 +1,8 @@
-const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
-const User = require('../Models/User');
-const SubAdmin = require('../Models/SubAdminModel');
-const AffiliateModel = require('../Models/AffiliateModel');
-const AdminModel = require('../Models/AdminModel');
+const PaymentGateWayTable = require('../models/PaymentGateWayTable');
+const User = require('../models/User');
+const SubAdmin = require('../models/SubAdminModel');
+const AffiliateModel = require('../models/AffiliateModel');
+const AdminModel = require('../models/AdminModel');
 
 class HierarchicalGatewayController {
     

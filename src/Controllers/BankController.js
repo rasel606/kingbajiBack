@@ -1,4 +1,4 @@
-const Bank = require('../Models/Bank');
+const Bank = require('../models/Bank');
 
 
 // @desc    Get all banks for affiliate

@@ -1,6 +1,6 @@
 // Services/CreateGateWayService.js
-const PaymentGateWayTable = require("../Models/PaymentGateWayTable");
-const WidthralPaymentGateWayTable = require("../Models/WidthralPaymentGateWayTable");
+const PaymentGateWayTable = require("../models/PaymentGateWayTable");
+const WidthralPaymentGateWayTable = require("../models/WidthralPaymentGateWayTable");
 
 const CreateGateWayService = async (user) => {
     try {

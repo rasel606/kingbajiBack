@@ -5,7 +5,7 @@ const {
   getWithdrawalHistory,
   requestWithdrawal,
   getWithdrawalById
-} = require('../Controllers/withdrawalController');
+} = require('../controllers/withdrawalController');
 const {protectAffiliate} = require('../MiddleWare/affiliateAuth');
 const validate = require('../MiddleWare/validation');
 

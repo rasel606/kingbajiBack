@@ -168,16 +168,16 @@
 
 // services/transactionService.js
 const mongoose = require('mongoose');
-const User = require('../Models/User');
-const Admin = require('../Models/AdminModel');
-const SubAdmin = require('../Models/SubAdminModel');
-const Affiliate = require('../Models/AffiliateModel');
-const Agent = require('../Models/AgentModel');
-const SubAgent = require('../Models/SubAgentModel');
-const Transaction = require('../Models/TransactionModel');
-const Bonus = require('../Models/Bonus');
-const UserBonus = require('../Models/UserBonus');
-const AppError = require('../Utils/AppError');
+const User = require('../models/User');
+const Admin = require('../models/AdminModel');
+const SubAdmin = require('../models/SubAdminModel');
+const Affiliate = require('../models/AffiliateModel');
+const Agent = require('../models/AgentModel');
+const SubAgent = require('../models/SubAgentModel');
+const Transaction = require('../models/TransactionModel');
+const Bonus = require('../models/Bonus');
+const UserBonus = require('../models/UserBonus');
+const AppError = require('../utils/AppError');
 const notificationController = require('../Controllers/notificationController');
 
 // Helper: find referral owner (Admin/SubAdmin/Affiliate/Agent/SubAgent)

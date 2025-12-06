@@ -19,7 +19,21 @@ const AdminModelSchema = new mongoose.Schema({
     write: { type: Boolean, default: false },
     delete: { type: Boolean, default: false }
   }],
-
+  apiBalance: {
+    type: Number,
+    default: 0
+  },
+  apiBalanceHistory: [{
+    amount: Number,
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  lastApiBalanceUpdate: {
+    type: Date
+  },
+  
   // Referral System
   userId: { type: String, },
   referralCode: { type: String },

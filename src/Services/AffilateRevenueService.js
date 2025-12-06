@@ -1,9 +1,9 @@
-const BettingHistory = require('../Models/BettingHistory');
-const User = require('../Models/User');
-const Affiliate = require('../Models/AffiliateModel');
-const { getPeriodDates } = require('../Utils/periodUtils');
-const redisClient = require('../Utils/redisClient');
-const AffiliateEarningsService = require('../Services/AffiliateEarningsService');
+const BettingHistory = require('../models/BettingHistory');
+const User = require('../models/User');
+const Affiliate = require('../models/AffiliateModel');
+const { getPeriodDates } = require('../utils/periodUtils');
+const redisClient = require('../utils/redisClient');
+const AffiliateEarningsService = require('./AffiliateEarningsService');
 
 // Cache configuration
 const CACHE_TTL = parseInt(process.env.CACHE_TTL) || 300; // 5 minutes in seconds

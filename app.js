@@ -13,37 +13,38 @@ const path = require('path');
 require('dotenv').config();
 
 // Import routes
-const router = require('./src/Router/Api');
+const router = require('./src/router/Api');
 const cookieHandler = require('./src/MiddleWare/cookieMiddleware');
-const logger = require('./src/Utils/logger');
-const AdminAurth = require('./src/Router/AdminAurth');
-const transactionRoutes = require('./src/Router/transactionRoutes');
-const subAdminRoutes = require('./src/Router/subAdminRoutes');
-const subAdminAurth = require('./src/Router/subAdminAurth');
-const dashboardRoutes = require('./src/Router/dashboardRoutes');
-const userRoutes = require('./src/Router/userRoutes');
-const gameRoutes = require('./src/Router/gameRoutes');
-const mainAdminRoutes = require('./src/Router/mainAdminRoutes');
-const phoneVerificationRoute = require('./src/Router/phoneVerificationRoute');
-const turnoverRoutes = require('./src/Router/turnoverServicesRoutes');
-const promotionsServiceRoutes = require('./src/Router/promotionsServiceRoutes');
-const userProfileRoutes = require('./src/Router/userProfileRoutes');
-const paymentMethod = require('./src/Router/paymentMethod');
-const hierarchicalGatewayRoutes = require('./src/Router/hierarchicalGatewayRoutes');
-const affiliateEarningsRoutes = require('./src/Router/affiliateEarnings');
-const kycRoutes = require('./src/Router/kyc');
-const links = require('./src/Router/links');
-const affiliateLinkRoutes = require('./src/Router/links');
-const withdrawalRoutes = require('./src/Router/withdrawals');
-const profileRoutes = require('./src/Router/affiliateProfile');
-const agentRoutes = require('./src/Router/agentRoutes');
-const agentDashboard = require('./src/Router/agentDashboard');
-const SubAdminDashboard = require('./src/Router/SubAdminDashboard');
-const subAgentRoutes = require('./src/Router/subAgentRoutes');
-const affiliateDashboardRoute = require('./src/Router/affiliateDashboardRoute');
-const AffiliateAuthRoute = require('./src/Router/AffiliateAuthRoute');
+const logger = require('./src/utils/logger');
+const AdminAurth = require('./src/router/AdminAurth');
+const transactionRoutes = require('./src/router/transactionRoutes');
+const subAdminRoutes = require('./src/router/subAdminRoutes');
+const subAdminAurth = require('./src/router/subAdminAurth');
+const dashboardRoutes = require('./src/router/dashboardRoutes');
+const userRoutes = require('./src/router/userRoutes');
+const gameRoutes = require('./src/router/gameRoutes');
+const mainAdminRoutes = require('./src/router/mainAdminRoutes');
+const phoneVerificationRoute = require('./src/router/phoneVerificationRoute');
+const turnoverRoutes = require('./src/router/turnoverServicesRoutes');
+const promotionsServiceRoutes = require('./src/router/promotionsServiceRoutes');
+const userProfileRoutes = require('./src/router/userProfileRoutes');
+const paymentMethod = require('./src/router/paymentMethod');
+const hierarchicalGatewayRoutes = require('./src/router/hierarchicalGatewayRoutes');
+const affiliateEarningsRoutes = require('./src/router/affiliateEarnings');
+const kycRoutes = require('./src/router/kyc');
+const links = require('./src/router/links');
+const affiliateLinkRoutes = require('./src/router/links');
+const withdrawalRoutes = require('./src/router/withdrawals');
+const profileRoutes = require('./src/router/affiliateProfile');
+const agentRoutes = require('./src/router/agentRoutes');
+const agentDashboard = require('./src/router/agentDashboard');
+const SubAdminDashboard = require('./src/router/SubAdminDashboard');
+const subAgentRoutes = require('./src/router/subAgentRoutes');
+const affiliateDashboardRoute = require('./src/router/affiliateDashboardRoute');
+const AffiliateAuthRoute = require('./src/router/AffiliateAuthRoute');
+const announcementRoutes = require('./src/router/announcementRoutes');
 // Import Live Chat Routes
-const chatRoutes = require('./src/Router/chatRoutes');
+const chatRoutes = require('./src/router/chatRoutes');
 
 // Import Socket Server
 const { initializeSocket, getConnectionStats, getUserConnections, getRoomInfo } = require('./src/socket/socketServer');
@@ -130,6 +131,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/v1", router);
 app.use('/api/admin/auth', AdminAurth);
 app.use('/api/admin', mainAdminRoutes);
+app.use('/api/adminannouncement', announcementRoutes);
 
 
 

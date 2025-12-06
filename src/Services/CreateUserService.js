@@ -2,11 +2,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
-const User = require('../Models/User');
+const User = require('../models/User');
 // const AffiliateUser = require('../Models/AffiliateUser');
-const SubAdminModel = require('../Models/SubAdminModel');
-const ReferralBonus = require('../Models/ReferralBonus');
-const { OTP } = require('../Models/Opt');
+const SubAdminModel = require('../models/SubAdminModel');
+const ReferralBonus = require('../models/ReferralBonus');
+const { OTP } = require('../models/Opt');
 const { sendSms } = require('./sendSms');
   const generateReferralCode = require('./generateReferralCode');
 
@@ -1126,8 +1126,8 @@ exports.logout = async (req, res) => {
 
 
   const GenerateOtpCode = require('./GenerateOtpCode');
-  const SubAdmin = require('../Models/SubAdminModel');
-  const SocialLink = require('../Models/SocialLink');
+  const SubAdmin = require('../models/SubAdminModel');
+  const SocialLink = require('../models/SocialLink');
   // const ReferralBonus = require('../Models/ReferralBonus');
   // const Affiliate = require('../Models/AffiliateModel');
   // const SubAdmin = require('../Models/SubAdminModel');

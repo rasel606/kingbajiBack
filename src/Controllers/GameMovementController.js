@@ -1,6 +1,6 @@
-const Category = require('../Models/Category');
-const GameListTable = require('../Models/GameListTable');
-const BetProviderTable = require('../Models/BetProviderTable');
+const Category = require('../models/Category');
+const GameListTable = require('../models/GameListTable');
+const BetProviderTable = require('../models/BetProviderTable');
 
 // Move games between categories and update provider list
 exports.moveGamesToAnotherCategoryAndUpdateProviderList = async (req, res) => {

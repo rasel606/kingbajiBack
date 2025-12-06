@@ -1,7 +1,7 @@
-const BettingHistory = require('../Models/BettingHistory');
-const GameListTable = require('../Models/GameListTable');
-const BetProviderTable = require('../Models/BetProviderTable');
-const Category = require('../Models/Category');
+const BettingHistory = require('../models/BettingHistory');
+const GameListTable = require('../models/GameListTable');
+const BetProviderTable = require('../models/BetProviderTable');
+const Category = require('../models/Category');
 
 // ১. নতুন BetData তৈরি (BettingHistory + GameListTable)
 exports.createNewBetData = async (req, res) => {

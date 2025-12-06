@@ -1,20 +1,20 @@
 // controllers/paymentMethodController.js
 
-const { getPaymentMethodsForUser } = require('../Utils/getPaymentMethods');
+const { getPaymentMethodsForUser } = require('../utils/getPaymentMethods');
 
-const PaymentGateWayTable = require('../Models/PaymentGateWayTable');
-const User = require('../Models/User');
+const PaymentGateWayTable = require('../models/PaymentGateWayTable');
+const User = require('../models/User');
 
 
 
-const TransactionModel = require('../Models/TransactionModel');
-const notificationController = require('../Controllers/notificationController');
-const PaymentService = require('../Services/paymentService');
-const {getUserWithReferralLevels, getReferralOwner} = require('../Services/getReferralOwner');
-const Bonus = require('../Models/Bonus');
-const AffiliateModel = require('../Models/AffiliateModel');
-const catchAsync = require('../Utils/catchAsync');
-const AppError = require('../Utils/AppError');
+const TransactionModel = require('../models/TransactionModel');
+const notificationController = require('./notificationController');
+const PaymentService = require('../services/paymentService');
+const {getUserWithReferralLevels, getReferralOwner} = require('../services/getReferralOwner');
+const Bonus = require('../models/Bonus');
+const AffiliateModel = require('../models/AffiliateModel');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/AppError');
 
 exports.GetUserPayMethods = async (req, res) => {
     try {

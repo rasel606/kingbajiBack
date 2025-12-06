@@ -1,7 +1,7 @@
 // routes/phoneVerification.js
 const express = require('express');
 
-const phoneVerificationService = require('../Services/PhoneVerificationService');
+const phoneVerificationService = require('../services/PhoneVerificationService');
 const {auth} = require('../MiddleWare/auth');
 const { validatePhoneNumber, validateVerificationCode } = require('../MiddleWare/mainValidation');
 

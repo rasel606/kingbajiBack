@@ -1,9 +1,9 @@
 // services/paymentService.js
-const SubAdmin = require('../Models/SubAdminModel');
-const Affiliate = require('../Models/AffiliateModel');
-const Admin = require('../Models/AdminModel');
-const Commission = require('../Models/AffiliateCommissionModal');
-const User = require('../Models/User');
+const SubAdmin = require('../models/SubAdminModel');
+const Affiliate = require('../models/AffiliateModel');
+const Admin = require('../models/AdminModel');
+const Commission = require('../models/AffiliateCommissionModal');
+const User = require('../models/User');
 const catchAsync = require('../utils/catchAsync');
 
 

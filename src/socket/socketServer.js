@@ -596,7 +596,7 @@
 // src/socket/socketServer.js
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
-const AdminModel = require('../Models/AdminModel');
+const AdminModel = require('../models/AdminModel');
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 let io;

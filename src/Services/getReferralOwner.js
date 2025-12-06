@@ -1,11 +1,11 @@
 
 // module.exports = { getUserWithReferralLevels, getReferralOwner };
-const SubAdmin = require("../Models/SubAdminModel");
-const AffiliateModel = require("../Models/AffiliateModel");
-const AdminModel = require("../Models/AdminModel");
-const AgentModel = require("../Models/AgentModel");
-const SubAgentModel = require("../Models/SubAgentModel");
-const User = require("../Models/User");
+const SubAdmin = require("../models/SubAdminModel");
+const AffiliateModel = require("../models/AffiliateModel");
+const AdminModel = require("../models/AdminModel");
+const AgentModel = require("../models/AgentModel");
+const SubAgentModel = require("../models/SubAgentModel");
+const User = require("../models/User");
 
 // ===================================================================
 // GET USER WITH REFERRAL LEVELS

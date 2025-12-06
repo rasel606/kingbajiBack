@@ -125,12 +125,12 @@
 
 
 
-const Transaction = require('../Models/TransactionModel');
-const AdminModel = require('../Models/AdminModel');
-const SubAdminModel = require('../Models/SubAdminModel');
-const AgentModel = require('../Models/AgentModel');
-const SubAgentModel = require('../Models/SubAgentModel');
-const AffiliateModel = require('../Models/AffiliateModel');
+const Transaction = require('../models/TransactionModel');
+const AdminModel = require('../models/AdminModel');
+const SubAdminModel = require('../models/SubAdminModel');
+const AgentModel = require('../models/AgentModel');
+const SubAgentModel = require('../models/SubAgentModel');
+const AffiliateModel = require('../models/AffiliateModel');
 
 let redisClient = null;
 function initCache  (client)  { redisClient = client; };

@@ -2,11 +2,11 @@ const bcrypt = require('bcryptjs');
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 
-const BettingHistory = require("../Models/BettingHistory");
-const UserBonus = require("../Models/UserBonus");
-const User = require('../Models/User');
-const Transaction = require('../Models/TransactionModel');
-const Bonus = require('../Models/Bonus');
+const BettingHistory = require("../models/BettingHistory");
+const UserBonus = require("../models/UserBonus");
+const User = require('../models/User');
+const Transaction = require('../models/TransactionModel');
+const Bonus = require('../models/Bonus');
 
 
 

@@ -1,10 +1,10 @@
 // controllers/authController.js
 const jwt = require('jsonwebtoken');
-const User = require('../Models/User');
-const AffiliateModel = require('../Models/AffiliateModel');
-const AppError = require('../Utils/AppError');
-const catchAsync = require('../Utils/catchAsync');
-const SubAdmin = require('../Models/SubAdminModel');
+const User = require('../models/User');
+const AffiliateModel = require('../models/AffiliateModel');
+const AppError = require('../utils/AppError');
+const catchAsync = require('../utils/catchAsync');
+const SubAdmin = require('../models/SubAdminModel');
 const crypto = require("crypto");
 const bcrypt = require('bcryptjs');
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";

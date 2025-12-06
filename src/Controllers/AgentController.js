@@ -4,7 +4,7 @@
 const bcrypt = require('bcryptjs');
 
 const crypto = require("crypto");
-const AppError = require('../Utils/AppError');
+const AppError = require('../utils/AppError');
 const { default: axios } = require('axios')
 const {
   loginUser,
@@ -14,27 +14,27 @@ const {
   forceLogoutUser,
   getActiveSessions,
   requestPasswordReset,
-  resetUserPassword } = require('../Services/LoginService');
+  resetUserPassword } = require('../services/LoginService');
 
-const AgentModel = require('../Models/AgentModel')
-const PaymentGateWayTable = require('../Models/PaymentGateWayTable')
-const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable')
-const SubAgentModel = require('../Models/SubAgentModel')
-const UserModel = require('../Models/User')
+const AgentModel = require('../models/AgentModel')
+const PaymentGateWayTable = require('../models/PaymentGateWayTable')
+const WidthralPaymentGateWayTable = require('../models/WidthralPaymentGateWayTable')
+const SubAgentModel = require('../models/SubAgentModel')
+const UserModel = require('../models/User')
 
 
 
-const { createUser } = require('../Services/CreateService');
-const catchAsync = require('../Utils/catchAsync');
-const CreateGateWayService = require('../Services/CreateGateWayService');
+const { createUser } = require('../services/CreateService');
+const catchAsync = require('../utils/catchAsync');
+const CreateGateWayService = require('../services/CreateGateWayService');
 const UserController = require('../Controllers/UserController');
 const GetWayControllers = require('../Controllers/GetWayControllers');
 const paymentMethodController = require('../Controllers/paymentMethodController');
-const { getUserListServices } = require('../Services/getUserListServices');
-const { getReferralData } = require('../Services/getReferralOwnerService');
-const { processTransaction } = require('../Services/processTransactionService');
-const User = require('../Models/User');
-const TransactionModel = require('../Models/TransactionModel');
+const { getUserListServices } = require('../services/getUserListServices');
+const { getReferralData } = require('../services/getReferralOwnerService');
+const { processTransaction } = require('../services/processTransactionService');
+const User = require('../models/User');
+const TransactionModel = require('../models/TransactionModel');
 // const SportsBet = require('../Models/OddSportsTable')
 exports.AgentRegister = catchAsync(async (req, res, next) => {
   try {

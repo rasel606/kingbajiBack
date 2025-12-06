@@ -7,22 +7,22 @@ const {
   forceLogoutUser,
   getActiveSessions,
   requestPasswordReset,
-  resetUserPassword } = require('../Services/LoginService');
-const PaymentGateWayTable = require('../Models/PaymentGateWayTable')
-const WidthralPaymentGateWayTable = require('../Models/WidthralPaymentGateWayTable')
+  resetUserPassword } = require('../services/LoginService');
+const PaymentGateWayTable = require('../models/PaymentGateWayTable')
+const WidthralPaymentGateWayTable = require('../models/WidthralPaymentGateWayTable')
 const GetWayControllers = require('../Controllers/GetWayControllers');
-const SubAgentModel = require('../Models/SubAgentModel')
-const AgentModel = require('../Models/AgentModel')
-const TransactionModel = require('../Models/TransactionModel');
+const SubAgentModel = require('../models/SubAgentModel')
+const AgentModel = require('../models/AgentModel')
+const TransactionModel = require('../models/TransactionModel');
 const UserController = require('../Controllers/UserController');
 
 
-const { createUser } = require('../Services/CreateService');
-const catchAsync = require('../Utils/catchAsync');
-const CreateGateWayService = require('../Services/CreateGateWayService');
-const User = require("../Models/User");
+const { createUser } = require('../services/CreateService');
+const catchAsync = require('../utils/catchAsync');
+const CreateGateWayService = require('../services/CreateGateWayService');
+const User = require("../models/User");
 
-const AppError = require('../Utils/AppError');
+const AppError = require('../utils/AppError');
 
 const saltRounds = 10;
 const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";

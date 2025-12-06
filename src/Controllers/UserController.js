@@ -1,11 +1,11 @@
 
 const express = require('express');
 
-const AppError = require('../Utils/AppError');
-const User = require("../Models/User");
-const SubAdmin = require('../Models/SubAdminModel');
-const AdminModel = require('../Models/AdminModel');
-const catchAsync = require('../Utils/catchAsync');
+const AppError = require('../utils/AppError');
+const User = require("../models/User");
+const SubAdmin = require('../models/SubAdminModel');
+const AdminModel = require('../models/AdminModel');
+const catchAsync = require('../utils/catchAsync');
 
 exports.GetRefferralUserList = async (req, res) => {
 

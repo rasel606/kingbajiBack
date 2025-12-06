@@ -1,10 +1,10 @@
-const User = require('../Models/User');
+const User = require('../models/User');
 const crypto = require("crypto");
-const GameTable = require('../Models/GamesTable');
-const BetProviderTable = require('../Models/BetProviderTable');
+const GameTable = require('../models/GamesTable');
+const BetProviderTable = require('../models/BetProviderTable');
 const { default: axios } = require('axios');
-const GameListTable = require('../Models/GameListTable');
-const Category = require('../Models/Category');
+const GameListTable = require('../models/GameListTable');
+const Category = require('../models/Category');
 const moment = require('moment-timezone');
 const { CookieJar } = require('tough-cookie');
 const cookieJar = new CookieJar(); // <-- Add this line

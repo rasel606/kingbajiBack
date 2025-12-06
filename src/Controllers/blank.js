@@ -1,9 +1,9 @@
-const User = require('../Models/User');
+const User = require('../models/User');
 
 const crypto = require("crypto");
 
-const GameTable = require('../Models/GamesTable');
-const BetProviderTable = require('../Models/BetProviderTable');
+const GameTable = require('../models/GamesTable');
+const BetProviderTable = require('../models/BetProviderTable');
 const { default: axios } = require('axios');
 
 const fetchBalance = async (agent, username) => {

@@ -1,12 +1,12 @@
-const Affiliate = require('../Models/AffiliateModel');
-const AffiliateEarnings = require('../Models/AffiliateUserEarnings');
-const User = require('../Models/User'); 
-const BettingHistory = require('../Models/BettingHistory');
-const TransactionModel = require('../Models/TransactionModel');
-const UserBonus = require('../Models/UserBonus');
+const Affiliate = require('../models/AffiliateModel');
+const AffiliateEarnings = require('../models/AffiliateUserEarnings');
+const User = require('../models/User'); 
+const BettingHistory = require('../models/BettingHistory');
+const TransactionModel = require('../models/TransactionModel');
+const UserBonus = require('../models/UserBonus');
 const moment = require('moment');
-const { getPeriodDates } = require('../Utils/periodUtils');
-const catchAsync = require('../Utils/catchAsync');
+const { getPeriodDates } = require('../utils/periodUtils');
+const catchAsync = require('../utils/catchAsync');
 // Custom error class for application errors
 class AppError extends Error {
   constructor(message, statusCode) {

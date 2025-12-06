@@ -1,5 +1,5 @@
-const User = require('../Models/User');
-const AffiliateModel = require('../Models/AffiliateModel');
+const User = require('../models/User');
+const AffiliateModel = require('../models/AffiliateModel');
 const ExcelJS = require('exceljs');
 
 // Helper function to build query from search parameters
