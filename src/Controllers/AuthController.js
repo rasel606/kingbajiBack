@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const AuthService = require('../services/AuthService');
+const AuthService = require('../services/authService');
 const UserService = require('../services/userService');
 const ApiService = require('../services/apiService');
 const { validateRegistration, validateLogin } = require('../utils/validators');
