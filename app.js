@@ -13,9 +13,10 @@ const path = require('path');
 require('dotenv').config();
 
 // Import routes
-const api = require('./src/router/api');
+
 const cookieHandler = require('./src/middleWare/cookieMiddleware');
 const logger = require('./src/utils/logger');
+const apiRouter = require('./src/router/apiRouter');
 const adminAurth = require('./src/router/adminAurth');
 const transactionRoutes = require('./src/router/transactionRoutes');
 const subAdminRoutes = require('./src/router/subAdminRoutes');
@@ -128,7 +129,7 @@ app.use(morgan('combined', {
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
-app.use("/api/v1", api);
+app.use("/api/v1", apiRouter);
 app.use('/api/admin/auth', adminAurth);
 app.use('/api/admin', mainAdminRoutes);
 app.use('/api/adminannouncement', announcementRoutes);
