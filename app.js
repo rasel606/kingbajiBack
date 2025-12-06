@@ -13,10 +13,10 @@ const path = require('path');
 require('dotenv').config();
 
 // Import routes
-const router = require('./src/router/Api');
-const cookieHandler = require('./src/MiddleWare/cookieMiddleware');
+const router = require('./src/router/api');
+const cookieHandler = require('./src/middleWare/cookieMiddleware');
 const logger = require('./src/utils/logger');
-const AdminAurth = require('./src/router/AdminAurth');
+const AdminAurth = require('./src/router/adminAurth');
 const transactionRoutes = require('./src/router/transactionRoutes');
 const subAdminRoutes = require('./src/router/subAdminRoutes');
 const subAdminAurth = require('./src/router/subAdminAurth');
@@ -38,10 +38,10 @@ const withdrawalRoutes = require('./src/router/withdrawals');
 const profileRoutes = require('./src/router/affiliateProfile');
 const agentRoutes = require('./src/router/agentRoutes');
 const agentDashboard = require('./src/router/agentDashboard');
-const SubAdminDashboard = require('./src/router/SubAdminDashboard');
+const SubAdminDashboard = require('./src/router/subAdminDashboard');
 const subAgentRoutes = require('./src/router/subAgentRoutes');
 const affiliateDashboardRoute = require('./src/router/affiliateDashboardRoute');
-const AffiliateAuthRoute = require('./src/router/AffiliateAuthRoute');
+const AffiliateAuthRoute = require('./src/router/affiliateAuthRoute');
 const announcementRoutes = require('./src/router/announcementRoutes');
 // Import Live Chat Routes
 const chatRoutes = require('./src/router/chatRoutes');
