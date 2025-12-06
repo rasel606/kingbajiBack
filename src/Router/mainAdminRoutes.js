@@ -28,7 +28,7 @@ router.get('/affiliate_get_commissionSettings', validate, auth, AdminController.
 // router.get('/get_rebate_settings', validate, auth, AdminController.getRebateSettings);
 router.get('/get_bonus_list', validate, auth, AdminController.getBonuses);
 // router.get('/get_users_by_referral', validate, auth, AdminController.getUsersByReferral);
-router.get('/get_users_by_Id/:userId', validate, auth, AdminController.getUserById_detaills);
+// router.get('/get_users_by_Id/:userId', validate, auth, AdminController.getUserById_detaills);
 router.get('/get_categories_with_providers_and_games', validate, auth, AdminController.getCategoriesWithProvidersAndGames);
 router.get('/dashboard/overview',validate, auth, AdminController.getAdminDashboardStats);
 router.get('/dashboard/social_link',validate, auth, AdminController.getSocialLinks);
@@ -46,48 +46,27 @@ router.get('/get_admin_agent_list', validate, auth, AdminController.getAdminAgen
 router.get('/get_admin_agent_user_list', validate, auth, AdminController.getAdminAgentUserList);
 router.get('/get_admin_agent_user_pending_deposit_user_list', validate, auth, AdminController.getAdminAgentUserDepositList);
 router.get('/get_admin_agent_user_withdraw__user_list', validate, auth, AdminController.getAdminAgentUserWithdrawList);
+router.get('/get_user_deposit_withdraw__user', validate, auth, AdminController.deposit_And_Widthraw_By_Admin);
+router.get('/get_user_transaction_report', validate, auth, AdminController.getTransactionsReport);
 
+//////////////////////Admin Agent Routes////////////////////////
 router.get('/get_sub_admin_affiliateList', validate, auth, AdminController.getAffiliateList);
 // router.get('/get_admin_AgentList', validate, auth, AdminController.GetAgentList);
 router.get('/get_admin_UserList', validate, auth, AdminController.getUserList);
 router.get('/get_user_list_by_role', validate, auth, AdminController.getTransactionList);
 router.get('/get_userList', validate, auth, UserControllers.GetRefferralUserList);
 // router.get('/dashboard_stats', auth, AdminController.getDashboardData);
-router.post(
-  '/get_users_verify-email/:userId',
-  auth,
-  validate,
-  AdminController.verifyEmail
-);
 
-// Verify user phone
-router.post(
-  '/get_users_verify-phone/:userId',
-  auth,
-  validate,
-  AdminController.verifyPhone
-);
-router.put(
-  '/get_users_by_Id_update/:userId',
-  auth,
-  // validate,[
-  //   body('email'),
-  //   body('phone'),
-  //   body('name'),
-  //   body('country'),
-  // ],
-  AdminController.updateUserProfileById
-);
-router.put(
-  '/get_users_by_Id_Password_update/:userId',
-  auth,
-  AdminController.changeUserPassword
-);
-// router.put(
-//   '/get_users_transfar_by_Id/:userId',
-//   auth,
-//   AdminController.Transfar_Deposit_And_Widthraw
-// );
+//////////////////////user Routes////////////////////////
+router.get('/get_users_by_Id/:userId', validate, auth, AdminController.GetUserById_detaills);
+router.put('/get_users_by_Id_update/:userId', validate, auth, AdminController.updateUserProfileById);
+router.post('/get_users_verify-phone/:userId', validate, auth, AdminController.verifyUserPhone);
+router.post('/get_users_verify-email/:userId', validate, auth, AdminController.verifyUserEmail);
+router.post('/get_users_update-password/:userId', validate, auth, AdminController.UpdateUserPassword);
+
+
+
+
 
 
 

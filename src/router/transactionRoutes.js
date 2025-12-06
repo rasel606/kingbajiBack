@@ -60,6 +60,7 @@ router.get('/search_widthrawal_getways', validate, auth, AdminController.Widthra
 router.get('/update-deposit-Widthrowal', validate, auth, newTransactionController.approveDeposit);
 
 router.post('/submit-transaction', validate, newTransactionController.submitTransaction);
+router.post('/submit-Widthrowal', validate, newTransactionController.submitWithdraw);
 
 // Get deposit totals
 router.get('/deposit-totals', [

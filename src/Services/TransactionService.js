@@ -179,6 +179,7 @@ const Bonus = require('../models/Bonus');
 const UserBonus = require('../models/UserBonus');
 const AppError = require('../utils/AppError');
 const notificationController = require('../Controllers/notificationController');
+const { generateReferralCode } = require('../utils/generateReferralCode');
 
 // Helper: find referral owner (Admin/SubAdmin/Affiliate/Agent/SubAgent)
 const getReferralOwner = async (referralCode) => {
@@ -407,14 +408,309 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
       throw new AppError('Invalid status value. Use 1 for approve or 2 for reject.', 400);
     }
   } catch (err) {
-    await session.abortTransaction().catch(() => {});
+    await session.abortTransaction().catch(() => { });
     session.endSession();
     throw err;
   }
 };
 
+
+
+
+
+
+const WithdrawTransaction = async (payload) => {
+  const { userId, amount, gateway_name, mobile } = payload;
+  console.log(req.body);
+
+  try {
+    const user = await User.findOne({ userId });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    console.log("User Balance Before Withdrawal:", user.balance);
+
+    // Check if the user has enough balance
+    if (user.balance < amount) {
+      return res.status(400).json({ message: 'Insufficient balance' });
+    }
+    if (user.balance > 0 && user.balance < amount) {
+      return res.status(400).json({ message: 'Insufficient balance' });
+    }
+
+
+    const transactionID = generateReferralCode();
+    const newTransaction = new Transaction({
+      userId: user.userId,
+      transactionID,
+      base_amount: amount,
+      amount: amount,
+      gateway_name: gateway_name,
+      mobile: mobile,
+      type: 1,  // Withdrawal type
+      status: 0,  // 0 = pending
+      referredBy: referredBy,
+      // is_commission: false,
+    });
+
+    // Deduct balance
+    user.balance -= parseInt(amount);
+
+    // Save transaction and user balance update
+    await newTransaction.save();
+    await user.save();
+
+    console.log("New Transaction:", newTransaction);
+    console.log("Updated User:", user);
+
+    await notificationController.createNotification(
+      `Withdrawal request send ${newTransaction.transactionID} with (User ID: ${user.userId})`,
+      newTransaction.userId,
+      `Withdrawal of ${newTransaction.amount} has been submitted at ${new Date()}  by ${newTransaction.gateway_name}.Your withdrawal request of ${newTransaction.amount} has been send at ${new Date()} with transaction ID: ${newTransaction.transactionID} by ${newTransaction.gateway_name} and will be processed within 15 minutes.`,
+      'withdrawal_request',
+      { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
+    );
+
+    res.json({
+      message: "Withdrawal request submitted successfully",
+      transactionID,
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+const approveWithdraw = async ({ userId, referralCode, transactionID, status }) => {
+  try {
+  if (!userId || !transactionID) throw new AppError('Missing userId or transactionID', 400);
+  const user = await User.findOne({ userId });
+  if (!user) throw new AppError('User not found', 404);
+
+  const transaction = await Transaction.findOne({ userId, transactionID, type: 0 });
+  if (!transaction) throw new AppError('Transaction not found', 404);
+  if (transaction.status !== 0) throw new AppError('Transaction already processed', 400);
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  
+
+
+    if (parseInt(status) === 1) {
+      // APPROVE
+      const affiliateRelation = await getAffiliateAndParent(user.referredBy);
+
+      if (affiliateRelation) {
+        const { affiliate, parent } = affiliateRelation;
+
+        if (!parent) throw new AppError('Affiliate parent (Admin/SubAdmin) not found', 400);
+
+        const baseAmount = Number(transaction.base_amount || 0);
+        const parentBalance = Number(parent.balance || 0);
+        if (parentBalance < baseAmount) throw new AppError('Parent balance insufficient', 400);
+
+        parent.balance = parentBalance + baseAmount;
+        await parent.save({ session });
+
+        user.balance = Number(user.balance || 0) - Number(transaction.amount || 0);
+        await user.save({ session });
+
+      } else {
+        // Normal gateway owner flow
+        const gatewayOwnerData = await getReferralOwner(referralCode);
+        if (!gatewayOwnerData || !gatewayOwnerData.owner) throw new AppError('Payment gateway owner not found', 404);
+
+        const gatewayOwner = gatewayOwnerData.owner;
+        const ownerBalance = Number(gatewayOwner.balance || 0);
+        const amountToDebit = Number(transaction.amount || 0);
+        if (ownerBalance < amountToDebit) throw new AppError('Insufficient gateway balance', 400);
+
+        gatewayOwner.balance = ownerBalance + amountToDebit;
+        await gatewayOwner.save({ session });
+
+        user.balance = Number(user.balance || 0) - amountToDebit;
+        await user.save({ session });
+      }
+
+      transaction.status = 1;
+      transaction.updatetime = new Date();
+      await transaction.save({ session });
+
+
+
+      await session.commitTransaction();
+      session.endSession();
+
+      await notificationController.createNotification(
+        'Deposit Approved',
+        user.userId,
+        `Your deposit of ${transaction.amount} has been approved`,
+        'deposit_approved',
+        { amount: transaction.amount, transactionID: transaction.transactionID }
+      );
+
+      return { transaction, affiliateBonusCut };
+    } else if (parseInt(status) === 2) {
+      // REJECT
+      transaction.status = 2;
+      transaction.updatetime = new Date();
+      await transaction.save({ session });
+
+      await session.commitTransaction();
+      session.endSession();
+
+      await notificationController.createNotification(
+        'Deposit Rejected',
+        user.userId,
+        `Your deposit of ${transaction.amount} has been rejected`,
+        'deposit_rejected',
+        { amount: transaction.amount, transactionID: transaction.transactionID }
+      );
+
+      return { transaction };
+    } else {
+      throw new AppError('Invalid status value. Use 1 for approve or 2 for reject.', 400);
+    }
+  } catch (err) {
+    await session.abortTransaction().catch(() => { });
+    session.endSession();
+    throw err;
+  }
+};
+
+
+
+
+const Approve_Transfar_With_Deposit_And_Widthraw_By_Admin = async ({ userId, email, dataModel, OwnerModel, transactionModel, referralCode, type, amount }) => {
+  try {
+
+
+    const transactionType = parseInt(type);
+    const baseAmountInt = parseInt(amount);
+
+    if (!userId || !referralCode || !email || !mobile || isNaN(baseAmountInt) || isNaN(transactionType)) {
+      return res.status(400).json({ message: 'Missing or invalid required fields' });
+    }
+
+    const user = await dataModel.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found or referral code mismatch' });
+    }
+
+
+
+    const Admin = await OwnerModel.findOne({ email });
+    if (!Admin) {
+      return res.status(404).json({ message: 'Sub-admin not found' });
+    }
+
+
+
+    if (baseAmountInt <= 50) {
+      return res.status(400).json({ message: 'Amount must be greater than 0' });
+    }
+
+    const transactionID = generateReferralCode();
+
+    const isValidTransaction =
+      user.userId === userId &&
+      Admin.email === email &&
+      baseAmountInt > 0;
+
+    // ✅ Withdrawal
+    if (transactionType === 1) {
+      if (user.balance < baseAmountInt) {
+        return res.status(400).json({ message: 'User does not have sufficient balance for withdrawal' });
+      }
+
+      const newTransaction = new Transaction({
+        userId: user.userId,
+        transactionID,
+        base_amount: baseAmountInt,
+        amount: baseAmountInt,
+        gateway_name: "transfer",
+        payment_type: "transfer",
+        mobile,
+        type: 1,
+        status: 1,
+        referredBy: user.referralCode,
+        is_commission: false,
+
+      });
+
+      user.balance -= baseAmountInt;
+      subAdmin.balance += baseAmountInt;
+
+      await newTransaction.save();
+      await user.save();
+      await subAdmin.save();
+
+      return res.status(200).json({
+        message: "Withdrawal transaction completed successfully",
+        userBalance: user.balance,
+        AdminBalance: Admin.balance
+      });
+    }
+
+    // ✅ Deposit
+    else if (transactionType === 0) {
+      if (subAdmin.balance < baseAmountInt) {
+        return res.status(400).json({ message: 'Sub-admin does not have sufficient balance for deposit' });
+      }
+
+
+
+      const newTransaction = new Transaction({
+        userId: user.userId,
+        transactionID,
+        base_amount: baseAmountInt,
+        bonus_amount: 0,
+        amount: baseAmountInt,
+        gateway_name: "transfer",
+        payment_type: "transfer",
+        mobile,
+        type: 0,
+        status: 1,
+        referredBy: referralCode,
+        is_commission: false,
+
+      });
+
+      user.balance += baseAmountInt;
+      subAdmin.balance -= baseAmountInt;
+
+      await newTransaction.save();
+      await user.save();
+      await subAdmin.save();
+
+      return res.status(200).json({
+        message: "Deposit transaction completed successfully with bonus",
+        userBalance: user.balance,
+        subAdminBalance: subAdmin.balance
+      });
+    }
+
+    return res.status(400).json({ message: 'Invalid transaction type or conditions not met' });
+
+  } catch (error) {
+    console.error('Transaction Error:', error);
+    return res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+
+
+
 module.exports = {
   submitTransaction,
   approveDeposit,
-  getReferralOwner // exported for other uses
+  getReferralOwner,
+  approveWithdraw,
+  WithdrawTransaction,
+  Approve_Transfar_With_Deposit_And_Widthraw_By_Admin
 };

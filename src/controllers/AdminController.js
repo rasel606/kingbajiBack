@@ -6,7 +6,7 @@ const AdminModel = require('../models/AdminModel')
 const SubAdminModel = require('../models/SubAdminModel')
 
 const SubAgentModel = require('../models/SubAgentModel')
-
+const transactionService = require('../services/TransactionService');
 const CreateService = require('../services/CreateService')
 const PaymentGateWayTable = require("../models/PaymentGateWayTable");
 const WidthralPaymentGateWayTable = require("../models/WidthralPaymentGateWayTable");
@@ -641,7 +641,6 @@ exports.UpdateBetProvider = async (req, res) => {
   }
 };
 
-// Delete BetProvider by ID
 
 
 
@@ -965,11 +964,10 @@ exports.getAdminAgentList = async (req, res) => {
   try {
 
     const result = await UserController.GetRefferralList(req, res, AdminModel, AgentModel);
+    console.log("Full Downline Result:", result);
     return res.json({
       success: true,
-      data: {Users:result.user},
-      total: result.total
-
+      data: result,
     });
 
   } catch (error) {
@@ -1112,24 +1110,7 @@ exports.getUserList = async (req, res) => {
   }
 };
 
-// exports.processTransactionForALL = async (req, res) => {
-//   try {
-//     const { userId, action, transactionID } = req.body;
-//     const referraledUsers = req.user;
 
-//     const result = await processTransaction({
-//       userId,
-//       action,
-//       transactionID,
-//       referralUser: referraledUsers,
-//     });
-
-//     return res.status(200).json({ message: "Transaction processed", ...result });
-//   } catch (error) {
-//     console.error("Transaction Error:", error);
-//     return res.status(500).json({ message: "Internal server error", error: error.message });
-//   }
-// };
 
 exports.processTransactionForALL = async (req, res) => {
   try {
@@ -1153,90 +1134,9 @@ exports.processTransactionForALL = async (req, res) => {
 
 
 
-exports.getTransactionList = async (req, res) => {
-  try {
-    const { page = 1, limit = 100 } = req.query;
-    const skip = (page - 1) * limit;
-    const user = req.user;
-    const role = user.role.toLowerCase();
-    let filter = {};
-    // role-wise filtering
-    switch (role) {
-      case "admin":
-        break; // admin sees all
-      case "subAdmin":
-        filter = { subAdminId: req.user?.referralCode };
-        break;
-      case "affiliate":
-        filter = { affiliateId: req.user?.referralCode };
-        break;
-      case "user":
-        filter = { userId: req.user?.referralCode };
-        break;
-      default:
-        throw new Error("Invalid role");
-    }
-
-    const total = await TransactionModel.countDocuments(filter);
-    const transactions = await TransactionModel.find(filter)
-      .sort({ createdAt: -1 })
-      .skip(parseInt(skip))
-      .limit(parseInt(limit));
-
-    res.json({ success: true, data: transactions, pagination: { page: parseInt(page), limit: parseInt(limit), total, totalPages: Math.ceil(total / limit) } });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
 
 
-
-// exports.approveDepositAdmin = async (req, res) => {
-//   try {
-//       const { userId, referralCode, status, transactionID } = req.body;
-
-//       // Find the user
-//       const user = await User.findOne({ userId });
-//       if (!user) {
-//           return res.status(404).json({ message: 'User not found' });
-//       }
-//       const SubAdminuser = await SubAdmin.findOne({ referralCode: referralCode });
-//       if (!user) return res.status(404).json({ message: 'User not found' });
-//       console.log(user);
-//       // Find the transaction
-//       const transaction = await TransactionModel.findOne({ userId, type, referredbyCode: SubAdminuser.referralCode, transactionID });
-//       if (!transaction) return res.status(404).json({ message: "Transaction not found" });
-//       console.log(transaction);
-
-//       // Find the transaction
-//       // const transaction = await Transaction.findOne({ userId, transactionID });
-//       // if (!transaction) {
-//       //     return res.status(404).json({ message: "Transaction not found" });
-//       // }
-
-//       // Check if the transaction status is "Hold" (0)
-//       if (transaction.status !== 0) {
-//           return res.status(400).json({ message: "Transaction already processed" });
-//       }
-
-//       // If the transaction is being approved, update the user's balance and bonus
-//       if (transaction.status === 0) {
-//           const bonusAmount = (transaction.amount * 0.30) / 100;
-//           user.balance += transaction.amount + bonusAmount;
-//           user.bonus += bonusAmount;
-//           await user.save();
-//       }
-
-//       // Update the transaction status to "Accepted" (1)
-//       transaction.status = 1;
-//       await transaction.save();
-
-//       res.status(200).json({ message: "Deposit approved", user });
-//   } catch (error) {
-//       res.status(500).json({ message: error.message });
-//   }
-// };
 
 
 exports.AffiliateModeladmin = async (req, res) => {
@@ -1307,44 +1207,16 @@ exports.updateCommissionSettings = async (req, res) => {
 };
 
 
-// exports.GetAgentAdmin = async (req, res) => {
-//   try {
-//       const affiliates = await AgentModel.find({});
-//       res.json(affiliates);
-//   } catch (error) {
-//       res.status(500).json({ message: error.message });
-//   }
-// };
-
-
-
-
-//////////////////////////////////////////////////////////////
-
-// Admin - Get All Users
-// router.get("/admin/users", async (req, res) => {
-//   try {
-//       const users = await User.find();
-//       res.status(200).json(users);
-//   } catch (error) {
-//       res.status(500).json({ message: "Server error", error });
-//   }
-// });
 
 
 
 
 
-///////////////////////////////////
-// Admin - Get All Transactions
-// router.get("/admin/transactions", async (req, res) => {
-//   try {
-//       const transactions = await Transaction.find().populate("user_id");
-//       res.status(200).json(transactions);
-//   } catch (error) {
-//       res.status(500).json({ message: "Server error", error });
-//   }
-// });
+
+
+
+
+
 
 
 exports.getBonuses = async (req, res) => {
@@ -1472,165 +1344,15 @@ exports.getUsersByReferral = async (req, res) => {
 };
 
 
-exports.changeUserPassword = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { password } = req.body;
-    console.log(userId, password);
-    if (!password || password.length < 6) {
-      return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
-    }
-
-    const user = await User.findOne({ userId });
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password.password, 10);
-    user.password = hashedPassword;
-    await user.save();
-
-    return res.status(200).json({ success: true, message: "Password updated successfully" });
-  } catch (err) {
-    console.error("Change Password Error:", err);
-    res.status(500).json({ success: false, message: "Server error while changing password" });
-  }
-};
-
-
-
-
-// Update user profile by userId
-exports.updateUserProfileById = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    console.log("updateUserProfileById", req.params);
-    const { name, email, phone, birthday, country } = req.body;
-    console.log("updateUserProfileById", req.body);
-    console.log("updateUserProfileById", req.params);
-    if (!userId) {
-      return res.status(400).json({ message: "UserId is required" });
-    }
-
-    const user = await User.findOne({ userId: userId, referredBy: req.user.referralCode });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (birthday) user.birthday = new Date(birthday);
-    if (country) user.country = country;
-
-    if (phone) {
-      if (typeof phone === "string") {
-        user.phone = [{
-          number: phone,
-          countryCode: "+88", // default or from frontend
-          isDefault: true,
-          verified: user.isVerified?.phone || false
-        }];
-      } else {
-        user.phone = phone;
-      }
-    }
-
-
-
-    user.updatetimestamp = new Date();
-
-    await user.save();
-
-    res.status(200).json({ message: "User updated successfully", user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
-
-// 
-// const User = require('../Models/User');
-// const catchAsync = require('../utils/catchAsync');
-// const AppError = require('../utils/AppError'); // If you have custom error handling
-
-// // Verify Email
-exports.verifyEmail = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-
-  const user = await User.findOne({ userId: userId, referredBy: req.user.referralCode }); // removed referredBy filter
-  if (!user) return next(new AppError('User not found', 404));
-
-  user.isVerified = user.isVerified || {};
-  user.isVerified.email = true;
-
-  if (user.email) {
-    user.email.isVerified = true;
-  }
-
-  await user.save();
-
-  res.json({
-    success: true,
-    message: 'Email verified successfully',
-    isVerified: user.isVerified,
-  });
-});
-
-// Verify Phone
-exports.verifyPhone = catchAsync(async (req, res, next) => {
-  const { userId } = req.params;
-
-  const user = await User.findOne({ userId: userId, referredBy: req.user.referralCode });
-  if (!user) return next(new AppError('User not found', 404));
-
-  // Update phone verification
-  user.isVerified = user.isVerified || {};
-  user.isVerified.phone = true;
-  user.phone.isVerified = true;
-
-  if (user.phone) {
-    user.phone.isVerified = true;
-  }
-
-  await user.save();
-
-  res.status(200).json({
-    success: true,
-    message: 'Phone verified successfully',
-    isVerified: user.isVerified,
-  });
-});
 
 
 
 
 
-// GET /api/users/:userId
-exports.getUserById_detaills = catchAsync(async (req, res, next) => {
-
-  try {
-    console.log("getUserById_detaills", req.params);
-    const { userId } = req.params;
-    console.log("getUserById_detaills", userId);
-    if (!userId) {
-      return next(new AppError("User ID is required", 400));
-    }
-
-    const user = await UserModel.findOne({ userId: userId, referredBy: req.user.referralCode }).select(
-      "userId name email phone birthday country isVerified"
-    );
-    console.log("getUserById_detaills", user);
 
 
-    res.status(200).json({
-      success: true,
-      message: 'User details fetched successfully',
-      data: user,
-    });
-  } catch (error) {
-    next(new AppError("User not found", 404));
-  }
-});
+
+
 
 
 
@@ -1813,204 +1535,6 @@ exports.getPendingWidthrawalTransactions = catchAsync(async (req, res, next) => 
 
 
 
-
-
-// exports.getPendingDepositTransactions = async (req, res) => {
-//   try {
-//     const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
-//     console.log("Pending deposit transactions query:", req.query);
-
-//     // Get the authenticated user's referral code
-//     const user = req.user;
-//     console.log("user", user);
-
-//     const ParentUser = await AdminModel.findOne({ email: user.email }) ||
-//       await SubAdminModel.findOne({ email: user.email }) ||
-//       await AgentModel.findOne({ email: user.email }) ||
-//       await SubAgentModel.findOne({ email: user.email });
-
-//     // console.log("getPendingDepositTransactions -----=========user", ParentUser);
-
-//     // if (!ParentUser) {
-//     //   return res.status(404).json({
-//     //     success: false,
-//     //     message: 'User not found'
-//     //   });
-//     // }
-
-//     console.log("getPendingDepositTransactions -----=========user", ParentUser.role);
-
-//     let query = {};
-//     console.log("query", query);
-
-//     // Add optional filters
-//     if (userId) query.userId = userId;
-//     if (amount) query.base_amount = { $gte: parseFloat(amount) };
-//     if (gateway_name) query.gateway_name = gateway_name;
-//     if (status !== undefined && !isNaN(status) && status !== "") {
-//       query.status = parseInt(status);
-//     }
-
-//     // Date filtering
-//     if (startDate && endDate) {
-//       query.datetime = {
-//         $gte: new Date(startDate),
-//         $lte: new Date(endDate),
-//       };
-//     } else if (startDate) {
-//       query.datetime = { $gte: new Date(startDate) };
-//     }
-
-//     // Handle referredBy based on user role
-//     let referredByFilter = {};
-
-//     if (ParentUser.role === 'Admin') {
-//       // If user is Admin, get transactions with referredBy as null or undefined
-//       referredByFilter = {
-//         $or: [
-//           { referredBy: null },
-//           // { referredBy: { $exists: false } }
-//         ]
-//       };
-//     } else {
-//       // For other roles, use their referral code
-//       referredByFilter = { referredBy: ParentUser.referralCode };
-//     }
-//     console.log("referredByFilter", referredByFilter);
-//     const transactions = await TransactionModel.find({
-//       ...referredByFilter,
-//       ...query,
-//       type: parseInt(0),
-//       status: parseInt(1),
-//     }).sort({ datetime: -1 });
-
-//     console.log("transactions", transactions);
-
-//     const totalDeposit = await TransactionModel.aggregate([
-//       {
-//         $match: {
-//           ...query,
-//           type: parseInt(1),
-//           status: parseInt(0),
-//           ...referredByFilter
-//         }
-//       },
-//       { $group: { _id: null, total: { $sum: "$amount" } } }
-//     ]);
-
-//     const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
-
-//     res.json({
-//       success: true,
-//       transactions,
-//       total
-//     });
-//   } catch (error) {
-//     console.error("Error searching transactions:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Server error"
-//     });
-//   }
-// };
-// exports.getPendingWidthrawalTransactions = async (req, res) => {
-//   try {
-//     const { userId, amount, gateway_name, status, startDate, endDate } = req.query;
-//     // console.log("Pending deposit transactions query:", req.query);
-
-//     // Get the authenticated user's referral code
-//     const user = req.user;
-//     console.log("user", user.email, user.role);
-
-//     const ParentUser = await AdminModel.findOne({ email: user.email }) ||
-//       await SubAdminModel.findOne({ email: user.email }) ||
-//       await AgentModel.findOne({ email: user.email }) ||
-//       await SubAgentModel.findOne({ email: user.email });
-
-//     // console.log("getPendingDepositTransactions -----=========user", ParentUser);
-
-//     // if (!ParentUser) {
-//     //   return res.status(404).json({
-//     //     success: false,
-//     //     message: 'User not found'
-//     //   });
-//     // }
-
-//     console.log("getPendingDepositTransactions -----=========ParentUser.role", ParentUser.role);
-
-//     let query = {};
-//     console.log("query", query);
-
-//     // Add optional filters
-//     if (userId) query.userId = userId;
-//     if (amount) query.base_amount = { $gte: parseFloat(amount) };
-//     if (gateway_name) query.gateway_name = gateway_name;
-//     if (status !== undefined && !isNaN(status) && status !== "") {
-//       query.status = parseInt(status);
-//     }
-
-//     // Date filtering
-//     if (startDate && endDate) {
-//       query.datetime = {
-//         $gte: new Date(startDate),
-//         $lte: new Date(endDate),
-//       };
-//     } else if (startDate) {
-//       query.datetime = { $gte: new Date(startDate) };
-//     }
-
-//     // Handle referredBy based on user role
-//     let referredByFilter = {};
-
-//     if (ParentUser.role === 'Admin') {
-//       // If user is Admin, get transactions with referredBy as null or undefined
-//       referredByFilter = {
-//         $or: [
-//           { referredBy: null },
-//           { referredBy: { $exists: false } }
-//         ]
-//       };
-//     } else {
-//       // For other roles, use their referral code
-//       referredByFilter = { referredBy: ParentUser.referralCode };
-//     }
-
-//     const transactions = await TransactionModel.find({
-//       ...query,
-//       type: parseInt(1),
-//       status: parseInt(0),
-//       ...referredByFilter
-//     }).sort({ datetime: -1 });
-
-//     console.log("transactions", transactions);
-
-//     const totalDeposit = await TransactionModel.aggregate([
-//       {
-//         $match: {
-//           ...query,
-//           type: parseInt(1),
-//           status: parseInt(0),
-//           ...referredByFilter
-//         }
-//       },
-//       { $group: { _id: null, total: { $sum: "$amount" } } }
-//     ]);
-
-//     const total = totalDeposit.length > 0 ? totalDeposit[0].total : 0;
-
-//     res.json({
-//       success: true,
-//       transactions,
-//       total
-//     });
-//   } catch (error) {
-//     console.error("Error searching transactions:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Server error"
-//     });
-//   }
-// };
 exports.getApprovedWithdrawalTransactions = async (req, res) => {
   try {
     const { referredBy, userId, amount, gateway_name, startDate, endDate, status = 0 } = req.query;
@@ -2083,6 +1607,8 @@ exports.getRejectedWithdrawalTransactions = async (req, res) => {
   }
 };
 
+
+
 exports.getDepositTotals = async (req, res) => {
   try {
     const userByReferralCode = req.referralCode
@@ -2154,7 +1680,75 @@ exports.getDepositTotals = async (req, res) => {
 
 
 
+exports.deposit_And_Widthraw_By_Admin = catchAsync(async (req, res, next) => {
+    console.log("req",req);
+    console.log("req.query",req.query);
+  const { userId, status,type,amount } = req.query;
+  const user = req.user;
 
+  const referralCode = user.referralCode;
+  const email = user.email;
+  const dataModel = UserModel;
+  const OwnerModel = AdminModel;
+  const transactionModel = TransactionModel;
+
+  const result = await transactionService.Approve_Transfar_With_Deposit_And_Widthraw_By_Admin( userId,email,dataModel,OwnerModel,transactionModel, referralCode, type, amount );
+  res.status(200).json({ success: true, ...result });
+});
+exports.getTransactionsReport = catchAsync(async (req, res, next) => {
+  try {
+    
+    const Transaction = TransactionModel; // Your deposit/transaction model
+    const ParentModel = AdminModel;
+    const ChildModel = AffiliateModel;
+    const SubChildModel = UserModel; 
+    const childUserModel = UserModel;     // Your User model
+    const user = req.user;              // Logged in user
+console.log("User:", user.email, user.referralCode, user.userId, user.role);
+    // if (req.user.length > 0 ) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: "Authentication required"
+    //   });
+    // }
+    const query = {
+      status: req.query.status,
+      type: req.query.type ,
+      limit: req.query.limit || 50,
+      page: req.query.page || 1,
+      userId: req.query.userId || null
+    };
+    // Call the service function (the long function you created earlier)
+    const userDetails = await paymentMethodController.GetParentAndDownlineTransactions(
+      ParentModel,
+      ChildModel,
+      SubChildModel,
+      childUserModel,
+      Transaction,
+      user,
+      query
+    );
+
+    console.log("Pending Deposit Result:", userDetails);
+
+    if (!userDetails.success) {
+      return res.status(400).json({
+        success: false,
+        message: userDetails.message
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Pending deposit transactions fetched successfully",
+      transactions: userDetails.transactions,
+      total: userDetails.total
+    });
+
+  } catch (err) {
+    next(err);
+  }
+});
 
 
 
@@ -2448,11 +2042,6 @@ exports.getCategoriesWithProvidersAndGames = async (req, res) => {
 
 
 
-/**
- * Create or update a user's social links.
- * If a record exists for the user, update it; otherwise, create a new one.
- */
-
 
 
 exports.getSocialLinks = async (req, res) => {
@@ -2517,3 +2106,134 @@ exports.updateAndCreateSocialLinks = async (req, res) => {
     });
   }
 };
+
+
+
+
+exports.GetUserById_detaills = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = UserModel;
+    const user = req.user; // Assuming user is available in request
+
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.getUserById_detaills(req, res, dataModel, user);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.updateUserProfileById = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = UserModel;
+    const user = req.user; // Assuming user is available in request
+    console.log("updateUserProfileById user:", req.body);
+    console.log("updateUserProfileById user:", user);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.updateUserProfileById(req, dataModel, user);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+exports.verifyUserEmail = catchAsync((req, res, next) => {
+  try {
+    const dataModel = UserModel;
+    const user = req.user; // Assuming user is available in request
+    console.log("updateUserProfileById user:", req.params.userId);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = UserController.verifyEmail(req, dataModel, next);
+    console.log("updateUserProfileById user:", userDetails);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      // data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+exports.verifyUserPhone = catchAsync(async (req, res, next) => {
+  try {
+    const dataModel = UserModel;
+    const user = req.user; // Assuming user is available in request
+    console.log("updateUserProfileById user:", req.params.userId);
+    console.log("updateUserProfileById user:", req.params.userId);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+
+    const userDetails = await UserController.verifyPhone(req, dataModel, res);
+    console.log("updateUserProfileById user:", userDetails);
+    // Note: GetUserList already sends the response, so we don't need to send again
+    // res.status(result.status).json({ status: result.status, data: result.data })
+    res.status(200).json({
+      success: true,
+      message: 'User details fetched successfully',
+      // data: userDetails.data,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+exports.UpdateUserPassword = catchAsync(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
+  }
+
+  const result = await UserController.updatePassword(req, UserModel);
+console.log("updateUserProfileById user:", result);
+  return res.status(result.status).json({
+    success: result.success,
+    message: result.message
+  })
+});
+
+
+
+
+
+
+
+

@@ -1,6 +1,7 @@
 
 const express = require('express');
-
+const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const AppError = require('../utils/AppError');
 const User = require("../models/User");
 const SubAdmin = require('../models/SubAdminModel');
@@ -595,11 +596,87 @@ exports.verifyBirthday = catchAsync(async (req, dataModel, next) => {
 });
 
 
+// Password update controller
+exports.updatePassword = async (req, dataModel) => {
+    const { newPassword} = req.body;
+    const { userId } = req.params;
+console.log("updatePassword userId:", userId);
+console.log("updatePassword newPassword:", newPassword);
+    // 1. Find user
+    const user = await dataModel.findOne({ userId }).select('+password passwordHistory loginAttempts lockUntil');
+    console.log("updatePassword user:", user);
+    if (!user) {
+        return {
+            status: 404,
+            success: false,
+            message: 'User not found'
+        };
+    }
+console.log("updatePassword user:", user);
+
+
+  // Prevent reusing last 3 passwords
+  if (user.passwordHistory?.length) {
+    const recentPasswords = user.passwordHistory.slice(-3);
+    for (const old of recentPasswords) {
+      const isOld = await bcrypt.compare(newPassword, old.password);
+      if (isOld) {
+        return {
+          status: 400,
+          message: 'Cannot reuse recent passwords'
+        };
+      }
+    }
+  }
+
+
+console.log("updatePassword user1:", user);
+    // 6. Hash the new password
+
+
+    // 7. Update password and related fields
+    user.password = newPassword;
+    user.passwordChangedAt = Date.now() - 1000; // Subtract 1 second to ensure token validity
+    console.log("updatePassword user2:", user);
+    // 8. Add to password history
+    if (!user.passwordHistory) {
+        user.passwordHistory = [];
+    }
+    console.log("updatePassword user3:", user);
+    user.passwordHistory.push({
+        password: newPassword,
+        changedAt: Date.now()
+    });
+console.log("updatePassword user4:", user);
+    // 9. Keep only last 5 passwords in history
+    if (user.passwordHistory.length > 5) {
+        user.passwordHistory = user.passwordHistory.slice(-5);
+    }
+console.log("updatePassword user5:", user);
+    // 10. Reset login attempts if any
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+console.log("updatePassword user6:", user);
+    // 11. Save the user
+    await user.save();
+    console.log("updatePassword user6:", user);
+console.log("updatePassword user7:", user);
+    // 12. Generate new token if needed (optional)
+    // const token = generateToken(user._id);
+console.log("updatePassword user:", user);
+    return {
+    success: true,
+    status: 200,
+    message: 'Password updated successfully by admin'
+  };
+}
 
 
 
 
-exports.updateProfile = catchAsync(async (req, res, next) => {
+
+
+exports.updateProfile = catchAsync(async (req, dataModel, next) => {
     const { userId } = req.user;
     const { firstName, lastName, birthday, phone, whatsapp } = req.body;
 
@@ -619,28 +696,6 @@ exports.updateProfile = catchAsync(async (req, res, next) => {
     });
 });
 
-
-
-//////////////dwonline////////////
-
-// exports.buildDownlineTree = async (model, referralCode) => {
-//     const downline = await model.find({ referredBy: referralCode });
-//     const tree = [];
-
-//     for (const node of downline) {
-//         const children = await buildDownlineTree(model, node.referralCode);
-//         tree.push({
-//             id: node._id,
-//             name: node.name,
-//             referralCode: node.referralCode,
-//             referredBy: node.referredBy,
-//             role: node.role,
-//             children
-//         });
-//     }
-
-//     return tree; // reusable, no response sent
-// };
 
 
 
