@@ -161,7 +161,8 @@ router.get('/betting-records/summary',bettingHistoryController.BettingRecordSumm
 
 router.put('/update-bet-provider',AdminController.UpdateBetProvider);
 router.put('/update-status-game',AdminController.UpdateStatusGame);
-rts);
+router.get('/get-all-games', ModelBettingController.GetAllGameList);
+router.get('/get-all-games-by-category', ModelBettingController.GetAllGameListByCategory);
 
 
 
