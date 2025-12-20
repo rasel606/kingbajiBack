@@ -8,7 +8,7 @@ const {
   exportBettingRecords
 } = require('../controllers/betController');
 
-const { auth } = require('../middleware/auth');
+const { auth } = require('../middleWare/auth');
 
 // All routes require authentication
 // router.use(auth);
