@@ -5,7 +5,7 @@ const {
   getReferralHistory,
   claimReferralBonus
 } = require('../controllers/newReferralController');
-const { auth } = require('../middleware/auth');
+const { auth } = require('../middleWare/auth');
 
 // Protected routes
 router.get('/dashboard', auth, getReferralDashboard);
