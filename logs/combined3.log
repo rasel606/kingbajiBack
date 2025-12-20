@@ -4235,3 +4235,15 @@
 {"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
 {"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
 {"level":"info","message":"SIGINT received. Shutting down gracefully","service":"bajicrick-api"}
+{"level":"info","message":"File logging enabled - logs directory created","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"SIGINT received. Shutting down gracefully","service":"bajicrick-api"}
+{"level":"info","message":"File logging enabled - logs directory created","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"127.0.0.1 - - [20/Dec/2025:23:53:41 +0000] \"GET / HTTP/1.1\" 200 433 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\"","service":"bajicrick-api"}
+{"level":"info","message":"127.0.0.1 - - [20/Dec/2025:23:53:41 +0000] \"GET /favicon.ico HTTP/1.1\" 404 106 \"-\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36\"","service":"bajicrick-api"}
+{"level":"info","message":"SIGINT received. Shutting down gracefully","service":"bajicrick-api"}
