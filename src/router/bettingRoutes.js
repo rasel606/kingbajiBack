@@ -11,20 +11,15 @@ const {
 const { auth } = require('../middleware/auth');
 
 // All routes require authentication
-router.use(auth);
-router.route('/records')
-  .get(getBettingRecords);
+// router.use(auth);
+router.get('/records',auth,getBettingRecords);
 
-router.route('/records/grouped')
-  .get(getBettingRecordsGrouped);
+router.get('/records/grouped',auth,getBettingRecordsGrouped);
 
-router.route('/records/:id')
-  .get(getBettingRecordById);
+router.get('/records/:id',auth,getBettingRecordById);
 
-router.route('/summary')
-  .get(getBettingSummary);
+router.get('/summary',auth,getBettingSummary);
 
-router.route('/export')
-  .get(exportBettingRecords);
+router.get('/export',exportBettingRecords);
 
 module.exports = router;
