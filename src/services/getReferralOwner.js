@@ -108,7 +108,7 @@ const getReferralOwner = async (referralCode) => {
     return {
       owner: admin,
       role: "admin",
-      referralCode: admin.referralCode || "1" ,
+      referralCode: admin.referralCode,
       parent: null,
     };
   }

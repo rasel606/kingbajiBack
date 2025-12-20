@@ -9,7 +9,9 @@ exports.submitTransaction = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Transaction submitted successfully', transaction: newTransaction });
 });
 exports.submitWithdraw = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   const newTransaction = await transactionService.WithdrawTransaction(req.body);
+  console.log(newTransaction);
   res.status(200).json({ success: true, message: 'Transaction submitted successfully', transaction: newTransaction });
 });
 

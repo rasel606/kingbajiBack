@@ -194,6 +194,68 @@ AdminModelSchema.methods.updateLogoutHistory = function (deviceId) {
   }
 };
 
+
+
+AdminModelSchema.methods.hasPermission = function(module, action) {
+  if (this.role === 'Admin') return true;
+  
+  const modulePermission = this.permissions.find(p => p.module === module);
+  if (!modulePermission) return false;
+  
+  return modulePermission[action] === true;
+};
+
+// Static method to create default permissions
+AdminModelSchema.statics.getDefaultPermissions = function(role) {
+  const defaultPermissions = {
+    superadmin: [
+      { module: 'dashboard', create: true, read: true, update: true, delete: true },
+      { module: 'users', create: true, read: true, update: true, delete: true },
+      { module: 'admins', create: true, read: true, update: true, delete: true },
+      { module: 'bonuses', create: true, read: true, update: true, delete: true },
+      { module: 'deposits', create: true, read: true, update: true, delete: true },
+      { module: 'withdrawals', create: true, read: true, update: true, delete: true },
+      { module: 'transactions', create: true, read: true, update: true, delete: true },
+      { module: 'referrals', create: true, read: true, update: true, delete: true },
+      { module: 'reports', create: true, read: true, update: true, delete: true },
+      { module: 'settings', create: true, read: true, update: true, delete: true }
+    ],
+    admin: [
+      { module: 'dashboard', create: false, read: true, update: false, delete: false },
+      { module: 'users', create: true, read: true, update: true, delete: false },
+      { module: 'bonuses', create: true, read: true, update: true, delete: false },
+      { module: 'deposits', create: false, read: true, update: true, delete: false },
+      { module: 'withdrawals', create: false, read: true, update: true, delete: false },
+      { module: 'transactions', create: false, read: true, update: false, delete: false },
+      { module: 'referrals', create: false, read: true, update: false, delete: false },
+      { module: 'reports', create: false, read: true, update: false, delete: false }
+    ],
+    support: [
+      { module: 'dashboard', create: false, read: true, update: false, delete: false },
+      { module: 'users', create: false, read: true, update: true, delete: false },
+      { module: 'deposits', create: false, read: true, update: false, delete: false },
+      { module: 'withdrawals', create: false, read: true, update: false, delete: false }
+    ],
+    finance: [
+      { module: 'dashboard', create: false, read: true, update: false, delete: false },
+      { module: 'deposits', create: false, read: true, update: true, delete: false },
+      { module: 'withdrawals', create: false, read: true, update: true, delete: false },
+      { module: 'transactions', create: false, read: true, update: false, delete: false },
+      { module: 'reports', create: false, read: true, update: false, delete: false }
+    ],
+    marketing: [
+      { module: 'dashboard', create: false, read: true, update: false, delete: false },
+      { module: 'users', create: false, read: true, update: false, delete: false },
+      { module: 'bonuses', create: true, read: true, update: true, delete: false },
+      { module: 'referrals', create: false, read: true, update: false, delete: false },
+      { module: 'reports', create: false, read: true, update: false, delete: false }
+    ]
+  };
+  
+  return defaultPermissions[role] || defaultPermissions.admin;
+
+};
+
 // Indexes
 AdminModelSchema.index({ email: 1, unique: true, sparse: true });
 AdminModelSchema.index({ userId: 1, unique: true, sparse: true });

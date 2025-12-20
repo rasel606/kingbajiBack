@@ -1,5 +1,5 @@
 // services/emailVerificationService.js
-const User = require('../Models/User');
+const User = require('../models/User');
 const EmailVerification = require('../Models/EmailVerification');
 const { generateVerificationCode, generateExpiryTime } = require('../utils/generateCode');
 const { sendEmail } = require('../utils/sendEmail');

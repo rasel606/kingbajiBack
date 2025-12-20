@@ -14,4 +14,13 @@ router.get("/available-methods",
     },
     paymentMethodController.GetUserPayMethods
 );
+router.get("/transactions_history", 
+    auth, 
+    (req, res, next) => {
+        userId = req.user;
+        console.log("User ID:", userId);
+        next();
+    },
+    paymentMethodController.getTransactions
+);
 module.exports = router;

@@ -179,7 +179,7 @@ const Bonus = require('../models/Bonus');
 const UserBonus = require('../models/UserBonus');
 const AppError = require('../utils/AppError');
 const notificationController = require('../Controllers/notificationController');
-const { generateReferralCode } = require('../utils/generateReferralCode');
+const generateReferralCode = require('../utils/generateReferralCode');
 
 // Helper: find referral owner (Admin/SubAdmin/Affiliate/Agent/SubAgent)
 const getReferralOwner = async (referralCode) => {
@@ -245,7 +245,7 @@ const submitTransaction = async (payload) => {
 
   let bonusAmount = 0, bonusId = null, turnoverRequirement = 0;
   if (baseAmount >= 200 && bonusCode) {
-    const depositBonus = await Bonus.findOne({ isActive: true, minDeposit: { $lte: baseAmount }, _id: bonusCode });
+    const depositBonus = await Bonus.findOne({ isActive: true, _id: bonusCode });
     if (depositBonus) {
       bonusAmount = depositBonus.fixedAmount || Math.floor((baseAmount * (depositBonus.percentage || 0)) / 100);
       if (depositBonus.maxBonus && bonusAmount > depositBonus.maxBonus) bonusAmount = depositBonus.maxBonus;
@@ -420,8 +420,17 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
 
 
 const WithdrawTransaction = async (payload) => {
-  const { userId, amount, gateway_name, mobile } = payload;
-  console.log(req.body);
+  const {
+    userId,
+    base_amount,
+    gateway_name,
+    mobile,
+    referredBy,
+  } = payload;
+
+  // ✅ Convert safely
+  const amount = Number(base_amount);
+  console.log(payload);
 
   try {
     const user = await User.findOne({ userId });
@@ -442,11 +451,11 @@ const WithdrawTransaction = async (payload) => {
 
 
     const transactionID = generateReferralCode();
-    const newTransaction = new Transaction({
+    const newTransaction = Transaction.create({
       userId: user.userId,
-      transactionID,
-      base_amount: amount,
-      amount: amount,
+      transactionID: transactionID,
+      base_amount: parseInt(amount),
+      amount: parseInt(amount),
       gateway_name: gateway_name,
       mobile: mobile,
       type: 1,  // Withdrawal type
@@ -456,24 +465,22 @@ const WithdrawTransaction = async (payload) => {
     });
 
     // Deduct balance
-    user.balance -= parseInt(amount);
-
-    // Save transaction and user balance update
-    await newTransaction.save();
+    user.balance = Number((user.balance - amount).toFixed(2));
     await user.save();
+
 
     console.log("New Transaction:", newTransaction);
     console.log("Updated User:", user);
 
     await notificationController.createNotification(
-      `Withdrawal request send ${newTransaction.transactionID} with (User ID: ${user.userId})`,
-      newTransaction.userId,
-      `Withdrawal of ${newTransaction.amount} has been submitted at ${new Date()}  by ${newTransaction.gateway_name}.Your withdrawal request of ${newTransaction.amount} has been send at ${new Date()} with transaction ID: ${newTransaction.transactionID} by ${newTransaction.gateway_name} and will be processed within 15 minutes.`,
-      'withdrawal_request',
-      { amount: newTransaction.amount, transactionID: newTransaction.transactionID }
-    );
+    `Withdrawal Request by ${user.name}`,
+    user.userId,
+    `Withdrawal of ${newTransaction.amount} submitted via ${gateway_name}`,
+    'Withdrawal_request',
+    { amount: newTransaction.amount, transactionID }
+  );
 
-    res.json({
+   return res.json({
       message: "Withdrawal request submitted successfully",
       transactionID,
     });
@@ -487,18 +494,18 @@ const WithdrawTransaction = async (payload) => {
 
 const approveWithdraw = async ({ userId, referralCode, transactionID, status }) => {
   try {
-  if (!userId || !transactionID) throw new AppError('Missing userId or transactionID', 400);
-  const user = await User.findOne({ userId });
-  if (!user) throw new AppError('User not found', 404);
+    if (!userId || !transactionID) throw new AppError('Missing userId or transactionID', 400);
+    const user = await User.findOne({ userId });
+    if (!user) throw new AppError('User not found', 404);
 
-  const transaction = await Transaction.findOne({ userId, transactionID, type: 0 });
-  if (!transaction) throw new AppError('Transaction not found', 404);
-  if (transaction.status !== 0) throw new AppError('Transaction already processed', 400);
+    const transaction = await Transaction.findOne({ userId, transactionID, type: 0 });
+    if (!transaction) throw new AppError('Transaction not found', 404);
+    if (transaction.status !== 0) throw new AppError('Transaction already processed', 400);
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-  
+
 
 
     if (parseInt(status) === 1) {

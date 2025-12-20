@@ -2,16 +2,16 @@
 const express = require('express');
 
 // const gameController = require('../Controllers/GameListControllers');
-const ModelBettingController = require('../Controllers/ModelBettingController');
-const GameListControllers = require('../Controllers/GameListControllers');
-const GameMovementController = require('../Controllers/GameMovementController');
+const modelBettingController = require('../controllers/modelBettingController');
+const GameListControllers = require('../controllers/GameListControllers');
+const GameMovementController = require('../controllers/GameMovementController');
 const getPlayerUserGameData = require('../services/getPlayerUserGameData');
-const ProviderController = require('../Controllers/providerController');
-const Refresh_blance = require('../Controllers/Refresh_blance');
-const{ auth }= require('../MiddleWare/auth');
+const ProviderController = require('../controllers/providerController');
+const Refresh_blance = require('../controllers/Refresh_blance');
+const{ auth }= require('../middleWare/auth');
 const router = express.Router();
 
-const betController = require('../Controllers/betController');
+const betController = require('../controllers/betController');
 
 // newBetData (joined bet history + game + provider + category)
 router.get('/new-bet-data', betController.createNewBetData);
@@ -22,7 +22,7 @@ router.get('/rebate-dashboard/:userId', betController.getUserRebateDashboard);
 
 // API 1: Get all game data (categories, providers, games, featured, hot games)
 // router.get('/game-data', gameController.getCompleteGameData);
-router.post('/game_g_type_update', ModelBettingController.updateGTypeList);
+router.post('/game_g_type_update', modelBettingController.updateGTypeList);
 
 
 router.get('/user_balance',auth,Refresh_blance.refreshBalance)
@@ -51,7 +51,7 @@ router.delete('categories/:id', getPlayerUserGameData.deleteCategory);
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 router.get('/game-list-filters', getPlayerUserGameData.getAllGames);
-router.get('/game-cetagory', GameListControllers.GetBettingCategory);
+
 
 
 
@@ -60,6 +60,8 @@ router.get('/provider', ProviderController.getAllProviders);
 
 // GET /api/providers/:id - Get provider by ID
 router.get('/provider/:providercode', ProviderController.getProviderById);
+router.get('/featured-games', betController.featuredGame);
+router.get('/featured-games-create/:game_Id', betController.createFeaturedGame);
 
 // POST /api/providers - Create new provider
 router.post('/provider', ProviderController.createProvider);

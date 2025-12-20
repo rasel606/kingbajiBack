@@ -39,7 +39,7 @@ const GameListTableSchema = new mongoose.Schema({
   is_active: { type: Boolean, default: true },
   is_hot: { type: Boolean, default: true },
   timestamp: { type: Date, default: Date.now },
-  isFeatured:{ type: Boolean, default: false },
+  is_featured:{ type: Boolean, default: false },
   updatetimestamp: { type: Date, default: Date.now },
 });
 

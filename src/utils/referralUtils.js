@@ -1,7 +1,7 @@
-const SubAdmin = require("../Models/SubAdmin");
-const AffiliateModel = require("../Models/AffiliateModel");
-const AdminModel = require("../Models/AdminModel");
-const User = require("../Models/User");
+const SubAdmin = require("../models/SubAdminModel");
+const AffiliateModel = require("../models/AffiliateModel");
+const AdminModel = require("../models/AdminModel");
+const User = require("../models/User");
 
 // ✅ ইউজার সাথে রেফারেল লেভেল পান
 const getUserWithReferralLevels = async (userId) => {

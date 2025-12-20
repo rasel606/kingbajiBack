@@ -6,7 +6,7 @@ const UpdateProfile = require('../Controllers/UpdateProfile');
 
 const BettingController = require('../Controllers/BettingController');
 
-const ModelBettingController = require('../Controllers/ModelBettingController');
+const ModelBettingController = require('../controllers/modelBettingController');
 const TransactionController = require('../Controllers/TransactionController');
 const AffiliateController = require('../Controllers/AffiliateController');
 const AffiliateDashboardController = require('../Controllers/AffiliateDashboardController');
@@ -26,7 +26,7 @@ const blank= require('../Controllers/blank');
 const notificationController = require('../Controllers/notificationController');
 const BankController = require('../Controllers/BankController');
 
-const {auth} = require('../MiddleWare/auth');
+const {auth} = require('../middleWare/auth');
 const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
 const {register, loginUser} = require('../Controllers/AuthController');
 
@@ -41,10 +41,14 @@ router.post('/createUser', register);
 router.post('/login_user', loginUser);
 
 router.get('/user_details', auth, CreateUserService.userDetails);
-router.post('/update-name', UpdateProfile.updateName);
-router.post('/update-birthday', UpdateProfile.verifyBirthday);
+router.post('/update-name',auth, UpdateProfile.updateName);
+router.put('/update-birthday',auth, UpdateProfile.sendotp);
 router.get('/verify', CreateUserService.verify);
 router.post('/reset_and_update_password', CreateUserService.resetAndUpdatePassword);
+router.put('/update-password', auth, CreateUserService.changePassword);
+// router.post('/update-email', CreateUserService.updateEmail);
+// router.post('/update-phone', CreateUserService.updatePhone);
+// router.post('/update-bank', CreateUserService.updateBank);
 
 router.post('/sendphoneotp', CreateUserService.SendPhoneVerificationCode);
 router.post('/sendemailotp', CreateUserService.SendPhoneVerificationCode);
@@ -52,7 +56,7 @@ router.post('/verify_opt', CreateUserService.verifyPhone);
 // router.post('/get_user_social_links', CreateUserService.getUserSocialLinks);
 router.post('/get_referred_users', CreateUserService.getReferredUsers);
 // router.post('/verify/send', CreateUserService.sendotp);
-router.patch('/profile/personal', CreateUserService.updateUser);
+// router.patch('/profile/personal', CreateUserService.updateUser);
 // router.get('/verify/otp', UpdateProfile.verifyOTP);
 router.get('/verify-email', UpdateProfile.verifyOTP);
 // router.get('/user_betting_history', UpdateProfile.sendotp);
@@ -143,9 +147,9 @@ router.get('/games/:id', ModelBettingController.ShowGameListById)
 router.get('/get_all_provider', ModelBettingController.GetAllProvider)
 router.post('/DeleteGameListByGtype', ModelBettingController.DeleteGameListByGtype)
 router.get('/user_balance',auth, Refresh_blance.refreshBalance)
-router.get('/featured',Refresh_blance.GetFeaturedGames)
-router.get('/get_all_providers',Refresh_blance.GetBettingProvider)
-router.get('/get_all_category',Refresh_blance.GetBettingCategory)
+// router.get('/featured',Refresh_blance.GetFeaturedGames)
+// router.get('/get_all_providers',Refresh_blance.GetBettingProvider)
+// router.get('/get_all_category',Refresh_blance.GetBettingCategory)
 
 router.get("/launch_gamePlayer/:game_id/:p_code",auth, Refresh_blance.launchGamePlayer);
 router.post("/game-update-serial", ModelBettingController.updateSerialNumber);

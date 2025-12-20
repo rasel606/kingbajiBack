@@ -1525,7 +1525,26 @@ const BetProviderTable = require('../models/BetProviderTable');
 const GameListTable = require('../models/GameListTable');
 const Category = require('../models/Category');
 const BettingHistory = require("../models/BettingHistory");
+const catchAsync = require("../utils/catchAsync");
 
+
+
+const featuredGame = catchAsync(async (req, res) => {
+  try {
+    const games = await GameListTable.find({ is_featured: true }).lean();
+    res.status(200).json({
+      success: true,
+      count: games.length,
+      data: games,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 // Utility functions
 function randomStr() {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -2493,3 +2512,7 @@ const refreshBalanceBefore = async (userId) => {
   // Implementation for pre-refresh balance logic
   // This would be similar to refreshBalance but without the response object
 };
+
+
+
+

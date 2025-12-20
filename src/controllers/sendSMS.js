@@ -1,6 +1,7 @@
 const twilio = require('twilio');
-
-const sendVerificationSMS = async (phone, code) => {
+const OTP = require('../models/OTPModel');
+const User = require('../models/User');
+exports.sendVerificationSMS = async (phone, code) => {
   const client = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
@@ -13,4 +14,3 @@ const sendVerificationSMS = async (phone, code) => {
   });
 };
 
-module.exports = { sendVerificationSMS };

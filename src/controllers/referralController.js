@@ -88,7 +88,7 @@
 // module.exports = runDailyCashback;
 const { getReferralOwner } = require('../utils/referralUtils');
 const User = require('../models/User');
-const SubAdmin = require('../models/SubAdmin');
+const SubAdmin = require('../models/SubAdminModel');
 const AffiliateModel = require('../models/AffiliateModel');
 const AdminModel = require('../models/AdminModel');
 

@@ -31,7 +31,10 @@ const promotionsServiceRoutes = require('./src/router/promotionsServiceRoutes');
 const userProfileRoutes = require('./src/router/userProfileRoutes');
 const paymentMethod = require('./src/router/paymentMethod');
 const hierarchicalGatewayRoutes = require('./src/router/hierarchicalGatewayRoutes');
-const affiliateEarningsRoutes = require('./src/router/affiliateEarnings');
+const affiliateEarningsRoutes = require('./src/router/affiliateEarnings');        
+const notificationRoutes = require('./src/router/notificationRoutes');        
+const reportRoutes = require('./src/router/reportRoutes');        
+
 const kycRoutes = require('./src/router/kyc');
 // const links = require('./src/router/links');
 const affiliateLinkRoutes = require('./src/router/links');
@@ -44,6 +47,11 @@ const subAgentRoutes = require('./src/router/subAgentRoutes');
 const affiliateDashboardRoute = require('./src/router/affiliateDashboardRoute');
 const affiliateAuthRoute = require('./src/router/affiliateAuthRoute');
 const announcementRoutes = require('./src/router/announcementRoutes');
+const bettingRoutes = require('./src/router/bettingRoutes');
+const vipUserRoutes = require('./src/router/vipUserRoutes');
+const realTimeBonusRoute = require('./src/router/realTimeBonusRoute');
+const BettingHistoryJob = require('./src/corn/BettingHistoryJob');
+const referralRoutes = require('./src/router/referralRoutes');
 // Import Live Chat Routes
 const chatRoutes = require('./src/router/chatRoutes');
 
@@ -149,14 +157,24 @@ app.use('/api/sub_agent', subAgentRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/user', userRoutes);
-
+app.use('/api/user/notification', notificationRoutes);
+app.use('/api/user/rebet', reportRoutes);
+app.use('/api/user/betting', bettingRoutes);
+app.use('/api/user/vip', vipUserRoutes);
+app.use('/api/user/rebate', realTimeBonusRoute);
+app.use('/api/payment-methods', paymentMethod);
 
 app.use('/api/games', gameRoutes);
 app.use('/api/phone', phoneVerificationRoute);
 app.use('/api/turnover', turnoverRoutes);
 app.use('/api/promotions', promotionsServiceRoutes);
 app.use('/api/profile', userProfileRoutes);
-app.use('/api/payment-methods', paymentMethod);
+app.use('/api/referral', referralRoutes);
+
+
+
+
+
 app.use('/api/payment', hierarchicalGatewayRoutes);
 app.use('/api/affiliate/Auth', affiliateAuthRoute);
 app.use('/api/affiliate/dashboard', affiliateDashboardRoute);

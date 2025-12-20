@@ -2,14 +2,14 @@
 const express = require('express');
 const router = express.Router();
 const NotificationController = require('../Controllers/notificationController');
-const auth = require('../MiddleWare/subAdminAuth');
-const validate = require('../MiddleWare/validation');
+const {auth} = require('../middleWare/auth');
+const validate = require('../middleWare/validation');
 
 // Get user notifications
-router.get('/user/:userId', auth, NotificationController.getUserNotifications);
+router.get('/user/:userId', auth, NotificationController.getGroupedNotifications);
 
-// Mark notification as read
-router.put('/:notificationId/read', auth, NotificationController.markAsRead);
+// // Mark notification as read
+// router.put('/:notificationId/read', auth, NotificationController.markAsRead);
 
 // Mark all as read
 router.put('/user/:userId/read-all', auth, NotificationController.markAllAsRead);

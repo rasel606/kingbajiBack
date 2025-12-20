@@ -120,41 +120,6 @@ exports.getGroupedNotifications = async (req, res) => {
 
 
 
-// // Mark notifications as read
-// exports.markAsRead = async (notificationIds) => {
-//   try {
-//     return await Notification.updateMany(
-//       { _id: { $in: notificationIds } },
-//       { $set: { read: true } }
-//     );
-//   } catch (error) {
-//     throw new Error(error.message);
-//   }
-// };
-
-// router.get("/:userId", async (req, res) => {
-//   try {
-//     const notifications = await notificationController.getUserNotifications(
-//       req.params.userId,
-//       req.query.limit || 10
-//     );
-//     res.json(notifications);
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
-// // Mark notifications as read
-// router.post("/mark-read", async (req, res) => {
-//   try {
-//     const result = await notificationController.markAsRead(req.body.notificationIds);
-//     res.json({ success: true, modifiedCount: result.modifiedCount });
-//   } catch (error) {
-//     res.status(500).json({ error: error.message });
-//   }
-// });
-
-
 exports.markAllAsRead = async (req, res) => {
   try {
     const { userId } = req.params;

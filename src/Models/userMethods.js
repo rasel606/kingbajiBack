@@ -8,6 +8,36 @@ const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
 
 module.exports = function addUserMethods(userSchema) {
 
+
+  userSchema.methods.changePassword = async function (currentPassword, newPassword) {
+  // Verify current password
+  const isMatch = await this.comparePassword(currentPassword);
+  if (!isMatch) {
+    throw new Error('Current password is incorrect');
+  }
+  
+  // Validate new password
+  if (newPassword.length < 6 || newPassword.length > 20) {
+    throw new Error('Password must be between 6 and 20 characters');
+  }
+  
+  if (!/[a-zA-Z]/.test(newPassword)) {
+    throw new Error('Password must contain at least one letter');
+  }
+  
+  if (!/\d/.test(newPassword)) {
+    throw new Error('Password must contain at least one number');
+  }
+  
+  // Update password
+  this.password = newPassword;
+  this.loginAttempts = 0;
+  this.lockUntil = undefined;
+  
+  return this.save();
+};
+
+
   // Phone management
   userSchema.methods.addPhoneNumber = async function (countryCode, number, isDefault = false) {
     if (this.phone.length >= 3) {
