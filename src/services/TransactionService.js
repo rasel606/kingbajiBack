@@ -436,22 +436,22 @@ const WithdrawTransaction = async (payload) => {
     const user = await User.findOne({ userId });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return {success: false, message: 'User not found' };
     }
 
     console.log("User Balance Before Withdrawal:", user.balance);
 
     // Check if the user has enough balance
     if (user.balance < amount) {
-      return res.status(400).json({ message: 'Insufficient balance' });
+      return {success: false, message: 'Insufficient balance' };
     }
     if (user.balance > 0 && user.balance < amount) {
-      return res.status(400).json({ message: 'Insufficient balance' });
+      return {success: false, message: 'Insufficient balance' };
     }
 
 
     const transactionID = generateReferralCode();
-    const newTransaction = Transaction.create({
+    const newTransaction = await  Transaction.create({
       userId: user.userId,
       transactionID: transactionID,
       base_amount: parseInt(amount),
@@ -480,14 +480,17 @@ const WithdrawTransaction = async (payload) => {
     { amount: newTransaction.amount, transactionID }
   );
 
-   return res.json({
-      message: "Withdrawal request submitted successfully",
-      transactionID,
-    });
+  return {
+    success: true,
+    message: "Withdrawal request submitted successfully",
+    transactionID,
+    transaction: newTransaction,
+  };
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: 'Server error' });
+    console.log(err);
+    return {success: false, message: 'Server error' };
   }
 };
 
