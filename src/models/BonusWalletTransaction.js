@@ -28,29 +28,32 @@
 
 // module.exports = mongoose.model('BonusWalletTransaction', BonusWalletTransactionSchema);
 
+const mongoose = require("mongoose");
 
-const mongoose = require('mongoose');
-
-const BonusWalletTransactionSchema = new mongoose.Schema({
+const BonusWalletTransactionSchema = new mongoose.Schema(
+  {
     userId: { type: String, required: true },
-    walletType: { type: String, enum: ['BONUS'], required: true },
+    walletType: { type: String, enum: ["BONUS"], required: true },
 
-    type: { type: String, enum: ['CLAIMED', 'DEBIT'], required: true },
+    type: { type: String, enum: ["CLAIMED", "DEBIT"], required: true },
 
     amount: { type: Number, required: true },
-    
+
     balanceBefore: { type: Number, required: true },
     balanceAfter: { type: String },
 
     transactionId: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true
-  },
-
+      type: String,
+      required: true,
+      unique: true,
+    },
+    ref: { type: String, unique: true, required: true },
     remark: String,
+  },
+  { timestamps: true }
+);
 
-}, { timestamps: true });
-
-module.exports = mongoose.model("BonusWalletTransaction", BonusWalletTransactionSchema);
+module.exports = mongoose.model(
+  "BonusWalletTransaction",
+  BonusWalletTransactionSchema
+);

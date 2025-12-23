@@ -476,7 +476,7 @@ console.log("provider amount", amount);
     if (amount ) {
       console.log("amount to transfer", amount);
       const transferSignature = generateSignature(
-        amount.toString(),
+        amount.toFixed(2),
         provider.operatorcode,
         provider.auth_pass,
         provider.providercode,
@@ -495,7 +495,7 @@ console.log("provider amount", amount);
         password: provider.auth_pass,
         referenceid: transId,
         type: 0,
-        amount,
+        amount: amount.toFixed(2),
         signature: transferSignature
       });
       console.log("transferResponse", transferResponse);

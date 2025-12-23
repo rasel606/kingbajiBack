@@ -51,6 +51,7 @@ const bettingRoutes = require('./src/router/bettingRoutes');
 const vipUserRoutes = require('./src/router/vipUserRoutes');
 const realTimeBonusRoute = require('./src/router/realTimeBonusRoute');
 const BettingHistoryJob = require('./src/corn/BettingHistoryJob');
+const SpcialBettingHistoryJob = require('./src/corn/SpcialBettingHistoryJob');
 const referralRoutes = require('./src/router/referralRoutes');
 // Import Live Chat Routes
 const chatRoutes = require('./src/router/chatRoutes');

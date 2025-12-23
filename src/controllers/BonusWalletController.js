@@ -7,115 +7,182 @@ const BonusWallet = require("../models/BonusWallet");
 const notificationController = require("../controllers/notificationController");
 const { randomBytes } = require("crypto");
 
-exports.claimBonus = asyncHandler(async function (req, res, next) {
+// exports.claimBonus = asyncHandler(async function (req, res, next) {
+//   const userId = req.user.userId;
+//   // const bonusId = req.params.bonusId;
+
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     //   const bonus = await UserBonus.findOne({
+//     //     _id: bonusId,
+//     //     userId,
+//     //     status: 'Active'
+//     //   }).session(session);
+
+//     //   if (!bonus) {
+//     //     throw new Error('Bonus not found or not available');
+//     //   }
+
+//     //   // Check if bonus has expired
+//     //   if (bonus.expiresAt && bonus.expiresAt < new Date()) {
+//     //     bonus.status = 'EXPIRED';
+//     //     await bonus.save({ session });
+//     //     throw new Error('Bonus has expired');
+//     //   }
+
+//     // Get or create wallet
+//     let wallet = await BonusWallet.findOne({ userId }).session(session);
+//     if (!wallet) {
+//       wallet = new BonusWallet({ userId });
+//     }
+//     const transactionId = `${randomBytes(16).toString("hex")}_${Date.now()}`;
+
+//     // Get user
+//     const user = await User.findOne({ userId }).session(session);
+//     if (!user) {
+//       throw new Error("User not found");
+//     }
+
+//     // const transaction = BonusWalletTransaction.create({
+//     //   userId,
+//     //   walletType: "BONUS",
+//     //   type: "CLAIMED",
+//     //   transactionId: transactionId, // ✅ REQUIRED
+//     //   amount: wallet.amount,
+//     //   balanceBefore: wallet.amount,
+//     //   balanceAfter: 0,
+//     //   remark: "Bonus claimed",
+//     // });
+
+
+//     const transaction = new BonusWalletTransaction({
+//       userId,
+//       walletType: "BONUS",
+//       type: "CLAIMED",
+//       transactionId: transactionId,
+//       amount: wallet.amount,
+//       balanceBefore: wallet.amount,
+//       balanceAfter: 0,
+//       remark: "Bonus claimed",
+//       ref: `bonus_txn_${Date.now()}_${Math.floor(Math.random() * 1000)}` // unique ref
+//     });
+
+
+//     // Update wallet
+//     //   wallet.bonusBalance - BonusWallet.amount
+//     wallet.balance = 0;
+//     wallet.amount = 0;
+//     wallet.claimedAt = new Date();
+
+//     wallet.status = "CLAIMED";
+
+//     //   bonus.claimedAt = new Date();
+//     //   bonus.claimedAmount = bonus.bonusAmount;
+//     // wallet.transactionId = transaction._id;
+//     await User.updateOne(
+//       { userId: userId },
+//       { $inc: { balance: wallet.amount } }
+//     ).session(session);
+//     // Save all changes
+//     //   await bonus.save({ session });
+//     await wallet.save({ session });
+//     await transaction.save({ session });
+
+//     await session.commitTransaction();
+
+//     await notificationController.createNotification(
+//       `${wallet.bonusType} claile ${wallet.status} with (User ID: ${userId}) bonus amount ${wallet.bonusBalance}`,
+//       userId,
+//       "BONUS_CLAIM"
+//     );
+
+//     res.json({
+//       success: true,
+//       newBalance: wallet.bonusBalance,
+//       transactionId: transaction._id,
+//     });
+//   } catch (error) {
+//     await session.abortTransaction();
+//     throw error;
+//   } finally {
+//     session.endSession();
+//   }
+// });
+exports.claimBonus = asyncHandler(async function (req, res) {
   const userId = req.user.userId;
-  // const bonusId = req.params.bonusId;
 
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    //   const bonus = await UserBonus.findOne({
-    //     _id: bonusId,
-    //     userId,
-    //     status: 'Active'
-    //   }).session(session);
-
-    //   if (!bonus) {
-    //     throw new Error('Bonus not found or not available');
-    //   }
-
-    //   // Check if bonus has expired
-    //   if (bonus.expiresAt && bonus.expiresAt < new Date()) {
-    //     bonus.status = 'EXPIRED';
-    //     await bonus.save({ session });
-    //     throw new Error('Bonus has expired');
-    //   }
-
     // Get or create wallet
     let wallet = await BonusWallet.findOne({ userId }).session(session);
     if (!wallet) {
-      wallet = new BonusWallet({ userId });
+      wallet = new BonusWallet({ userId, balance: 0, amount: 0, status: 'ACTIVE' });
     }
+
+    if (wallet.amount <= 0) {
+      throw new Error('No bonus available to claim');
+    }
+
+    // Save claim amount before zeroing wallet
+    const claimAmount = wallet.amount;
+
+    // Generate unique transaction ID and ref
     const transactionId = `${randomBytes(16).toString("hex")}_${Date.now()}`;
+    const ref = `bonus_txn_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-    // Create transaction record
-    //   const transaction = new BonusWalletTransaction({
-    //     userId,
-    //     walletType: 'BONUS',
-    //     type: 'CLAIMED',
-    //     amount: wallet.amount,
-    //     balanceBefore: wallet.amount,
-    //     balanceAfter: wallet.amount ? wallet.amount - BonusWallet.amount : 0,
-    //     ref: transactionId,
-    //     remark: `Real-time bonus claim for ${BonusWallet.dailyRebate}`
-    //   });
-
-    const transaction = new BonusWalletTransaction({
+    // Create transaction
+    const transaction = await BonusWalletTransaction.create([{
       userId,
       walletType: "BONUS",
       type: "CLAIMED",
-      transactionId, // ✅ REQUIRED
-      amount: wallet.amount,
+      transactionId,
+      amount: claimAmount,
       balanceBefore: wallet.amount,
       balanceAfter: 0,
       remark: "Bonus claimed",
-    });
+      ref // ✅ unique ref
+    }], { session });
 
     // Update wallet
-    //   wallet.bonusBalance - BonusWallet.amount
     wallet.balance = 0;
     wallet.amount = 0;
     wallet.claimedAt = new Date();
-
-    // Update statistics
-    //   const today = new Date().toDateString();
-    //   const lastClaimDate = wallet.lastClaimedAt ? wallet.lastClaimedAt.toDateString() : null;
-
-    //   if (lastClaimDate !== today) {
-    //     wallet.statistics.todayClaims = 1;
-    //     wallet.statistics.todayBonus = bonus.bonusAmount;
-    //   } else {
-    //     wallet.statistics.todayClaims += 1;
-    //     wallet.statistics.todayBonus += bonus.bonusAmount;
-    //   }
-
-    // Update bonus record
     wallet.status = "CLAIMED";
-    //   bonus.claimedAt = new Date();
-    //   bonus.claimedAmount = bonus.bonusAmount;
-    wallet.transactionId = transaction._id;
-    await User.updateOne(
-      { userId: userId },
-      { $inc: { balance: wallet.amount } }
-    ).session(session);
-    // Save all changes
-    //   await bonus.save({ session });
     await wallet.save({ session });
-    await transaction.save({ session });
 
+    // Update user balance
+    await User.updateOne(
+      { userId },
+      { $inc: { balance: claimAmount } }
+    ).session(session);
+
+    // Commit transaction
     await session.commitTransaction();
 
+    // Notification
     await notificationController.createNotification(
-      `${wallet.bonusType} claile ${wallet.status} with (User ID: ${userId}) bonus amount ${wallet.bonusBalance}`,
+      `BONUS claimed with status ${wallet.status} for User ID: ${userId}, amount: ${claimAmount}`,
       userId,
-
       "BONUS_CLAIM"
     );
 
     res.json({
       success: true,
-      newBalance: wallet.bonusBalance,
-      transactionId: transaction._id,
+      newBalance: claimAmount,
+      transactionId: transaction[0]._id
     });
+
   } catch (error) {
     await session.abortTransaction();
-    throw error;
+    res.status(400).json({ success: false, message: error.message });
   } finally {
     session.endSession();
   }
 });
-
 exports.getBonusWallet = asyncHandler(async (req, res, next) => {
   try {
     const userId = req.user.userId;
@@ -131,6 +198,91 @@ exports.getBonusWallet = asyncHandler(async (req, res, next) => {
     return next(error); // ✅ only forward error
   }
 });
+
+
+
+exports.getBonusWalletTransaction = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { from, to } = req.query;
+
+  const match = {
+    userId,
+    walletType: "BONUS"
+  };
+
+  if (from && to) {
+    match.createdAt = {
+      $gte: new Date(from),
+      $lte: new Date(to)
+    };
+  }
+
+  const transactions = await BonusWalletTransaction.find(match)
+    .sort({ createdAt: -1 });
+
+  const claimedAmount = transactions
+    .filter(t => t.type === "CLAIMED")
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  res.json({
+    success: true,
+    data: {
+      claimed_amount: claimedAmount,
+      transactions
+    }
+  });
+});
+
+
+
+
+exports.getBonusSummary = asyncHandler(async (req, res) => {
+  const userId = req.user.userId;
+  const { from, to } = req.query;
+console.log(from, to);
+  const match = {
+    userId,
+    createdAt: {
+      $gte: new Date(from),
+      $lte: new Date(to)
+    }
+  };
+
+  const transactions = await BonusWalletTransaction.find(match)
+    .sort({ createdAt: -1 });
+
+  const summary = await BonusWalletTransaction.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: "$type",
+        total: { $sum: "$amount" }
+      }
+    }
+  ]);
+
+  let total_claimed = 0;
+  let total_rebate = 0;
+  let total_expired = 0;
+
+  summary.forEach(s => {
+    if (s._id === "CLAIMED") total_claimed = s.total;
+    if (s._id === "DEBIT") total_rebate = s.total;
+    if (s._id === "EXPIRED") total_expired = s.total;
+  });
+
+  res.json({
+    success: true,
+    data: {
+      total_rebate,
+      total_claimed,
+      total_expired,
+      transactions
+    }
+  });
+});
+
+
 
 // // Other controller methods...
 

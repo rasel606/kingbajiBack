@@ -12,11 +12,11 @@ const { auth } = require('../middleWare/auth');
 
 // All routes require authentication
 // router.use(auth);
-router.get('/records',auth,getBettingRecords);
+router.get('/records',getBettingRecords);
 
 router.get('/records/grouped',auth,getBettingRecordsGrouped);
 
-router.get('/records/:id',auth,getBettingRecordById);
+// router.get('/records/:id',auth,getBettingRecordById);
 
 router.get('/summary',auth,getBettingSummary);
 

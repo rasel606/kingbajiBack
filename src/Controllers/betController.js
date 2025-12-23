@@ -643,9 +643,9 @@ exports.getUserRebateDashboard = async (req, res) => {
 exports.getBettingRecords = asyncHandler(async (req, res, next) => {
   const {
     page = 1,
-    limit = 20,
+    limit = 20000,
     settlement = "settled",
-    dateOption = "last7days",
+    dateOption = "today",
     platforms = "",
     gameTypes = "",
     sortBy = "start_time",
@@ -656,6 +656,7 @@ exports.getBettingRecords = asyncHandler(async (req, res, next) => {
     maxBet,
     minPayout,
     maxPayout,
+    userId
   } = req.query;
   console.log("req.query", {
     platforms,
@@ -670,10 +671,13 @@ exports.getBettingRecords = asyncHandler(async (req, res, next) => {
     maxPayout,
   });
 
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+
   // Calculate date range
   const dateRange = dateUtils.getDateRange(dateOption);
-  const userId = req.user.id;
-  const user = await User.findById(userId).lean();
+  // const userId = req.user.id;
+  const user = await User.findOne({userId}).lean();
   console.log("user", user.userId);
   // Build match pipeline
   const matchStage = {
@@ -692,168 +696,168 @@ exports.getBettingRecords = asyncHandler(async (req, res, next) => {
   matchStage.member = user.userId;
 
   // Additional filters
-  if (status) {
-    matchStage.status = parseInt(status);
-  }
+  // if (status) {
+  //   matchStage.status = parseInt(status);
+  // }
 
-  if (platforms) {
-    const platformArray = platforms.split(",");
-    matchStage.provider_code = { $in: platformArray };
-  }
+  // if (platforms) {
+  //   const platformArray = platforms.split(",");
+  //   matchStage.provider_code = { $in: platformArray };
+  // }
 
-  if (gameTypes) {
-    const gameTypeArray = gameTypes.split(",");
-    matchStage.game_type = { $in: gameTypeArray };
-  }
+  // if (gameTypes) {
+  //   const gameTypeArray = gameTypes.split(",");
+  //   matchStage.game_type = { $in: gameTypeArray };
+  // }
 
-  // Bet amount filters
-  if (minBet || maxBet) {
-    matchStage.bet = {};
-    if (minBet) matchStage.bet.$gte = parseFloat(minBet);
-    if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
-  }
+  // // Bet amount filters
+  // if (minBet || maxBet) {
+  //   matchStage.bet = {};
+  //   if (minBet) matchStage.bet.$gte = parseFloat(minBet);
+  //   if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
+  // }
 
-  // Payout filters
-  if (minPayout || maxPayout) {
-    matchStage.payout = {};
-    if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
-    if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
-  }
+  // // Payout filters
+  // if (minPayout || maxPayout) {
+  //   matchStage.payout = {};
+  //   if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
+  //   if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
+  // }
 
-  // Search functionality
-  if (search) {
-    matchStage.$or = [
-      { ref_no: { $regex: search, $options: "i" } },
-      { game_id: { $regex: search, $options: "i" } },
-      { bet_detail: { $regex: search, $options: "i" } },
-    ];
-  }
+  // // Search functionality
+  // if (search) {
+  //   matchStage.$or = [
+  //     { ref_no: { $regex: search, $options: "i" } },
+  //     { game_id: { $regex: search, $options: "i" } },
+  //     { bet_detail: { $regex: search, $options: "i" } },
+  //   ];
+  // }
   console.log(await BettingHistory.findOne({ member: user.userId }));
 
   // Build aggregation pipeline
   const result = await BettingHistory.aggregate([
     { $match: matchStage },
 
-    // Lookup game details
-    {
-      $lookup: {
-        from: "gamelisttables",
-        let: { site: "$provider_code", gameId: "$g_code" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $or: [
-                  {
-                    $and: [
-                      { $eq: ["$p_code", "$$site"] },
-                      { $eq: ["$g_code", "$$gameId"] },
-                    ],
-                  },
-                  { $eq: ["$p_code", "$$site"] },
-                ],
-              },
-            },
-          },
-          {
-            $project: {
-              g_code: 1,
-              p_code: 1,
-              gameName: 1,
-              imgFileName: 1,
-              category_name: 1,
-              g_type: 1,
-            },
-          },
-        ],
-        as: "game",
-      },
-    },
-    { $unwind: { path: "$game", preserveNullAndEmptyArrays: true } },
+    // // Lookup game details
+    // {
+    //   $lookup: {
+    //     from: "gamelisttables",
+    //     let: { site: "$provider_code", gameId: "$g_code" },
+    //     pipeline: [
+    //       {
+    //         $match: {
+    //           $expr: {
+    //             $or: [
+    //               {
+    //                 $and: [
+    //                   { $eq: ["$p_code", "$$site"] },
+    //                   { $eq: ["$g_code", "$$gameId"] },
+    //                 ],
+    //               },
+    //               { $eq: ["$p_code", "$$site"] },
+    //             ],
+    //           },
+    //         },
+    //       },
+    //       {
+    //         $project: {
+    //           g_code: 1,
+    //           p_code: 1,
+    //           gameName: 1,
+    //           imgFileName: 1,
+    //           category_name: 1,
+    //           g_type: 1,
+    //         },
+    //       },
+    //     ],
+    //     as: "game",
+    //   },
+    // },
+    // { $unwind: { path: "$game", preserveNullAndEmptyArrays: true } },
 
-    // Lookup provider
-    {
-      $lookup: {
-        from: "betprovidertables",
-        let: { p_code: "$site" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$providercode", "$$p_code"] } } },
-          { $project: { providercode: 1, company: 1, name: 1, image_url: 1 } },
-        ],
-        as: "provider",
-      },
-    },
-    { $unwind: { path: "$provider", preserveNullAndEmptyArrays: true } },
+    // // Lookup provider
+    // {
+    //   $lookup: {
+    //     from: "betprovidertables",
+    //     let: { p_code: "$site" },
+    //     pipeline: [
+    //       { $match: { $expr: { $eq: ["$providercode", "$$p_code"] } } },
+    //       { $project: { providercode: 1, company: 1, name: 1, image_url: 1 } },
+    //     ],
+    //     as: "provider",
+    //   },
+    // },
+    // { $unwind: { path: "$provider", preserveNullAndEmptyArrays: true } },
 
-    // Lookup category
-    {
-      $lookup: {
-        from: "categories",
-        let: { category_Name: "$game.category_name" },
-        pipeline: [
-          { $match: { $expr: { $eq: ["$category_name", "$$category_Name"] } } },
-          { $project: { category_name: 1, g_type: 1, image: 1 } },
-        ],
-        as: "category",
-      },
-    },
-    { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+    // // Lookup category
+    // {
+    //   $lookup: {
+    //     from: "categories",
+    //     let: { category_Name: "$game.category_name" },
+    //     pipeline: [
+    //       { $match: { $expr: { $eq: ["$category_name", "$$category_Name"] } } },
+    //       { $project: { category_name: 1, g_type: 1, image: 1 } },
+    //     ],
+    //     as: "category",
+    //   },
+    // },
+    // { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
 
-    // Add calculated fields
-    {
-      $addFields: {
-        profitLoss: {
-          $subtract: [
-            { $ifNull: ["$payout", 0] },
-            {
-              $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }],
-            },
-          ],
-        },
-        platform: "$provider.company",
-        gameType: "$category.category_name",
-        date: { $dateToString: { format: "%Y-%m-%d", date: "$start_time" } },
-      },
-    },
+    // // Add calculated fields
+    // {
+    //   $addFields: {
+    //     profitLoss: {
+    //       $subtract: [
+    //         { $ifNull: ["$payout", 0] },
+    //         {
+    //           $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }],
+    //         },
+    //       ],
+    //     },
+    //     platform: "$provider.company",
+    //     gameType: "$category.category_name",
+    //     date: { $dateToString: { format: "%Y-%m-%d", date: "$start_time" } },
+    //   },
+    // },
 
-    // Sort
-    { $sort: { [sortBy]: sortOrder === "desc" ? -1 : 1 } },
+    // // Sort
+    // { $sort: { [sortBy]: sortOrder === "desc" ? -1 : 1 } },
 
-    // Facet for pagination and total count
-    {
-      $facet: {
-        metadata: [
-          { $count: "total" },
-          { $addFields: { page: parseInt(page), limit: parseInt(limit) } },
-        ],
-        data: [
-          { $skip: (parseInt(page) - 1) * parseInt(limit) },
-          { $limit: parseInt(limit) },
-          {
-            $project: {
-              _id: 1,
-              ref_no: 1,
-              start_time: 1,
-              turnover: 1,
-              bet: 1,
-              payout: 1,
-              commission: 1,
-              profitLoss: 1,
-              status: 1,
-              settlement_status: 1,
-              platform: 1,
-              gameType: 1,
-              game_id: 1,
-              product: 1,
-              currency: 1,
-            },
-          },
-        ],
-      },
-    },
+    // // Facet for pagination and total count
+    // {
+    //   $facet: {
+    //     metadata: [
+    //       { $count: "total" },
+    //       { $addFields: { page: parseInt(page), limit: parseInt(limit) } },
+    //     ],
+    //     data: [
+    //       { $skip: (parseInt(page) - 1) * parseInt(limit) },
+    //       { $limit: parseInt(limit) },
+    //       {
+    //         $project: {
+    //           _id: 1,
+    //           ref_no: 1,
+    //           start_time: 1,
+    //           turnover: 1,
+    //           bet: 1,
+    //           payout: 1,
+    //           commission: 1,
+    //           profitLoss: 1,
+    //           status: 1,
+    //           settlement_status: 1,
+    //           platform: 1,
+    //           gameType: 1,
+    //           game_id: 1,
+    //           product: 1,
+    //           currency: 1,
+    //         },
+    //       },
+    //     ],
+    //   },
+    // },
 
-    // Unwind metadata
-    { $unwind: { path: "$metadata", preserveNullAndEmptyArrays: true } },
+    // // Unwind metadata
+    // { $unwind: { path: "$metadata", preserveNullAndEmptyArrays: true } },
   ]);
   // console.log("pipeline", pipeline);
   // const result = await BettingHistory.aggregate(pipeline);
@@ -1010,6 +1014,10 @@ exports.getDateRange = (option) => {
     case "today":
       from = new Date(now.setHours(0, 0, 0, 0));
       break;
+    case "yesterday":
+      from = new Date(now.setHours(0, 0, 0, 0));
+      from.setDate(from.getDate() - 1);
+      break;
     case "last7days":
     default:
       from = new Date();
@@ -1067,6 +1075,9 @@ exports.getDateRange = (option) => {
       from = new Date(now.setHours(0, 0, 0, 0));
       break;
     case "last7days":
+      from = new Date(now.setHours(0, 0, 0, 0));
+      from.setDate(from.getDate() - 7);
+      break;
     default:
       from = new Date();
       from.setDate(from.getDate() - 7);
@@ -1075,6 +1086,1406 @@ exports.getDateRange = (option) => {
   return { from, to: new Date() };
 };
 
+// exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
+//   const {
+//     page = 1,
+//     limit = 20,
+//     dateOption = "last7days",
+//     platforms = "",
+//     gameTypes = "",
+//     sortBy = "start_time",
+//     sortOrder = "desc",
+//     search = "",
+//     status,
+//     minBet,
+//     maxBet,
+//     minPayout,
+//     maxPayout,
+//   } = req.query;
+//   const userId = req.user.userId
+//   // 1️⃣ Verify user
+//   const user = await User.findOne({ userId }).lean();
+//   if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+//   // 2️⃣ Date range
+//   const dateRange = dateUtils.getDateRange(dateOption);
+
+//   // 3️⃣ Match stage for BettingHistory
+//   const matchStage = {
+//     member: user.userId,
+//     start_time: { $gte: new Date(dateRange.from), $lte: new Date(dateRange.to) },
+//   };
+
+//   if (status) matchStage.status = parseInt(status);
+//   if (platforms) {
+//     const platformArray = platforms.split(",").filter(p => p.trim() !== "");
+//     if (platformArray.length > 0) {
+//       matchStage.site = { $in: platformArray };
+//     }
+//   }
+
+//   if (minBet || maxBet) {
+//     matchStage.bet = {};
+//     if (minBet) matchStage.bet.$gte = parseFloat(minBet);
+//     if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
+//   }
+
+//   if (minPayout || maxPayout) {
+//     matchStage.payout = {};
+//     if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
+//     if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
+//   }
+
+//   if (search) {
+//     matchStage.$or = [
+//       { ref_no: { $regex: search, $options: "i" } },
+//       { game_id: { $regex: search, $options: "i" } },
+//       { bet_detail: { $regex: search, $options: "i" } },
+//     ];
+//   }
+
+//   // 4️⃣ Main Aggregation Pipeline - FIXED
+//   const pipeline = [
+//     // Step 1: Match betting history records
+//     { $match: matchStage },
+
+//     // Step 2: Lookup GameListTable using site (p_code)
+//     {
+//       $lookup: {
+//         from: "gamelisttables",
+//         let: { siteCode: "$site" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$p_code", "$$siteCode"] },
+//                   { $eq: ["$is_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "gameDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$gameDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 3: Create newGameObject
+//     {
+//       $addFields: {
+//         newGameObject: {
+//           $cond: {
+//             if: { $ne: ["$gameDetails", null] },
+//             then: {
+//               g_code: "$gameDetails.g_code",
+//               g_type: "$gameDetails.g_type",
+//               gameName: "$gameDetails.gameName",
+//               imgFileName: "$gameDetails.imgFileName",
+//               category_name: "$gameDetails.category_name",
+//               brand: "$gameDetails.brand"
+//             },
+//             else: {
+//               g_code: "$game_id",
+//               g_type: "Unknown",
+//               gameName: { gameName_enus: "Unknown Game" },
+//               imgFileName: null,
+//               category_name: null,
+//               brand: null
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 4: Lookup BetProviderTable using site (providercode)
+//     {
+//       $lookup: {
+//         from: "betprovidertables",
+//         let: { siteCode: "$site" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$providercode", "$$siteCode"] },
+//                   { $eq: ["$id_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "providerDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$providerDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 5: FIXED - Lookup Categories using provider's g_type array
+//     {
+//       $lookup: {
+//         from: "categories",
+//         let: { 
+//           providerGTypes: { 
+//             $cond: {
+//               if: { $isArray: "$providerDetails.g_type" },
+//               then: "$providerDetails.g_type",
+//               else: { $ifNull: [{ $split: ["$providerDetails.g_type", ","] }, []] }
+//             }
+//           } 
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { 
+//                     $or: [
+//                       { $in: ["$g_type", "$$providerGTypes"] },
+//                       { $in: ["$$providerGTypes", ["$g_type"]] }
+//                     ]
+//                   },
+//                   { $eq: ["$id_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "categoryDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$categoryDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 6: Add profitLoss calculation for each record
+//     {
+//       $addFields: {
+//         profitLoss: {
+//           $subtract: [
+//             { $ifNull: ["$payout", 0] },
+//             { $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }] }
+//           ]
+//         }
+//       }
+//     },
+
+//     // Step 7: Group by newGameObject (g_type + game combination)
+//     {
+//       $group: {
+//         _id: {
+//           g_code: "$newGameObject.g_code",
+//           g_type: "$newGameObject.g_type",
+//           gameName: "$newGameObject.gameName",
+//           category_name: "$newGameObject.category_name"
+//         },
+//         providerCode: { $first: "$site" },
+//         providerDetails: { $first: "$providerDetails" },
+//         categoryDetails: { $first: "$categoryDetails" },
+//         // records: { $push: "$$ROOT" },
+//         totalTurnover: { $sum: "$turnover" },
+//         totalBet: { $sum: "$bet" },
+//         totalPayout: { $sum: "$payout" },
+//         totalCommission: { $sum: { $ifNull: ["$commission", 0] } },
+//         totalProfitLoss: { $sum: "$profitLoss" }
+//       }
+//     },
+
+//     // Step 8: Determine final category
+//     {
+//       $addFields: {
+//         gameCategory: {
+//           $cond: {
+//             if: { $ne: ["$categoryDetails", null] },
+//             then: "$categoryDetails.category_name",
+//             else: {
+//               $cond: {
+//                 if: { $ne: ["$_id.category_name", null] },
+//                 then: "$_id.category_name",
+//                 else: "Uncategorized"
+//               }
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 9: Group by Category
+//     {
+//       $group: {
+//         _id: "$gameCategory",
+//         games: {
+//           $push: {
+//             gameCode: "$_id.g_code",
+//             gameType: "$_id.g_type",
+//             gameName: "$_id.gameName",
+//             providerCode: "$providerCode",
+//             providerName: { $ifNull: ["$providerDetails.name", "Unknown Provider"] },
+//             providerCompany: { $ifNull: ["$providerDetails.company", "Unknown"] },
+//             totalTurnover: "$totalTurnover",
+//             totalBet: "$totalBet",
+//             totalPayout: "$totalPayout",
+//             totalProfitLoss: "$totalProfitLoss"
+//           }
+//         },
+//         categoryTurnover: { $sum: "$totalTurnover" },
+//         categoryBet: { $sum: "$totalBet" },
+//         categoryPayout: { $sum: "$totalPayout" },
+//         categoryProfitLoss: { $sum: "$totalProfitLoss" }
+//       }
+//     },
+
+//     // Step 10: Group providers within each category
+//     {
+//       $addFields: {
+//         providers: {
+//           $reduce: {
+//             input: "$games",
+//             initialValue: [],
+//             in: {
+//               $let: {
+//                 vars: {
+//                   existingProviderIndex: {
+//                     $indexOfArray: ["$$value.providerCode", "$$this.providerCode"]
+//                   }
+//                 },
+//                 in: {
+//                   $cond: {
+//                     if: { $ne: ["$$existingProviderIndex", -1] },
+//                     then: {
+//                       $map: {
+//                         input: { $range: [0, { $size: "$$value" }] },
+//                         as: "idx",
+//                         in: {
+//                           $cond: {
+//                             if: { $eq: ["$$idx", "$$existingProviderIndex"] },
+//                             then: {
+//                               $mergeObjects: [
+//                                 { $arrayElemAt: ["$$value", "$$idx"] },
+//                                 {
+//                                   games: {
+//                                     $concatArrays: [
+//                                       { $arrayElemAt: ["$$value", "$$idx"] }.games,
+//                                       [{
+//                                         gameCode: "$$this.gameCode",
+//                                         gameType: "$$this.gameType",
+//                                         gameName: "$$this.gameName",
+//                                         totalTurnover: "$$this.totalTurnover",
+//                                         totalBet: "$$this.totalBet",
+//                                         totalPayout: "$$this.totalPayout",
+//                                         totalProfitLoss: "$$this.totalProfitLoss"
+//                                       }]
+//                                     ]
+//                                   }
+//                                 }
+//                               ]
+//                             },
+//                             else: { $arrayElemAt: ["$$value", "$$idx"] }
+//                           }
+//                         }
+//                       }
+//                     },
+//                     else: {
+//                       $concatArrays: [
+//                         "$$value",
+//                         [{
+//                           providerCode: "$$this.providerCode",
+//                           providerName: "$$this.providerName",
+//                           providerCompany: "$$this.providerCompany",
+//                           games: [{
+//                             gameCode: "$$this.gameCode",
+//                             gameType: "$$this.gameType",
+//                             gameName: "$$this.gameName",
+//                             totalTurnover: "$$this.totalTurnover",
+//                             totalBet: "$$this.totalBet",
+//                             totalPayout: "$$this.totalPayout",
+//                             totalProfitLoss: "$$this.totalProfitLoss"
+//                           }]
+//                         }]
+//                       ]
+//                     }
+//                   }
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 11: Calculate provider stats
+//     {
+//       $addFields: {
+//         providers: {
+//           $map: {
+//             input: "$providers",
+//             as: "provider",
+//             in: {
+//               providerCode: "$$provider.providerCode",
+//               providerName: "$$provider.providerName",
+//               providerCompany: "$$provider.providerCompany",
+//               games: "$$provider.games",
+//               providerStats: {
+//                 turnover: { $sum: "$$provider.games.totalTurnover" },
+//                 bet: { $sum: "$$provider.games.totalBet" },
+//                 payout: { $sum: "$$provider.games.totalPayout" },
+//                 profitLoss: { $sum: "$$provider.games.totalProfitLoss" }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 12: Final projection
+//     {
+//       $project: {
+//         _id: 0,
+//         category: "$_id",
+//         categoryTurnover: 1,
+//         categoryBet: 1,
+//         categoryPayout: 1,
+//         categoryProfitLoss: 1,
+//         providers: 1,
+//         date: { $literal: null }
+//       }
+//     },
+
+//     // Step 13: Sort
+//     {
+//       $sort: { category: sortOrder === "desc" ? -1 : 1 }
+//     },
+
+//     // Step 14: Pagination
+//     {
+//       $facet: {
+//         metadata: [{ $count: "total" }],
+//         data: [
+//           { $skip: (parseInt(page) - 1) * parseInt(limit) },
+//           { $limit: parseInt(limit) }
+//         ]
+//       }
+//     }
+//   ];
+
+//   try {
+//     // 5️⃣ Execute aggregation
+//     const result = await BettingHistory.aggregate(pipeline).allowDiskUse(true);
+
+//     // 6️⃣ Prepare response
+//     const data = result[0].data;
+//     const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+
+//     res.status(200).json({
+//       success: true,
+//       count: total,
+//       totalPages: Math.ceil(total / parseInt(limit)),
+//       currentPage: parseInt(page),
+//       data: data
+//     });
+//   } catch (error) {
+//     console.error("Aggregation error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Error fetching betting records",
+//       error: error.message
+//     });
+//   }
+// });
+/**
+ * @desc    Get betting record by ID
+ * @route   GET /api/v1/betting/records/:id
+ * @access  Private
+ */
+// exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
+//   const {
+//     page = 1,
+//     limit = 20,
+//     dateOption = "last7days",
+//     platforms = "",
+//     gameTypes = "",
+//     sortBy = "start_time",
+//     sortOrder = "desc",
+//     search = "",
+//     status,
+//     minBet,
+//     maxBet,
+//     minPayout,
+//     maxPayout,
+//   } = req.query;
+//   const userId = req.user.userId;
+
+//   // 1️⃣ Verify user
+//   const user = await User.findOne({ userId }).lean();
+//   if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+//   // 2️⃣ Date range
+//   const dateRange = dateUtils.getDateRange(dateOption);
+
+//   // 3️⃣ Match stage for BettingHistory
+//   const matchStage = {
+//     member: user.userId,
+//     start_time: { $gte: new Date(dateRange.from), $lte: new Date(dateRange.to) },
+//   };
+
+//   if (status) matchStage.status = parseInt(status);
+//   if (platforms) {
+//     const platformArray = platforms.split(",").filter(p => p.trim() !== "");
+//     if (platformArray.length > 0) {
+//       matchStage.site = { $in: platformArray };
+//     }
+//   }
+
+//   if (minBet || maxBet) {
+//     matchStage.bet = {};
+//     if (minBet) matchStage.bet.$gte = parseFloat(minBet);
+//     if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
+//   }
+
+//   if (minPayout || maxPayout) {
+//     matchStage.payout = {};
+//     if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
+//     if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
+//   }
+
+//   if (search) {
+//     matchStage.$or = [
+//       { ref_no: { $regex: search, $options: "i" } },
+//       { game_id: { $regex: search, $options: "i" } },
+//       { bet_detail: { $regex: search, $options: "i" } },
+//     ];
+//   }
+
+//   // 4️⃣ Main Aggregation Pipeline - Grouped by Date
+//   const pipeline = [
+//     // Step 1: Match betting history records
+//     { $match: matchStage },
+
+//     // Step 2: Format date for grouping (YYYY-MM-DD)
+//     {
+//       $addFields: {
+//         dateGroup: {
+//           $dateToString: {
+//             format: "%Y-%m-%d",
+//             date: "$start_time",
+//             timezone: "Asia/Singapore" // Adjust timezone as needed
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 3: Lookup GameListTable using site (p_code)
+//     {
+//       $lookup: {
+//         from: "gamelisttables",
+//         let: { siteCode: "$site" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$p_code", "$$siteCode"] },
+//                   { $eq: ["$is_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "gameDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$gameDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 4: Create newGameObject
+//     {
+//       $addFields: {
+//         newGameObject: {
+//           $cond: {
+//             if: { $ne: ["$gameDetails", null] },
+//             then: {
+//               g_code: "$gameDetails.g_code",
+//               g_type: "$gameDetails.g_type",
+//               gameName: "$gameDetails.gameName",
+//               imgFileName: "$gameDetails.imgFileName",
+//               category_name: "$gameDetails.category_name",
+//               brand: "$gameDetails.brand"
+//             },
+//             else: {
+//               g_code: "$game_id",
+//               g_type: "Unknown",
+//               gameName: { gameName_enus: "Unknown Game" },
+//               imgFileName: null,
+//               category_name: null,
+//               brand: null
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 5: Lookup BetProviderTable using site (providercode)
+//     {
+//       $lookup: {
+//         from: "betprovidertables",
+//         let: { siteCode: "$site" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$providercode", "$$siteCode"] },
+//                   { $eq: ["$id_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "providerDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$providerDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 6: Lookup Categories using provider's g_type array
+//     {
+//       $lookup: {
+//         from: "categories",
+//         let: { 
+//           providerGTypes: { 
+//             $cond: {
+//               if: { $isArray: "$providerDetails.g_type" },
+//               then: "$providerDetails.g_type",
+//               else: { $ifNull: [{ $split: ["$providerDetails.g_type", ","] }, []] }
+//             }
+//           } 
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { 
+//                     $or: [
+//                       { $in: ["$g_type", "$$providerGTypes"] },
+//                       { $in: ["$$providerGTypes", ["$g_type"]] }
+//                     ]
+//                   },
+//                   { $eq: ["$id_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "categoryDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$categoryDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 7: Add profitLoss calculation for each record
+//     {
+//       $addFields: {
+//         profitLoss: {
+//           $subtract: [
+//             { $ifNull: ["$payout", 0] },
+//             { $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }] }
+//           ]
+//         }
+//       }
+//     },
+
+//     // Step 8: Group by Date first
+//     {
+//       $group: {
+//         _id: "$dateGroup",
+//         date: { $first: "$dateGroup" },
+//         totalRecords: { $sum: 1 },
+//         totalTurnover: { $sum: "$turnover" },
+//         totalBet: { $sum: "$bet" },
+//         totalPayout: { $sum: "$payout" },
+//         totalCommission: { $sum: { $ifNull: ["$commission", 0] } },
+//         totalProfitLoss: { $sum: "$profitLoss" },
+//         // records: { $push: "$$ROOT" }
+//       }
+//     },
+
+//     // Step 9: Group by Category within each date
+//     {
+//       $unwind: "$records"
+//     },
+//     {
+//       $group: {
+//         _id: {
+//           date: "$_id",
+//           gameCategory: {
+//             $cond: {
+//               if: { $ne: ["$records.categoryDetails", null] },
+//               then: "$records.categoryDetails.category_name",
+//               else: {
+//                 $cond: {
+//                   if: { $ne: ["$records.newGameObject.category_name", null] },
+//                   then: "$records.newGameObject.category_name",
+//                   else: "Uncategorized"
+//                 }
+//               }
+//             }
+//           }
+//         },
+//         date: { $first: "$date" },
+//         category: { $first: "$_id.gameCategory" },
+//         records: { $push: "$records" },
+//         categoryTurnover: { $sum: "$records.turnover" },
+//         categoryBet: { $sum: "$records.bet" },
+//         categoryPayout: { $sum: "$records.payout" },
+//         categoryProfitLoss: { $sum: "$records.profitLoss" }
+//       }
+//     },
+
+//     // Step 10: Group by Game within each category-date group
+//     {
+//       $unwind: "$records"
+//     },
+//     {
+//       $group: {
+//         _id: {
+//           date: "$_id.date",
+//           category: "$_id.gameCategory",
+//           gameCode: "$records.newGameObject.g_code",
+//           gameType: "$records.newGameObject.g_type",
+//           gameName: "$records.newGameObject.gameName",
+//           providerCode: "$records.site",
+//           providerDetails: "$records.providerDetails"
+//         },
+//         date: { $first: "$date" },
+//         category: { $first: "$category" },
+//         gameTurnover: { $sum: "$records.turnover" },
+//         gameBet: { $sum: "$records.bet" },
+//         gamePayout: { $sum: "$records.payout" },
+//         gameProfitLoss: { $sum: "$records.profitLoss" },
+//         recordCount: { $sum: 1 },
+//         // records: { $push: "$records" }
+//       }
+//     },
+
+//     // Step 11: Group by Provider within each category-date group
+//     {
+//       $group: {
+//         _id: {
+//           date: "$_id.date",
+//           category: "$_id.category",
+//           providerCode: "$_id.providerCode",
+//           providerDetails: "$_id.providerDetails"
+//         },
+//         date: { $first: "$date" },
+//         category: { $first: "$category" },
+//         providerCode: { $first: "$_id.providerCode" },
+//         providerName: { 
+//           $first: { 
+//             $ifNull: [
+//               { $ifNull: ["$_id.providerDetails.name", "$_id.providerDetails.providerName"] }, 
+//               "Unknown Provider"
+//             ] 
+//           } 
+//         },
+//         providerCompany: { 
+//           $first: { 
+//             $ifNull: ["$_id.providerDetails.company", "Unknown"] 
+//           } 
+//         },
+//         providerTurnover: { $sum: "$gameTurnover" },
+//         providerBet: { $sum: "$gameBet" },
+//         providerPayout: { $sum: "$gamePayout" },
+//         providerProfitLoss: { $sum: "$gameProfitLoss" },
+//         games: {
+//           $push: {
+//             gameCode: "$_id.gameCode",
+//             gameType: "$_id.gameType",
+//             gameName: "$_id.gameName",
+//             gameTurnover: "$gameTurnover",
+//             gameBet: "$gameBet",
+//             gamePayout: "$gamePayout",
+//             gameProfitLoss: "$gameProfitLoss",
+//             recordCount: "$recordCount"
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 12: Group by Category within each date
+//     {
+//       $group: {
+//         _id: {
+//           date: "$_id.date",
+//           category: "$_id.category"
+//         },
+//         date: { $first: "$date" },
+//         category: { $first: "$category" },
+//         categoryTurnover: { $sum: "$providerTurnover" },
+//         categoryBet: { $sum: "$providerBet" },
+//         categoryPayout: { $sum: "$providerPayout" },
+//         categoryProfitLoss: { $sum: "$providerProfitLoss" },
+//         providers: {
+//           $push: {
+//             providerCode: "$providerCode",
+//             providerName: "$providerName",
+//             providerCompany: "$providerCompany",
+//             providerTurnover: "$providerTurnover",
+//             providerBet: "$providerBet",
+//             providerPayout: "$providerPayout",
+//             providerProfitLoss: "$providerProfitLoss",
+//             games: "$games"
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 13: Group by Date (final structure)
+//     {
+//       $group: {
+//         _id: "$_id.date",
+//         date: { $first: "$date" },
+//         dateTurnover: { $sum: "$categoryTurnover" },
+//         dateBet: { $sum: "$categoryBet" },
+//         datePayout: { $sum: "$categoryPayout" },
+//         dateProfitLoss: { $sum: "$categoryProfitLoss" },
+//         categories: {
+//           $push: {
+//             category: "$category",
+//             categoryTurnover: "$categoryTurnover",
+//             categoryBet: "$categoryBet",
+//             categoryPayout: "$categoryPayout",
+//             categoryProfitLoss: "$categoryProfitLoss",
+//             providers: "$providers"
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 14: Final projection
+//     {
+//       $project: {
+//         _id: 0,
+//         date: 1,
+//         dateTurnover: 1,
+//         dateBet: 1,
+//         datePayout: 1,
+//         dateProfitLoss: 1,
+//         categories: 1
+//       }
+//     },
+
+//     // Step 15: Sort by date
+//     {
+//       $sort: { 
+//         date: sortOrder === "desc" ? -1 : 1 
+//       }
+//     },
+
+//     // Step 16: Pagination
+//     {
+//       $facet: {
+//         metadata: [{ $count: "total" }],
+//         data: [
+//           { $skip: (parseInt(page) - 1) * parseInt(limit) },
+//           { $limit: parseInt(limit) }
+//         ]
+//       }
+//     }
+//   ];
+
+//   try {
+//     // 5️⃣ Execute aggregation
+//     const result = await BettingHistory.aggregate(pipeline).allowDiskUse(true);
+
+//     // 6️⃣ Prepare response
+//     const data = result[0].data;
+//     const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+
+//     res.status(200).json({
+//       success: true,
+//       count: total,
+//       totalPages: Math.ceil(total / parseInt(limit)),
+//       currentPage: parseInt(page),
+//       data: data
+//     });
+//   } catch (error) {
+//     console.error("Aggregation error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Error fetching betting records",
+//       error: error.message
+//     });
+//   }
+// });
+
+// exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
+//   const {
+//     page = 1,
+//     limit = 20,
+//     dateOption = "last7days",
+//     platforms = "",
+//     gameTypes = "",
+//     sortBy = "start_time",
+//     sortOrder = "desc",
+//     search = "",
+//     status,
+//     minBet,
+//     maxBet,
+//     minPayout,
+//     maxPayout,
+//   } = req.query;
+//   const userId = req.user.userId
+//   // 1️⃣ Verify user
+//   const user = await User.findOne({ userId }).lean();
+//   if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+//   // 2️⃣ Date range
+//   const dateRange = dateUtils.getDateRange(dateOption);
+
+//   // 3️⃣ Match stage for BettingHistory
+//   const matchStage = {
+//     member: user.userId,
+//     start_time: { $gte: new Date(dateRange.from), $lte: new Date(dateRange.to) },
+//   };
+
+//   if (status) matchStage.status = parseInt(status);
+//   if (platforms) {
+//     const platformArray = platforms.split(",").filter(p => p.trim() !== "");
+//     if (platformArray.length > 0) {
+//       matchStage.site = { $in: platformArray };
+//     }
+//   }
+
+//   if (minBet || maxBet) {
+//     matchStage.bet = {};
+//     if (minBet) matchStage.bet.$gte = parseFloat(minBet);
+//     if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
+//   }
+
+//   if (minPayout || maxPayout) {
+//     matchStage.payout = {};
+//     if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
+//     if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
+//   }
+
+//   if (search) {
+//     matchStage.$or = [
+//       { ref_no: { $regex: search, $options: "i" } },
+//       { game_id: { $regex: search, $options: "i" } },
+//       { bet_detail: { $regex: search, $options: "i" } },
+//     ];
+//   }
+
+//   // 4️⃣ Main Aggregation Pipeline - FIXED with Date Grouping
+//   const pipeline = [
+//     // Step 1: Match betting history records
+//     { $match: matchStage },
+
+//     // Step 2: Extract date part for grouping
+//     {
+//       $addFields: {
+//         betDate: {
+//           $dateToString: {
+//             format: "%Y-%m-%d",
+//             date: "$start_time"
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 3: Lookup GameListTable using site (p_code)
+//     {
+//       $lookup: {
+//         from: "gamelisttables",
+//         let: { siteCode: "$site" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$p_code", "$$siteCode"] },
+//                   { $eq: ["$is_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "gameDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$gameDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 4: Create newGameObject
+//     {
+//       $addFields: {
+//         newGameObject: {
+//           $cond: {
+//             if: { $ne: ["$gameDetails", null] },
+//             then: {
+//               g_code: "$gameDetails.g_code",
+//               g_type: "$gameDetails.g_type",
+//               gameName: "$gameDetails.gameName",
+//               imgFileName: "$gameDetails.imgFileName",
+//               category_name: "$gameDetails.category_name",
+//               brand: "$gameDetails.brand"
+//             },
+//             else: {
+//               g_code: "$game_id",
+//               g_type: "Unknown",
+//               gameName: { gameName_enus: "Unknown Game" },
+//               imgFileName: null,
+//               category_name: null,
+//               brand: null
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 5: Lookup BetProviderTable using site (providercode)
+//     {
+//       $lookup: {
+//         from: "betprovidertables",
+//         let: { siteCode: "$site" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { $eq: ["$providercode", "$$siteCode"] },
+//                   { $eq: ["$id_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "providerDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$providerDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 6: FIXED - Lookup Categories using provider's g_type array
+//     {
+//       $lookup: {
+//         from: "categories",
+//         let: { 
+//           providerGTypes: { 
+//             $cond: {
+//               if: { $isArray: "$providerDetails.g_type" },
+//               then: "$providerDetails.g_type",
+//               else: { $ifNull: [{ $split: ["$providerDetails.g_type", ","] }, []] }
+//             }
+//           } 
+//         },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $and: [
+//                   { 
+//                     $or: [
+//                       { $in: ["$g_type", "$$providerGTypes"] },
+//                       { $in: ["$$providerGTypes", ["$g_type"]] }
+//                     ]
+//                   },
+//                   { $eq: ["$id_active", true] }
+//                 ]
+//               }
+//             }
+//           }
+//         ],
+//         as: "categoryDetails"
+//       }
+//     },
+//     {
+//       $unwind: {
+//         path: "$categoryDetails",
+//         preserveNullAndEmptyArrays: true
+//       }
+//     },
+
+//     // Step 7: Add profitLoss calculation for each record
+//     {
+//       $addFields: {
+//         profitLoss: {
+//           $subtract: [
+//             { $ifNull: ["$payout", 0] },
+//             { $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }] }
+//           ]
+//         }
+//       }
+//     },
+
+//     // Step 8: Group by date first, then by newGameObject
+//     {
+//       $group: {
+//         _id: {
+//           date: "$betDate",
+//           g_code: "$newGameObject.g_code",
+//           g_type: "$newGameObject.g_type",
+//           gameName: "$newGameObject.gameName",
+//           category_name: "$newGameObject.category_name"
+//         },
+//         providerCode: { $first: "$site" },
+//         providerDetails: { $first: "$providerDetails" },
+//         categoryDetails: { $first: "$categoryDetails" },
+//         totalTurnover: { $sum: "$turnover" },
+//         totalBet: { $sum: "$bet" },
+//         totalPayout: { $sum: "$payout" },
+//         totalCommission: { $sum: { $ifNull: ["$commission", 0] } },
+//         totalProfitLoss: { $sum: "$profitLoss" }
+//       }
+//     },
+
+//     // Step 9: Determine final category
+//     {
+//       $addFields: {
+//         gameCategory: {
+//           $cond: {
+//             if: { $ne: ["$categoryDetails", null] },
+//             then: "$categoryDetails.category_name",
+//             else: {
+//               $cond: {
+//                 if: { $ne: ["$_id.category_name", null] },
+//                 then: "$_id.category_name",
+//                 else: "Uncategorized"
+//               }
+//             }
+//           }
+//         }
+//       }
+//     },
+
+//     // Step 10: Group by Date first, then by Category
+//     {
+//       $group: {
+//         _id: {
+//           date: "$_id.date",
+//           category: "$gameCategory"
+//         },
+//         games: {
+//           $push: {
+//             gameCode: "$_id.g_code",
+//             gameType: "$_id.g_type",
+//             gameName: "$_id.gameName",
+//             providerCode: "$providerCode",
+//             providerName: { $ifNull: ["$providerDetails.name", "Unknown Provider"] },
+//             providerCompany: { $ifNull: ["$providerDetails.company", "Unknown"] },
+//             totalTurnover: "$totalTurnover",
+//             totalBet: "$totalBet",
+//             totalPayout: "$totalPayout",
+//             totalProfitLoss: "$totalProfitLoss"
+//           }
+//         },
+//         categoryTurnover: { $sum: "$totalTurnover" },
+//         categoryBet: { $sum: "$totalBet" },
+//         categoryPayout: { $sum: "$totalPayout" },
+//         categoryProfitLoss: { $sum: "$totalProfitLoss" }
+//       }
+//     },
+
+//     // Step 11: Group providers within each category for each date
+//     // {
+//     //   $addFields: {
+//     //     providers: {
+//     //       $reduce: {
+//     //         input: "$games",
+//     //         initialValue: [],
+//     //         in: {
+//     //           $let: {
+//     //             vars: {
+//     //               existingProviderIndex: {
+//     //                 $indexOfArray: ["$$value.providerCode", "$$this.providerCode"]
+//     //               }
+//     //             },
+//     //             in: {
+//     //               $cond: {
+//     //                 if: { $ne: ["$$existingProviderIndex", -1] },
+//     //                 then: {
+//     //                   $map: {
+//     //                     input: { $range: [0, { $size: "$$value" }] },
+//     //                     as: "idx",
+//     //                     in: {
+//     //                       $cond: {
+//     //                         if: { $eq: ["$$idx", "$$existingProviderIndex"] },
+//     //                         then: {
+//     //                           $mergeObjects: [
+//     //                             { $arrayElemAt: ["$$value", "$$idx"] },
+//     //                             {
+//     //                               games: {
+//     //                                 $concatArrays: [
+//     //                                   { $arrayElemAt: ["$$value", "$$idx"] }.games,
+//     //                                   [{
+//     //                                     gameCode: "$$this.gameCode",
+//     //                                     gameType: "$$this.gameType",
+//     //                                     gameName: "$$this.gameName",
+//     //                                     totalTurnover: "$$this.totalTurnover",
+//     //                                     totalBet: "$$this.totalBet",
+//     //                                     totalPayout: "$$this.totalPayout",
+//     //                                     totalProfitLoss: "$$this.totalProfitLoss"
+//     //                                   }]
+//     //                                 ]
+//     //                               }
+//     //                             }
+//     //                           ]
+//     //                         },
+//     //                         else: { $arrayElemAt: ["$$value", "$$idx"] }
+//     //                       }
+//     //                     }
+//     //                   }
+//     //                 },
+//     //                 else: {
+//     //                   $concatArrays: [
+//     //                     "$$value",
+//     //                     [{
+//     //                       providerCode: "$$this.providerCode",
+//     //                       providerName: "$$this.providerName",
+//     //                       providerCompany: "$$this.providerCompany",
+//     //                       games: [{
+//     //                         gameCode: "$$this.gameCode",
+//     //                         gameType: "$$this.gameType",
+//     //                         gameName: "$$this.gameName",
+//     //                         totalTurnover: "$$this.totalTurnover",
+//     //                         totalBet: "$$this.totalBet",
+//     //                         totalPayout: "$$this.totalPayout",
+//     //                         totalProfitLoss: "$$this.totalProfitLoss"
+//     //                       }]
+//     //                     }]
+//     //                   ]
+//     //                 }
+//     //               }
+//     //             }
+//     //           }
+//     //         }
+//     //       }
+//     //     }
+//     //   }
+//     // },
+
+//     // // Step 12: Calculate provider stats
+//     // {
+//     //   $addFields: {
+//     //     providers: {
+//     //       $map: {
+//     //         input: "$providers",
+//     //         as: "provider",
+//     //         in: {
+//     //           providerCode: "$$provider.providerCode",
+//     //           providerName: "$$provider.providerName",
+//     //           providerCompany: "$$provider.providerCompany",
+//     //           games: "$$provider.games",
+//     //           providerStats: {
+//     //             turnover: { $sum: "$$provider.games.totalTurnover" },
+//     //             bet: { $sum: "$$provider.games.totalBet" },
+//     //             payout: { $sum: "$$provider.games.totalPayout" },
+//     //             profitLoss: { $sum: "$$provider.games.totalProfitLoss" }
+//     //           }
+//     //         }
+//     //       }
+//     //     }
+//     //   }
+//     // },
+
+//     // Step 13: Group by Date for final structure
+//     {
+//       $group: {
+//         _id: "$_id.date",
+//         categories: {
+//           $push: {
+//             category: "$_id.category",
+//             categoryTurnover: "$categoryTurnover",
+//             categoryBet: "$categoryBet",
+//             categoryPayout: "$categoryPayout",
+//             categoryProfitLoss: "$categoryProfitLoss",
+//             providers: "$providers"
+//           }
+//         },
+//         dateTurnover: { $sum: "$categoryTurnover" },
+//         dateBet: { $sum: "$categoryBet" },
+//         datePayout: { $sum: "$categoryPayout" },
+//         dateProfitLoss: { $sum: "$categoryProfitLoss" }
+//       }
+//     },
+
+//     // Step 14: Final projection
+//     {
+//       $project: {
+//         _id: 0,
+//         date: "$_id",
+//         dateTurnover: 1,
+//         dateBet: 1,
+//         datePayout: 1,
+//         dateProfitLoss: 1,
+//         categories: 1
+//       }
+//     },
+
+//     // Step 15: Sort by date
+//     {
+//       $sort: { date: sortOrder === "desc" ? -1 : 1 }
+//     },
+
+//     // Step 16: Pagination
+//     {
+//       $facet: {
+//         metadata: [{ $count: "total" }],
+//         data: [
+//           { $skip: (parseInt(page) - 1) * parseInt(limit) },
+//           { $limit: parseInt(limit) }
+//         ]
+//       }
+//     }
+//   ];
+
+//   try {
+//     // 5️⃣ Execute aggregation
+//     const result = await BettingHistory.aggregate(pipeline).allowDiskUse(true);
+
+//     // 6️⃣ Prepare response
+//     const data = result[0].data;
+//     const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
+
+//     res.status(200).json({
+//       success: true,
+//       count: total,
+//       totalPages: Math.ceil(total / parseInt(limit)),
+//       currentPage: parseInt(page),
+//       data: data
+//     });
+//   } catch (error) {
+//     console.error("Aggregation error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Error fetching betting records",
+//       error: error.message
+//     });
+//   }
+// });
+// exports.getBettingRecordById = asyncHandler(async (req, res, next) => {
+//   const { id } = req.params;
+//   const user = req.user;
+
+//   const pipeline = [
+//     {
+//       $match: {
+//         $or: [{ id }, { ref_no: id }],
+//         member: user.member_id || user.id,
+//       },
+//     },
+
+//     // Extensive lookups for detailed view
+//     {
+//       $lookup: {
+//         from: "gamelisttables",
+//         let: { product: "$product", gameId: "$game_id" },
+//         pipeline: [
+//           {
+//             $match: {
+//               $expr: {
+//                 $or: [
+//                   {
+//                     $and: [
+//                       { $eq: ["$p_code", "$$product"] },
+//                       { $eq: ["$g_code", "$$gameId"] },
+//                     ],
+//                   },
+//                   { $eq: ["$p_code", "$$product"] },
+//                 ],
+//               },
+//             },
+//           },
+//         ],
+//         as: "game",
+//       },
+//     },
+//     { $unwind: { path: "$game", preserveNullAndEmptyArrays: true } },
+
+//     {
+//       $lookup: {
+//         from: "betprovidertables",
+//         localField: "product",
+//         foreignField: "providercode",
+//         as: "provider",
+//       },
+//     },
+//     { $unwind: { path: "$provider", preserveNullAndEmptyArrays: true } },
+
+//     {
+//       $lookup: {
+//         from: "categories",
+//         localField: "game.category_name",
+//         foreignField: "category_name",
+//         as: "category",
+//       },
+//     },
+//     { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+
+//     // Add calculated fields
+//     {
+//       $addFields: {
+//         profitLoss: {
+//           $subtract: [
+//             { $ifNull: ["$payout", 0] },
+//             {
+//               $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }],
+//             },
+//           ],
+//         },
+//         netAmount: {
+//           $subtract: ["$payout", "$commission"],
+//         },
+//       },
+//     },
+//   ];
+
+//   const record = await BettingHistory.aggregate(pipeline);
+
+//   if (!record || record.length === 0) {
+//     return next(
+//       new ErrorResponse(`Betting record not found with id: ${id}`, 404)
+//     );
+//   }
+
+//   res.status(200).json({
+//     success: true,
+//     data: record[0],
+//   });
+// });
 exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
   const {
     page = 1,
@@ -1090,41 +2501,51 @@ exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
     maxBet,
     minPayout,
     maxPayout,
+    product // new query param
   } = req.query;
-  const userId = req.user.userId
-  // 1️⃣ Verify user
+
+  const userId = req.user.userId;
+
   const user = await User.findOne({ userId }).lean();
   if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-  // 2️⃣ Date range
   const dateRange = dateUtils.getDateRange(dateOption);
 
-  // 3️⃣ Match stage for BettingHistory
-  const matchStage = {
-    member: user.userId,
-    start_time: { $gte: new Date(dateRange.from), $lte: new Date(dateRange.to) },
-  };
+  // const matchStage = {
+  //   member: user.userId || user.userId.toUpperCase(),
+  //   start_time: { $gte: new Date(dateRange.from), $lte: new Date(dateRange.to) },
+  // };
 
-  if (status) matchStage.status = parseInt(status);
+
+  const matchStage = {
+  member: {
+    $in: [
+      user.userId,
+      user.userId.toUpperCase(),
+      user.userId.toLowerCase(),
+    ],
+  },
+  start_time: {
+    $gte: new Date(dateRange.from),
+    $lte: new Date(dateRange.to),
+  },
+};
+
+  // if (status) matchStage.status = parseInt(status);
   if (platforms) {
     const platformArray = platforms.split(",").filter(p => p.trim() !== "");
-    if (platformArray.length > 0) {
-      matchStage.site = { $in: platformArray };
-    }
+    if (platformArray.length > 0) matchStage.site = { $in: platformArray };
   }
-  
   if (minBet || maxBet) {
     matchStage.bet = {};
     if (minBet) matchStage.bet.$gte = parseFloat(minBet);
     if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
   }
-  
   if (minPayout || maxPayout) {
     matchStage.payout = {};
     if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
     if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
   }
-
   if (search) {
     matchStage.$or = [
       { ref_no: { $regex: search, $options: "i" } },
@@ -1133,116 +2554,95 @@ exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
     ];
   }
 
-  // 4️⃣ Main Aggregation Pipeline - FIXED
   const pipeline = [
-    // Step 1: Match betting history records
     { $match: matchStage },
 
-    // Step 2: Lookup GameListTable using site (p_code)
+    // Lookup provider
     {
       $lookup: {
-        from: "gamelisttables",
-        let: { siteCode: "$site" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$p_code", "$$siteCode"] },
-                  { $eq: ["$is_active", true] }
-                ]
-              }
-            }
-          }
-        ],
-        as: "gameDetails"
+        from: "betprovidertables",
+        localField: "site",
+        foreignField: "providercode",
+        as: "providerDetails"
       }
     },
-    {
-      $unwind: {
-        path: "$gameDetails",
-        preserveNullAndEmptyArrays: true
-      }
-    },
+    { $addFields: { provider: { $arrayElemAt: ["$providerDetails", 0] } } },
+  ];
 
-    // Step 3: Create newGameObject
-    {
-      $addFields: {
-        newGameObject: {
-          $cond: {
-            if: { $ne: ["$gameDetails", null] },
-            then: {
-              g_code: "$gameDetails.g_code",
-              g_type: "$gameDetails.g_type",
-              gameName: "$gameDetails.gameName",
-              imgFileName: "$gameDetails.imgFileName",
-              category_name: "$gameDetails.category_name",
-              brand: "$gameDetails.brand"
-            },
-            else: {
-              g_code: "$game_id",
-              g_type: "Unknown",
-              gameName: { gameName_enus: "Unknown Game" },
-              imgFileName: null,
-              category_name: null,
-              brand: null
+  // ✅ Conditional logic: skip gamelist lookup for sb/lc
+  if (!["sb", "lc"].includes(product)) {
+    pipeline.push(
+      {
+        $lookup: {
+          from: "gamelisttables",
+          localField: "site",
+          foreignField: "p_code",
+          as: "gameDetails"
+        }
+      },
+      {
+        $addFields: {
+          game: { $arrayElemAt: ["$gameDetails", 0] },
+          newGameObject: {
+            $cond: {
+              if: { $ne: [{ $arrayElemAt: ["$gameDetails", 0] }, null] },
+              then: {
+                g_code: { $arrayElemAt: ["$gameDetails.g_code", 0] },
+                g_type: { $arrayElemAt: ["$gameDetails.g_type", 0] },
+                gameName: { $arrayElemAt: ["$gameDetails.gameName", 0] },
+                imgFileName: { $arrayElemAt: ["$gameDetails.imgFileName", 0] },
+                category_name: { $arrayElemAt: ["$gameDetails.category_name", 0] },
+                brand: { $arrayElemAt: ["$gameDetails.brand", 0] }
+              },
+              else: {
+                g_code: "$game_id",
+                g_type: "Unknown",
+                gameName: { gameName_enus: "Unknown Game" },
+                imgFileName: null,
+                category_name: null,
+                brand: null
+              }
             }
           }
         }
       }
-    },
-
-    // Step 4: Lookup BetProviderTable using site (providercode)
-    {
-      $lookup: {
-        from: "betprovidertables",
-        let: { siteCode: "$site" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $eq: ["$providercode", "$$siteCode"] },
-                  { $eq: ["$id_active", true] }
-                ]
-              }
-            }
-          }
-        ],
-        as: "providerDetails"
+    );
+  } else {
+    // sb/lc জন্য শুধু category_name provider থেকে নেবে
+    pipeline.push({
+      $addFields: {
+        newGameObject: {
+          g_code: "$game_id",
+          g_type: "Unknown",
+          gameName: { gameName_enus: "Unknown Game" },
+          imgFileName: null,
+          category_name: "$provider.category_name",
+          brand: null
+        }
       }
-    },
-    {
-      $unwind: {
-        path: "$providerDetails",
-        preserveNullAndEmptyArrays: true
-      }
-    },
+    });
+  }
 
-    // Step 5: FIXED - Lookup Categories using provider's g_type array
+  // Lookup category (provider g_type অনুযায়ী)
+  pipeline.push(
     {
       $lookup: {
         from: "categories",
-        let: { 
-          providerGTypes: { 
+        let: {
+          providerGTypes: {
             $cond: {
-              if: { $isArray: "$providerDetails.g_type" },
-              then: "$providerDetails.g_type",
-              else: { $ifNull: [{ $split: ["$providerDetails.g_type", ","] }, []] }
+              if: { $isArray: "$provider.g_type" },
+              then: "$provider.g_type",
+              else: { $ifNull: [{ $split: ["$provider.g_type", ","] }, []] }
             }
-          } 
+          }
         },
         pipeline: [
           {
             $match: {
               $expr: {
                 $and: [
-                  { 
-                    $or: [
-                      { $in: ["$g_type", "$$providerGTypes"] },
-                      { $in: ["$$providerGTypes", ["$g_type"]] }
-                    ]
-                  },
+                  { $or: [{ $in: ["$g_type", "$$providerGTypes"] }, { $in: ["$$providerGTypes", ["$g_type"]] }] },
                   { $eq: ["$id_active", true] }
                 ]
               }
@@ -1252,229 +2652,93 @@ exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
         as: "categoryDetails"
       }
     },
-    {
-      $unwind: {
-        path: "$categoryDetails",
-        preserveNullAndEmptyArrays: true
-      }
-    },
+    { $addFields: { category: { $arrayElemAt: ["$categoryDetails.category_name", 0] } } },
 
-    // Step 6: Add profitLoss calculation for each record
+    // Profit/Loss
     {
       $addFields: {
-        profitLoss: {
-          $subtract: [
-            { $ifNull: ["$payout", 0] },
-            { $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }] }
-          ]
-        }
+        profitLoss: { $subtract: [{ $ifNull: ["$payout", 0] }, { $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }] }] },
+        formattedDate: { $dateToString: { format: "%Y-%m-%d", date: "$start_time" } }
       }
     },
 
-    // Step 7: Group by newGameObject (g_type + game combination)
+    // Group by date & category
     {
       $group: {
         _id: {
-          g_code: "$newGameObject.g_code",
-          g_type: "$newGameObject.g_type",
-          gameName: "$newGameObject.gameName",
-          category_name: "$newGameObject.category_name"
+          date: "$formattedDate",
+          category: "$category",
+          providerCode: "$site",
+          providerName: { $ifNull: ["$provider.name", "Unknown Provider"] }
         },
-        providerCode: { $first: "$site" },
-        providerDetails: { $first: "$providerDetails" },
-        categoryDetails: { $first: "$categoryDetails" },
-        records: { $push: "$$ROOT" },
         totalTurnover: { $sum: "$turnover" },
         totalBet: { $sum: "$bet" },
         totalPayout: { $sum: "$payout" },
-        totalCommission: { $sum: { $ifNull: ["$commission", 0] } },
-        totalProfitLoss: { $sum: "$profitLoss" }
-      }
-    },
-
-    // Step 8: Determine final category
-    {
-      $addFields: {
-        gameCategory: {
-          $cond: {
-            if: { $ne: ["$categoryDetails", null] },
-            then: "$categoryDetails.category_name",
-            else: {
-              $cond: {
-                if: { $ne: ["$_id.category_name", null] },
-                then: "$_id.category_name",
-                else: "Uncategorized"
-              }
-            }
-          }
-        }
-      }
-    },
-
-    // Step 9: Group by Category
-    {
-      $group: {
-        _id: "$gameCategory",
+        totalProfitLoss: { $sum: "$profitLoss" },
         games: {
           $push: {
-            gameCode: "$_id.g_code",
-            gameType: "$_id.g_type",
-            gameName: "$_id.gameName",
-            providerCode: "$providerCode",
-            providerName: { $ifNull: ["$providerDetails.name", "Unknown Provider"] },
-            providerCompany: { $ifNull: ["$providerDetails.company", "Unknown"] },
-            totalTurnover: "$totalTurnover",
+            gameCode: "$newGameObject.g_code",
+            gameType: "$newGameObject.g_type",
+            gameName: "$newGameObject.gameName",
+            providerCode: "$site",
+            providerName: { $ifNull: ["$provider.name", "Unknown Provider"] },
+            totalTurnover: "$turnover",
+            totalBet: "$bet",
+            totalPayout: "$payout",
+            totalProfitLoss: "$profitLoss"
+          }
+        }
+      }
+    },
+
+    {
+      $group: {
+        _id: "$_id.date",
+        records: {
+          $push: {
+            gameType: "$_id.category",
+            providerCode: "$_id.providerCode",
+            platform: "$_id.providerName",
+            turnover: "$totalTurnover",
             totalBet: "$totalBet",
             totalPayout: "$totalPayout",
-            totalProfitLoss: "$totalProfitLoss"
-          }
-        },
-        categoryTurnover: { $sum: "$totalTurnover" },
-        categoryBet: { $sum: "$totalBet" },
-        categoryPayout: { $sum: "$totalPayout" },
-        categoryProfitLoss: { $sum: "$totalProfitLoss" }
-      }
-    },
-
-    // Step 10: Group providers within each category
-    {
-      $addFields: {
-        providers: {
-          $reduce: {
-            input: "$games",
-            initialValue: [],
-            in: {
-              $let: {
-                vars: {
-                  existingProviderIndex: {
-                    $indexOfArray: ["$$value.providerCode", "$$this.providerCode"]
-                  }
-                },
-                in: {
-                  $cond: {
-                    if: { $ne: ["$$existingProviderIndex", -1] },
-                    then: {
-                      $map: {
-                        input: { $range: [0, { $size: "$$value" }] },
-                        as: "idx",
-                        in: {
-                          $cond: {
-                            if: { $eq: ["$$idx", "$$existingProviderIndex"] },
-                            then: {
-                              $mergeObjects: [
-                                { $arrayElemAt: ["$$value", "$$idx"] },
-                                {
-                                  games: {
-                                    $concatArrays: [
-                                      { $arrayElemAt: ["$$value", "$$idx"] }.games,
-                                      [{
-                                        gameCode: "$$this.gameCode",
-                                        gameType: "$$this.gameType",
-                                        gameName: "$$this.gameName",
-                                        totalTurnover: "$$this.totalTurnover",
-                                        totalBet: "$$this.totalBet",
-                                        totalPayout: "$$this.totalPayout",
-                                        totalProfitLoss: "$$this.totalProfitLoss"
-                                      }]
-                                    ]
-                                  }
-                                }
-                              ]
-                            },
-                            else: { $arrayElemAt: ["$$value", "$$idx"] }
-                          }
-                        }
-                      }
-                    },
-                    else: {
-                      $concatArrays: [
-                        "$$value",
-                        [{
-                          providerCode: "$$this.providerCode",
-                          providerName: "$$this.providerName",
-                          providerCompany: "$$this.providerCompany",
-                          games: [{
-                            gameCode: "$$this.gameCode",
-                            gameType: "$$this.gameType",
-                            gameName: "$$this.gameName",
-                            totalTurnover: "$$this.totalTurnover",
-                            totalBet: "$$this.totalBet",
-                            totalPayout: "$$this.totalPayout",
-                            totalProfitLoss: "$$this.totalProfitLoss"
-                          }]
-                        }]
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            profitLoss: "$totalProfitLoss",
+            games: "$games"
           }
         }
       }
     },
 
-    // Step 11: Calculate provider stats
-    {
-      $addFields: {
-        providers: {
-          $map: {
-            input: "$providers",
-            as: "provider",
-            in: {
-              providerCode: "$$provider.providerCode",
-              providerName: "$$provider.providerName",
-              providerCompany: "$$provider.providerCompany",
-              games: "$$provider.games",
-              providerStats: {
-                turnover: { $sum: "$$provider.games.totalTurnover" },
-                bet: { $sum: "$$provider.games.totalBet" },
-                payout: { $sum: "$$provider.games.totalPayout" },
-                profitLoss: { $sum: "$$provider.games.totalProfitLoss" }
-              }
-            }
-          }
-        }
-      }
-    },
 
-    // Step 12: Final projection
-    {
-      $project: {
-        _id: 0,
-        category: "$_id",
-        categoryTurnover: 1,
-        categoryBet: 1,
-        categoryPayout: 1,
-        categoryProfitLoss: 1,
-        providers: 1,
-        date: { $literal: null }
-      }
-    },
+    // Final projection
+    // {
+    //   $project: {
+    //     _id: 0,
+    //     date: "$_id.date",
+    //     category: "$_id.category",
+    //     providerCode: "$_id.providerCode",
+    //     providerName: "$_id.providerName",
+    //     totalTurnover: 1,
+    //     totalBet: 1,
+    //     totalPayout: 1,
+    //     totalProfitLoss: 1,
+    //     // games: 1
+    //   }
+    // },
 
-    // Step 13: Sort
-    {
-      $sort: { category: sortOrder === "desc" ? -1 : 1 }
-    },
-
-    // Step 14: Pagination
+    { $sort: { date: sortOrder === "desc" ? -1 : 1 } },
     {
       $facet: {
         metadata: [{ $count: "total" }],
-        data: [
-          { $skip: (parseInt(page) - 1) * parseInt(limit) },
-          { $limit: parseInt(limit) }
-        ]
+        data: [{ $skip: (parseInt(page) - 1) * parseInt(limit) }, { $limit: parseInt(limit) }]
       }
     }
-  ];
+  );
 
   try {
-    // 5️⃣ Execute aggregation
-    const result = await BettingHistory.aggregate(pipeline);
-
-    // 6️⃣ Prepare response
+    const result = await BettingHistory.aggregate(pipeline).allowDiskUse(true);
     const data = result[0].data;
+    console.log(data);
     const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
 
     res.status(200).json({
@@ -1486,108 +2750,11 @@ exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error("Aggregation error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error fetching betting records",
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: "Error fetching betting records", error: error.message });
   }
 });
-/**
- * @desc    Get betting record by ID
- * @route   GET /api/v1/betting/records/:id
- * @access  Private
- */
-exports.getBettingRecordById = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const user = req.user;
 
-  const pipeline = [
-    {
-      $match: {
-        $or: [{ id }, { ref_no: id }],
-        member: user.member_id || user.id,
-      },
-    },
 
-    // Extensive lookups for detailed view
-    {
-      $lookup: {
-        from: "gamelisttables",
-        let: { product: "$product", gameId: "$game_id" },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $or: [
-                  {
-                    $and: [
-                      { $eq: ["$p_code", "$$product"] },
-                      { $eq: ["$g_code", "$$gameId"] },
-                    ],
-                  },
-                  { $eq: ["$p_code", "$$product"] },
-                ],
-              },
-            },
-          },
-        ],
-        as: "game",
-      },
-    },
-    { $unwind: { path: "$game", preserveNullAndEmptyArrays: true } },
-
-    {
-      $lookup: {
-        from: "betprovidertables",
-        localField: "product",
-        foreignField: "providercode",
-        as: "provider",
-      },
-    },
-    { $unwind: { path: "$provider", preserveNullAndEmptyArrays: true } },
-
-    {
-      $lookup: {
-        from: "categories",
-        localField: "game.category_name",
-        foreignField: "category_name",
-        as: "category",
-      },
-    },
-    { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
-
-    // Add calculated fields
-    {
-      $addFields: {
-        profitLoss: {
-          $subtract: [
-            { $ifNull: ["$payout", 0] },
-            {
-              $add: [{ $ifNull: ["$bet", 0] }, { $ifNull: ["$commission", 0] }],
-            },
-          ],
-        },
-        netAmount: {
-          $subtract: ["$payout", "$commission"],
-        },
-      },
-    },
-  ];
-
-  const record = await BettingHistory.aggregate(pipeline);
-
-  if (!record || record.length === 0) {
-    return next(
-      new ErrorResponse(`Betting record not found with id: ${id}`, 404)
-    );
-  }
-
-  res.status(200).json({
-    success: true,
-    data: record[0],
-  });
-});
 
 /**
  * @desc    Export betting records to CSV

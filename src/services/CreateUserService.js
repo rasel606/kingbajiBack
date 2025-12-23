@@ -563,6 +563,8 @@ exports.userDetails = async (req, res) => {
             levelOneReferrals: 1,
             levelTwoReferrals: 1,
             levelThreeReferrals: 1,
+            birthday: 1,
+            email: 1,
           },
         },
       ]);

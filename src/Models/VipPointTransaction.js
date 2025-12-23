@@ -7,10 +7,15 @@ const VipPointTransactionSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  type: { 
+  source: { 
     type: String, 
     required: true,
     enum: ['earned', 'conversion', 'bonus', 'adjustment'] 
+  },
+  type: {
+    type: String,
+    required: true,
+    enum: ['used', 'recived', 'adjustment']
   },
   amount: { 
     type: Number, 
@@ -29,6 +34,9 @@ const VipPointTransactionSchema = new mongoose.Schema({
     index: true
   },
   balanceAfter: { 
+    type: Number 
+  },
+  points: { 
     type: Number 
   },
   relatedTurnover: { 

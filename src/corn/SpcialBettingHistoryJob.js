@@ -1,7 +1,7 @@
 const cron = require('node-cron');
 const axios = require('axios');
 const md5 = require('md5');
-const BettingHistory = require('../Models/BettingHistory');
+const BettingHistory = require('../models/BettingHistory');
 
 const LOG_URL = 'http://fetch.336699bet.com';
 const SECRET_KEY = '9332fd9144a3a1a8bd3ab7afac3100b0';
@@ -50,7 +50,7 @@ console.log("SpcialBettingHistoryJob response", response.data);
               $set: {
                 site: record.site,
                 product: record.product,
-                member: record.member,
+                member: record.member.toString(),
                 game_id: record.game_id,
                 start_time: new Date(record.start_time),
                 match_time: new Date(record.match_time),

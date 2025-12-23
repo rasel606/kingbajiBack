@@ -103,10 +103,6 @@
 //   }
 // };
 
-
-
-
-
 // controllers/vipUserController.js
 // const UserVip = require('../models/UserVip');
 // const Transaction = require('../models/VipPointTransaction'); // You'll need to create this model
@@ -120,7 +116,7 @@
 //       console.log("Fetching VIP data for user:", req.user);
 //       // Find or create VIP record
 //       let userVip = await UserVip.findOne({ userId });
-      
+
 //       if (!userVip) {
 //         // Create new VIP record if doesn't exist
 //         userVip = await UserVip.create({
@@ -135,7 +131,7 @@
 
 //       // Calculate experience (based on monthly turnover)
 //       const experience = userVip.monthlyTurnover;
-      
+
 //       // Get next level requirement
 //       const { VIP_CONFIG } = require('../models/UserVip');
 //       const nextLevel = this.getNextLevel(userVip.currentLevel);
@@ -230,10 +226,10 @@
 //   static async getVipHistory(req, res) {
 //     try {
 //       const userId = req.user.id;
-      
+
 //       // You should create a VIPHistory model to track level changes
 //       // For now, using the UserVip model with monthly aggregation
-      
+
 //       const vipHistory = await UserVip.aggregate([
 //         { $match: { userId: userId } },
 //         {
@@ -261,7 +257,7 @@
 //       if (vipHistory.length === 0) {
 //         const userVip = await UserVip.findOne({ userId });
 //         const currentDate = new Date();
-        
+
 //         vipHistory.push({
 //           year: currentDate.getFullYear(),
 //           month: currentDate.getMonth() + 1,
@@ -307,7 +303,7 @@
 
 //       // Get user VIP data
 //       const userVip = await UserVip.findOne({ userId });
-      
+
 //       if (!userVip) {
 //         return res.status(404).json({
 //           success: false,
@@ -397,7 +393,7 @@
 //   static async getConversionPreview(req, res) {
 //     try {
 //       const { points } = req.query;
-      
+
 //       if (!points || points <= 0) {
 //         return res.status(400).json({
 //           success: false,
@@ -430,9 +426,9 @@
 //     try {
 //       const userId = req.user.id;
 //       const userVip = await UserVip.findOne({ userId });
-      
+
 //       const level = userVip?.currentLevel || 'Bronze';
-      
+
 //       const benefits = {
 //         Bronze: {
 //           name: 'Bronze',
@@ -508,7 +504,7 @@
 //           userProgress: {
 //             currentTurnover: userVip?.monthlyTurnover || 0,
 //             nextLevelTurnover: benefits[level]?.monthlyTurnoverRequired || 0,
-//             progressPercentage: userVip ? 
+//             progressPercentage: userVip ?
 //               (userVip.monthlyTurnover / benefits[level]?.monthlyTurnoverRequired) * 100 : 0
 //           }
 //         }
@@ -566,26 +562,26 @@
 
 // module.exports = VipUserController;
 
-const UserVip = require('../models/UserVip');
-const Transaction = require('../models/VipPointTransaction'); // You'll need to create this model
-const mongoose = require('mongoose');
-
-
+const User = require("../models/User");
+const UserVip = require("../models/UserVip");
+const VipPointTransaction = require("../models/VipPointTransaction"); // You'll need to create this model
+const mongoose = require("mongoose");
+const vipService = require("../services/VipService");
 exports.getMyVipData = async (req, res) => {
   try {
     const userId = req.user.userId;
-console.log(userId);
+    console.log(userId);
     let vip = await UserVip.findOne({ userId });
     // if (!vip) {
     //   vip = await UserVip.create({ userId });
     // }
-console.log(vip);
+    console.log(vip);
     const nextLevelMap = {
-      Bronze: 'Silver',
-      Silver: 'Gold',
-      Gold: 'Diamond',
-      Diamond: 'Elite',
-      Elite: 'Elite'
+      Bronze: "Silver",
+      Silver: "Gold",
+      Gold: "Diamond",
+      Diamond: "Elite",
+      Elite: "Elite",
     };
 
     const nextLevel = nextLevelMap[vip.currentLevel];
@@ -598,9 +594,9 @@ console.log(vip);
         monthlyTurnover: vip.monthlyTurnover,
         lifetimeTurnover: vip.lifetimeTurnover,
         nextLevel,
-        minConversionPoints: 100,
-        conversionRatio: '100 VP = 1 BDT'
-      }
+        minConversionPoints: 1000,
+        conversionRatio: "1000 VP = 1 BDT",
+      },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -613,10 +609,11 @@ console.log(vip);
 exports.getVipPointRecords = async (req, res) => {
   try {
     const userId = req.user.userId;
-
-    const records = await VipPointTransaction.find({ userId })
-      .sort({ createdAt: -1 });
-
+    console.log(userId);
+    const records = await VipPointTransaction.find({ userId }).sort({
+      createdAt: -1,
+    });
+    console.log(records);
     res.json({ success: true, data: records });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -629,19 +626,24 @@ exports.getVipPointRecords = async (req, res) => {
 exports.getVipHistory = async (req, res) => {
   try {
     const userId = req.user.userId;
+    console.log(userId);
     const vip = await UserVip.findOne({ userId });
-
+    console.log(vip);
     if (!vip) {
       return res.json({ success: true, data: [] });
     }
 
     // Example monthly history
-    const history = [{
-      year: new Date().getFullYear(),
-      month: new Date().toLocaleString('default', { month: 'long' }),
-      level: vip.currentLevel,
-      experience: vip.monthlyTurnover / 1000
-    }];
+    const history = [
+      {
+        year: new Date().getFullYear(),
+        month: new Date().toLocaleString("default", { month: "long" }),
+        level: vip.currentLevel,
+        experience: vip.monthlyTurnover / 1000,
+      },
+    ];
+
+    console.log(history);
 
     res.json({ success: true, data: history });
   } catch (err) {
@@ -652,46 +654,92 @@ exports.getVipHistory = async (req, res) => {
 /**
  * POST /api/vip/convert-points
  */
+// exports.convertVipPoints = async (req, res) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+//   try {
+//     console.log(req.body);
+//     const userId = req.user.userId;
+//     const { points } = req.body;
+//     console.log("points", points);
+//     const user = await User.findOne({ userId});
+//     console.log("user", user.userId);
+//     const vip = await UserVip.findOne({ userId: user.userId });
+//     console.log("vip", vip);
+//     if (!vip) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "VIP data not found" });
+//     }
+//     console.log(vip.vipPoints);
+//     if (points < 1000) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Minimum 100 VP required" });
+//     }
+//     console.log(vip.vipPoints);
+//     if (vip.vipPoints < points) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Insufficient VP" });
+//     }
+//     console.log(vip.vipPoints);
+//     const realMoney = points / 1000;
+//     const claimAmount = realMoney;
+//     // await VipPointTransaction.create({
+//     //   userId,
+//     //   type: "used",
+//     //   points,
+//     //   source: "conversion",
+//     //   balanceAfter: vip.vipPoints,
+//     // });
+//     await User.updateOne({ userId }, { $inc: { balance: claimAmount }}, { session});
+//     console.log("vip.vipPoints", vip.vipPoints , "userId", user.userId);
+//     vip.vipPoints = vip.vipPoints - points;
+//     console.log("vip.vipPoints", vip.vipPoints);
+//     await vip.save({ session });
+//     await VipPointTransaction.create([{
+//       userId,
+//       source: "conversion",
+//       type: "used",
+//       points,
+//       amount,
+//       balanceAfter: vip.vipPoints,
+//       description: "VIP points converted"
+//     }], { session });
+
+
+//      await session.commitTransaction();
+//     console.log(vip.vipPoints);
+
+//     res.json({
+//       success: true,
+//       data: {
+//         convertedPoints: points,
+//         amount: realMoney,
+//       },
+//     });
+//   } catch (err) {
+//     await session.abortTransaction();
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+//   finally {
+//     session.endSession();
+//   }
+// };
 exports.convertVipPoints = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const { points } = req.body;
-
-    const vip = await UserVip.findOne({ userId });
-    if (!vip) {
-      return res.status(404).json({ success: false, message: 'VIP data not found' });
-    }
-
-    if (points < 100) {
-      return res.status(400).json({ success: false, message: 'Minimum 100 VP required' });
-    }
-
-    if (vip.vipPoints < points) {
-      return res.status(400).json({ success: false, message: 'Insufficient VP' });
-    }
-
-    vip.vipPoints -= points;
-    await vip.save();
-
-    await VipPointTransaction.create({
-      userId,
-      type: 'used',
-      points,
-      source: 'conversion',
-      balanceAfter: vip.vipPoints
-    });
-
-    const realMoney = points / 100;
+    const amount = await vipService.convertPoints(
+      req.user.userId,
+      Number(req.body.points)
+    );
 
     res.json({
       success: true,
-      data: {
-        convertedPoints: points,
-        amount: realMoney
-      }
+      data: { amount }
     });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+  } catch (e) {
+    res.status(400).json({ success: false, message: e.message });
   }
 };
 
@@ -702,9 +750,9 @@ exports.getConversionPreview = async (req, res) => {
   res.json({
     success: true,
     data: {
-      ratio: '100 VP = 1 BDT',
-      minPoints: 100
-    }
+      ratio: "1000 VP = 1 BDT",
+      minPoints: 1000,
+    },
   });
 };
 
@@ -715,11 +763,11 @@ exports.getLevelBenefits = async (req, res) => {
   res.json({
     success: true,
     data: {
-      Bronze: { cashback: '0.5%', withdrawLimit: 'Normal' },
-      Silver: { cashback: '1%', withdrawLimit: 'Fast' },
-      Gold: { cashback: '1.5%', withdrawLimit: 'Faster' },
-      Diamond: { cashback: '2%', withdrawLimit: 'Instant' },
-      Elite: { cashback: '3%', withdrawLimit: 'VIP Priority' }
-    }
+      Bronze: { cashback: "0.5%", withdrawLimit: "Normal" },
+      Silver: { cashback: "1%", withdrawLimit: "Fast" },
+      Gold: { cashback: "1.5%", withdrawLimit: "Faster" },
+      Diamond: { cashback: "2%", withdrawLimit: "Instant" },
+      Elite: { cashback: "3%", withdrawLimit: "VIP Priority" },
+    },
   });
 };
