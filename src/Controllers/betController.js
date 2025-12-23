@@ -1066,25 +1066,70 @@ exports.createFeaturedGame = asyncHandler(async (req, res) => {
   }
 })
 
+// exports.getDateRange = (option) => {
+//   const now = new Date();
+//   let from;
+
+//   switch (option) {
+//     case "today":
+//       from = new Date(now.setHours(0, 0, 0, 0));
+//       break;
+//     case "last7days":
+//       from = new Date(now.setHours(0, 0, 0, 0));
+//       from.setDate(from.getDate() - 7);
+//       break;
+//     default:
+//       from = new Date();
+//       from.setDate(from.getDate() - 7);
+//   }
+
+//   return { from, to: new Date() };
+// };
+
+
+
+
+
 exports.getDateRange = (option) => {
   const now = new Date();
   let from;
+  let to = new Date();
 
   switch (option) {
     case "today":
-      from = new Date(now.setHours(0, 0, 0, 0));
+      from = new Date();
+      from.setHours(0, 0, 0, 0);
       break;
+
     case "last7days":
-      from = new Date(now.setHours(0, 0, 0, 0));
+      from = new Date();
+      from.setHours(0, 0, 0, 0);
       from.setDate(from.getDate() - 7);
       break;
+
+    case "last30days":
+      from = new Date();
+      from.setHours(0, 0, 0, 0);
+      from.setDate(from.getDate() - 30);
+      break;
+
+    case "thisMonth":
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      break;
+
+    case "custom":
+      // handled separately if needed
+      return null;
+
     default:
       from = new Date();
+      from.setHours(0, 0, 0, 0);
       from.setDate(from.getDate() - 7);
   }
 
-  return { from, to: new Date() };
+  return { from, to };
 };
+
 
 // exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
 //   const {
