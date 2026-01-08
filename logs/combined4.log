@@ -11555,3 +11555,8 @@
 {"level":"info","message":"127.0.0.1 - - [08/Jan/2026:05:29:11 +0000] \"GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1\" 304 - \"http://localhost:3001/\" \"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36\"","service":"bajicrick-api"}
 {"level":"info","message":"127.0.0.1 - - [08/Jan/2026:05:29:13 +0000] \"GET /api/games/New-Games-with-Providers-By-Category?category_name=SPORTS HTTP/1.1\" 304 - \"http://localhost:3001/\" \"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36\"","service":"bajicrick-api"}
 {"level":"info","message":"SIGINT received. Shutting down gracefully","service":"bajicrick-api"}
+{"level":"info","message":"File logging enabled - logs directory created","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5000","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}
+{"level":"info","message":"127.0.0.1 - - [08/Jan/2026:05:37:17 +0000] \"GET /assets/images/icon-set/icon-arrow-type06.svg HTTP/1.1\" 404 139 \"http://localhost:3001/gamesProvidersPage/SLOT/JD\" \"Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36\"","service":"bajicrick-api"}
