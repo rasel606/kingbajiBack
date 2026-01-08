@@ -18,10 +18,10 @@
 const express = require('express');
 const router = express.Router();
 const referralController = require('../controllers/referralController');
-const {auth }= require('../middleware/auth');
+const {auth} = require('../middleWare/auth');
 
 // Apply auth middleware to all routes
-router.use(auth);
+
 
 // Get referral dashboard
 router.get('/dashboard',auth, referralController.getDashboard);
