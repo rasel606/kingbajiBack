@@ -147,6 +147,19 @@ exports.claimBonus = asyncHandler(async function (req, res) {
       ref // ✅ unique ref
     }], { session });
 
+
+              // await UserBonus.create([{
+              //   userId: userId,
+              //   bonusId: wallet.bonusId,
+              //   amount: transaction.amount,
+              //   bonusAmount: transaction.amount,
+              //   remainingAmount: transaction.amount,
+              //   turnoverRequirement: transaction.amount,
+              //   expiryDate: transaction.expiryDate,
+              //   transactionId: transaction.transactionID,
+              //   bonusType: transaction.bonusType
+              // }], { session });
+
     // Update wallet
     wallet.balance = 0;
     wallet.amount = 0;

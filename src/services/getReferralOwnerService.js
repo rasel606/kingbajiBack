@@ -215,7 +215,7 @@ const AdminModel = require("../models/AdminModel");
  * Supports: admin | subAdmin | affiliate | user
  */
 const getReferralData = async (role, filter = {}, options = {}) => {
-  const { page = 1, limit = 10, sort = {} } = options;
+  const { page = 1, limit = 30, sort = {} } = options;
   const skip = (page - 1) * limit;
 
   let Model;

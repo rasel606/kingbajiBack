@@ -42,7 +42,7 @@ router.post('/login_user', loginUser);
 
 router.get('/user_details', auth, CreateUserService.userDetails);
 router.post('/update-name',auth, UpdateProfile.updateName);
-router.put('/update-birthday',auth, UpdateProfile.sendotp);
+router.put('/update-birthday',auth, UpdateProfile.verifyBirthday);
 router.get('/verify', CreateUserService.verify);
 router.post('/reset_and_update_password', CreateUserService.resetAndUpdatePassword);
 router.put('/update-password', auth, CreateUserService.changePassword);

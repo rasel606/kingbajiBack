@@ -276,7 +276,7 @@ exports.GetParentAndDownlineTransactions = async (
   query
 ) => {
   try {
-    console.log("user", user.userId, user.role, user.referralCode);
+    console.log("user", query);
 
     // STEP 1: Get parent
     const parent = await ParentUserModel.findOne({
@@ -317,15 +317,14 @@ exports.GetParentAndDownlineTransactions = async (
       );
     }
 
-    // STEP 5: Build transaction filter
-    const filter = { userId: { $in: allUserIds } };
+    // STEP 5: Build transaction filter                                                                                 
+    const filter = { userId: { $in: allUserIds } }
     if (query.status !== undefined) filter.status = parseInt(query.status);
-    if (query.type) filter.type = query.type;
+    if (query.type !== undefined) filter.type = query.type;
 
     const limit = parseInt(query.limit) || 10;
     const page = parseInt(query.page) || 1;
     const skip = (page - 1) * limit;
-
     // STEP 6: Fetch transactions
     const [transactions, total] = await Promise.all([
       transactionModel
@@ -784,16 +783,16 @@ const formatSingleTransaction = (transaction) => {
     updatetime: transaction.updatetime,
     user: transaction.userId
       ? {
-          name: transaction.userId.name,
-          username: transaction.userId.username,
-          email: transaction.userId.email,
-        }
+        name: transaction.userId.name,
+        username: transaction.userId.username,
+        email: transaction.userId.email,
+      }
       : null,
     bonus: transaction.bonusId
       ? {
-          name: transaction.bonusId.name,
-          description: transaction.bonusId.description,
-        }
+        name: transaction.bonusId.name,
+        description: transaction.bonusId.description,
+      }
       : null,
   };
 };

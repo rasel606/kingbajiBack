@@ -3,7 +3,8 @@ const AuthService = require('../services/authService');
 const UserService = require('../services/userService');
 const ApiService = require('../services/apiService');
 const { validateRegistration, validateLogin } = require('../utils/validators');
-
+const UserVip = require('../models/UserVip');
+const notificationController = require('../controllers/notificationController');
 exports.register = async (req, res) => {
   try {
     const { userId, phone, password, countryCode, referredBy, name } = req.body;
@@ -37,6 +38,15 @@ exports.register = async (req, res) => {
       referredBy,
       name
     });
+
+    const savedUser = await newUser.save();
+
+    const vipUser = await UserVip.findOne({ userId: savedUser.userId });
+    if (vipUser) {
+      await UserVip.findOneAndDelete({ userId: savedUser.userId });
+    }
+    const newVipUser = new UserVip({ userId: savedUser.userId });
+    await newVipUser.save();  
 
     console.log("✅ User saved to database:", newUser.userId);
 
@@ -74,6 +84,13 @@ exports.register = async (req, res) => {
 
     // Prepare response
     const userResponse = await UserService.getUserProfile(newUser.userId);
+
+
+    await notificationController.createNotification(
+                "Sign Up Notification",
+                userResponse.userId,
+                `Congratulations sign up success.`,
+            );
 
     res.status(201).json({
       success: true,

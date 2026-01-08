@@ -178,7 +178,7 @@ const Transaction = require('../models/TransactionModel');
 const Bonus = require('../models/Bonus');
 const UserBonus = require('../models/UserBonus');
 const AppError = require('../utils/AppError');
-const notificationController = require('../Controllers/notificationController');
+const notificationController = require('../controllers/notificationController');
 const generateReferralCode = require('../utils/generateReferralCode');
 
 // Helper: find referral owner (Admin/SubAdmin/Affiliate/Agent/SubAgent)
@@ -242,7 +242,7 @@ const submitTransaction = async (payload) => {
 
   const existing = await Transaction.findOne({ userId, referredBy: user.referredBy, transactionID, payment_type });
   if (existing) throw new AppError('Transaction already used', 409);
-
+      const depositBonus = await Bonus.findOne({ isActive: true, _id: bonusCode });
   let bonusAmount = 0, bonusId = null, turnoverRequirement = 0;
   if (baseAmount >= 200 && bonusCode) {
     const depositBonus = await Bonus.findOne({ isActive: true, _id: bonusCode });
@@ -268,6 +268,7 @@ const submitTransaction = async (payload) => {
     status: 0,
     referredBy: user.referredBy,
     bonusId,
+    bonusType:depositBonus.bonusType[0],
     isBonusApplied: bonusAmount > 0,
     bonusStatus: bonusAmount > 0 ? 'pending' : undefined,
     turnoverRequirement,
@@ -287,6 +288,7 @@ const submitTransaction = async (payload) => {
 
 // approve deposit - uses MongoDB session to keep atomic changes
 const approveDeposit = async ({ userId, referralCode, transactionID, status }) => {
+  console.log('approveDeposit',userId, referralCode, transactionID, status);
   if (!userId || !transactionID) throw new AppError('Missing userId or transactionID', 400);
   const user = await User.findOne({ userId });
   if (!user) throw new AppError('User not found', 404);
@@ -361,7 +363,8 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
             remainingAmount: transaction.bonus_amount,
             turnoverRequirement: transaction.turnoverRequirement,
             expiryDate: transaction.expiryDate,
-            transactionId: transaction.transactionID
+            transactionId: transaction.transactionID,
+            bonusType: transaction.bonusType
           }], { session });
 
           user.bonus = {
@@ -501,7 +504,8 @@ const approveWithdraw = async ({ userId, referralCode, transactionID, status }) 
     const user = await User.findOne({ userId });
     if (!user) throw new AppError('User not found', 404);
 
-    const transaction = await Transaction.findOne({ userId, transactionID, type: 0 });
+    const transaction = await Transaction.findOne({ userId: user.userId, transactionID, type: 0 });
+    console.log(transaction);
     if (!transaction) throw new AppError('Transaction not found', 404);
     if (transaction.status !== 0) throw new AppError('Transaction already processed', 400);
 

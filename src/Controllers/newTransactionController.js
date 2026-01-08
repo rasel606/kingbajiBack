@@ -23,6 +23,7 @@ exports.approveDeposit = catchAsync(async (req, res, next) => {
   const referralCode = user.referralCode;
 
   const result = await transactionService.approveDeposit({ userId, referralCode, transactionID, status });
+  console.log(result);
   res.status(200).json({ success: true, ...result });
 });
 

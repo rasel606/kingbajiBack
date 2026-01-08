@@ -1,11 +1,11 @@
 const User = require('../models/User');
 const { validateFullName } = require('../utils/validators');
-
+const notificationController = require('../controllers/notificationController');
 exports.updateFullName = async (req, res) => {
   try {
     const { fullName } = req.body;
     const userId = req.user.userId;
-console.log('💡 Received request to update full name:', { userId, fullName });
+    console.log('💡 Received request to update full name:', { userId, fullName });
     console.log(`🔄 Updating full name for user: ${userId}`, { fullName });
 
     // Validate input
@@ -47,6 +47,11 @@ console.log('💡 Received request to update full name:', { userId, fullName });
     user.updatetimestamp = new Date();
 
     await user.save();
+            await notificationController.createNotification(
+                    "Notification",
+                    user.userId,
+                    `Your name updated success.`,
+                );
 
     console.log(`✅ Full name updated for user: ${userId}`);
 

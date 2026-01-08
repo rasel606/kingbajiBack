@@ -656,28 +656,25 @@ exports.getBettingRecords = asyncHandler(async (req, res, next) => {
     maxBet,
     minPayout,
     maxPayout,
-    userId
+    
   } = req.query;
+    const userId = req.user.userId;
   console.log("req.query", {
     platforms,
     gameTypes,
     sortBy,
     sortOrder,
-    search,
-    status,
-    minBet,
-    maxBet,
-    minPayout,
-    maxPayout,
+userId
   });
 
+  const skip = (parseInt(page) - 1) * parseInt(limit);
   const pageNum = parseInt(page);
   const limitNum = parseInt(limit);
 
   // Calculate date range
   const dateRange = dateUtils.getDateRange(dateOption);
   // const userId = req.user.id;
-  const user = await User.findOne({userId}).lean();
+  const user = await User.findOne({userId});
   console.log("user", user.userId);
   // Build match pipeline
   const matchStage = {
@@ -695,115 +692,103 @@ exports.getBettingRecords = asyncHandler(async (req, res, next) => {
   // }
   matchStage.member = user.userId;
 
-  // Additional filters
-  // if (status) {
-  //   matchStage.status = parseInt(status);
-  // }
 
-  // if (platforms) {
-  //   const platformArray = platforms.split(",");
-  //   matchStage.provider_code = { $in: platformArray };
-  // }
+  if (status) {
+    matchStage.status = parseInt(status);
+  }
 
-  // if (gameTypes) {
-  //   const gameTypeArray = gameTypes.split(",");
-  //   matchStage.game_type = { $in: gameTypeArray };
-  // }
+  if (platforms) {
+    const platformArray = platforms.split(",");
+    matchStage.provider_code = { $in: platformArray };
+  }
 
-  // // Bet amount filters
-  // if (minBet || maxBet) {
-  //   matchStage.bet = {};
-  //   if (minBet) matchStage.bet.$gte = parseFloat(minBet);
-  //   if (maxBet) matchStage.bet.$lte = parseFloat(maxBet);
-  // }
+  if (gameTypes) {
+    const gameTypeArray = gameTypes.split(",");
+    matchStage.game_type = { $in: gameTypeArray };
+  }
 
-  // // Payout filters
-  // if (minPayout || maxPayout) {
-  //   matchStage.payout = {};
-  //   if (minPayout) matchStage.payout.$gte = parseFloat(minPayout);
-  //   if (maxPayout) matchStage.payout.$lte = parseFloat(maxPayout);
-  // }
 
-  // // Search functionality
-  // if (search) {
-  //   matchStage.$or = [
-  //     { ref_no: { $regex: search, $options: "i" } },
-  //     { game_id: { $regex: search, $options: "i" } },
-  //     { bet_detail: { $regex: search, $options: "i" } },
-  //   ];
-  // }
+
+  // Search functionality
+  if (search) {
+    matchStage.$or = [
+      { ref_no: { $regex: search, $options: "i" } },
+      { game_id: { $regex: search, $options: "i" } },
+      { bet_detail: { $regex: search, $options: "i" } },
+    ];
+  }
   console.log(await BettingHistory.findOne({ member: user.userId }));
 
   // Build aggregation pipeline
   const result = await BettingHistory.aggregate([
     { $match: matchStage },
 
-    // // Lookup game details
-    // {
-    //   $lookup: {
-    //     from: "gamelisttables",
-    //     let: { site: "$provider_code", gameId: "$g_code" },
-    //     pipeline: [
-    //       {
-    //         $match: {
-    //           $expr: {
-    //             $or: [
-    //               {
-    //                 $and: [
-    //                   { $eq: ["$p_code", "$$site"] },
-    //                   { $eq: ["$g_code", "$$gameId"] },
-    //                 ],
-    //               },
-    //               { $eq: ["$p_code", "$$site"] },
-    //             ],
-    //           },
-    //         },
-    //       },
-    //       {
-    //         $project: {
-    //           g_code: 1,
-    //           p_code: 1,
-    //           gameName: 1,
-    //           imgFileName: 1,
-    //           category_name: 1,
-    //           g_type: 1,
-    //         },
-    //       },
-    //     ],
-    //     as: "game",
-    //   },
-    // },
-    // { $unwind: { path: "$game", preserveNullAndEmptyArrays: true } },
+    // Lookup game details
+    {
+      $lookup: {
+        from: "gamelisttables",
+        let: { site: "$provider_code", gameId: "$g_code" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  {
+                    $and: [
+                      { $eq: ["$p_code", "$$site"] },
+                      { $eq: ["$g_code", "$$gameId"] },
+                    ],
+                  },
+                  { $eq: ["$p_code", "$$site"] },
+                ],
+              },
+            },
+          },
+          {
+            $project: {
+              g_code: 1,
+              p_code: 1,
+              gameName: 1,
+              imgFileName: 1,
+              category_name: 1,
+              g_type: 1,
+            },
+          },
+        ],
+        as: "game",
+      },
+    },
+    { $unwind: { path: "$game", preserveNullAndEmptyArrays: true } },
 
-    // // Lookup provider
-    // {
-    //   $lookup: {
-    //     from: "betprovidertables",
-    //     let: { p_code: "$site" },
-    //     pipeline: [
-    //       { $match: { $expr: { $eq: ["$providercode", "$$p_code"] } } },
-    //       { $project: { providercode: 1, company: 1, name: 1, image_url: 1 } },
-    //     ],
-    //     as: "provider",
-    //   },
-    // },
-    // { $unwind: { path: "$provider", preserveNullAndEmptyArrays: true } },
+    // Lookup provider
+    {
+      $lookup: {
+        from: "betprovidertables",
+        let: { p_code: "$site" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$providercode", "$$p_code"] } } },
+          { $project: { providercode: 1, company: 1, name: 1, image_url: 1 } },
+        ],
+        as: "provider",
+      },
+    },
+    { $unwind: { path: "$provider", preserveNullAndEmptyArrays: true } },
 
-    // // Lookup category
-    // {
-    //   $lookup: {
-    //     from: "categories",
-    //     let: { category_Name: "$game.category_name" },
-    //     pipeline: [
-    //       { $match: { $expr: { $eq: ["$category_name", "$$category_Name"] } } },
-    //       { $project: { category_name: 1, g_type: 1, image: 1 } },
-    //     ],
-    //     as: "category",
-    //   },
-    // },
-    // { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
+    // Lookup category
+    {
+      $lookup: {
+        from: "categories",
+        let: { category_Name: "$game.category_name" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$category_name", "$$category_Name"] } } },
+          { $project: { category_name: 1, g_type: 1, image: 1 } },
+        ],
+        as: "category",
+      },
+    },
+    { $unwind: { path: "$category", preserveNullAndEmptyArrays: true } },
 
-    // // Add calculated fields
+    // Add calculated fields
     // {
     //   $addFields: {
     //     profitLoss: {
@@ -820,8 +805,8 @@ exports.getBettingRecords = asyncHandler(async (req, res, next) => {
     //   },
     // },
 
-    // // Sort
-    // { $sort: { [sortBy]: sortOrder === "desc" ? -1 : 1 } },
+    // Sort
+    { $sort: { [sortBy]: sortOrder === "desc" ? -1 : 1 } },
 
     // // Facet for pagination and total count
     // {
@@ -2535,7 +2520,7 @@ exports.getBettingRecordsGrouped = asyncHandler(async (req, res) => {
   const {
     page = 1,
     limit = 20,
-    dateOption = "last7days",
+    dateOption = "today",
     platforms = "",
     gameTypes = "",
     sortBy = "start_time",

@@ -242,6 +242,7 @@ const md5 = require("md5");
 
 const BettingHistory = require("../models/BettingHistory");
 const BonusWallet = require("../models/BonusWallet");
+const Bonus = require("../models/Bonus");
 const UserVip = require("../models/UserVip");
 
 /* ==============================
@@ -349,15 +350,18 @@ const BettingHistoryJob = async () => {
           userId,
           bonusType: "dailyRebate",
         });
+        let bonus = await Bonus.findOne({
+          bonusType: "dailyRebate",
+        });
 
         if (!bonusWallet) {
           bonusWallet = await BonusWallet.create({
             userId,
-            bonusId: `DAILY_REBATE_${Date.now()}`,
-            bonusType: "dailyRebate",
+            bonusId: bonus._id,
+            bonusType: bonus.bonusType,
             amount: rebateAmount,
             balance: rebateAmount,
-            wageringRequirement: 0,
+            wageringRequirement: bonus.wageringRequirement,
             wageringCompleted: 0,
             provider: record.site,
             status: "ACTIVE",
@@ -365,9 +369,12 @@ const BettingHistoryJob = async () => {
             expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
           });
         } else {
+          bonusWallet.wageringCompleted += rebateAmount;
+          
           bonusWallet.amount += rebateAmount;
           bonusWallet.balance += rebateAmount;
           bonusWallet.provider = record.site;
+          
           await bonusWallet.save();
         }
 

@@ -1442,7 +1442,7 @@ console.log("User:", user.email, user.referralCode, user.userId, user.role);
     // }
     const query = {
       status: req.query.status || 0,
-      type: req.query.type || 0,
+      type: 0,
       limit: req.query.limit || 50,
       page: req.query.page || 1,
       userId: req.query.userId || null

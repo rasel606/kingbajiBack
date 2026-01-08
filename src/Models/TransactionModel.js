@@ -47,6 +47,10 @@ const transactionModelSchema = new mongoose.Schema({
     is_commission: { type: Boolean, default: false },
     referredBy: { type: String },
     paymentGatewayOwner: { type: String,  enum: ['SubAdmin', 'Agent', "Admin"] },
+    bonusType: {
+        type: String,
+        enum: ['deposit', 'dailyRebate', 'weeklyBonus', 'vip', 'referral', 'other','referralRebate', 'normalDeposit','signup','birthday'],
+    },
     // referredbysubAdmin: { type: String, ref: 'SubAdmin' },
     datetime: { type: Date, default: Date.now },
     updatetime: { type: Date, default: Date.now },

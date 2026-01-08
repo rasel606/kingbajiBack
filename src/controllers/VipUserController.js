@@ -570,12 +570,12 @@ const vipService = require("../services/VipService");
 exports.getMyVipData = async (req, res) => {
   try {
     const userId = req.user.userId;
-    console.log(userId);
+    console.log("UserVip userId",userId);
     let vip = await UserVip.findOne({ userId });
     // if (!vip) {
     //   vip = await UserVip.create({ userId });
     // }
-    console.log(vip);
+    console.log("UserVip userId",vip);
     const nextLevelMap = {
       Bronze: "Silver",
       Silver: "Gold",
@@ -584,19 +584,23 @@ exports.getMyVipData = async (req, res) => {
       Elite: "Elite",
     };
 
-    const nextLevel = nextLevelMap[vip.currentLevel];
+    const nextLevel = nextLevelMap[vip.currentLevel] || "Bronze";
 
+    data= {
+        currentLevel: vip.currentLevel || "Bronze",
+        vipPoints: vip.vipPoints || 0,
+        monthlyTurnover: vip.monthlyTurnover || 0,
+        lifetimeTurnover: vip.lifetimeTurnover || 0,
+        nextLevel : nextLevel || "Elite",
+        minConversionPoints: 1000 || 0,
+        conversionRatio: "1000 VP = 1 BDT",
+      }
+
+console.log("UserVip userId",nextLevel);
+console.log("UserVip userId",data);
     res.json({
       success: true,
-      data: {
-        currentLevel: vip.currentLevel,
-        vipPoints: vip.vipPoints,
-        monthlyTurnover: vip.monthlyTurnover,
-        lifetimeTurnover: vip.lifetimeTurnover,
-        nextLevel,
-        minConversionPoints: 1000,
-        conversionRatio: "1000 VP = 1 BDT",
-      },
+      data: data
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

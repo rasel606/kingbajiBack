@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {auth} = require('../middleWare/auth');
-const profileController = require('../Controllers/profileController');
+const profileController = require('../controllers/profileController');
 // All profile routes require authentication
 router.use(auth);
 

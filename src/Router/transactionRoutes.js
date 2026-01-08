@@ -43,8 +43,8 @@
 const express = require('express');
 const { body,query } = require('express-validator');
 const AdminController = require('../Controllers/AdminController');
-const newTransactionController = require('../Controllers/newTransactionController');
-const paymentMethodController = require('../Controllers/paymentMethodController');
+const newTransactionController = require('../controllers/newTransactionController');
+const { validationResult } = require('express-validator');``
 const auth = require('../MiddleWare/AdminAuth');
 const validate = require('../MiddleWare/validation');
 const MainTransactinController = require('../Controllers/MainTransactinController');

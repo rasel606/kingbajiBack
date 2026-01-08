@@ -11,9 +11,9 @@ const Bonus = require('../models/Bonus');
 
 
 
-exports.checkPromotionsEligibility = async (req, res) => {
+exports.checkPromotionsEligibilityActive = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const  userId  = req.user.userId;
 
         // Find active bonuses for user
         const userBonuses = await UserBonus.find({
@@ -44,13 +44,13 @@ exports.checkPromotionsEligibility = async (req, res) => {
                 member: userId,
                 start_time: { $gte: createdAt },
                 end_time: { $lte: expiryDate },
-                status: 1 // Only count settled bets (assuming 1 means settled)
+                // status: 1 // Only count settled bets (assuming 1 means settled)
             };
 
             // Filter by eligible games if specified
-            if (eligibleGames.length && eligibleGames[0] !== 'all') {
-                matchQuery.game_id = { $in: eligibleGames };
-            }
+            // if (eligibleGames.length && eligibleGames[0] !== 'all') {
+            //     matchQuery.game_id = { $in: eligibleGames };
+            // }
 
             // Calculate completed turnover
             const turnoverData = await BettingHistory.aggregate([
@@ -63,6 +63,8 @@ exports.checkPromotionsEligibility = async (req, res) => {
                     }
                 }
             ]);
+
+            console.log("turnoverData", turnoverData);
 
             const completedTurnover = turnoverData[0]?.totalTurnover || 0;
             const isCompleted = completedTurnover >= turnoverRequirement;
@@ -95,6 +97,10 @@ exports.checkPromotionsEligibility = async (req, res) => {
                 wageringRequirement: bonusId?.wageringRequirement || 1
             });
         }
+
+
+
+        console.log("results", results);
 
         return res.status(200).json({
             message: isFullyEligible
@@ -146,9 +152,9 @@ exports.checkPromotionsEligibility = async (req, res) => {
 
 
 
-exports.checkPromotionsEligibilityActive = async (req, res) => {
+exports.checkPromotionsEligibility = async (req, res) => {
     try {
-        const { userId } = req.body;
+                const  userId  = req.user.userId;
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -212,7 +218,7 @@ exports.checkPromotionsEligibilityActive = async (req, res) => {
 
 exports.checkPromotionsComplated = async (req, res) => {
     try {
-        const { userId } = req.body;
+                const  userId  = req.user.userId;
 
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
