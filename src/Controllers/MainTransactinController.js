@@ -54,11 +54,7 @@ class TransactionController {
 
       const pagination = buildPaginationResponse(pageNum, limitNum, total);
 
-      res.json({
-        success: true,
-        data: transactionsWithHierarchy,
-        pagination
-      });
+      sendPaginatedResponse(res, transactionsWithHierarchy, pagination, 'Transactions retrieved successfully');
     } catch (error) {
       console.error("Error:", error);
       res.status(500).json({ success: false, message: "Server error", error: error.message });
