@@ -145,10 +145,40 @@ const validatePassword = (password) => {
   };
 };
 
+/**
+ * Validate required fields
+ * @param {Object} fields - Object with field names as keys and values to check
+ * @returns {Object} { isValid: boolean, missing: Array }
+ */
+const validateRequiredFields = (fields) => {
+  const missing = [];
+  
+  Object.entries(fields).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === '') {
+      missing.push(key);
+    }
+  });
+  
+  const isValid = missing.length === 0;
+  
+  return { isValid, missing };
+};
+
+/**
+ * Validate user is logged in (userId exists)
+ * @param {string} userId - User ID from request
+ * @returns {boolean} true if valid, false otherwise
+ */
+const validateUserId = (userId) => {
+  return !!userId;
+};
+
 module.exports = {
   validateFullName,
   validateRegistration,
   validateLogin,
   validateBirthday,
-  validatePassword
+  validatePassword,
+  validateRequiredFields,
+  validateUserId
 };

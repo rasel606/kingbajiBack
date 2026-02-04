@@ -4,6 +4,8 @@ const Affiliate = require('../models/AffiliateModel');
 const Transaction = require('../models/TransactionModel');
 const AppError = require('../utils/AppError');
 const catchAsync = require('../utils/catchAsync');
+const { paginateQuery } = require('../utils/paginationHelper');
+const { sendPaginatedResponse } = require('../utils/responseHelper');
 
 // Get withdrawal history
 exports.getWithdrawalHistory = catchAsync(async (req, res, next) => {
@@ -13,28 +15,13 @@ exports.getWithdrawalHistory = catchAsync(async (req, res, next) => {
   const query = { userId };
   if (type) query.type = type;
   
-  const options = {
-    page: parseInt(page),
-    limit: parseInt(limit),
+  const result = await paginateQuery(Withdrawal, query, {
+    page,
+    limit,
     sort: { createdAt: -1 }
-  };
-  
-  const withdrawals = await Withdrawal.find(query)
-    .limit(options.limit)
-    .skip((options.page - 1) * options.limit);
-  
-  const total = await Withdrawal.countDocuments(query);
-  
-  res.status(200).json({
-    success: true,
-    data: withdrawals,
-    pagination: {
-      page: options.page,
-      limit: options.limit,
-      total,
-      pages: Math.ceil(total / options.limit)
-    }
   });
+  
+  sendPaginatedResponse(res, result.data, result.pagination, 'Withdrawal history retrieved successfully');
 });
 
 // Request withdrawal

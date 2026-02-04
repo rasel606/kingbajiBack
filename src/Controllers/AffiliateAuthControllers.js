@@ -1,5 +1,4 @@
 // controllers/authController.js
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AffiliateModel = require('../models/AffiliateModel');
 const AppError = require('../utils/AppError');
@@ -7,8 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const SubAdmin = require('../models/SubAdminModel');
 const crypto = require("crypto");
 const bcrypt = require('bcryptjs');
-const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const { signToken, setMultipleCookies } = require('../services/tokenService');
 
 // ডিভাইস ID জেনারেট করার ফাংশন
 const generateDeviceId = (req) => {
@@ -17,11 +15,10 @@ const generateDeviceId = (req) => {
     .digest('hex');
 };
 
-// টোকেন জেনারেট ফাংশন
-const generateToken = (email, deviceId) => {
-  return jwt.sign({ email, deviceId }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+// টোকেন জেনারেট ফাংশন (custom for affiliate with extra fields)
+const generateToken = (userId, deviceId, role) => {
+  // Use signToken for simple case, or add custom logic if needed
+  return signToken(userId);
 };
 
 
@@ -182,19 +179,12 @@ exports.login = catchAsync(async (req, res, next) => {
   await user.save();
   const newUser = await AffiliateModel.findById(user._id).select('-password');
 
-    res.cookie('affiliateToken', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
-      });
+  // Set cookies using shared utility
+  setMultipleCookies(res, {
+    affiliateToken: token,
+    affiliateDeviceId: deviceId
+  });
 
-      res.cookie('affiliateDeviceId',deviceId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
-      });
   // Respond with user data and token
   res.status(200).json({
     success: true,

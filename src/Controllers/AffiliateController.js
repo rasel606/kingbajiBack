@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const crypto = require("crypto");
 // const AffiliateModel = require("../Models/AffiliateModel");
@@ -8,43 +7,10 @@ const asyncHandler = require('express-async-handler');
 // const sendEmail = require("../Services/sendEmail");
 const TurnOverModal = require("../models/TurnOverModal");
 const { getPeriodDates } = require('../utils/periodUtils');
-  const generateReferralCode = require('../services/generateReferralCode');
+const generateReferralCode = require('../services/generateReferralCode');
 const Verification = require('../models/Verification');
 const AffiliateModel = require('../models/AffiliateModel');
-
-const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-const JWT_EXPIRE = process.env.JWT_EXPIRE || "1d";
-const signToken = id => {
-
-  console.log(id)
-  return jwt.sign({ id }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRE
-  });
-};
-
-const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
-  
- const cookieOptions = {
-  expires: new Date(Date.now() + (process.env.JWT_COOKIE_EXPIRES_IN || 1) * 24 * 60 * 60 * 1000),
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production'
-};
-
-  
-  res.cookie('jwt', token, cookieOptions);
-  
-  // Remove password from output
-  user.password = undefined;
-  
-  res.status(statusCode).json({
-    status: 'success',
-    token,
-    data: {
-      user
-    }
-  });
-};
+const { createSendToken, signToken } = require('../services/tokenService');
 
 // 🔧 Register Affiliate
 exports.registerAffiliate = async (req, res, next) => {
