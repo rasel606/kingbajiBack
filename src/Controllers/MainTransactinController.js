@@ -4,6 +4,8 @@
 
 const Transaction = require('../models/TransactionModel');
 const HierarchyService = require('../services/hierarchyService');
+const { getPaginationValues, buildPaginationResponse } = require('../utils/paginationHelper');
+const { sendPaginatedResponse } = require('../utils/responseHelper');
 
 class TransactionController {
 
@@ -38,26 +40,24 @@ class TransactionController {
         if (endDate) filter.datetime.$lte = new Date(endDate);
       }
 
-      const skip = (page - 1) * limit;
+      const { page: pageNum, limit: limitNum, skip } = getPaginationValues(page, limit);
 
       const transactions = await Transaction.find(filter)
         .sort({ datetime: -1 })
         .skip(skip)
-        .limit(Number(limit));
+        .limit(limitNum);
 
       const transactionsWithHierarchy =
         await HierarchyService.getTransactionsWithHierarchy(transactions);
 
       const total = await Transaction.countDocuments(filter);
 
+      const pagination = buildPaginationResponse(pageNum, limitNum, total);
+
       res.json({
         success: true,
         data: transactionsWithHierarchy,
-        pagination: {
-          total,
-          page: Number(page),
-          limit: Number(limit),
-          pages: Math.ceil(total / limit)
+        pagination
         }
       });
     } catch (error) {
