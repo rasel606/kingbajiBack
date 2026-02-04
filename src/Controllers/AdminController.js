@@ -34,6 +34,7 @@ const VIPConfig = require('../models/VIPConfig');
 const VipPointTransaction = require('../models/VipPointTransaction');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
+const logger = require('../utils/logger');
 
 const TransactionModel = require('../models/TransactionModel');
 // const notificationController = require('../Controllers/notificationController');
@@ -2231,6 +2232,168 @@ console.log("updateUserProfileById user:", result);
 });
 
 
+// VIP Level Configuration Management
+
+/**
+ * Create/Initialize all VIP levels with default or custom configuration
+ * POST /api/admin/vip-levels/initialize
+ */
+exports.initializeVipLevels = catchAsync(async (req, res, next) => {
+  try {
+    console.log("📥 Initializing VIP levels with data:", req.body);
+
+    // Check if VIP config already exists
+    let vipConfig = await VIPConfig.findOne();
+
+    if (vipConfig && !req.body.forceUpdate) {
+      return res.status(400).json({
+        success: false,
+        message: "VIP configuration already exists. Use forceUpdate=true to override."
+      });
+    }
+
+    // Default configuration for all VIP levels
+    const defaultLevels = {
+      bronze: {
+        monthlyTurnoverRequirement: req.body.bronze?.monthlyTurnoverRequirement || 0,
+        vpConversionRate: req.body.bronze?.vpConversionRate || 5000,
+        loyaltyBonus: req.body.bronze?.loyaltyBonus || 0.01
+      },
+      silver: {
+        monthlyTurnoverRequirement: req.body.silver?.monthlyTurnoverRequirement || 50000,
+        vpConversionRate: req.body.silver?.vpConversionRate || 1250,
+        loyaltyBonus: req.body.silver?.loyaltyBonus || 0.02
+      },
+      gold: {
+        monthlyTurnoverRequirement: req.body.gold?.monthlyTurnoverRequirement || 100000,
+        vpConversionRate: req.body.gold?.vpConversionRate || 1000,
+        loyaltyBonus: req.body.gold?.loyaltyBonus || 0.03
+      },
+      diamond: {
+        monthlyTurnoverRequirement: req.body.diamond?.monthlyTurnoverRequirement || 500000,
+        vpConversionRate: req.body.diamond?.vpConversionRate || 500,
+        loyaltyBonus: req.body.diamond?.loyaltyBonus || 0.05
+      },
+      elite: {
+        monthlyTurnoverRequirement: req.body.elite?.monthlyTurnoverRequirement || 1000000,
+        vpConversionRate: req.body.elite?.vpConversionRate || 400,
+        loyaltyBonus: req.body.elite?.loyaltyBonus || 0.07
+      }
+    };
+
+    if (vipConfig) {
+      // Update existing configuration
+      vipConfig.levels = defaultLevels;
+      vipConfig.updatedAt = new Date();
+      await vipConfig.save();
+      
+      logger.info("✅ VIP configuration updated successfully");
+      console.log("✅ VIP configuration updated successfully");
+    } else {
+      // Create new configuration
+      vipConfig = new VIPConfig({
+        levels: defaultLevels,
+        updatedAt: new Date()
+      });
+      await vipConfig.save();
+      
+      logger.info("✅ VIP configuration created successfully");
+      console.log("✅ VIP configuration created successfully");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "VIP levels initialized successfully",
+      data: vipConfig
+    });
+  } catch (err) {
+    logger.error(`Error initializing VIP levels: ${err.message}`);
+    next(err);
+  }
+});
+
+/**
+ * Get current VIP level configuration
+ * GET /api/admin/vip-levels/config
+ */
+exports.getVipLevelsConfig = catchAsync(async (req, res, next) => {
+  try {
+    console.log("📥 Fetching VIP levels configuration");
+
+    const vipConfig = await VIPConfig.findOne();
+
+    if (!vipConfig) {
+      return res.status(404).json({
+        success: false,
+        message: "VIP configuration not found. Please initialize VIP levels first."
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: vipConfig
+    });
+  } catch (err) {
+    logger.error(`Error fetching VIP levels config: ${err.message}`);
+    next(err);
+  }
+});
+
+/**
+ * Update a specific VIP level configuration
+ * PUT /api/admin/vip-levels/:level
+ */
+exports.updateVipLevel = catchAsync(async (req, res, next) => {
+  try {
+    const { level } = req.params;
+    const validLevels = ['bronze', 'silver', 'gold', 'diamond', 'elite'];
+
+    console.log(`📥 Updating VIP level: ${level}`, req.body);
+
+    if (!validLevels.includes(level.toLowerCase())) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid level. Must be one of: ${validLevels.join(', ')}`
+      });
+    }
+
+    let vipConfig = await VIPConfig.findOne();
+
+    if (!vipConfig) {
+      return res.status(404).json({
+        success: false,
+        message: "VIP configuration not found. Please initialize VIP levels first."
+      });
+    }
+
+    // Update the specific level
+    const levelKey = level.toLowerCase();
+    if (req.body.monthlyTurnoverRequirement !== undefined) {
+      vipConfig.levels[levelKey].monthlyTurnoverRequirement = req.body.monthlyTurnoverRequirement;
+    }
+    if (req.body.vpConversionRate !== undefined) {
+      vipConfig.levels[levelKey].vpConversionRate = req.body.vpConversionRate;
+    }
+    if (req.body.loyaltyBonus !== undefined) {
+      vipConfig.levels[levelKey].loyaltyBonus = req.body.loyaltyBonus;
+    }
+
+    vipConfig.updatedAt = new Date();
+    await vipConfig.save();
+
+    logger.info(`✅ VIP level ${level} updated successfully`);
+    console.log(`✅ VIP level ${level} updated successfully`);
+
+    res.status(200).json({
+      success: true,
+      message: `VIP level ${level} updated successfully`,
+      data: vipConfig
+    });
+  } catch (err) {
+    logger.error(`Error updating VIP level: ${err.message}`);
+    next(err);
+  }
+});
 
 
 
