@@ -58,7 +58,6 @@ class TransactionController {
         success: true,
         data: transactionsWithHierarchy,
         pagination
-        }
       });
     } catch (error) {
       console.error("Error:", error);
