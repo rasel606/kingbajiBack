@@ -33,4 +33,5 @@ console.log(decoded)
   }
 };
 
-module.exports = auth; // ✅ default export
+module.exports = auth; // ✅ default export for plain imports
+module.exports.protectAdmin = auth; // ✅ named export for destructured imports

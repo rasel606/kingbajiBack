@@ -85,6 +85,96 @@ const { createUser } = require('../services/CreateService');
 
 
 
+exports.getAdminDashboardStats = catchAsync(async (req, res, next) => {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    
+    // Get statistics for admin dashboard
+    const totalUsers = await UserModel.countDocuments();
+    const totalAgents = await AgentModel.countDocuments();
+    const totalSubAdmins = await SubAdminModel.countDocuments();
+    const totalAffiliates = await AffiliateModel.countDocuments();
+    const totalBets = await BettingTable.countDocuments() || 0;
+    
+    // Calculate total deposits and withdrawals
+    const deposits = await TransactionModel.aggregate([
+      { $match: { type: 'deposit', status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    const withdrawals = await TransactionModel.aggregate([
+      { $match: { type: 'withdrawal', status: 'completed' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    
+    const totalDeposits = deposits.length > 0 ? deposits[0].total : 0;
+    const totalWithdrawals = withdrawals.length > 0 ? withdrawals[0].total : 0;
+    
+    // Get active sessions
+    const activeSessions = await UserModel.countDocuments({ status: 'active' }) || 0;
+    
+    // Calculate revenue (deposits - withdrawals + commissions)
+    const revenue = totalDeposits - totalWithdrawals;
+    
+    return res.json({
+      success: true,
+      data: {
+        stats: {
+          totalUsers,
+          totalAgents,
+          totalSubAdmins,
+          totalAffiliates,
+          totalBets,
+          totalDeposits,
+          totalWithdrawals,
+          revenue,
+          activeSessions
+        },
+        timestamp: new Date()
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.getSocialLinks = catchAsync(async (req, res, next) => {
+  try {
+    const socialLinks = await SocialLink.find({});
+    return res.json({
+      success: true,
+      data: socialLinks || []
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+exports.updateAndCreateSocialLinks = catchAsync(async (req, res, next) => {
+  try {
+    const { platform, url } = req.body;
+    if (!platform || !url) {
+      return res.status(400).json({ success: false, message: 'Platform and URL required' });
+    }
+    
+    const updated = await SocialLink.findOneAndUpdate(
+      { platform },
+      { platform, url, updatedAt: new Date() },
+      { upsert: true, new: true }
+    );
+    
+    return res.json({
+      success: true,
+      message: 'Social link updated successfully',
+      data: updated
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
   try {

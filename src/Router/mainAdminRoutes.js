@@ -19,13 +19,12 @@ const apiIntregationsController = require('../Controllers/apiIntregationsControl
 const router = express.Router();
 
 // Search transactions
-
-router.get('/New-table-categories-with-Providers', getPlayerUserGameData.getCategoriesWithProviders);
-
-router.get('/New-Games-with-Providers-By-Category', getPlayerUserGameData.getGamesWithProvidersByCategory);
+// ⚠️ Temporarily disabled - pending route fix
+// router.get('/New-table-categories-with-Providers', getPlayerUserGameData.getCategoriesWithProviders);
+// router.get('/New-Games-with-Providers-By-Category', getPlayerUserGameData.getGamesWithProvidersByCategory);
 router.get('/get_admin_affiliateList', validate, auth, AdminController.AffiliateModeladmin);
 router.get('/affiliate_get_commissionSettings', validate, auth, AdminController.affiliate_get_commissionSettings);
-// router.get('/get_rebate_settings', validate, auth, AdminController.getRebateSettings);
+router.get('/get_rebate_settings', validate, auth, AdminController.getRebateSettings);
 router.get('/get_bonus_list', validate, auth, AdminController.getBonuses);
 // router.get('/get_users_by_referral', validate, auth, AdminController.getUsersByReferral);
 // router.get('/get_users_by_Id/:userId', validate, auth, AdminController.getUserById_detaills);

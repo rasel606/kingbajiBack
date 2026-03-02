@@ -1174,6 +1174,17 @@ const initializeSocket = (server) => {
     socketManager.updateStats('connectionErrors');
   });
 
+  // Initialize Dashboard Socket Handlers for real-time analytics
+  console.log('🎯 Initializing Dashboard Socket Handlers...');
+  try {
+    const DashboardSocketHandlers = require('./DashboardSocketHandlers');
+    new DashboardSocketHandlers(io);
+    console.log('✅ Dashboard Socket Handlers initialized successfully');
+  } catch (error) {
+    console.error('⚠️ Dashboard Socket Handlers initialization warning:', error.message);
+    // Non-critical, server continues without real-time dashboard updates
+  }
+
   console.log('✅ Socket.io server initialization completed');
   return io;
 };

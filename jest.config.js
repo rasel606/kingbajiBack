@@ -1,0 +1,20 @@
+module.exports = {
+  testEnvironment: 'node',
+  testPathIgnorePatterns: ['/node_modules/', '/litellm/', '/Backend/', '/bot/'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/litellm/', '/Backend/', '/bot/'],
+  collectCoverageFrom: [
+    'src/**/*.js',
+    'app.js',
+    'index.js',
+    '!node_modules/**',
+    '!coverage/**',
+    '!litellm/**',
+    '!Backend/**',
+    '!bot/**',
+  ],
+  testMatch: ['**/__tests__/**/*.test.js'],
+  verbose: true,
+  testTimeout: 10000,
+  detectOpenHandles: true,
+  maxWorkers: 1,
+};

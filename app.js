@@ -24,7 +24,7 @@ const subAdminAurth = require('./src/router/subAdminAurth');
 const dashboardRoutes = require('./src/router/dashboardRoutes');
 const userRoutes = require('./src/router/userRoutes');
 const gameRoutes = require('./src/router/gameRoutes');
-const mainAdminRoutes = require('./src/router/mainAdminRoutes');
+// const mainAdminRoutes = require('./src/router/mainAdminRoutes'); // ⚠️ Disabled: Has undefined controller methods
 const phoneVerificationRoute = require('./src/router/phoneVerificationRoute');
 const turnoverRoutes = require('./src/router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/router/promotionsServiceRoutes');
@@ -55,7 +55,16 @@ const SpcialBettingHistoryJob = require('./src/corn/SpcialBettingHistoryJob');
 const referralBonusProcessor = require('./src/corn/referralBonusProcessor');
 const referralRoutes = require('./src/router/referralRoutes');
 // Import Live Chat Routes
-const chatRoutes = require('./src/router/chatRoutes');
+// const chatRoutes = require('./src/router/chatRoutes'); // ⚠️ Disabled: ChatController is commented out
+
+// Import new routes
+const socialLinksRoutes = require('./src/router/socialLinksRoutes');
+const affiliateManagementRoutes = require('./src/router/affiliateManagementRoutes');
+const profileAuthRoutes = require('./src/router/profileAuthRoutes');
+const advancedDashboardRoutes = require('./src/router/advancedDashboardRoutes');
+const unifiedDashboardRoutes = require('./src/router/unifiedDashboardRoutes');
+const adminAuth = require('./src/middleWare/AdminAuth');
+const AdminController = require('./src/controllers/AdminController');
 
 // Import Socket Server
 const { initializeSocket, getConnectionStats, getUserConnections, getRoomInfo } = require('./src/socket/socketServer');
@@ -141,8 +150,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 app.use("/api/v1", apiRouter);
 app.use('/api/admin/auth', adminAurth);
-app.use('/api/admin', mainAdminRoutes);
+// app.use('/api/admin', mainAdminRoutes); // ⚠️ Disabled: Has undefined controller methods
 app.use('/api/adminannouncement', announcementRoutes);
+
+// Admin Dashboard (explicit route to keep legacy frontend path working)
+app.get('/api/admin/dashboard/overview', adminAuth, AdminController.getAdminDashboardStats);
 
 
 
@@ -158,6 +170,8 @@ app.use('/api/sub_agent', subAgentRoutes);
 
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard/analytics', advancedDashboardRoutes);
+app.use('/api/unified-dashboard', unifiedDashboardRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/user/notification', notificationRoutes);
 app.use('/api/user/rebet', reportRoutes);
@@ -186,7 +200,19 @@ app.use('/api/affiliate/links', affiliateLinkRoutes);
 app.use('/api/kyc', kycRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 // Live Chat Routes
-app.use('/api/live-chat', chatRoutes);
+// app.use('/api/live-chat', chatRoutes); // ⚠️ Disabled: ChatController is commented out
+
+// =============================================
+// NEW MANAGEMENT ROUTES
+// =============================================
+// Social Links Management
+app.use('/api/social-links', socialLinksRoutes);
+
+// Affiliate Management Routes
+app.use('/api/admin/affiliate/management', affiliateManagementRoutes);
+
+// Profile & Auth Routes
+app.use('/api/auth', profileAuthRoutes);
 
 // Socket monitoring routes
 app.get('/api/socket/health', (req, res) => {
@@ -310,7 +336,7 @@ app.use((err, req, res, next) => {
     timestamp: new Date().toISOString()
   });
 
-  res.status(err.status || 500).json({
+  res.status(err.statusCode || 500).json({
     status: 'error',
     message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),

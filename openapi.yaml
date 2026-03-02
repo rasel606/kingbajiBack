@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: KingBaji API
+  version: 1.0.0
+  description: OpenAPI documentation for KingBaji backend API
+servers:
+  - url: http://localhost:3001/api
+paths:
+  /affiliate/Auth/register:
+    post:
+      summary: Register new affiliate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                email:
+                  type: string
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Registration error
+  /affiliate/Auth/login:
+    post:
+      summary: Login affiliate user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '400':
+          description: Login error
+  /affiliate/Auth/me:
+    get:
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+        '401':
+          description: Unauthorized
+  /affiliate/password:
+    put:
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                oldPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Error
+  /affiliate/banks:
+    get:
+      summary: List banks
+      responses:
+        '200':
+          description: List of banks
+    post:
+      summary: Create a new bank
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bankName:
+                  type: string
+                bankBranch:
+                  type: string
+                bankHolder:
+                  type: string
+                bankCardNo:
+                  type: string
+                swiftCode:
+                  type: string
+      responses:
+        '201':
+          description: Bank created
+        '400':
+          description: Error
+  /affiliate/banks/{id}:
+    put:
+      summary: Update a bank by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bankName:
+                  type: string
+                bankBranch:
+                  type: string
+                bankHolder:
+                  type: string
+                bankCardNo:
+                  type: string
+                swiftCode:
+                  type: string
+      responses:
+        '200':
+          description: Bank updated
+        '400':
+          description: Error
+    delete:
+      summary: Delete a bank by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bank deleted
+        '400':
+          description: Error
+# ... (Add more endpoints as needed for other services)
