@@ -1,0 +1,858 @@
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+  CButton,
+  CBadge,
+  CSpinner,
+  CToast,
+  CToastBody,
+  CAlert,
+  CForm,
+  CFormInput,
+  CFormLabel,
+  CFormSelect,
+  CTable,
+  CTableHead,
+  CTableBody,
+  CTableHeaderCell,
+  CTableDataCell,
+} from '@coreui/react'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js'
+import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2'
+import axios from 'axios'
+import socketService from '../../service/socketService'
+import moment from 'moment-timezone'
+import {
+  cilArrowBottom,
+  cilArrowTop,
+  cilDollar,
+  cilPeople,
+  cilChartPie,
+  cilStar,
+  cilReload,
+} from '@coreui/icons'
+import CIcon from '@coreui/icons-react'
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+)
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+
+const AdvancedDashboard = () => {
+  // State management
+  const [dashboardData, setDashboardData] = useState(null)
+  const [timeSeriesData, setTimeSeriesData] = useState(null)
+  const [revenueBreakdown, setRevenueBreakdown] = useState(null)
+  const [userStats, setUserStats] = useState(null)
+  const [bettingStats, setBettingStats] = useState(null)
+  const [transactionFlow, setTransactionFlow] = useState(null)
+  const [performanceMetrics, setPerformanceMetrics] = useState(null)
+  const [affiliatePerformance, setAffiliatePerformance] = useState(null)
+  const [realtimeUpdates, setRealtimeUpdates] = useState(null)
+
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+
+  // Filters
+  const [filters, setFilters] = useState({
+    startDate: moment().subtract(30, 'days').format('YYYY-MM-DD'),
+    endDate: moment().format('YYYY-MM-DD'),
+    timeZone: 'UTC',
+    interval: 'daily',
+  })
+
+  const [selectedMetrics, setSelectedMetrics] = useState({
+    revenue: true,
+    users: true,
+    betting: true,
+    transactions: true,
+    performance: true,
+    affiliate: true,
+  })
+
+  // Fetch all dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const headers = {
+        Authorization: `Bearer ${localStorage.getItem('admin_auth_token')}`,
+      }
+
+      const params = {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        timeZone: filters.timeZone,
+      }
+
+      const [
+        metricsRes,
+        timeSeriesRes,
+        revenueRes,
+        usersRes,
+        bettingRes,
+        transactionRes,
+        performanceRes,
+        affiliateRes,
+        realtimeRes,
+      ] = await Promise.allSettled([
+        selectedMetrics.revenue &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/metrics`, { headers, params }),
+        selectedMetrics.revenue &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/time-series`, {
+            headers,
+            params: { ...params, interval: filters.interval, metric: 'revenue' },
+          }),
+        selectedMetrics.revenue &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/revenue-breakdown`, { headers, params }),
+        selectedMetrics.users &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/users/statistics`, { headers, params }),
+        selectedMetrics.betting &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/betting/statistics`, { headers, params }),
+        selectedMetrics.transactions &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/transactions/flow`, { headers, params }),
+        selectedMetrics.performance &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/performance/metrics`, { headers, params }),
+        selectedMetrics.affiliate &&
+          axios.get(`${API_BASE_URL}/dashboard/analytics/performance/affiliate`, {
+            headers,
+            params,
+          }),
+        axios.get(`${API_BASE_URL}/dashboard/analytics/realtime/updates`, { headers }),
+      ])
+
+      // Handle responses
+      if (metricsRes.status === 'fulfilled' && metricsRes.value?.data?.success) {
+        setDashboardData(metricsRes.value.data.data)
+      }
+      if (timeSeriesRes.status === 'fulfilled' && timeSeriesRes.value?.data?.success) {
+        setTimeSeriesData(timeSeriesRes.value.data.data)
+      }
+      if (revenueRes.status === 'fulfilled' && revenueRes.value?.data?.success) {
+        setRevenueBreakdown(revenueRes.value.data.data)
+      }
+      if (usersRes.status === 'fulfilled' && usersRes.value?.data?.success) {
+        setUserStats(usersRes.value.data.data)
+      }
+      if (bettingRes.status === 'fulfilled' && bettingRes.value?.data?.success) {
+        setBettingStats(bettingRes.value.data.data)
+      }
+      if (transactionRes.status === 'fulfilled' && transactionRes.value?.data?.success) {
+        setTransactionFlow(transactionRes.value.data.data)
+      }
+      if (performanceRes.status === 'fulfilled' && performanceRes.value?.data?.success) {
+        setPerformanceMetrics(performanceRes.value.data.data)
+      }
+      if (affiliateRes.status === 'fulfilled' && affiliateRes.value?.data?.success) {
+        setAffiliatePerformance(affiliateRes.value.data.data)
+      }
+      if (realtimeRes.status === 'fulfilled' && realtimeRes.value?.data?.success) {
+        setRealtimeUpdates(realtimeRes.value.data.data)
+      }
+
+      setLoading(false)
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+      setError('Failed to load dashboard data')
+      setLoading(false)
+    }
+  }, [filters, selectedMetrics])
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    if (socketService) {
+      socketService.on('dashboard_update', (data) => {
+        setRealtimeUpdates((prev) => ({ ...prev, ...data }))
+      })
+
+      socketService.on('transaction_update', (data) => {
+        setTransactionFlow((prev) => ({
+          ...prev,
+          recent: [data, ...(prev?.recent || []).slice(0, 9)],
+        }))
+      })
+
+      return () => {
+        socketService.off('dashboard_update')
+        socketService.off('transaction_update')
+      }
+    }
+  }, [])
+
+  // Fetch data on mount and filter changes
+  useEffect(() => {
+    fetchDashboardData()
+
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchDashboardData, 60000)
+
+    return () => clearInterval(interval)
+  }, [fetchDashboardData])
+
+  // Handlers
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
+
+  const handleMetricToggle = (metric) => {
+    setSelectedMetrics((prev) => ({
+      ...prev,
+      [metric]: !prev[metric],
+    }))
+  }
+
+  const handleExport = async (format = 'json') => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/dashboard/analytics/export`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('admin_auth_token')}` },
+        params: { ...filters, format },
+        responseType: format === 'csv' ? 'blob' : 'json',
+      })
+
+      if (format === 'csv') {
+        const url = window.URL.createObjectURL(new Blob([response.data]))
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', `dashboard-${moment().format('YYYY-MM-DD')}.csv`)
+        document.body.appendChild(link)
+        link.click()
+      } else {
+        const dataStr = JSON.stringify(response.data, null, 2)
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
+        const link = document.createElement('a')
+        link.setAttribute('href', dataUri)
+        link.setAttribute('download', `dashboard-${moment().format('YYYY-MM-DD')}.json`)
+        link.click()
+      }
+
+      setToastMessage(`Dashboard exported successfully as ${format.toUpperCase()}`)
+      setShowToast(true)
+    } catch (err) {
+      console.error('Export error:', err)
+      setToastMessage('Failed to export dashboard data')
+      setShowToast(true)
+    }
+  }
+
+  // Statistics Card Component
+  const StatCard = ({ icon: Icon, title, value, change, color = 'primary', suffix = '' }) => (
+    <CCard className="mb-4 stat-card">
+      <CCardBody className="p-4">
+        <div className="d-flex justify-content-between align-items-start">
+          <div>
+            <small className="text-muted">{title}</small>
+            <h3 className="mb-1">
+              {typeof value === 'number' ? `${value.toLocaleString()}${suffix}` : value}
+            </h3>
+            {change !== undefined && (
+              <CBadge color={change >= 0 ? 'success' : 'danger'} className="mt-2">
+                <CIcon icon={change >= 0 ? cilArrowTop : cilArrowBottom} className="me-1" />
+                {Math.abs(change)}%
+              </CBadge>
+            )}
+          </div>
+          <div className={`text-${color} display-6`}>
+            <CIcon icon={Icon} />
+          </div>
+        </div>
+      </CCardBody>
+    </CCard>
+  )
+
+  if (loading && !dashboardData) {
+    return (
+      <div className="text-center py-5">
+        <CSpinner color="primary" />
+        <p className="mt-3 text-muted">Loading dashboard...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <CAlert color="danger" dismissible>
+        {error}
+      </CAlert>
+    )
+  }
+
+  return (
+    <div className="advanced-dashboard">
+      {/* Header Section */}
+      <CRow className="mb-4">
+        <CCol lg={12}>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 className="m-0">Advanced Analytics Dashboard</h2>
+            <div className="btn-group" role="group">
+              <CButton
+                color="info"
+                variant="outline"
+                size="sm"
+                onClick={() => fetchDashboardData()}
+                className="me-2"
+              >
+                <CIcon icon={cilReload} className="me-1" />
+                Refresh
+              </CButton>
+              <CButton
+                color="primary"
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport('json')}
+                className="me-2"
+              >
+                <CIcon icon={cilArrowBottom} className="me-1" />
+                JSON
+              </CButton>
+              <CButton
+                color="primary"
+                variant="outline"
+                size="sm"
+                onClick={() => handleExport('csv')}
+              >
+                <CIcon icon={cilArrowBottom} className="me-1" />
+                CSV
+              </CButton>
+            </div>
+          </div>
+        </CCol>
+      </CRow>
+
+      {/* Filters */}
+      <CCard className="mb-4">
+        <CCardBody>
+          <CRow>
+            <CCol md={3} className="mb-3">
+              <CFormLabel>Start Date</CFormLabel>
+              <CFormInput
+                type="date"
+                name="startDate"
+                value={filters.startDate}
+                onChange={handleFilterChange}
+              />
+            </CCol>
+            <CCol md={3} className="mb-3">
+              <CFormLabel>End Date</CFormLabel>
+              <CFormInput
+                type="date"
+                name="endDate"
+                value={filters.endDate}
+                onChange={handleFilterChange}
+              />
+            </CCol>
+            <CCol md={3} className="mb-3">
+              <CFormLabel>Time Zone</CFormLabel>
+              <CFormSelect name="timeZone" value={filters.timeZone} onChange={handleFilterChange}>
+                <option value="UTC">UTC</option>
+                <option value="Asia/Dhaka">Asia/Dhaka</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="Europe/London">Europe/London</option>
+              </CFormSelect>
+            </CCol>
+            <CCol md={3} className="mb-3">
+              <CFormLabel>Interval</CFormLabel>
+              <CFormSelect name="interval" value={filters.interval} onChange={handleFilterChange}>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </CFormSelect>
+            </CCol>
+          </CRow>
+        </CCardBody>
+      </CCard>
+
+      {/* Real-time Statistics Cards */}
+      {dashboardData && (
+        <CRow className="mb-4">
+          <CCol md={6} lg={4} className="mb-3">
+            <StatCard
+              icon={cilDollar}
+              title="Total Revenue"
+              value={`$${dashboardData.summary?.totalRevenue?.toLocaleString()}`}
+              color="success"
+            />
+          </CCol>
+          <CCol md={6} lg={4} className="mb-3">
+            <StatCard
+              icon={cilPeople}
+              title="Total Users"
+              value={dashboardData.summary?.totalUsers}
+              color="primary"
+            />
+          </CCol>
+          <CCol md={6} lg={4} className="mb-3">
+            <StatCard
+              icon={cilStar}
+              title="Active Users"
+              value={dashboardData.summary?.activeUsers}
+              color="info"
+            />
+          </CCol>
+          <CCol md={6} lg={4} className="mb-3">
+            <StatCard
+              icon={cilChartPie}
+              title="Total Bets"
+              value={dashboardData.summary?.totalBets}
+              color="warning"
+            />
+          </CCol>
+          <CCol md={6} lg={4} className="mb-3">
+            <StatCard
+              icon={cilDollar}
+              title="Total Deposits"
+              value={`$${dashboardData.summary?.totalDeposits?.toLocaleString()}`}
+              color="success"
+            />
+          </CCol>
+          <CCol md={6} lg={4} className="mb-3">
+            <StatCard
+              icon={cilDollar}
+              title="Total Withdrawals"
+              value={`$${dashboardData.summary?.totalWithdrawals?.toLocaleString()}`}
+              color="danger"
+            />
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Revenue Trend Chart */}
+      {timeSeriesData && (
+        <CRow className="mb-4">
+          <CCol>
+            <CCard>
+              <CCardHeader>Revenue Trend</CCardHeader>
+              <CCardBody>
+                <Line
+                  data={timeSeriesData}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        display: true,
+                        position: 'top',
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                      },
+                    },
+                  }}
+                />
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Revenue Breakdown */}
+      {revenueBreakdown && (
+        <CRow className="mb-4">
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Revenue Breakdown</CCardHeader>
+              <CCardBody>
+                <Pie
+                  data={{
+                    labels: revenueBreakdown.labels,
+                    datasets: revenueBreakdown.datasets,
+                  }}
+                  options={{
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'bottom',
+                      },
+                    },
+                  }}
+                />
+              </CCardBody>
+            </CCard>
+          </CCol>
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Revenue Details</CCardHeader>
+              <CCardBody>
+                <CTable striped hover>
+                  <CTableHead>
+                    <CTableHeaderCell>Type</CTableHeaderCell>
+                    <CTableHeaderCell>Amount</CTableHeaderCell>
+                    <CTableHeaderCell>Count</CTableHeaderCell>
+                  </CTableHead>
+                  <CTableBody>
+                    {revenueBreakdown.summary?.map((item, idx) => (
+                      <tr key={idx}>
+                        <CTableDataCell>{item._id}</CTableDataCell>
+                        <CTableDataCell>${item.amount?.toLocaleString()}</CTableDataCell>
+                        <CTableDataCell>{item.count}</CTableDataCell>
+                      </tr>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* User Statistics */}
+      {userStats && (
+        <CRow className="mb-4">
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>User Statistics</CCardHeader>
+              <CCardBody>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between mb-2">
+                    <small>New Users</small>
+                    <strong>{userStats.newUsers}</strong>
+                  </div>
+                  <div className="progress" style={{ height: '5px' }}>
+                    <div className="progress-bar" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between mb-2">
+                    <small>Active Users</small>
+                    <strong>{userStats.activeUsers}</strong>
+                  </div>
+                  <div className="progress" style={{ height: '5px' }}>
+                    <div className="progress-bar bg-success" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between mb-2">
+                    <small>VIP Users</small>
+                    <strong>{userStats.vipUsers}</strong>
+                  </div>
+                  <div className="progress" style={{ height: '5px' }}>
+                    <div className="progress-bar bg-warning" style={{ width: '100%' }}></div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-top">
+                  <small className="text-muted">Engagement Rate</small>
+                  <h5>{userStats.engagementRate}%</h5>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Users by Country (Top 10)</CCardHeader>
+              <CCardBody>
+                <CTable striped hover size="sm">
+                  <CTableHead>
+                    <CTableHeaderCell>Country</CTableHeaderCell>
+                    <CTableHeaderCell>Count</CTableHeaderCell>
+                  </CTableHead>
+                  <CTableBody>
+                    {userStats.usersByCountry?.slice(0, 10).map((item, idx) => (
+                      <tr key={idx}>
+                        <CTableDataCell>{item._id || 'Unknown'}</CTableDataCell>
+                        <CTableDataCell>{item.count}</CTableDataCell>
+                      </tr>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Betting Statistics */}
+      {bettingStats && (
+        <CRow className="mb-4">
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Betting Metrics</CCardHeader>
+              <CCardBody>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between">
+                    <small>Total Bets</small>
+                    <strong>{bettingStats.totalBets}</strong>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between">
+                    <small>Winning Bets</small>
+                    <strong>{bettingStats.winningBets}</strong>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between">
+                    <small>Win Rate</small>
+                    <strong className="text-success">{bettingStats.winRate}%</strong>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between">
+                    <small>Avg Odds</small>
+                    <strong>{parseFloat(bettingStats.avgOdds).toFixed(2)}</strong>
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <div className="d-flex justify-content-between">
+                    <small>ROI</small>
+                    <strong className={bettingStats.roi >= 0 ? 'text-success' : 'text-danger'}>
+                      {bettingStats.roi}%
+                    </strong>
+                  </div>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Bets by Game (Top 10)</CCardHeader>
+              <CCardBody>
+                <CTable striped hover size="sm">
+                  <CTableHead>
+                    <CTableHeaderCell>Game</CTableHeaderCell>
+                    <CTableHeaderCell>Count</CTableHeaderCell>
+                    <CTableHeaderCell>Amount</CTableHeaderCell>
+                  </CTableHead>
+                  <CTableBody>
+                    {bettingStats.betsByGame?.slice(0, 10).map((item, idx) => (
+                      <tr key={idx}>
+                        <CTableDataCell>{item._id}</CTableDataCell>
+                        <CTableDataCell>{item.count}</CTableDataCell>
+                        <CTableDataCell>${item.totalAmount?.toLocaleString()}</CTableDataCell>
+                      </tr>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Transaction Flow */}
+      {transactionFlow && (
+        <CRow className="mb-4">
+          <CCol>
+            <CCard>
+              <CCardHeader>Transaction Flow Analysis</CCardHeader>
+              <CCardBody>
+                <CRow>
+                  <CCol md={3}>
+                    <div className="text-center p-3">
+                      <h5>{transactionFlow.deposits?.count}</h5>
+                      <small className="text-muted">Total Deposits</small>
+                      <p className="text-success">
+                        ${transactionFlow.deposits?.total?.toLocaleString()}
+                      </p>
+                    </div>
+                  </CCol>
+                  <CCol md={3}>
+                    <div className="text-center p-3">
+                      <h5>{transactionFlow.withdrawals?.count}</h5>
+                      <small className="text-muted">Total Withdrawals</small>
+                      <p className="text-danger">
+                        ${transactionFlow.withdrawals?.total?.toLocaleString()}
+                      </p>
+                    </div>
+                  </CCol>
+                  <CCol md={3}>
+                    <div className="text-center p-3">
+                      <h5>{transactionFlow.pending}</h5>
+                      <small className="text-muted">Pending</small>
+                      <p className="text-warning">Waiting</p>
+                    </div>
+                  </CCol>
+                  <CCol md={3}>
+                    <div className="text-center p-3">
+                      <h5>{transactionFlow.successRate}%</h5>
+                      <small className="text-muted">Success Rate</small>
+                      <p className="text-info">High Performance</p>
+                    </div>
+                  </CCol>
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Performance Metrics */}
+      {performanceMetrics && (
+        <CRow className="mb-4">
+          <CCol>
+            <CCard>
+              <CCardHeader>Performance Metrics</CCardHeader>
+              <CCardBody>
+                <CRow>
+                  <CCol md={4}>
+                    <div className="p-3">
+                      <small className="text-muted">Avg Session Duration</small>
+                      <h4>{parseFloat(performanceMetrics.avgSessionDuration).toFixed(2)} min</h4>
+                    </div>
+                  </CCol>
+                  <CCol md={4}>
+                    <div className="p-3">
+                      <small className="text-muted">Customer LTV</small>
+                      <h4>${parseFloat(performanceMetrics.customerLifetimeValue).toFixed(2)}</h4>
+                    </div>
+                  </CCol>
+                  <CCol md={4}>
+                    <div className="p-3">
+                      <small className="text-muted">Avg Bet Size</small>
+                      <h4>${parseFloat(performanceMetrics.avgBetSize).toFixed(2)}</h4>
+                    </div>
+                  </CCol>
+                </CRow>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Affiliate Performance */}
+      {affiliatePerformance && (
+        <CRow className="mb-4">
+          <CCol>
+            <CCard>
+              <CCardHeader>Top Affiliates</CCardHeader>
+              <CCardBody>
+                <CTable striped hover>
+                  <CTableHead>
+                    <CTableHeaderCell>Affiliate</CTableHeaderCell>
+                    <CTableHeaderCell>Referrals</CTableHeaderCell>
+                    <CTableHeaderCell>Total Earnings</CTableHeaderCell>
+                    <CTableHeaderCell>Transactions</CTableHeaderCell>
+                  </CTableHead>
+                  <CTableBody>
+                    {affiliatePerformance.topAffiliates?.map((affiliate, idx) => (
+                      <tr key={idx}>
+                        <CTableDataCell>{affiliate.affiliateName}</CTableDataCell>
+                        <CTableDataCell>{affiliate.referrals}</CTableDataCell>
+                        <CTableDataCell>
+                          ${affiliate.totalEarnings?.toLocaleString()}
+                        </CTableDataCell>
+                        <CTableDataCell>{affiliate.totalTransactions}</CTableDataCell>
+                      </tr>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Real-time Updates */}
+      {realtimeUpdates && (
+        <CRow className="mb-4">
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Real-time Status</CCardHeader>
+              <CCardBody>
+                <div className="mb-3 d-flex justify-content-between">
+                  <small>Online Users</small>
+                  <strong className="text-primary">{realtimeUpdates.onlineUsers}</strong>
+                </div>
+                <div className="mb-3 d-flex justify-content-between">
+                  <small>Active Bets</small>
+                  <strong>{realtimeUpdates.activeBets}</strong>
+                </div>
+                <div className="mb-3 d-flex justify-content-between">
+                  <small>Pending Withdrawals</small>
+                  <strong>{realtimeUpdates.pendingWithdrawals}</strong>
+                </div>
+                <div className="mt-3 pt-3 border-top">
+                  <small className="text-muted">Last Update</small>
+                  <p>{moment(realtimeUpdates.lastUpdate).fromNow()}</p>
+                </div>
+              </CCardBody>
+            </CCard>
+          </CCol>
+          <CCol md={6}>
+            <CCard>
+              <CCardHeader>Recent Transactions</CCardHeader>
+              <CCardBody>
+                <CTable striped hover size="sm">
+                  <CTableHead>
+                    <CTableHeaderCell>Type</CTableHeaderCell>
+                    <CTableHeaderCell>Amount</CTableHeaderCell>
+                    <CTableHeaderCell>Status</CTableHeaderCell>
+                  </CTableHead>
+                  <CTableBody>
+                    {realtimeUpdates.recentTransactions?.slice(0, 5).map((transaction, idx) => (
+                      <tr key={idx}>
+                        <CTableDataCell>{transaction.type}</CTableDataCell>
+                        <CTableDataCell>${transaction.amount?.toLocaleString()}</CTableDataCell>
+                        <CTableDataCell>
+                          <CBadge
+                            color={
+                              transaction.status === 'completed'
+                                ? 'success'
+                                : transaction.status === 'pending'
+                                  ? 'warning'
+                                  : 'danger'
+                            }
+                          >
+                            {transaction.status}
+                          </CBadge>
+                        </CTableDataCell>
+                      </tr>
+                    ))}
+                  </CTableBody>
+                </CTable>
+              </CCardBody>
+            </CCard>
+          </CCol>
+        </CRow>
+      )}
+
+      {/* Toast Notification */}
+      <div style={{ position: 'fixed', top: '20px', right: '20px', zIndex: 9999 }}>
+        <CToast
+          autohide={true}
+          delay={5000}
+          visible={showToast}
+          onClose={() => setShowToast(false)}
+          color="success"
+        >
+          <CToastBody>{toastMessage}</CToastBody>
+        </CToast>
+      </div>
+    </div>
+  )
+}
+
+export default AdvancedDashboard
