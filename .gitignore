@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependencies
 node_modules/
 npm-debug.log*
@@ -35,3 +36,7 @@ coverage/
 # Logs
 logs/
 *.log
+=======
+node_modules
+.vercel
+>>>>>>> 5494efab3b53d6d75bf33840ff5f1568d974c04b

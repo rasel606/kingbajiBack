@@ -1,0 +1,10 @@
+[2025-11-05 22:25:38] INFO: 🚀 Server running in 5000 mode on port 5000
+[2025-11-05 22:25:38] INFO: 🔌 Socket.io is ready for real-time connections
+[2025-11-05 22:25:38] INFO: 💬 Live Chat System is initialized
+[2025-11-05 22:25:38] INFO: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+[2025-11-05 22:25:38] INFO: 📊 Socket monitoring available at /api/socket/health
+[2025-11-05 22:28:39] INFO: 🚀 Server running in 5000 mode on port 5000
+[2025-11-05 22:28:39] INFO: 🔌 Socket.io is ready for real-time connections
+[2025-11-05 22:28:39] INFO: 💬 Live Chat System is initialized
+[2025-11-05 22:28:39] INFO: 🌐 CORS enabled for: http://localhost:3000, http://localhost:3001
+[2025-11-05 22:28:39] INFO: 📊 Socket monitoring available at /api/socket/health
