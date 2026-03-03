@@ -1,0 +1,52 @@
+name: Deploy Backend to Netlify
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend-netlify.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+      
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+      
+      - name: Deploy to Netlify
+        working-directory: backend
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_BACKEND_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          API_KEY: ${{ secrets.API_KEY }}
+          NODE_ENV: production
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            netlify deploy --prod --dir=.
+          else
+            netlify deploy --dir=.
+          fi
