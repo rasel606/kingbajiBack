@@ -1,0 +1,54 @@
+name: Deploy CoreUI to Netlify
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'coreui-free-react-admin-template-main/**'
+      - '.github/workflows/deploy-coreui-netlify.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'coreui-free-react-admin-template-main/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: coreui-free-react-admin-template-main/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: coreui-free-react-admin-template-main
+        run: npm ci
+      
+      - name: Build
+        working-directory: coreui-free-react-admin-template-main
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+      
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+      
+      - name: Deploy to Netlify
+        working-directory: coreui-free-react-admin-template-main
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_COREUI_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            netlify deploy --prod --dir=build
+          else
+            netlify deploy --dir=build
+          fi

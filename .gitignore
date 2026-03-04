@@ -1,2 +1,42 @@
+<<<<<<< HEAD
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production
+build/
+dist/
+.vercel
+.vercel_build_output
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.production.local
+.env.development.local
+.env.test.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Build
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+=======
 node_modules
 .vercel
+>>>>>>> 5494efab3b53d6d75bf33840ff5f1568d974c04b

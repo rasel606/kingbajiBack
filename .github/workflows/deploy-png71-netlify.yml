@@ -1,0 +1,55 @@
+name: Deploy png71-front to Netlify
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'png71-front/**'
+      - '.github/workflows/deploy-png71-netlify.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'png71-front/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: png71-front/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: png71-front
+        run: npm ci
+      
+      - name: Build
+        working-directory: png71-front
+        env:
+          REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+          CI: false
+        run: npm run build
+      
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+      
+      - name: Deploy to Netlify
+        working-directory: png71-front
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_PNG71_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            netlify deploy --prod --dir=build
+          else
+            netlify deploy --dir=build
+          fi
