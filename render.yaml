@@ -1,18 +1,30 @@
 services:
   - type: web
-    name: bajicrick-backend
+    name: kingbaji-backend
     env: node
+    region: oregon
     plan: free
     buildCommand: npm install
     startCommand: npm start
+    healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 5000
       - key: MONGODB_URI
-        fromDatabase:
-          name: bajicrick-mongodb
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
-        generateValue: true
-      - key: FRONTEND_URL
-        # value: https://your-frontend-app.onrender.com
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: API_OPERATOR_CODE
+        sync: false
+      - key: API_SECRET_KEY
+        sync: false
+      - key: API_BASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false

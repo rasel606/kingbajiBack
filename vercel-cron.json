@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/betting-history",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/vip-daily",
+      "schedule": "5 0 * * *"
+    },
+    {
+      "path": "/api/cron/vip-monthly",
+      "schedule": "10 0 1 * *"
+    },
+    {
+      "path": "/api/cron/referral-bonus",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/promo-free-spin",
+      "schedule": "*/10 * * * *"
+    }
+  ]
+}
