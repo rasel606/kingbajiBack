@@ -1,0 +1,28 @@
+# Koyeb Deployment Configuration
+# Truly FREE - No credit card required!
+
+app: kingbaji-backend
+
+services:
+  web:
+    name: backend
+    type: web
+    build:
+      dockerfile: Dockerfile
+    instance:
+      type: free
+    ports:
+      - port: 8000
+        protocol: http
+    env:
+      - name: NODE_ENV
+        value: production
+      - name: PORT
+        value: "8000"
+    healthcheck:
+      http:
+        path: /api/health
+        port: 8000
+    routes:
+      - path: /
+        port: 8000
