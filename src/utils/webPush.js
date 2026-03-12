@@ -1,30 +1,43 @@
 const webpush = require('web-push');
 
-// Configure VAPID keys (generate with: npx web-push generate-vapid-keys)
-const vapidKeys = {
-  publicKey: process.env.VAPID_PUBLIC_KEY,
-  privateKey: process.env.VAPID_PRIVATE_KEY
-};
+// Webpush config - DISABLED until VAPID keys are set
+// To enable: set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in .env
 
-// Configure web-push
-webpush.setVapidDetails(
-  'mailto:bajicrick247@example.com',
-  vapidKeys.publicKey,
-  vapidKeys.privateKey
-);
+let webpushConfigured = false;
+
+try {
+  if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+    webpush.setVapidDetails(
+      process.env.VAPID_SUBJECT || 'mailto:admin@bajicrick.com',
+      process.env.VAPID_PUBLIC_KEY,
+      process.env.VAPID_PRIVATE_KEY
+    );
+    webpushConfigured = true;
+    console.log('✅ Webpush VAPID configured');
+  } else {
+    console.log('⚠️ Webpush VAPID keys missing - push notifications disabled');
+  }
+} catch (error) {
+  console.log('❌ Webpush configuration error:', error.message);
+  webpushConfigured = false;
+}
 
 const webPushService = {
   /**
-   * Send push notification to a specific user
+   * Send push notification to a specific user (only if configured)
    */
   async sendNotification(subscription, payload) {
+    if (!webpushConfigured) {
+      console.log('Push notifications disabled - missing VAPID keys');
+      return false;
+    }
+    
     try {
       await webpush.sendNotification(subscription, JSON.stringify(payload));
       return true;
     } catch (error) {
       console.error('Error sending push notification:', error);
       if (error.statusCode === 410) {
-        // Subscription expired or invalid
         return 'expired';
       }
       return false;
@@ -32,9 +45,13 @@ const webPushService = {
   },
 
   /**
-   * Send notification to multiple users
+   * Send notification to multiple users (only if configured)
    */
   async sendBulkNotification(subscriptions, payload) {
+    if (!webpushConfigured) {
+      return { success: false, message: 'Push notifications disabled' };
+    }
+    
     const results = await Promise.allSettled(
       subscriptions.map(sub => this.sendNotification(sub, payload))
     );
@@ -48,11 +65,11 @@ const webPushService = {
     return {
       title,
       body,
-      icon: '/logo192.png', // Your app icon
+      icon: '/logo192.png',
       badge: '/logo192.png',
       vibrate: [200, 100, 200],
       data: {
-        url: window.location.origin,
+        url: '/',
         createdAt: new Date().toISOString(),
         ...data
       },
@@ -60,13 +77,16 @@ const webPushService = {
         {
           action: 'view',
           title: 'View Details'
-        },
-        {
-          action: 'close',
-          title: 'Close'
         }
       ]
     };
+  },
+
+  /**
+   * Check if push notifications are enabled
+   */
+  isEnabled() {
+    return webpushConfigured;
   }
 };
 

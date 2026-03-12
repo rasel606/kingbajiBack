@@ -276,4 +276,4 @@ AdminModelSchema.index({ status: 1 });
 
 AdminModelSchema.index({ isLoggedIn: 1 });
 
-module.exports = mongoose.model("AdminModel", AdminModelSchema);
+module.exports = mongoose.models.AdminModel || mongoose.model("AdminModel", AdminModelSchema);

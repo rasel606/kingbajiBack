@@ -245,4 +245,5 @@ AgentModelSchema.index({ status: 1 });
 AgentModelSchema.index({ 'hierarchy.upline': 1 });
 AgentModelSchema.index({ agentType: 1 });
 
-module.exports = mongoose.model('Agent', AgentModelSchema);
+const AgentModel = mongoose.models.Agent || mongoose.model('Agent', AgentModelSchema);
+module.exports = AgentModel;

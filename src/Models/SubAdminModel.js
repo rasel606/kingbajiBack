@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const SubAdminModelSchema = new mongoose.Schema({
   // Basic Information
-  email: { type: String, required: true, lowercase: true, unique: true }, // Added unique
+  email: { type: String, required: true, lowercase: true, unique: true },
   firstName: { type: String, required: true },
   lastName: { type: String },
   mobile: { type: String },
@@ -11,14 +11,14 @@ const SubAdminModelSchema = new mongoose.Schema({
   password: { type: String, required: true, select: false },
   
   // Identification
-  userId: { type: String, unique: true }, // Added unique
-  referralCode: { type: String, unique: true }, // ADDED THIS FIELD
-    referredBy: { type: String, default: "1" }, // ADDED THIS FIELD
+  userId: { type: String, unique: true },
+  referralCode: { type: String, unique: true },
+  referredBy: { type: String, default: "1" },
+  
   // Role & Permissions
   role: { type: String, default: "SubAdmin", enum: ["SubAdmin"] },
   permissions: [{
-    module: { 
-      type: String, 
+    module: { type: String, 
       enum: [
         'users', 'affiliates', 'transactions', 'betting', 
         'reports', 'settings', 'bonus', 'withdrawals'
@@ -78,7 +78,6 @@ const SubAdminModelSchema = new mongoose.Schema({
     question: String,
     answer: String
   }]
-
 }, {
   timestamps: true,
   versionKey: false
@@ -108,7 +107,7 @@ SubAdminModelSchema.pre('save', async function(next) {
       
       while (!isUnique) {
         referralCode = 'SUB' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        const exists = await this.constructor.findOne({ referralCode });
+        const exists = await mongoose.model('SubAdminModel').findOne({ referralCode });
         if (!exists) {
           isUnique = true;
         }
@@ -123,7 +122,7 @@ SubAdminModelSchema.pre('save', async function(next) {
       
       while (!isUnique) {
         newUserId = 'SUB' + Math.random().toString(36).substring(2, 8).toUpperCase();
-        const exists = await this.constructor.findOne({ userId: newUserId });
+        const exists = await mongoose.model('SubAdminModel').findOne({ userId: newUserId });
         if (!exists) {
           isUnique = true;
         }
@@ -276,10 +275,10 @@ SubAdminModelSchema.methods.verifyBackupCode = function(code) {
 // Indexes
 SubAdminModelSchema.index({ email: 1 ,unique: true });
 SubAdminModelSchema.index({ userId: 1 ,unique: true });
-SubAdminModelSchema.index({ referralCode: 1 ,unique: true }); // Added index
+SubAdminModelSchema.index({ referralCode: 1 ,unique: true });
 SubAdminModelSchema.index({ role: 1 });
 SubAdminModelSchema.index({ status: 1 });
 SubAdminModelSchema.index({ isLoggedIn: 1 });
 SubAdminModelSchema.index({ createdBy: 1 });
 
-module.exports = mongoose.model("SubAdminModel", SubAdminModelSchema);
+module.exports = mongoose.models.SubAdminModel || mongoose.model("SubAdminModel", SubAdminModelSchema);

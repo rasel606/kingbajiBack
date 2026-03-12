@@ -36,6 +36,5 @@ const BonusSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
- const Bonus= mongoose.model('Bonus', BonusSchema);
-
-module.exports = Bonus
+const Bonus = mongoose.models.Bonus || mongoose.model('Bonus', BonusSchema);
+module.exports = Bonus;

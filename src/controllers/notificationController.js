@@ -1,7 +1,7 @@
 const Notification = require("../models/Notification");
-const NotificationService = require("../services/NotificationService");
+const NotificationService = require("../services/notificationService");
 const webPushService = require("../utils/webPush");
-const UserModel = require("../models/userModel");
+const UserModel = require('../Models/User');
 
 // Legacy DB-only create (keep for compatibility)
 exports.createNotification = async (title, userId, content, type, metaData = {}) => {
@@ -27,7 +27,7 @@ exports.getGroupedNotifications = async (req, res) => {
 
   try {
     console.log(req.params);
-    const { userId } = req.params;
+    const { userId } = req.params.id;
     // const page = parseInt(req.query.page) || 1; // default page 1
     // const limit = parseInt(req.query.limit) || 5; // default 5 groups per page
 

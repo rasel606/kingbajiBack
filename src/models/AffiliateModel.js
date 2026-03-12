@@ -289,4 +289,5 @@ AffiliateModelSchema.index({ status: 1 });
 AffiliateModelSchema.index({ isLoggedIn: 1 });
 AffiliateModelSchema.index({ 'currentSession.deviceId': 1 });
 
-module.exports = mongoose.model('AffiliateModel', AffiliateModelSchema);
+const AffiliateModel = mongoose.models.AffiliateModel || mongoose.model('AffiliateModel', AffiliateModelSchema);
+module.exports = AffiliateModel;

@@ -156,11 +156,6 @@ SubAgentModelSchema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// Virtual for total downline count
-// SubAgentModelSchema.virtual('totalDownlines').get(function () {
-//   return this.hierarchy.affiliates.length;
-// });
-
 // Password hashing and referral code generation middleware
 SubAgentModelSchema.pre('save', async function(next) {
   // Generate referral code if not exists
@@ -212,13 +207,6 @@ SubAgentModelSchema.methods.createPasswordResetToken = function() {
   return resetToken;
 };
 
-// Add affiliate to hierarchy
-// SubAgentModelSchema.methods.addAffiliate = function(affiliateId) {
-//   if (!this.hierarchy.affiliates.includes(affiliateId)) {
-//     this.hierarchy.affiliates.push(affiliateId);
-//   }
-// };
-
 // Indexes
 SubAgentModelSchema.index({ email: 1 , unique: true});
 SubAgentModelSchema.index({ userId: 1 , unique: true});
@@ -227,4 +215,4 @@ SubAgentModelSchema.index({ referredBy: 1 });
 SubAgentModelSchema.index({ parentAgent: 1 });
 SubAgentModelSchema.index({ status: 1 });
 
-module.exports = mongoose.model('SubAgent', SubAgentModelSchema);
+module.exports = mongoose.models.SubAgent || mongoose.model('SubAgent', SubAgentModelSchema);

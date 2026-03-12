@@ -32,4 +32,5 @@ const UserBonusSchema = new mongoose.Schema({
 UserBonusSchema.index({ userId: 1, status: 1 });
 UserBonusSchema.index({ bonusType: 1, createdAt: 1 });
 
-module.exports = mongoose.model('UserBonus', UserBonusSchema);
+const UserBonus = mongoose.models.UserBonus || mongoose.model('UserBonus', UserBonusSchema);
+module.exports = UserBonus;

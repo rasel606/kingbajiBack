@@ -62,21 +62,21 @@ router.get('/verify-email', UpdateProfile.verifyOTP);
 // router.get('/user_betting_history', UpdateProfile.sendotp);
 
 
-router.post('/searchTransactionsbyUserId', TransactionController.searchTransactionsbyUserId)
+// router.post('/searchTransactionsbyUserId', TransactionController.searchTransactionsbyUserId)
 
 
 
 
 
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
-router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
-router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
-router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
-router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
-router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
-router.post('/checkWithdrawalEligibility', TransactionController.checkWithdrawalEligibility);
-router.post('/checkWithdrawalEligibility/active', TransactionController.checkWithdrawalEligibilityActive);
-router.post('/checkWithdrawalEligibility/complate', TransactionController.checkWithdrawalEligibilityComplated);
+// router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
+// router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
+// router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
+// router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
+// router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
+// router.post('/checkWithdrawalEligibility', TransactionController.checkWithdrawalEligibility);
+// router.post('/checkWithdrawalEligibility/active', TransactionController.checkWithdrawalEligibilityActive);
+// router.post('/checkWithdrawalEligibility/complate', TransactionController.checkWithdrawalEligibilityComplated);
 
 router.post('/create_bonuses',createBonus);
 router.post('/bonuses',getAllBonuses);
@@ -106,34 +106,34 @@ router.get('/get_notifications/:userId',notificationController.getGroupedNotific
 
 
 
-router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
-router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
-router.post('/update_deposit_gateway_status', TransactionController.updateDepositGatewayStatus);
-router.post('/update_deposit_gateway_type', TransactionController.updatedepositGatewayType);
-router.post('/update_widthraw_gateway_status', TransactionController.updateWidthrawGatewayStatus);
-router.post('/update_withdrawal_gateway_type', TransactionController.updateWithdrawalGatewayType);
+// router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
+// router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
+// router.post('/update_deposit_gateway_status', TransactionController.updateDepositGatewayStatus);
+// router.post('/update_deposit_gateway_type', TransactionController.updatedepositGatewayType);
+// router.post('/update_widthraw_gateway_status', TransactionController.updateWidthrawGatewayStatus);
+// router.post('/update_withdrawal_gateway_type', TransactionController.updateWithdrawalGatewayType);
 
 
-router.post("/submitTransaction", TransactionController.submitTransaction);
-router.post('/deposits_list', TransactionController.DepositsList);
+// router.post("/submitTransaction", TransactionController.submitTransaction);
+// router.post('/deposits_list', TransactionController.DepositsList);
 
-router.post('/deposit_with_bonus', TransactionController.addTransaction)
+// router.post('/deposit_with_bonus', TransactionController.addTransaction)
 
-router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
-router.post('/search_Deposit_transactions_pendings', TransactionController.Search_Deposit_Transactions_Pending)
-router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
-router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
+// router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
+// router.post('/search_Deposit_transactions_pendings', TransactionController.Search_Deposit_Transactions_Pending)
+// router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
+// router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
 
 
-router.post('/widthraw_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
-router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
-router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin)
-router.post('/searchWidthdrawTransactionsReportAprove', TransactionController.searchWidthdrawTransactionsReportAprove)
-router.post('/searchWidthdrawTransactionsReportReject', TransactionController.searchWidthdrawTransactionsReportReject)
+// router.post('/widthraw_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
+// router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
+// router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin)
+// router.post('/searchWidthdrawTransactionsReportAprove', TransactionController.searchWidthdrawTransactionsReportAprove)
+// router.post('/searchWidthdrawTransactionsReportReject', TransactionController.searchWidthdrawTransactionsReportReject)
 
-router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
-router.post('/get_all_user_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
-router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
+// router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
+// router.post('/get_all_user_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
+// router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
 
 
 

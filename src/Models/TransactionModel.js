@@ -63,4 +63,5 @@ const transactionModelSchema = new mongoose.Schema({
 // Enable virtuals in JSON and Object output
 // transactionSchema.set("toObject", { virtuals: true });
 // transactionSchema.set("toJSON", { virtuals: true });
-module.exports = mongoose.model("TransactionModel", transactionModelSchema);
+const TransactionModel = mongoose.models.TransactionModel || mongoose.model("TransactionModel", transactionModelSchema);
+module.exports = TransactionModel;
