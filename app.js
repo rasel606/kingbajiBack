@@ -12,19 +12,20 @@ const http = require('http');
 const path = require('path');
 require('dotenv').config();
 
+const IS_TEST = process.env.NODE_ENV === 'test';
+
 // Import routes
 
 const cookieHandler = require('./src/middleWare/cookieHandler');
 const logger = require('./src/utils/logger');
 const apiRouter = require('./src/router/apiRouter');
-const adminAurth = require('./src/router/adminAurth');
+const adminAuthRouter = require('./src/router/adminAuth'); 
 const transactionRoutes = require('./src/router/transactionRoutes');
 const subAdminRoutes = require('./src/router/subAdminRoutes');
-const subAdminAurth = require('./src/router/subAdminAurth');
 const dashboardRoutes = require('./src/router/dashboardRoutes');
 const userRoutes = require('./src/router/userRoutes');
 const gameRoutes = require('./src/router/gameRoutes');
-// const mainAdminRoutes = require('./src/router/mainAdminRoutes'); // ⚠️ Disabled: Has undefined controller methods
+const mainAdminRoutes = require('./src/router/mainAdminRoutes');
 const phoneVerificationRoute = require('./src/router/phoneVerificationRoute');
 const turnoverRoutes = require('./src/router/turnoverServicesRoutes');
 const promotionsServiceRoutes = require('./src/router/promotionsServiceRoutes');
@@ -50,10 +51,16 @@ const announcementRoutes = require('./src/router/announcementRoutes');
 const bettingRoutes = require('./src/router/bettingRoutes');
 const vipUserRoutes = require('./src/router/vipUserRoutes');
 const realTimeBonusRoute = require('./src/router/realTimeBonusRoute');
-const BettingHistoryJob = require('./src/corn/BettingHistoryJob');
-const SpcialBettingHistoryJob = require('./src/corn/SpcialBettingHistoryJob');
-const referralBonusProcessor = require('./src/corn/referralBonusProcessor');
+let BettingHistoryJob, SpcialBettingHistoryJob, referralBonusProcessor;
+if (!IS_TEST) {
+  BettingHistoryJob = require('./src/corn/BettingHistoryJob');
+  SpcialBettingHistoryJob = require('./src/corn/SpcialBettingHistoryJob');
+  referralBonusProcessor = require('./src/corn/referralBonusProcessor');
+}
 const referralRoutes = require('./src/router/referralRoutes');
+const legalRoutes = require('./src/router/legalRoutes');
+const widgetRoutes = require('./src/router/widgetRoutes');
+const widgetPublicRoutes = require('./src/router/widgetPublicRoutes');
 // Import Live Chat Routes
 // const chatRoutes = require('./src/router/chatRoutes'); // ⚠️ Disabled: ChatController is commented out
 
@@ -63,7 +70,7 @@ const affiliateManagementRoutes = require('./src/router/affiliateManagementRoute
 const profileAuthRoutes = require('./src/router/profileAuthRoutes');
 const advancedDashboardRoutes = require('./src/router/advancedDashboardRoutes');
 const unifiedDashboardRoutes = require('./src/router/unifiedDashboardRoutes');
-const adminAuth = require('./src/middleWare/AdminAuth');
+const AdminAuth = require('./src/middleWare/AdminAuth');
 const AdminController = require('./src/controllers/AdminController');
 
 // Import Socket Server
@@ -77,13 +84,20 @@ console.log('🚀 Starting application initialization...');
 const server = http.createServer(app);
 console.log('✅ HTTP server created');
 
-// Initialize Socket.io
-console.log('🔌 Initializing Socket.io...');
-const io = initializeSocket(server);
+// Initialize Socket.io (skip in test to avoid open handles)
+if (!IS_TEST) {
+  console.log('🔌 Initializing Socket.io...');
+  const io = initializeSocket(server);
+app.set('socketio', io);
+  app.set('io', io);
+  console.log('✅ Socket.io stored as socketio & io in app context');
 
-// Store socket instance in app for route access
-app.set('io', io);
-console.log('✅ Socket.io stored in app context');
+  // Make io accessible in routes via req.io
+  app.use((req, res, next) => {
+    req.io = io;
+    next();
+  });
+}
 
 app.use(cors({
   origin: "*", // সব domain allow করুন
@@ -135,7 +149,9 @@ const connectDB = async () => {
     .catch((err) => console.error("❌ MongoDB connection error:", err));
 };
 
-connectDB();
+if (!IS_TEST) {
+  connectDB();
+}
 
 // Logging middleware
 app.use(morgan('combined', {
@@ -149,18 +165,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
 app.use("/api/v1", apiRouter);
-app.use('/api/admin/auth', adminAurth);
-// app.use('/api/admin', mainAdminRoutes); // ⚠️ Disabled: Has undefined controller methods
+app.use('/api/admin/auth', adminAuthRouter);
+app.use('/api/admin', mainAdminRoutes);
 app.use('/api/adminannouncement', announcementRoutes);
 
 // Admin Dashboard (explicit route to keep legacy frontend path working)
-app.get('/api/admin/dashboard/overview', adminAuth, AdminController.getAdminDashboardStats);
+app.get('/api/admin/dashboard/overview', AdminAuth, AdminController.getAdminDashboardStats);
 
 
 
 
 ////////////////SubAdmin////////////////////////////////
-app.use('/api/subadmin/auth', subAdminAurth);
 app.use('/api/subadmin/dashboard', subAdminDashboard);
 app.use('/api/subadmin', subAdminRoutes);
 ////////////////agent////////////////////////////////
@@ -169,7 +184,7 @@ app.use('/api/agent_dashboard', agentDashboard);
 app.use('/api/sub_agent', subAgentRoutes);
 
 app.use('/api/transactions', transactionRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/admin/dashboard', AdminAuth, dashboardRoutes);
 app.use('/api/dashboard/analytics', advancedDashboardRoutes);
 app.use('/api/unified-dashboard', unifiedDashboardRoutes);
 app.use('/api/user', userRoutes);
@@ -178,6 +193,7 @@ app.use('/api/user/rebet', reportRoutes);
 app.use('/api/user/betting', bettingRoutes);
 app.use('/api/user/vip', vipUserRoutes);
 app.use('/api/user/rebate', realTimeBonusRoute);
+app.use('/api/transactions', require('./src/router/transactionRoutes'));
 app.use('/api/payment-methods', paymentMethod);
 
 app.use('/api/games', gameRoutes);
@@ -198,6 +214,12 @@ app.use('/api/affiliate/profile', profileRoutes);
 app.use('/api/affiliate/earnings', affiliateEarningsRoutes);
 app.use('/api/affiliate/links', affiliateLinkRoutes);
 app.use('/api/kyc', kycRoutes);
+app.use('/api/legal', legalRoutes);
+app.use('/api/admin/banners', require('./src/router/adminBannerRoutes'));
+app.use('/api/admin/ads', require('./src/router/adminAdRoutes'));
+app.use('/api/ads', require('./src/router/publicAdRoutes'));
+app.use('/api/admin/widgets', widgetRoutes);
+app.use('/api/widgets', widgetPublicRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 // Live Chat Routes
 // app.use('/api/live-chat', chatRoutes); // ⚠️ Disabled: ChatController is commented out
@@ -314,6 +336,11 @@ app.get('/', (req, res) => {
   });
 });
 
+// Demo lobby page built from provided layout sample
+app.get('/table-lobby', (req, res) => {
+  res.sendFile(path.join(__dirname, 'src', 'static', 'table-lobby.html'));
+});
+
 // 404 handler
 app.use("*", (req, res) => {
   res.status(404).json({
@@ -327,18 +354,40 @@ app.use("*", (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('❌ Global error handler:', err);
+  
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
 
+  // Log the full error for debugging
   logger.error('Global Error Handler', {
     error: err.message,
+    statusCode: err.statusCode,
+    status: err.status,
+    message: err.message,
     stack: err.stack,
     url: req.originalUrl,
     method: req.method,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    isOperational: err.isOperational
   });
 
-  res.status(err.statusCode || 500).json({
+  // Send a clean, operational error message to the client
+  if (err.isOperational) {
+    return res.status(err.statusCode).json({
+      status: err.status,
+      message: err.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // For programming or other unknown errors, don't leak error details in production
+  const errorMessage = process.env.NODE_ENV === 'production'
+    ? 'Something went very wrong!'
+    : err.message;
+
+  return res.status(500).json({
     status: 'error',
-    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message,
+    message: errorMessage,
     ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
     timestamp: new Date().toISOString()
   });

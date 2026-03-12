@@ -1,6 +1,9 @@
 const Notification = require("../models/Notification");
+const NotificationService = require("../services/NotificationService");
+const webPushService = require("../utils/webPush");
+const UserModel = require("../models/userModel");
 
-// Create notification
+// Legacy DB-only create (keep for compatibility)
 exports.createNotification = async (title, userId, content, type, metaData = {}) => {
   try {
     console.log(title, userId, content, type, metaData);
@@ -200,42 +203,88 @@ exports.updatePreferences = async (req, res) => {
 
 exports.sendPushNotification = async (req, res) => {
   try {
+    const io = req.app.get('socketio'); // Get socket.io instance
+    const notificationService = new NotificationService(io);
     const { userIds, title, message, type, data } = req.body;
     
-    // Create notifications for each user
-    const notifications = userIds.map(userId => ({
-      userId,
-      title,
-      message,
-      type: type || 'system',
-      data: data || {}
-    }));
-    
-    await Notification.insertMany(notifications);
-    
-    // Here you would integrate with actual push notification services
-    // like Firebase Cloud Messaging, OneSignal, etc.
+    const results = [];
+    for (const userId of userIds) {
+      await notificationService.createAndSendNotification(
+        userId, title, message, type || 'system', data || {}
+      );
+      results.push(userId);
+    }
     
     res.json({ 
       success: true, 
-      message: `Notification sent to ${userIds.length} users` 
+      message: `Push notifications sent to ${results.length} users`,
+      sentTo: results
     });
   } catch (error) {
     console.error('Error sending push notification:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// Helper function for default preferences
-function getDefaultPreferences() {
-  return {
-    email: true,
-    push: true,
-    sms: false,
-    depositAlerts: true,
-    withdrawalAlerts: true,
-    bonusAlerts: true,
-    systemAlerts: true,
-    marketing: false
-  };
-}
+// Send admin notification on deposit/withdrawal submit
+exports.notifyAdminsOnSubmit = async (transaction) => {
+  try {
+    const io = global.io || req?.app?.get('socketio'); // Flexible io access
+    const notificationService = new NotificationService(io);
+    
+    await notificationService.sendTransactionNotification(transaction, 'created');
+    console.log(`Admin notifications sent for transaction ${transaction.transactionID || transaction._id}`);
+    return true;
+  } catch (error) {
+    console.error('Error notifying admins:', error);
+    throw error;
+  }
+};
+
+// Notify user on approve/reject
+exports.notifyUserOnStatusChange = async (userId, transaction, action) => {
+  try {
+    const io = global.io || req?.app?.get('socketio');
+    const notificationService = new NotificationService(io);
+    
+    await notificationService.sendTransactionNotification(transaction, action);
+    console.log(`User ${userId} notified of ${action} for transaction ${transaction.transactionID || transaction._id}`);
+    return true;
+  } catch (error) {
+    console.error('Error notifying user:', error);
+    throw error;
+  }
+};
+  try {
+    const AdminModel = require('../models/AdminModel');
+    
+    // Get all admins with userId
+    const admins = await AdminModel.find({ role: 'Admin' }).select('userId');
+    
+    if (!admins || admins.length === 0) {
+      console.log('No admins found to notify');
+      return [];
+    }
+    
+    // Create notification for each admin
+    const notifications = [];
+    for (const admin of admins) {
+      if (admin.userId) {
+        const notification = await exports.createNotification(
+          title,
+          admin.userId,
+          content,
+          type,
+          metaData
+        );
+        notifications.push(notification);
+      }
+    }
+    
+    console.log(`Notifications sent to ${notifications.length} admin(s)`);
+    return notifications;
+  } catch (error) {
+    console.error('Error notifying admins:', error.message);
+    throw new Error(error.message);
+  }
+};

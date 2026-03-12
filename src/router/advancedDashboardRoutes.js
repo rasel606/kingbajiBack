@@ -5,6 +5,9 @@ const DashboardAnalyticsController = require('../controllers/DashboardAnalyticsC
 const { auth } = require('../middleWare/auth');
 const adminAuth = require('../middleWare/adminAuth');
 
+// ⚡ OPTIMIZED: Single combined endpoint for all dashboard data
+router.get('/summary', auth, DashboardAnalyticsController.getOptimizedSummary);
+
 // Public metrics (can be cached)
 router.get('/metrics', auth, DashboardAnalyticsController.getDashboardMetrics);
 router.get('/time-series', auth, DashboardAnalyticsController.getTimeSeriesData);

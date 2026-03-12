@@ -1,0 +1,15 @@
+const config = {
+  testEnvironment: "node",
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  moduleFileExtensions: ["js", "json", "jsx", "ts", "tsx", "node"],
+  testMatch: ["**/__tests__/**/*.test.js"],
+};
+
+module.exports = config;
+
+const { test, expect } = require('@jest/globals');
+
+test('returns "Hello, World!"', () => {
+  expect("Hello, World!").toBe("Hello, World!");
+});

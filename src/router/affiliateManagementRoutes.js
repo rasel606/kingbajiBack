@@ -23,13 +23,13 @@ const {
   approveAffiliateUserWithdrawal,
   rejectAffiliateUserWithdrawal
 } = require('../controllers/AffiliateManagementController');
-const { protectAdmin } = require('../MiddleWare/adminAuth');
-const validate = require('../MiddleWare/validation');
+const AdminAuth = require('../middleWare/AdminAuth');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 
 // All routes require admin authentication
-router.use(protectAdmin);
+router.use(AdminAuth);
 
 // =============================================
 // AFFILIATE USERS ROUTES

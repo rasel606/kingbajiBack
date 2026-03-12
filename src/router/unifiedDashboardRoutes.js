@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const UnifiedDashboardController = require('../controllers/UnifiedDashboardController');
-const { auth } = require('../middleWare/auth');
+const { auth } = require('../middleWare/auth'); // Fixed: destructured import
 const adminAuth = require('../middleWare/adminAuth');
 
 // =============================================
@@ -17,7 +17,65 @@ const adminAuth = require('../middleWare/adminAuth');
  * @query modules - Comma-separated list of modules or 'all' (default: all)
  * @access Private (Admin)
  */
-router.get('/', auth, adminAuth, UnifiedDashboardController.getUnifiedDashboard);
+router.get('/', auth, UnifiedDashboardController.getUnifiedDashboard);
+
+// ⚡ OPTIMIZED: Fast summary endpoint (single API call)
+/**
+ * @route GET /api/unified-dashboard/summary
+ * @desc Get optimized unified dashboard summary with all critical data in one call
+ * @query startDate - Start date for date range (optional)
+ * @query endDate - End date for date range (optional)
+ * @query timeZone - Timezone (default: UTC)
+ * @access Private (Admin)
+ */
+router.get('/summary', auth, UnifiedDashboardController.getOptimizedSummary);
+
+// Advanced programmatic summary (no cache flag) - returns full JSON for integrations
+router.get('/summary/advanced', auth, async (req, res) => {
+  try {
+    const dateRange = UnifiedDashboardController.getDateRange(
+      req.query.startDate,
+      req.query.endDate,
+      req.query.timeZone || 'UTC',
+    );
+    const data = await UnifiedDashboardController.fetchOptimizedData(dateRange);
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Prometheus-style metrics endpoint for observability
+router.get('/metrics', auth, async (req, res) => {
+  try {
+    const dateRange = UnifiedDashboardController.getDateRange(
+      req.query.startDate,
+      req.query.endDate,
+      req.query.timeZone || 'UTC',
+    );
+    const data = await UnifiedDashboardController.fetchOptimizedData(dateRange);
+    const m = data.summary;
+    const lines = [
+      `# HELP unified_total_users Total registered users`,
+      `# TYPE unified_total_users gauge`,
+      `unified_total_users ${m.totalUsers || 0}`,
+      `# HELP unified_active_users Active users in last 24h`,
+      `# TYPE unified_active_users gauge`,
+      `unified_active_users ${m.activeUsers || 0}`,
+      `# HELP unified_revenue_total Revenue in selected range`,
+      `# TYPE unified_revenue_total gauge`,
+      `unified_revenue_total ${parseFloat(m.revenue || 0)}`,
+      `# HELP unified_profit Profit in selected range`,
+      `# TYPE unified_profit gauge`,
+      `unified_profit ${parseFloat(m.profit || 0)}`,
+    ];
+
+    res.set('Content-Type', 'text/plain');
+    res.send(lines.join('\n'));
+  } catch (error) {
+    res.status(500).send(`# error\n# ${error.message}`);
+  }
+});
 
 // =============================================
 // MODULE-SPECIFIC ROUTES

@@ -10,16 +10,16 @@ const {
   deleteSocialLink,
   updateSocialLinkPlatform
 } = require('../controllers/SocialLinksController');
-const { protect } = require('../MiddleWare/auth');
-const { protectAdmin } = require('../MiddleWare/adminAuth');
-const validate = require('../MiddleWare/validation');
+const { protect } = require('../middleWare/auth');
+const AdminAuth = require('../middleWare/AdminAuth');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 
 // Admin routes
-router.get('/', protectAdmin, getAllSocialLinks);
-router.get('/:id', protectAdmin, getSocialLink);
-router.delete('/:id', protectAdmin, deleteSocialLink);
+router.get('/', AdminAuth, getAllSocialLinks);
+router.get('/:id', AdminAuth, getSocialLink);
+router.delete('/:id', AdminAuth, deleteSocialLink);
 
 // Protected user routes
 router.use(protect);

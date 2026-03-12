@@ -1,7 +1,7 @@
 // middleware/auth.js
-const jwt = require('jsonwebtoken');
-const AppError = require('../utils/AppError');
-const SubAdminModel = require('../models/SubAdminModel');
+const jwt = require("jsonwebtoken");
+const AppError = require("../utils/AppError");
+const SubAdminModel = require("../models/SubAdminModel");
 
 const JWT_SECRET = "Kingbaji";
 
@@ -9,27 +9,32 @@ const auth = async (req, res, next) => {
   try {
     let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
     if (!token) {
-      return next(new AppError('Access denied. No token provided.', 401));
+      return next(new AppError("Access denied. No token provided.", 401));
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
-console.log("admin by email",decoded)
+    console.log("admin by email", decoded);
     // Find user/admin by email
-    const user = await SubAdminModel.findOne({ email: decoded.email }).select('-password');
-console.log(user)
+    const user = await SubAdminModel.findOne({ email: decoded.email }).select(
+      "-password",
+    );
+    console.log(user);
     if (!user) {
-      return next(new AppError('Token is not valid.', 401));
+      return next(new AppError("Token is not valid.", 401));
     }
 
     req.user = user;
     next();
   } catch (error) {
-    return next(new AppError('Token is not valid.', 401));
+    return next(new AppError("Token is not valid.", 401));
   }
 };
 

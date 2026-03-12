@@ -19,3 +19,7 @@
 {"level":"info","message":"127.0.0.1 - - [28/Feb/2026:13:54:15 +0000] \"GET /api/admin/auth/main_admin HTTP/1.1\" 500 1673 \"http://localhost:3000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"","service":"bajicrick-api"}
 {"error":"Operation `adminmodels.findOne()` buffering timed out after 10000ms","level":"error","message":"Global Error Handler","method":"POST","service":"bajicrick-api","stack":"MongooseError: Operation `adminmodels.findOne()` buffering timed out after 10000ms\n    at Timeout.<anonymous> (E:\\megabaji-2\\backend\\node_modules\\mongoose\\lib\\drivers\\node-mongodb-native\\collection.js:187:23)\n    at listOnTimeout (node:internal/timers:588:17)\n    at process.processTimers (node:internal/timers:523:7)","timestamp":"2026-02-28T13:54:35.924Z","url":"/api/admin/auth/login_admin"}
 {"level":"info","message":"127.0.0.1 - - [28/Feb/2026:13:54:35 +0000] \"POST /api/admin/auth/login_admin HTTP/1.1\" 500 476 \"http://localhost:3000/\" \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36\"","service":"bajicrick-api"}
+{"level":"info","message":"File logging enabled - logs directory created","service":"bajicrick-api"}
+{"level":"info","message":"🚀 Server running in development mode on port 5010","service":"bajicrick-api"}
+{"level":"info","message":"🔌 Socket.io is ready for real-time connections","service":"bajicrick-api"}
+{"level":"info","message":"💬 Live Chat System is initialized","service":"bajicrick-api"}

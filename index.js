@@ -6,10 +6,21 @@ const { server } = require('./app');
 const logger = require('./src/utils/logger');
 const mongoose = require('mongoose');
 
+// Configure mongoose index behavior to avoid duplicate-index warnings during startup.
+// In production you may want to disable autoIndex entirely and manage indexes via migrations.
+if (process.env.MONGOOSE_AUTO_INDEX === 'false' || process.env.NODE_ENV === 'production') {
+  mongoose.set('autoIndex', false)
+  console.log('Mongoose autoIndex disabled (production/migration mode)')
+} else {
+  mongoose.set('autoIndex', true)
+  console.log('Mongoose autoIndex enabled (development mode)')
+}
+
 // ------------------------------
 // Environment Configuration
 // ------------------------------
-const PORT = process.env.PORT || 5000;
+// Force port 5000 for frontend compatibility
+const PORT = 5000;
 const HOST = process.env.HOST || '0.0.0.0';
 const ENV = process.env.NODE_ENV || 'development';
 
@@ -36,6 +47,22 @@ server.listen(PORT, HOST, () => {
 });
 
 console.log('✅ Server startup configuration completed');
+
+// Start dashboard cache refresher cron (best-effort)
+try {
+  const { scheduleJobs } = require('./src/corn/dashboardCacheRefresher');
+  scheduleJobs();
+} catch (e) {
+  console.warn('Unable to start dashboard cache refresher:', e.message);
+}
+
+// Try to connect Redis (best-effort). Uses src/redisClient.js which falls back to in-memory cache if unavailable.
+try {
+  const { connectRedis } = require('./src/redisClient')
+  connectRedis().catch((e) => console.warn('Redis connect rejected:', e && e.message))
+} catch (e) {
+  console.warn('Redis client not configured:', e && e.message)
+}
 
 // ------------------------------
 // Graceful Shutdown Handler

@@ -1,0 +1,103 @@
+{
+  "info": {
+    "name": "Promo Engine Phase-1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Seed VIP8 promo, evaluate, deposit with promo, verify claim status"
+  },
+  "item": [
+    {
+      "name": "1) Seed VIP8 campaign",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/promo-engine/admin/seed-vip8",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "promo-engine", "admin", "seed-vip8"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Seed success', function () {",
+              "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "pm.test('Campaign code is VIP8_UNLIMITED', function () {",
+              "  pm.expect(pm.response.json().data.code).to.eql('VIP8_UNLIMITED');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2) Active campaigns",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/promo-engine/campaigns/active",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "promo-engine", "campaigns", "active"]
+        }
+      }
+    },
+    {
+      "name": "3) Evaluate VIP8",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userCUserId}}\",\n  \"depositAmount\": 1000,\n  \"promoCode\": \"VIP8_UNLIMITED\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/promo-engine/evaluate",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "promo-engine", "evaluate"]
+        }
+      }
+    },
+    {
+      "name": "4) Deposit with promoCode",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"userId\": \"{{userCUserId}}\",\n  \"amount\": 1000,\n  \"gatewayId\": \"{{gatewayId}}\",\n  \"paymentMethod\": \"bKash\",\n  \"transactionReference\": \"PROMO-{{$timestamp}}\",\n  \"accountNumber\": \"01755556666\",\n  \"mobile\": \"01755556666\",\n  \"promoCode\": \"VIP8_UNLIMITED\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/advanced/deposit-bonus/create",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "advanced", "deposit-bonus", "create"]
+        }
+      }
+    },
+    {
+      "name": "5) Claim list by user",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/promo-engine/admin/claims?userId={{userCUserId}}&campaignCode=VIP8_UNLIMITED",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "promo-engine", "admin", "claims"],
+          "query": [
+            { "key": "userId", "value": "{{userCUserId}}" },
+            { "key": "campaignCode", "value": "VIP8_UNLIMITED" }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "userCUserId", "value": "" },
+    { "key": "gatewayId", "value": "" }
+  ]
+}

@@ -275,13 +275,7 @@ const submitTransaction = async (payload) => {
     expiryDate: bonusAmount > 0 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null
   });
 
-  await notificationController.createNotification(
-    `Deposit Request by ${user.name}`,
-    user.userId,
-    `Deposit of ${newTransaction.amount} submitted via ${gateway_name}`,
-    'deposit_request',
-    { amount: newTransaction.amount, transactionID }
-  );
+  await notificationController.notifyAdminsOnSubmit(newTransaction);
 
   return newTransaction;
 };
@@ -380,13 +374,7 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
       await session.commitTransaction();
       session.endSession();
 
-      await notificationController.createNotification(
-        'Deposit Approved',
-        user.userId,
-        `Your deposit of ${transaction.amount} has been approved`,
-        'deposit_approved',
-        { amount: transaction.amount, transactionID: transaction.transactionID }
-      );
+      await notificationController.notifyUserOnStatusChange(user.userId, transaction, 'approved');
 
       return { transaction, affiliateBonusCut };
     } else if (parseInt(status) === 2) {
@@ -398,13 +386,7 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
       await session.commitTransaction();
       session.endSession();
 
-      await notificationController.createNotification(
-        'Deposit Rejected',
-        user.userId,
-        `Your deposit of ${transaction.amount} has been rejected`,
-        'deposit_rejected',
-        { amount: transaction.amount, transactionID: transaction.transactionID }
-      );
+      await notificationController.notifyUserOnStatusChange(user.userId, transaction, 'rejected');
 
       return { transaction };
     } else {
@@ -475,13 +457,7 @@ const WithdrawTransaction = async (payload) => {
     console.log("New Transaction:", newTransaction);
     console.log("Updated User:", user);
 
-    await notificationController.createNotification(
-    `Withdrawal Request by ${user.name}`,
-    user.userId,
-    `Withdrawal of ${newTransaction.amount} submitted via ${gateway_name}`,
-    'Withdrawal_request',
-    { amount: newTransaction.amount, transactionID }
-  );
+    await notificationController.notifyAdminsOnSubmit(newTransaction);
 
   return {
     success: true,

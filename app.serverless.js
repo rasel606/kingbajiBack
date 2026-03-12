@@ -12,6 +12,7 @@ require('dotenv').config();
 const cookieHandler = require('./src/middleWare/cookieHandler');
 const logger = require('./src/utils/logger');
 const apiRouter = require('./src/router/apiRouter');
+const refactoredApiRouter = require('./src/router/refactoredApiRouter');
 const adminAurth = require('./src/router/adminAurth');
 const transactionRoutes = require('./src/router/transactionRoutes');
 const subAdminRoutes = require('./src/router/subAdminRoutes');
@@ -48,7 +49,7 @@ const affiliateManagementRoutes = require('./src/router/affiliateManagementRoute
 const profileAuthRoutes = require('./src/router/profileAuthRoutes');
 const advancedDashboardRoutes = require('./src/router/advancedDashboardRoutes');
 const unifiedDashboardRoutes = require('./src/router/unifiedDashboardRoutes');
-const adminAuth = require('./src/middleWare/AdminAuth');
+const adminAuth = require('./src/MiddleWare/AdminAuth');
 const AdminController = require('./src/controllers/AdminController');
 
 const app = express();
@@ -139,6 +140,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api', apiRouter);
+app.use('/api/v1', refactoredApiRouter); // New refactored routes
 app.use('/api/admin', adminAurth);
 app.use('/api/subadmin/auth', subAdminAurth);
 app.use('/api/subadmin', subAdminRoutes);

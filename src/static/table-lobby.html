@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Table Lobby</title>
+  <style>
+    :root {
+      --bg: #0b121d;
+      --panel: #111b2b;
+      --panel-2: #172438;
+      --text: #eaf1ff;
+      --muted: #9eb2d2;
+      --accent: #26d07c;
+      --chip: #1b2940;
+      --chip-active: #2b8bff;
+      --danger: #ff5f6d;
+      --border: #2b3a56;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top, #17243b 0%, var(--bg) 45%);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .banner {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #0f192a;
+      margin-bottom: 10px;
+    }
+
+    .banner-track {
+      display: flex;
+      width: 300%;
+      animation: slide 18s infinite;
+    }
+
+    .banner img {
+      width: 100%;
+      display: block;
+      max-height: 180px;
+      object-fit: cover;
+    }
+
+    @keyframes slide {
+      0%, 30% { transform: translateX(0); }
+      35%, 63% { transform: translateX(-33.3333%); }
+      68%, 96% { transform: translateX(-66.6666%); }
+      100% { transform: translateX(0); }
+    }
+
+    .marquee {
+      background: linear-gradient(90deg, #16243a, #1a304e);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .marquee span {
+      display: inline-block;
+      padding-left: 100%;
+      animation: ticker 22s linear infinite;
+      color: #ffd95c;
+      font-weight: 600;
+    }
+
+    @keyframes ticker {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .category-nav {
+      display: grid;
+      grid-template-columns: repeat(9, minmax(80px, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .cat-btn {
+      background: var(--chip);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 6px;
+      font-size: 12px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .cat-btn.active {
+      background: linear-gradient(180deg, #1f8aff, #1562c7);
+      border-color: #5ba7ff;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .providers {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      white-space: nowrap;
+      background: var(--chip);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .chip.active {
+      background: var(--chip-active);
+      border-color: #76b5ff;
+    }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    .btn.primary {
+      background: linear-gradient(180deg, #2fd98a, #20a466);
+      border-color: #69efb4;
+      color: #072515;
+      font-weight: 700;
+    }
+
+    .search-area {
+      display: none;
+      margin-top: 10px;
+      background: #0f1b2d;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px;
+    }
+
+    .search-area.open { display: block; }
+
+    .search-input {
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+      background: #0b1423;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .checkbox-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    .checkbox-grid label {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-body {
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      line-height: 1.3;
+      color: #dce7fc;
+      margin: 0;
+      flex: 1;
+    }
+
+    .heart {
+      border: 0;
+      background: transparent;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0.4px;
+    }
+
+    @media (max-width: 860px) {
+      .category-nav {
+        grid-template-columns: repeat(3, minmax(90px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="banner">
+      <div class="banner-track">
+        <img alt="banner one" src="https://img.s628b.com/upload/h5Announcement/image_346568.jpg">
+        <img alt="banner two" src="https://img.s628b.com/upload/h5Announcement/image_347432.jpg">
+        <img alt="banner three" src="https://img.s628b.com/upload/h5Announcement/image_338161.jpg">
+      </div>
+    </section>
+
+    <section class="marquee">
+      <span>Claim up to 8% unlimited deposit bonus. Daily free spins + leaderboard cash prizes.</span>
+    </section>
+
+    <section class="category-nav">
+      <button class="cat-btn">HOT GAMES</button>
+      <button class="cat-btn">SLOTS</button>
+      <button class="cat-btn">CRASH</button>
+      <button class="cat-btn">CASINO</button>
+      <button class="cat-btn">SPORTS</button>
+      <button class="cat-btn">ARCADE</button>
+      <button class="cat-btn active">TABLE</button>
+      <button class="cat-btn">LOTTERY</button>
+      <button class="cat-btn">FISHING</button>
+    </section>
+
+    <section class="panel">
+      <div class="row">
+        <h2 class="title">Table</h2>
+        <div>
+          <button class="btn">Filter: Recommend</button>
+          <button class="btn" id="searchToggle">Search</button>
+        </div>
+      </div>
+
+      <div class="providers" id="providers"></div>
+
+      <div class="search-area" id="searchArea">
+        <input class="search-input" id="searchInput" placeholder="Search games" type="text">
+        <div class="checkbox-grid" id="providerChecks"></div>
+        <button class="btn primary" id="confirmFilter">Confirm</button>
+      </div>
+    </section>
+
+    <section class="games" id="games"></section>
+  </div>
+
+  <script>
+    const providers = [
+      "ALL", "JILI", "MONOPOLY", "KM", "RICH88", "SPRIBE", "COOLGAME", "HACKSAW",
+      "JDB", "2J", "NETENT", "PG", "PP", "PT", "RELAX", "YL", "CQ9", "INJOY", "JOKER",
+      "KA", "MG", "PNG", "WORLDMATCH"
+    ];
+
+    const games = [
+      { name: "JILI 7up7down", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-011.png?v=1751418030805" },
+      { name: "JILI Andar Bahar", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-003.png?v=1751418030805" },
+      { name: "JILI Sic Bo", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-017.png?v=1751418030805" },
+      { name: "JILI Callbreak", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-009.png?v=1751418030805" },
+      { name: "JILI Fortune Roulette", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-066.png?v=1751418030805" },
+      { name: "JILI Jhandi Munda", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-056.png?v=1751418030805" },
+      { name: "JILI Rummy", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-004.png?v=1751418030805" },
+      { name: "JILI Cricket Roulette", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-060.png?v=1751418030805" },
+      { name: "JILI Dragon & Tiger", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-012.png?v=1751418030805" },
+      { name: "JILI European Roulette", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-053.european-roulette.png?v=1764313414861" },
+      { name: "JILI Golden Treasure", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-077.golden-treasure.png?v=1764313354710" },
+      { name: "JILI Mines", vendor: "JILI", img: "https://img.s628b.com/upload/game/AWCV2_JILI/JILI-TABLE-033.png?v=1751418030805" }
+    ];
+
+    let activeProvider = "ALL";
+    const enabledProviders = new Set(["JILI"]);
+
+    const providersEl = document.getElementById("providers");
+    const providerChecksEl = document.getElementById("providerChecks");
+    const gamesEl = document.getElementById("games");
+    const searchAreaEl = document.getElementById("searchArea");
+    const searchInputEl = document.getElementById("searchInput");
+
+    function renderProviders() {
+      providersEl.innerHTML = "";
+      providers.forEach((name) => {
+        const btn = document.createElement("button");
+        btn.className = "chip" + (name === activeProvider ? " active" : "");
+        btn.textContent = name;
+        btn.onclick = () => {
+          activeProvider = name;
+          renderProviders();
+          renderGames();
+        };
+        providersEl.appendChild(btn);
+      });
+    }
+
+    function renderProviderChecks() {
+      providerChecksEl.innerHTML = "";
+      providers.filter((p) => p !== "ALL").forEach((name) => {
+        const label = document.createElement("label");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = enabledProviders.has(name);
+        cb.onchange = () => {
+          if (cb.checked) enabledProviders.add(name);
+          else enabledProviders.delete(name);
+        };
+        label.appendChild(cb);
+        label.append(" " + name);
+        providerChecksEl.appendChild(label);
+      });
+    }
+
+    function renderGames() {
+      const q = searchInputEl.value.trim().toLowerCase();
+      gamesEl.innerHTML = "";
+      games
+        .filter((g) => (activeProvider === "ALL" ? true : g.vendor === activeProvider))
+        .filter((g) => enabledProviders.size === 0 || enabledProviders.has(g.vendor))
+        .filter((g) => g.name.toLowerCase().includes(q))
+        .forEach((g) => {
+          const card = document.createElement("article");
+          card.className = "card";
+          card.innerHTML = `
+            <img alt="${g.name}" loading="lazy" src="${g.img}">
+            <div class="card-body">
+              <h3 class="card-title">${g.name}</h3>
+              <button class="heart" aria-label="favorite">&#9829;</button>
+            </div>
+          `;
+          gamesEl.appendChild(card);
+        });
+    }
+
+    document.getElementById("searchToggle").onclick = () => {
+      searchAreaEl.classList.toggle("open");
+    };
+
+    document.getElementById("confirmFilter").onclick = () => {
+      renderGames();
+      searchAreaEl.classList.remove("open");
+    };
+
+    searchInputEl.addEventListener("input", renderGames);
+
+    renderProviders();
+    renderProviderChecks();
+    renderGames();
+  </script>
+</body>
+</html>

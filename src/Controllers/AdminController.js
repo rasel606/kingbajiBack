@@ -58,6 +58,7 @@ const { AdminProfile } = require('../services/LoginService');
 const { getUserListServices } = require('../services/getUserListServices');
 const { getReferralData } = require('../services/getReferralOwnerService');
 const { processTransaction } = require('../services/processTransactionService');
+const subAdminService = require('../services/subAdminService');
 const CreateGateWayService = require('../services/CreateGateWayService');
 
 const { createUser } = require('../services/CreateService');
@@ -362,24 +363,54 @@ exports.AdminUpdate = async (req, res) => {
 
 
 
+// Get SubAdmin List filtered by referredBy (admin's referral code)
 exports.GetSubAdminList = async (req, res) => {
-
-
   try {
+    const { page = 1, limit = 10, userId, email, phone, status } = req.query;
+    
+    // Get current admin's referral code from auth middleware
+    const adminReferralCode = req.user?.referralCode;
+    
+    let query = {};
+    
+    // Filter by referredBy if admin is logged in (for admin to see only their sub-admins)
+    if (adminReferralCode) {
+      query.referredBy = adminReferralCode;
+    }
+    
+    // Add additional filters
+    if (userId) query.userId = { $regex: userId, $options: 'i' };
+    if (email) query.email = { $regex: email, $options: 'i' };
+    if (phone) query.phone = { $regex: phone, $options: 'i' };
+    if (status) query.status = status;
 
-    let dataModel = SubAdminModel;
-    let result = await getUserListServices(req, dataModel);
-    res.json({ data: result.data, message: result.message, success: result.success });
+    const total = await SubAdminModel.countDocuments(query);
+    const subAdmins = await SubAdminModel.find(query)
+      .skip((parseInt(page) - 1) * parseInt(limit))
+      .limit(parseInt(limit))
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: subAdmins,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 exports.GetSubAdminUserList = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     console.log("User:", user.email, user.referralCode, user.userId, user.role);
     if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
+  const { data, pagination } = await subAdminService.getSubAdminUsers(req.query);
 
     const result = await UserController.GetDirectDownlineTree(
       AdminModel,       // parent model
@@ -2319,11 +2350,3 @@ console.log("updateUserProfileById user:", result);
     message: result.message
   })
 });
-
-
-
-
-
-
-
-

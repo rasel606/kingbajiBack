@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     userId: {
       type: String,
       required: true,
-      unique: true,
+      // unique index is managed in `userIndexes.js` to avoid duplicate index definitions
       lowercase: true,
       trim: true,
       minlength: 3,
@@ -64,18 +64,19 @@ const userSchema = new mongoose.Schema(
     apiVerified: { type: Boolean, default: false },
     referralCode: {
       type: String,
-      unique: true,
-      sparse: true,
+      // referralCode unique/sparse index is applied via `userIndexes.js`
     },
     country: String,
     countryCode: String,
     balance: { type: Number, default: 0, min: 0 },
     cashReward: { type: Number, default: 0, min: 0 },
     totalBonus: { type: Number, default: 0, min: 0 },
+    commissionRate: { type: Number, default: 0 }, // decimal fraction (e.g. 0.2 = 20%)
+    gatewayId: { type: mongoose.Schema.Types.ObjectId, ref: 'PaymentGateWayTable' },
     role: {
       type: String,
       default: "user",
-      enum: ["user"],
+      enum: ["user", "affiliate", "agent", "sub-agent", "sub-admin", "admin"],
     },
     isActive: { type: Boolean, default: true },
     isVerified: {

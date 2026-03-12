@@ -1,0 +1,68 @@
+name: bajicrick-backend
+description: BajiCrick Backend API - Node.js/Express
+
+runtime:
+  engine: node
+  version: 18.x
+
+build:
+  script: npm install
+  cache: true
+
+start:
+  command: npm start
+  port: 5000
+
+environment:
+  NODE_ENV: production
+  PORT: 5000
+
+variables:
+  # MongoDB Configuration - Update with your credentials
+  MONGODB_URI: ${MONGODB_URI}
+  
+  # JWT Configuration
+  JWT_SECRET: ${JWT_SECRET}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+  
+  # API Configuration
+  API_OPERATOR_CODE: ${API_OPERATOR_CODE}
+  API_SECRET_KEY: ${API_SECRET_KEY}
+  API_BASE_URL: ${API_BASE_URL}
+  
+  # CORS Configuration
+  CORS_ORIGIN: ${CORS_ORIGIN}
+  
+  # Redis Configuration
+  REDIS_URL: ${REDIS_URL}
+  REDIS_PASSWORD: ${REDIS_PASSWORD}
+  REDIS_DB: 0
+  CACHE_TTL: 300
+  REFERRED_USERS_TTL: 1800
+
+healthcheck:
+  endpoint: /api/health
+  interval: 30s
+  timeout: 10s
+
+processes:
+  api: npm start
+  # Add background jobs if needed
+  # worker: node src/corn/index.js
+
+resources:
+  memory: 512MB
+  cpu: 0.5
+  disk: 2GB
+
+regions:
+  - us-east-1
+  - eu-west-1
+  - asia-south-1
+
+logging:
+  level: info
+  format: json
+
+domains:
+  - ${CUSTOM_DOMAIN}

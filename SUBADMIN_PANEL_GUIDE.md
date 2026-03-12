@@ -57,7 +57,7 @@ Once all applications are running, access them at:
 
 - **Backend API**: http://localhost:5000
 - **Admin Panel**: http://localhost:3000
-- **Frontend App**: http://localhost:3001
+- **Frontend App**: http://localhost:5000
 - **Sub Admin Panel**: http://localhost:5173
 
 ## Sub Admin Panel Features

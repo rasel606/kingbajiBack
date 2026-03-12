@@ -211,11 +211,6 @@ exports.refreshBalance = async (req, res) => {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-function randomStr() {
-  return Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-}
-
 const refreshBalancebefore = async (userId) => {
 
 
@@ -535,12 +530,6 @@ console.log("provider amount", amount);
     res.status(500).json({ errCode: 500, errMsg: "Server error." });
   }
 };
-
-function generateSignature(...args) {
-  console.log("args:", args);
-  return crypto.createHash("md5").update(args.join("")).digest("hex").toUpperCase();
-}
-
 
 
 

@@ -34,10 +34,15 @@ const bannerSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  targetPlatform: {
+targetPlatform: {
     type: String,
     enum: ['web', 'mobile', 'both'],
     default: 'both'
+  },
+  promotionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Promotion',
+    required: false
   }
 }, {
   timestamps: true

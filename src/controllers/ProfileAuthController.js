@@ -9,8 +9,16 @@ const catchAsync = require('../utils/catchAsync');
 // =============================================
 
 exports.getProfile = catchAsync(async (req, res, next) => {
+  console.log('DEBUG getProfile - req.user:', req.user ? {_id: req.user._id, userId: req.user.userId, email: req.user.email, role: req.user.role} : 'undefined');
+  
+  if (!req.user) {
+    return next(new AppError('User not authenticated', 401));
+  }
+  
   const userId = req.user.userId || req.user._id;
   const role = req.user.role;
+
+  console.log('DEBUG getProfile - userId:', userId, 'role:', role);
 
   let user;
 
@@ -24,28 +32,30 @@ exports.getProfile = catchAsync(async (req, res, next) => {
     return next(new AppError('User profile not found', 404));
   }
 
+  console.log('DEBUG getProfile - user found:', user.email);
+
   res.status(200).json({
     status: 'success',
     data: {
       id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      avatar: user.avatar,
-      address: user.address,
-      city: user.city,
-      country: user.country,
-      dateOfBirth: user.dateOfBirth,
-      gender: user.gender,
-      username: user.username,
-      status: user.status,
-      createdAt: user.createdAt,
-      lastLogin: user.lastLogin,
-      lastPasswordChange: user.lastPasswordChange,
-      kycStatus: user.kycStatus,
-      emailVerified: user.emailVerified,
-      phoneVerified: user.phoneVerified
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.email || '',
+      phoneNumber: user.phoneNumber || '',
+      avatar: user.avatar || '',
+      address: user.address || '',
+      city: user.city || '',
+      country: user.country || '',
+      dateOfBirth: user.dateOfBirth || '',
+      gender: user.gender || '',
+      username: user.username || '',
+      status: user.status || '',
+      createdAt: user.createdAt || '',
+      lastLogin: user.lastLogin || '',
+      lastPasswordChange: user.lastPasswordChange || '',
+      kycStatus: user.kycStatus || '',
+      emailVerified: user.emailVerified || false,
+      phoneVerified: user.phoneVerified || false
     }
   });
 });
