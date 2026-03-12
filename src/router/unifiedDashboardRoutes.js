@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const UnifiedDashboardController = require('../controllers/UnifiedDashboardController');
 const { auth } = require('../middleWare/auth'); // Fixed: destructured import
-const adminAuth = require('../middleWare/adminAuth');
+const adminAuth = require('../middleWare/AdminAuth');
 
 // =============================================
 // MAIN UNIFIED DASHBOARD ROUTE
