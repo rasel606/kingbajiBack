@@ -1,4 +1,4 @@
-const TransactionService = require('../services/TransactionService');
+const TransactionService = require('../services/transactionService');
 const DepositHistory = require('../models/DepositHistory');
 const WithdrawModel = require('../models/Withdrawal');
 const notificationController = require('./notificationController');

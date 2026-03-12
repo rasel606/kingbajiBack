@@ -6,7 +6,7 @@ const AdminModel = require('../models/AdminModel')
 const SubAdminModel = require('../models/SubAdminModel')
 
 const SubAgentModel = require('../models/SubAgentModel')
-const transactionService = require('../services/TransactionService');
+const transactionService = require('../services/transactionService');
 const CreateService = require('../services/CreateService')
 const PaymentGateWayTable = require("../models/PaymentGateWayTable");
 const WidthralPaymentGateWayTable = require("../models/WidthralPaymentGateWayTable");
@@ -39,8 +39,6 @@ const TransactionModel = require('../models/TransactionModel');
 // const notificationController = require('../Controllers/notificationController');
 const UserController = require('../Controllers/UserController');
 const paymentMethodController = require('../Controllers/paymentMethodController');
-// const SubAdminModel = require('../Models/SubAdminModel');
-// const SubAdminModel = require('../Models/SubAdminModel');
 const Category = require('../models/Category');
 const SocialLink = require('../models/SocialLink');
 const BettingHistory = require('../models/BettingHistory');
