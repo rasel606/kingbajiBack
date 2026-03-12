@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 // Local import controllers
-const DashboardController = require('../controllers/DashboardController');
+const DashboardController = require('../controllers/dashboardController');
 
 // Auth middleware (adjust path if needed)
 const adminAuth = require('./adminAuth');
