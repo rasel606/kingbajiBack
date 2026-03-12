@@ -255,36 +255,4 @@ exports.notifyUserOnStatusChange = async (userId, transaction, action) => {
     throw error;
   }
 };
-  try {
-    const AdminModel = require('../models/AdminModel');
-    
-    // Get all admins with userId
-    const admins = await AdminModel.find({ role: 'Admin' }).select('userId');
-    
-    if (!admins || admins.length === 0) {
-      console.log('No admins found to notify');
-      return [];
-    }
-    
-    // Create notification for each admin
-    const notifications = [];
-    for (const admin of admins) {
-      if (admin.userId) {
-        const notification = await exports.createNotification(
-          title,
-          admin.userId,
-          content,
-          type,
-          metaData
-        );
-        notifications.push(notification);
-      }
-    }
-    
-    console.log(`Notifications sent to ${notifications.length} admin(s)`);
-    return notifications;
-  } catch (error) {
-    console.error('Error notifying admins:', error.message);
-    throw new Error(error.message);
-  }
-};
+
