@@ -3,36 +3,36 @@ const express = require('express');
 const router = express.Router();
 const DashboardAnalyticsController = require('../controllers/DashboardAnalyticsController');
 const { auth } = require('../middleWare/auth');
-const adminAuth = require('../middleWare/adminAuth');
+const AdminAuth = require('../middleWare/AdminAuth');
 
 // ⚡ OPTIMIZED: Single combined endpoint for all dashboard data
-router.get('/summary', adminAuth, DashboardAnalyticsController.getOptimizedSummary);
+router.get('/summary', AdminAuth, DashboardAnalyticsController.getOptimizedSummary);
 
 // Public metrics (can be cached)
-router.get('/metrics', adminAuth, DashboardAnalyticsController.getDashboardMetrics);
-router.get('/time-series', adminAuth, DashboardAnalyticsController.getTimeSeriesData);
-router.get('/revenue-breakdown', adminAuth, DashboardAnalyticsController.getRevenueBreakdown);
+router.get('/metrics', AdminAuth, DashboardAnalyticsController.getDashboardMetrics);
+router.get('/time-series', AdminAuth, DashboardAnalyticsController.getTimeSeriesData);
+router.get('/revenue-breakdown', AdminAuth, DashboardAnalyticsController.getRevenueBreakdown);
 
 // User analytics
-router.get('/users/statistics', adminAuth, DashboardAnalyticsController.getUserStatistics);
-router.get('/users/geographical', adminAuth, DashboardAnalyticsController.getUsersByCountry);
+router.get('/users/statistics', AdminAuth, DashboardAnalyticsController.getUserStatistics);
+router.get('/users/geographical', AdminAuth, DashboardAnalyticsController.getUsersByCountry);
 
 // Betting analytics
-router.get('/betting/statistics', adminAuth, DashboardAnalyticsController.getBettingStatistics);
-router.get('/betting/by-game', adminAuth, DashboardAnalyticsController.getBetsByGame);
+router.get('/betting/statistics', AdminAuth, DashboardAnalyticsController.getBettingStatistics);
+router.get('/betting/by-game', AdminAuth, DashboardAnalyticsController.getBetsByGame);
 
 // Transaction analytics
-router.get('/transactions/flow', adminAuth, DashboardAnalyticsController.getTransactionFlow);
-router.get('/transactions/export', adminAuth, DashboardAnalyticsController.exportDashboardData);
+router.get('/transactions/flow', AdminAuth, DashboardAnalyticsController.getTransactionFlow);
+router.get('/transactions/export', AdminAuth, DashboardAnalyticsController.exportDashboardData);
 
 // Performance metrics
-router.get('/performance/metrics', adminAuth, DashboardAnalyticsController.getPerformanceMetrics);
-router.get('/performance/affiliate', adminAuth, DashboardAnalyticsController.getAffiliatePerformance);
+router.get('/performance/metrics', AdminAuth, DashboardAnalyticsController.getPerformanceMetrics);
+router.get('/performance/affiliate', AdminAuth, DashboardAnalyticsController.getAffiliatePerformance);
 
 // Real-time data
-router.get('/realtime/updates', adminAuth, DashboardAnalyticsController.getRealtimeUpdates);
+router.get('/realtime/updates', AdminAuth, DashboardAnalyticsController.getRealtimeUpdates);
 
 // Export functionality
-router.get('/export', adminAuth, DashboardAnalyticsController.exportDashboardData);
+router.get('/export', AdminAuth, DashboardAnalyticsController.exportDashboardData);
 
 module.exports = router;
