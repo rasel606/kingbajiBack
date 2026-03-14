@@ -529,11 +529,55 @@ const Approve_Transfar_With_Deposit_And_Widthraw_By_Admin = async ({ userId, ema
 
 
 
+// Search deposits with optional filters (page, limit, status, gateway_name, userId, startDate, endDate)
+const searchDeposits = async (filters = {}) => {
+  const DepositHistory = require('../Models/DepositHistory');
+  const { page = 1, limit = 10, status, gateway_name, userId, startDate, endDate } = filters;
+  const query = {};
+  if (status !== undefined && status !== '') query.status = parseInt(status);
+  if (gateway_name) query.gateway_name = gateway_name;
+  if (userId) query.deposit_user_id = userId;
+  if (startDate || endDate) {
+    query.datetime = {};
+    if (startDate) query.datetime.$gte = new Date(startDate);
+    if (endDate) query.datetime.$lte = new Date(endDate);
+  }
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const [data, total] = await Promise.all([
+    DepositHistory.find(query).sort({ datetime: -1 }).skip(skip).limit(parseInt(limit)),
+    DepositHistory.countDocuments(query)
+  ]);
+  return { data, total, page: parseInt(page), limit: parseInt(limit) };
+};
+
+// Search withdrawals with optional filters
+const searchWithdrawals = async (filters = {}) => {
+  const WithdrawModel = require('../models/Withdrawal');
+  const { page = 1, limit = 10, status, gateway, userId, startDate, endDate } = filters;
+  const query = {};
+  if (status !== undefined && status !== '') query.status = parseInt(status);
+  if (gateway) query.gateway = gateway;
+  if (userId) query.userId = userId;
+  if (startDate || endDate) {
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
+  }
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const [data, total] = await Promise.all([
+    WithdrawModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(parseInt(limit)),
+    WithdrawModel.countDocuments(query)
+  ]);
+  return { data, total, page: parseInt(page), limit: parseInt(limit) };
+};
+
 module.exports = {
   submitTransaction,
   approveDeposit,
   getReferralOwner,
   approveWithdraw,
   WithdrawTransaction,
-  Approve_Transfar_With_Deposit_And_Widthraw_By_Admin
+  Approve_Transfar_With_Deposit_And_Widthraw_By_Admin,
+  searchDeposits,
+  searchWithdrawals
 };
