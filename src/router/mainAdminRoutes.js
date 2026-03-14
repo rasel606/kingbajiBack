@@ -79,6 +79,9 @@ router.get('/get_admin_agent_user_list', validate, AdminAuth, AdminController.ge
 router.get('/get_admin_agent_user_pending_deposit_user_list', validate, AdminAuth, AdminController.getAdminAgentUserDepositList);
 // 💡 Fixed typo in route path (removed double underscore)
 router.get('/get_admin_agent_user_withdraw_user_list', validate, AdminAuth, AdminController.getAdminAgentUserWithdrawList);
+// Backward-compatible aliases for legacy frontend paths (fixes 404 for issue #22)
+router.get('/get_admin_agent_user_withdraw__user_list', validate, AdminAuth, AdminController.getAdminAgentUserWithdrawList);
+router.get('/get_admin_agent_user_withdraw_deposit_user_list', validate, AdminAuth, AdminController.getAdminAgentUserDepositList);
 router.get('/get_user_deposit_withdraw__user', validate, AdminAuth, AdminController.deposit_And_Widthraw_By_Admin);
 router.get('/get_user_transaction_report', validate, AdminAuth, AdminController.getTransactionsReport);
 

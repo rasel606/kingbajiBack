@@ -73,6 +73,9 @@ const unifiedDashboardRoutes = require('./src/router/unifiedDashboardRoutes');
 const AdminAuth = require('./src/middleWare/AdminAuth');
 const AdminController = require('./src/controllers/AdminController');
 
+// AI Monitor / Route-health bot (issue #22)
+const issueMonitor = require('./src/bot/issueMonitor');
+
 // Import Socket Server
 const { initializeSocket, getConnectionStats, getUserConnections, getRoomInfo } = require('./src/socket/socketServer');
 
@@ -340,6 +343,23 @@ app.get('/', (req, res) => {
 app.get('/table-lobby', (req, res) => {
   res.sendFile(path.join(__dirname, 'src', 'static', 'table-lobby.html'));
 });
+
+// Route-health diagnostics endpoint (issue #22 AI Monitor)
+app.get('/api/admin/route-health', AdminAuth, (req, res) => {
+  const results = issueMonitor.getLatestResults();
+  res.json({
+    status: 'OK',
+    checkedAt: results.length ? results[0].timestamp : null,
+    totalEndpoints: results.length,
+    results,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Start the AI route monitor (no-op if BOT_ENABLED=false or in test env)
+if (!IS_TEST) {
+  issueMonitor.start();
+}
 
 // 404 handler
 app.use("*", (req, res) => {
