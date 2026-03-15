@@ -23,20 +23,12 @@ router.post('/login_admin', [
     .withMessage('Password is required')
 ],validate,  AdminController.AdminLogin);
 
-router.get('/main_admin',
-  AdminAuth,
-   AdminController.GetAdminProfile);
+router.get('/main_admin', AdminAuth, AdminController.GetAdminProfile);
 
 router.post('/register_Sub_admin', validate,SubAdminControllers.CreateAdmin);
 router.post('/register_agent', validate,AgentController.AgentRegister);
 router.post('/register_Sub_agent', validate,SubAgentController.SubAgentRegister);
 router.post('/register_affiliate', validate,AffiliateAuthControllers.register);
 router.post('/createUser', register);
-// router.get('/sessions/active', adminAuthMiddleware, AdminController.GetActiveAdminSessions);
-
-// router.post('/force-logout/admin/:userId', adminAuthMiddleware,   AdminController.ForceLogoutAdmin);
-
-
 
 module.exports = router;
-

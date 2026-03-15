@@ -35,9 +35,10 @@ exports.getLegalContent = asyncHandler(async (req, res) => {
     }).select('-versions');
 
     if (!content) {
-      return res.status(404).json({
-        success: false,
-        message: `Legal content of type "${type}" not found`
+      return res.json({
+        success: true,
+        data: null,
+        message: `No content yet for type "${type}" — create it in the admin panel`
       });
     }
 

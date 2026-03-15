@@ -4,7 +4,7 @@ const {
   getDownlineCommissions,
   getCommissionDetails
 } = require('../Controllers/AffiliateEarningsController');
-const { protectAffiliate } = require('../MiddleWare/affiliateAuth');
+const { protectAffiliate } = require('../middleWare/affiliateAuth');
 
 const router = express.Router();
 

@@ -1,16 +1,14 @@
 // src/Services/notificationService.js
-// const webpush = require('web-push');
-const NotificationModel = require('../Models/Notification');
-const User = require('../Models/User');
+const webpush = require('web-push');
+const NotificationModel = require('../Models/notificationModel');
+const User = require('../Models/userModel');
 
 // Configure web-push with VAPID keys
-if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
-    process.env.VAPID_PUBLIC_KEY,
-    process.env.VAPID_PRIVATE_KEY
-  );
-}
+webpush.setVapidDetails(
+  process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 class NotificationService {
   constructor(io) {

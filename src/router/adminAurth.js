@@ -27,6 +27,10 @@ router.get('/main_admin',
   auth,
    AdminController.GetAdminProfile);
 
+router.put('/main_admin/update',
+  auth,
+  AdminController.UpdateAdminProfile);
+
 router.post('/register_Sub_admin', validate,SubAdminControllers.CreateAdmin);
 router.post('/register_agent', validate,AgentController.AgentRegister);
 router.post('/register_Sub_agent', validate,SubAgentController.SubAgentRegister);

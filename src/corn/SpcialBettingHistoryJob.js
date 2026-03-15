@@ -6,6 +6,33 @@ const BettingHistory = require('../models/BettingHistory');
 const LOG_URL = 'http://fetch.336699bet.com';
 const SECRET_KEY = '9332fd9144a3a1a8bd3ab7afac3100b0';
 const OPERATOR_CODE = 'rbdb';
+const PROVIDER_ERROR_LOG_THROTTLE_MS = Number(process.env.PROVIDER_ERROR_LOG_THROTTLE_MS || 120000);
+
+const providerErrorLogState = new Map();
+
+const logProviderErrorThrottled = (key, level, message) => {
+  const now = Date.now();
+  const previous = providerErrorLogState.get(key);
+
+  if (!previous || now - previous.lastAt >= PROVIDER_ERROR_LOG_THROTTLE_MS) {
+    const suppressedSuffix = previous && previous.suppressed > 0
+      ? ` (suppressed ${previous.suppressed} similar logs in last ${Math.round(PROVIDER_ERROR_LOG_THROTTLE_MS / 1000)}s)`
+      : '';
+
+    const finalMessage = `${message}${suppressedSuffix}`;
+    if (level === 'warn') {
+      console.warn(finalMessage);
+    } else {
+      console.error(finalMessage);
+    }
+
+    providerErrorLogState.set(key, { lastAt: now, suppressed: 0 });
+    return;
+  }
+
+  previous.suppressed += 1;
+  providerErrorLogState.set(key, previous);
+};
 
 const generateSignature = (operatorCode) => {
   return md5(operatorCode + SECRET_KEY).toUpperCase();
@@ -37,7 +64,11 @@ console.log("SpcialBettingHistoryJob url", url);
       const { errCode, result, errMsg } = response.data;
 console.log("SpcialBettingHistoryJob response", response.data);
       if (errCode !== '0') {
-        console.warn(`⚠️ Provider SpcialBettingHistoryJob ${provider} error: ${errMsg}`);
+        logProviderErrorThrottled(
+          `provider-api-${provider}-${errCode}`,
+          'warn',
+          `⚠️ Provider SpcialBettingHistoryJob ${provider} error: ${errMsg}`
+        );
         continue;
       }
 
@@ -74,7 +105,12 @@ console.log("SpcialBettingHistoryJob response", response.data);
 
       console.log(`✅ Updated betting SpcialBettingHistoryJob history for provider ${provider}`);
     } catch (error) {
-      console.error(`❌ Failed to fetch SpcialBettingHistoryJob from provider ${provider}:`, error.message);
+      const errorSignature = error && (error.code || error.name) ? (error.code || error.name) : 'unknown';
+      logProviderErrorThrottled(
+        `provider-fetch-${provider}-${errorSignature}`,
+        'error',
+        `❌ Failed to fetch SpcialBettingHistoryJob from provider ${provider}: ${error.message}`
+      );
     }
   }
 }

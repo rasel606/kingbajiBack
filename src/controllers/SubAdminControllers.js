@@ -465,13 +465,19 @@ exports.getAdminDashboardStats = async (req, res) => {
 
 exports.processTransactionForALL = async (req, res) => {
   try {
-    const { userId, action, transactionID } = req.body;
+    const { userId, action, transactionID, reason } = req.body;
     const referraledUsers = req.user;
-    console.log("userId", userId, "action", action, "transactionID", transactionID);
+
+    if (action === 'reject' && (!reason || !String(reason).trim())) {
+      return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+    }
+
+    console.log("userId", userId, "action", action, "transactionID", transactionID, "reason", reason);
     const result = await processTransaction({
       userId,
       action,
       transactionID,
+      reason,
       referralUser: referraledUsers,
     });
     res.json({ success: true, ...result });

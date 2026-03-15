@@ -170,4 +170,3 @@ router.post('/withdraw/accept', async (req, res) => {
       res.json({ return: false, message: 'Something went wrong' });
     }
   });
-  

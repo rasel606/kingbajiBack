@@ -1,18 +1,41 @@
+// routes/subAdminRoutes.js
 const express = require('express');
+const { body } = require('express-validator');
+const SubAdminControllers = require('../Controllers/AdminController');
+const auth = require('../MiddleWare/subAdminAuth');
+const validate = require('../MiddleWare/validation');
+
 const router = express.Router();
 
-// Local import controllers
-const DashboardController = require('../controllers/dashboardController');
+// Dashboard statistics
+router.get('/dashboard_stats', auth, SubAdminControllers.getAdminDashboardStats);
 
-// Auth middleware (adjust path if needed)
-const adminAuth = require('./adminAuth');
+// // Search rejected deposit transactions
+// router.post('/search-deposit-reject', [
+//   body('referredBy')
+//     .notEmpty()
+//     .withMessage('Referral code is required')
+// ], validate, auth, SubAdminControllers.searchDepositTransactionsReportreject);
 
-// Dashboard routes
-router.get('/advanced', adminAuth, DashboardController.getAdvancedDashboard);
-router.get('/unified', adminAuth, DashboardController.getUnifiedDashboard);
-router.get('/realtime', adminAuth, DashboardController.getRealtimeStats);
-router.get('/providers', adminAuth, DashboardController.getProviderStats);
-router.get('/timeseries', adminAuth, DashboardController.getTimeSeriesData);
+// Search approved deposit transactions
+// router.post('/search-deposit-approve', [
+//   body('referredBy')
+//     .notEmpty()
+//     .withMessage('Referral code is required')
+// ], validate, auth, SubAdminControllers.searchDepositTransactionsReportAprove);
+
+// Get deposit totals
+// router.post('/deposit-totals', [
+//   body('referredBy')
+//     .notEmpty()
+//     .withMessage('Referral code is required')
+// ], validate, auth, SubAdminControllers.getTransactionDepositTotals);
+
+// Get all users for sub-admin
+// router.post('/users', [
+//   body('referredBy')
+//     .notEmpty()
+//     .withMessage('Referral code is required')
+// ], validate, auth, SubAdminControllers.getUsersForSubAdmin);
 
 module.exports = router;
-

@@ -20,8 +20,10 @@ const cookieHandler = require('./src/middleWare/cookieHandler');
 const logger = require('./src/utils/logger');
 const apiRouter = require('./src/router/apiRouter');
 const adminAuthRouter = require('./src/router/adminAuth'); 
+const subAdminAuthRouter = require('./src/router/subAdminAurth');
 const transactionRoutes = require('./src/router/transactionRoutes');
 const subAdminRoutes = require('./src/router/subAdminRoutes');
+const subAdminBannerRoutes = require('./src/router/subAdminBannerRoutes');
 const dashboardRoutes = require('./src/router/dashboardRoutes');
 const userRoutes = require('./src/router/userRoutes');
 const gameRoutes = require('./src/router/gameRoutes');
@@ -47,6 +49,7 @@ const subAdminDashboard = require('./src/router/subAdminDashboard');
 const subAgentRoutes = require('./src/router/subAgentRoutes');
 const affiliateDashboardRoute = require('./src/router/affiliateDashboardRoute');
 const affiliateAuthRoute = require('./src/router/affiliateAuthRoute');
+const affiliateBankRoutes = require('./src/router/affiliateBank');
 const announcementRoutes = require('./src/router/announcementRoutes');
 const bettingRoutes = require('./src/router/bettingRoutes');
 const vipUserRoutes = require('./src/router/vipUserRoutes');
@@ -61,8 +64,9 @@ const referralRoutes = require('./src/router/referralRoutes');
 const legalRoutes = require('./src/router/legalRoutes');
 const widgetRoutes = require('./src/router/widgetRoutes');
 const widgetPublicRoutes = require('./src/router/widgetPublicRoutes');
+const providerSettlementRoutes = require('./src/router/providerSettlementRoutes');
 // Import Live Chat Routes
-// const chatRoutes = require('./src/router/chatRoutes'); // ⚠️ Disabled: ChatController is commented out
+const chatRoutes = require('./src/router/chatRoutes');
 
 // Import new routes
 const socialLinksRoutes = require('./src/router/socialLinksRoutes');
@@ -99,18 +103,52 @@ app.set('socketio', io);
   });
 }
 
-app.use(cors({
-  origin: "*", // সব domain allow করুন
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000'
+];
+
+const envAllowedOrigins = (process.env.CORS_ORIGIN || process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedCorsOrigins = Array.from(new Set([
+  ...defaultAllowedOrigins,
+  ...envAllowedOrigins
+]));
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser or same-origin requests (no Origin header)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // If wildcard is explicitly configured in env, allow all origins.
+    if (allowedCorsOrigins.includes('*')) {
+      return callback(null, true);
+    }
+
+    if (allowedCorsOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    logger.warn('CORS blocked request', { origin });
+    // Do not throw server error for CORS mismatch; just disable CORS headers.
+    return callback(null, false);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+};
 
-// OPTIONS request handle করুন
-app.options('*', cors());
-
-// Handle preflight requests
-app.options('*', cors());
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Security Middleware
 app.use(helmet({
@@ -143,14 +181,57 @@ const connectDB = async () => {
   //   process.exit(1);
   // }
 
-  mongoose
-    .connect(process.env.MONGODB_URI)
-    .then(() => console.log("✅ MongoDB connected successfully"))
-    .catch((err) => console.error("❌ MongoDB connection error:", err));
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGODB_URI_LOCAL, {
+      bufferCommands: false,
+      bufferTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4  // Use IPv4, skip trying IPv6
+    })
+    .then(() => {
+      console.log("✅ MongoDB connected successfully");
+    })
+    .catch((err) => {
+      console.error("❌ MongoDB initial connection error:", err.message);
+      console.error("MONGODB_URI:", process.env.MONGODB_URI ? 'SET' : 'MISSING');
+    });
 };
 
 if (!IS_TEST) {
   connectDB();
+  
+  // Add Mongoose connection event handlers
+  mongoose.connection.on('connected', () => {
+    console.log('🔗 Mongoose connected to MongoDB');
+  });
+
+  mongoose.connection.on('error', (err) => {
+    console.error('❌ Mongoose connection error:', err.message);
+  });
+
+  mongoose.connection.on('disconnected', async () => {
+    console.log('🔌 Mongoose disconnected');
+    // Attempt reconnect after 5 seconds
+    setTimeout(async () => {
+      try {
+        await mongoose.connect(process.env.MONGODB_URI || process.env.MONGODB_URI_LOCAL, {
+          bufferCommands: false,
+          bufferTimeoutMS: 10000,
+          serverSelectionTimeoutMS: 5000
+        });
+        console.log('🔄 Mongoose reconnected to MongoDB');
+      } catch (reconnectErr) {
+        console.error('❌ Mongoose reconnect failed:', reconnectErr.message);
+      }
+    }, 5000);
+  });
+
+  // Graceful disconnect on app termination
+  process.on('SIGINT', async () => {
+    await mongoose.connection.close();
+    console.log('👋 Mongoose disconnected on app termination');
+    process.exit(0);
+  });
 }
 
 // Logging middleware
@@ -166,6 +247,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 app.use("/api/v1", apiRouter);
 app.use('/api/admin/auth', adminAuthRouter);
+app.use('/api/subadmin/auth', subAdminAuthRouter);
 app.use('/api/admin', mainAdminRoutes);
 app.use('/api/adminannouncement', announcementRoutes);
 
@@ -178,6 +260,12 @@ app.get('/api/admin/dashboard/overview', AdminAuth, AdminController.getAdminDash
 ////////////////SubAdmin////////////////////////////////
 app.use('/api/subadmin/dashboard', subAdminDashboard);
 app.use('/api/subadmin', subAdminRoutes);
+app.use('/api/subadmin', subAdminBannerRoutes);
+// Backward-compatible alias for frontend paths using hyphenated sub-admin segment
+app.use('/api/sub-admin/auth', subAdminAuthRouter);
+app.use('/api/sub-admin/dashboard', subAdminDashboard);
+app.use('/api/sub-admin', subAdminRoutes);
+app.use('/api/sub-admin', subAdminBannerRoutes);
 ////////////////agent////////////////////////////////
 app.use('/api/agent', agentRoutes);
 app.use('/api/agent_dashboard', agentDashboard);
@@ -209,6 +297,7 @@ app.use('/api/referral', referralRoutes);
 
 app.use('/api/payment', hierarchicalGatewayRoutes);
 app.use('/api/affiliate/Auth', affiliateAuthRoute);
+app.use('/api/affiliate/banks', affiliateBankRoutes);
 app.use('/api/affiliate/dashboard', affiliateDashboardRoute);
 app.use('/api/affiliate/profile', profileRoutes);
 app.use('/api/affiliate/earnings', affiliateEarningsRoutes);
@@ -218,11 +307,22 @@ app.use('/api/legal', legalRoutes);
 app.use('/api/admin/banners', require('./src/router/adminBannerRoutes'));
 app.use('/api/admin/ads', require('./src/router/adminAdRoutes'));
 app.use('/api/ads', require('./src/router/publicAdRoutes'));
+app.use('/api/v1/provider', providerSettlementRoutes);
+app.use('/api/provider', providerSettlementRoutes);
 app.use('/api/admin/widgets', widgetRoutes);
 app.use('/api/widgets', widgetPublicRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
 // Live Chat Routes
-// app.use('/api/live-chat', chatRoutes); // ⚠️ Disabled: ChatController is commented out
+app.use('/api/live-chat', chatRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/admin/live-chat', chatRoutes);
+app.use('/api/live_chat', chatRoutes);
+
+// ============================================================
+// AI Error Bot Routes - বাংলায় এরর নির্ণয় ও সমাধান
+// ============================================================
+const aiBotRoutes = require('./src/router/aiBotRoutes');
+app.use('/api/ai-bot', aiBotRoutes);
 
 // =============================================
 // NEW MANAGEMENT ROUTES
@@ -287,6 +387,16 @@ app.get('/health', (req, res) => {
   };
 
   res.json(health);
+});
+
+// Backward-compatible health alias used by frontend diagnostics
+app.get('/api/v1/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 app.get('/health/detailed', (req, res) => {
@@ -392,6 +502,7 @@ app.use((err, req, res, next) => {
     timestamp: new Date().toISOString()
   });
 });
+
 
 console.log('✅ Express app setup completed');
 

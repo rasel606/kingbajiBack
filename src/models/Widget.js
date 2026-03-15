@@ -119,7 +119,6 @@ const widgetSchema = new mongoose.Schema({
 
 widgetSchema.index({ type: 1, status: 1 });
 widgetSchema.index({ position: 1, status: 1 });
-widgetSchema.index({ slug: 1 });
 widgetSchema.index({ order: 1 });
 
 module.exports = mongoose.model('Widget', widgetSchema);

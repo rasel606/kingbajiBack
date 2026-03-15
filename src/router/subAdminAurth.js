@@ -4,6 +4,7 @@ const { body } = require('express-validator');
 const SubAdminController = require('../Controllers/SubAdminControllers');
 const auth = require('../MiddleWare/subAdminAuth');
 const validate = require('../MiddleWare/validation');
+const AppError = require('../utils/AppError');
 
 const router = express.Router();
 

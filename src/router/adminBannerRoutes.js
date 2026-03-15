@@ -7,13 +7,13 @@ const BannerController = require('../controllers/BannerController');
 router.use(adminAuth);
 
 // Banner Management - Admin only (not subadmin)
+router.get('/promotions-for-banner', BannerController.getPromotionsForBanner);
 router.get('/', BannerController.getBanners);
 router.get('/:id', BannerController.getBannerById);
 router.post('/', BannerController.createBanner);
 router.put('/:id', BannerController.updateBanner);
 router.delete('/:id', BannerController.deleteBanner);
 router.put('/:id/toggle', BannerController.toggleBannerActive);
-router.get('/promotions-for-banner', BannerController.getPromotionsForBanner);
 
 module.exports = router;
 

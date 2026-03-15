@@ -1,7 +1,7 @@
 // routes/links.js
 const express = require('express');
 const router = express.Router();
-const {protectAffiliate} = require('../MiddleWare/affiliateAuth');
+const {protectAffiliate} = require('../middleWare/affiliateAuth');
 const {
   getKYCData,
   submitKYC,

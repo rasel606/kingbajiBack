@@ -1,36 +1,36 @@
 const express = require('express')
 const router = express.Router()
-const AdminController = require("../controllers/AdminController")
+const AdminController = require("../Controllers/AdminController")
 const CreateUserService = require("../services/CreateUserService");
-const UpdateProfile = require('../controllers/UpdateProfile');
+const UpdateProfile = require('../Controllers/UpdateProfile');
 
-const BettingController = require('../controllers/BettingController');
+const BettingController = require('../Controllers/BettingController');
 
 const ModelBettingController = require('../controllers/modelBettingController');
-const TransactionController = require('../controllers/TransactionController');
-const AffiliateController = require('../controllers/AffiliateController');
-const AffiliateDashboardController = require('../controllers/AffiliateDashboardController');
-const AffiliateMemberController = require('../controllers/AffiliateMemberController');
+const TransactionController = require('../Controllers/TransactionController');
+const AffiliateController = require('../Controllers/AffiliateController');
+const AffiliateDashboardController = require('../Controllers/AffiliateDashboardController');
+const AffiliateMemberController = require('../Controllers/AffiliateMemberController');
 
-const AgentController = require('../controllers/AgentController');
+const AgentController = require('../Controllers/AgentController');
 
-const Refresh_blance = require('../controllers/Refresh_blance');
+const Refresh_blance = require('../Controllers/Refresh_blance');
 
-const bettingHistoryController = require ("../controllers/bettingHistoryController")
+const bettingHistoryController = require ("../Controllers/bettingHistoryController")
 
 const GetAllUser= require('../services/GetAllUser');
 // const { Transaction } = require('mongodb');
-const { getDailyWager } = require('../controllers/MyController');
-const blank= require('../controllers/blank');
+const { getDailyWager } = require('../Controllers/MyController');
+const blank= require('../Controllers/blank');
 
-const notificationController = require('../controllers/notificationController');
-const BankController = require('../controllers/BankController');
+const notificationController = require('../Controllers/notificationController');
+const BankController = require('../Controllers/BankController');
 
 const {auth} = require('../middleWare/auth');
-const { createBonus,getAllBonuses } = require('../controllers/BonusTransactionController');
-const {register, loginUser} = require('../controllers/AuthController');
+const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
+const {register, loginUser} = require('../Controllers/AuthController');
 
-// const BonusTransactionController = require('../controllers/vipBonusesController');
+// const BonusTransactionController = require('../Controllers/vipBonusesController');
 const { Console } = require('winston/lib/winston/transports');
 
 
@@ -62,21 +62,21 @@ router.get('/verify-email', UpdateProfile.verifyOTP);
 // router.get('/user_betting_history', UpdateProfile.sendotp);
 
 
-// router.post('/searchTransactionsbyUserId', TransactionController.searchTransactionsbyUserId)
+router.post('/searchTransactionsbyUserId', TransactionController.searchTransactionsbyUserId)
 
 
 
 
 
 router.get('/sub_admin_User', GetAllUser.GetAllUserForSUbAdmin);
-// router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
-// router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
-// router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
-// router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
-// router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
-// router.post('/checkWithdrawalEligibility', TransactionController.checkWithdrawalEligibility);
-// router.post('/checkWithdrawalEligibility/active', TransactionController.checkWithdrawalEligibilityActive);
-// router.post('/checkWithdrawalEligibility/complate', TransactionController.checkWithdrawalEligibilityComplated);
+router.post('/sub_admin_tnx_deposit_details_summary', TransactionController.getTransactionDepositTotals);
+router.post('/sub_admin_tnx_widthraw_details_summary', TransactionController.getTransactionWidthrawTotals);
+router.post('/sub_admin_deposit_total', TransactionController.totalDeposit);
+router.post('/sub_admin_widthraw_total', TransactionController.totalWidthraw);
+router.post('/sub_admin_chats_deposit_Summary', TransactionController.chatsSummary);
+router.post('/checkWithdrawalEligibility', TransactionController.checkWithdrawalEligibility);
+router.post('/checkWithdrawalEligibility/active', TransactionController.checkWithdrawalEligibilityActive);
+router.post('/checkWithdrawalEligibility/complate', TransactionController.checkWithdrawalEligibilityComplated);
 
 router.post('/create_bonuses',createBonus);
 router.post('/bonuses',getAllBonuses);
@@ -106,34 +106,34 @@ router.get('/get_notifications/:userId',notificationController.getGroupedNotific
 
 
 
-// router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
-// router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
-// router.post('/update_deposit_gateway_status', TransactionController.updateDepositGatewayStatus);
-// router.post('/update_deposit_gateway_type', TransactionController.updatedepositGatewayType);
-// router.post('/update_widthraw_gateway_status', TransactionController.updateWidthrawGatewayStatus);
-// router.post('/update_withdrawal_gateway_type', TransactionController.updateWithdrawalGatewayType);
+router.post('/subadmingetwaylistfor_user', TransactionController.GetPaymentMethodsUser);
+router.post('/subadmin_getway_widthraw_listfor_user', TransactionController.GetPaymentMethodsWidthrawUser);
+router.post('/update_deposit_gateway_status', TransactionController.updateDepositGatewayStatus);
+router.post('/update_deposit_gateway_type', TransactionController.updatedepositGatewayType);
+router.post('/update_widthraw_gateway_status', TransactionController.updateWidthrawGatewayStatus);
+router.post('/update_withdrawal_gateway_type', TransactionController.updateWithdrawalGatewayType);
 
 
-// router.post("/submitTransaction", TransactionController.submitTransaction);
-// router.post('/deposits_list', TransactionController.DepositsList);
+router.post("/submitTransaction", TransactionController.submitTransaction);
+router.post('/deposits_list', TransactionController.DepositsList);
 
-// router.post('/deposit_with_bonus', TransactionController.addTransaction)
+router.post('/deposit_with_bonus', TransactionController.addTransaction)
 
-// router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
-// router.post('/search_Deposit_transactions_pendings', TransactionController.Search_Deposit_Transactions_Pending)
-// router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
-// router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
+router.post('/deposit_with_approveDeposit_subadmin/:transactionID', TransactionController.approveDepositbySubAdmin)
+router.post('/search_Deposit_transactions_pendings', TransactionController.Search_Deposit_Transactions_Pending)
+router.post('/searchDepositTransactionsReportAprove', TransactionController.searchDepositTransactionsReportAprove)
+router.post('/searchDepositTransactionsReportreject', TransactionController.searchDepositTransactionsReportreject)
 
 
-// router.post('/widthraw_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
-// router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
-// router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin)
-// router.post('/searchWidthdrawTransactionsReportAprove', TransactionController.searchWidthdrawTransactionsReportAprove)
-// router.post('/searchWidthdrawTransactionsReportReject', TransactionController.searchWidthdrawTransactionsReportReject)
+router.post('/widthraw_with_approvewidthraw_subadmin/:transactionID', TransactionController.approveWidthdrawBySubAdmin)
+router.post('/searchWidthdrawTransactions', TransactionController.searchWidthdrawTransactions)
+router.post('/approveTransfarWithDepositbySubAdmin', TransactionController.Approve_Transfar_With_Deposit_And_Widthraw_By_SubAdmin)
+router.post('/searchWidthdrawTransactionsReportAprove', TransactionController.searchWidthdrawTransactionsReportAprove)
+router.post('/searchWidthdrawTransactionsReportReject', TransactionController.searchWidthdrawTransactionsReportReject)
 
-// router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
-// router.post('/get_all_user_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
-// router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
+router.post('/Widthdraw_ListBy_user', TransactionController.WidthdrawListByUser)
+router.post('/get_all_user_For_Sub_Admin', TransactionController.GetAllUser_For_Sub_Admin)
+router.post('/getUser_Transaction_History', TransactionController.getUserTransactionHistory);
 
 
 

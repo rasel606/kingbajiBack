@@ -32,6 +32,6 @@ const depositHistorySchema = new Schema({
 });
 
 // Create the model based on the schema
-const depositHistory = mongoose.model('depositHistory', depositHistorySchema);
+const depositHistory = mongoose.models.depositHistory || mongoose.model('depositHistory', depositHistorySchema);
 
 module.exports = depositHistory;

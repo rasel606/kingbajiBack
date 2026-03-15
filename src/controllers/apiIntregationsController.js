@@ -44,31 +44,14 @@ console.log("response", response.data);
 exports.updateAdminBalance = async (req, res) => {
     try {
         const user = req.user; // assume middleware sets adminId
+        // if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
         console.log("user", user.email);
-        
         const adminId = await AdminModel.findOne({ email: user.email }).select('-password');
-        if (!adminId) {
-            return res.status(404).json({ success: false, message: 'Admin not found' });
-        }
-        
         console.log("adminId", adminId.email);
-        
-        let kioskBalance;
-        try {
-            kioskBalance = await fetchAgentBalance();
-            console.log("kioskBalance", kioskBalance);
-        } catch (apiError) {
-            console.error("API Error:", apiError.message);
-            // Return last known balance if API fails
-            return res.json({
-                success: true,
-                message: 'Using cached balance (API temporarily unavailable)',
-                apiBalance: adminId.apiBalance || 0,
-                apiBalanceHistory: adminId.apiBalanceHistory || [],
-                cached: true
-            });
-        }
-        
+        const kioskBalance = await fetchAgentBalance();
+        console.log("kioskBalance", kioskBalance);
+        const email = adminId.email;
+        console.log("email", email);
         const updatedAdmin = await AdminModel.findByIdAndUpdate(
             adminId._id,
             {
@@ -77,9 +60,7 @@ exports.updateAdminBalance = async (req, res) => {
             },
             { new: true }
         );
-        
-        console.log("updatedAdmin", updatedAdmin.apiBalance, updatedAdmin.apiBalanceHistory);
-        
+console.log("updatedAdmin", updatedAdmin.apiBalance, updatedAdmin.apiBalanceHistory);
         res.json({
             success: true,
             message: 'Admin balance updated',
@@ -87,7 +68,6 @@ exports.updateAdminBalance = async (req, res) => {
             apiBalanceHistory: updatedAdmin.apiBalanceHistory
         });
     } catch (err) {
-        console.error("Update admin balance error:", err);
         res.status(500).json({ success: false, message: err.message });
     }
 };

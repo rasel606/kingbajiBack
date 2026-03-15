@@ -40,7 +40,6 @@ const userBonusWalletSchema = new mongoose.Schema({
     timestamps: true 
 });
 
-userBonusWalletSchema.index({ userId: 1 });
 userBonusWalletSchema.index({ availableBalance: 1 });
 
 // Static method to get or create wallet

@@ -1,15 +1,182 @@
 
+
+
+// const TransactionModel = require("../Models/TransactionModel");
+// const User = require("../Models/User");
+// const Bonus = require("../Models/Bonus");
+// const UserBonus = require("../Models/UserBonus");
+// const notificationController = require("../Controllers/notificationController");
+// const { getUserWithReferralLevels, getReferralOwner } = require("./getReferralOwner");
+
+// // ✅ Process Transaction (Deposit / Withdraw / Reject) with Affiliate bonus deduction
+// const processTransaction = async ({ userId, action, transactionID, referralUser }) => {
+//   console.log("processTransaction", userId, action, transactionID, referralUser);
+//   // 1️⃣ User & Referral Validation
+//   const user = await getUserWithReferralLevels(userId);
+//   console.log("processTransaction user", user);
+//   if (!user || user.referredBy !== referralUser.referralCode)
+//     throw new Error("User not found or referral mismatch");
+
+//   const referralData = await getReferralOwner(referralUser.referralCode);
+//   console.log("processTransaction referralData", referralData);
+//   if (!referralData) throw new Error("Invalid referral owner");
+
+//   const paymentOwner =
+//     referralData.role === "affiliate" ? referralData.subAdmin : referralData.owner;
+//   if (!paymentOwner) throw new Error("Payment owner not found");
+
+//   // 2️⃣ Find Transaction
+//   let transaction = await TransactionModel.findOne({ transactionID, status: 0 });
+//   if (!transaction) throw new Error("Transaction not found or already processed");
+
+//   const baseAmount = parseFloat(transaction.amount);
+//   const type = transaction.type;
+//   if (isNaN(baseAmount) || baseAmount <= 0) throw new Error("Invalid amount");
+
+//   // ✅ Reject Transaction
+//   if (action === "reject") {
+//     transaction = await TransactionModel.findOneAndUpdate(
+//       { transactionID },
+//       { status: 2 },
+//       { new: true }
+//     );
+//     await notificationController.createNotification(
+//       `Transaction Rejected (${transactionID})`,
+//       user.userId,
+//       `Your ${parseInt(type) === 0 ? "deposit" : "withdrawal"} of ${baseAmount} was rejected.`,
+//       "rejected",
+//       { amount: baseAmount, transactionID }
+//     );
+//     return { status: 2, transaction };
+//   }
+
+//   // ✅ Deposit Transaction
+//   if (parseInt(type) === 0) {
+//     let bonusAmount = 0,
+//       bonusId = null,
+//       turnoverRequirement = 0;
+
+//     const depositBonus = await Bonus.findOne({
+//       bonusType: "deposit",
+//       isActive: true,
+//       _id: transaction.bonusId,
+//       minDeposit: { $lte: baseAmount },
+//     }).sort({ minDeposit: -1 });
+
+//     if (transaction.bonusId && depositBonus) {
+//       bonusAmount =
+//         depositBonus.fixedAmount ||
+//         Math.floor((baseAmount * depositBonus.percentage) / 100);
+//       if (depositBonus.maxBonus && bonusAmount > depositBonus.maxBonus)
+//         bonusAmount = depositBonus.maxBonus;
+
+//       bonusId = depositBonus._id;
+//       turnoverRequirement =
+//         (baseAmount + bonusAmount) * depositBonus.wageringRequirement;
+
+//       // ✅ Deduct bonus from Affiliate if applicable
+//       if (referralData.role === "affiliate" && referralData.owner) {
+//         if (referralData.owner.balance < bonusAmount)
+//           throw new Error("Affiliate balance insufficient for bonus");
+//         referralData.owner.balance -= bonusAmount;
+//         await referralData.owner.save();
+//       }
+//     }
+
+//     // ✅ Check SubAdmin/Owner balance for deposit
+//     if (paymentOwner.balance < baseAmount)
+//       throw new Error("SubAdmin/Owner balance insufficient");
+
+//     paymentOwner.balance -= baseAmount;
+//     user.balance += baseAmount;
+
+//     transaction = await TransactionModel.findOneAndUpdate(
+//       { transactionID },
+//       {
+//         status: 1,
+//         bonus_amount: bonusAmount,
+//         amount: baseAmount + bonusAmount,
+//         bonusId,
+//         isBonusApplied: bonusAmount > 0,
+//         bonusStatus: bonusAmount > 0 ? "active" : undefined,
+//         turnoverRequirement,
+//         expiryDate: bonusAmount > 0 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null,
+//       },
+//       { new: true }
+//     );
+
+//     // ✅ Create UserBonus record if bonus applied
+//     if (bonusAmount > 0) {
+//       await UserBonus.create({
+//         userId: user.userId,
+//         bonusId,
+//         amount: baseAmount,
+//         bonusAmount,
+//         remainingAmount: bonusAmount,
+//         turnoverRequirement,
+//         expiryDate: transaction.expiryDate,
+//         transactionId: transactionID,
+//       });
+//     }
+
+//     await paymentOwner.save();
+//     await User.findOneAndUpdate({ userId: user.userId }, { balance: user.balance });
+
+//     await notificationController.createNotification(
+//       `Deposit Approved (${transactionID})`,
+//       user.userId,
+//       `Deposit of ${transaction.amount} has been approved.`,
+//       "approved",
+//       { amount: transaction.amount, transactionID }
+//     );
+
+//     return { status: 1, transaction };
+//   }
+
+//   // ✅ Withdraw Transaction
+//   if (parseInt(type) === 1) {
+//     if (user.balance < baseAmount) throw new Error("User balance insufficient");
+
+//     user.balance -= baseAmount;
+//     paymentOwner.balance += baseAmount;
+
+//     transaction = await TransactionModel.findOneAndUpdate(
+//       { transactionID },
+//       { status: 1 },
+//       { new: true }
+//     );
+
+//     await User.findOneAndUpdate({ userId: user.userId }, { balance: user.balance });
+//     await paymentOwner.save();
+
+//     await notificationController.createNotification(
+//       `Withdrawal Approved (${transactionID})`,
+//       user.userId,
+//       `Withdrawal of ${transaction.amount} has been approved.`,
+//       "approved",
+//       { amount: transaction.amount, transactionID }
+//     );
+
+//     return { status: 1, transaction };
+//   }
+
+//   throw new Error("Invalid transaction type");
+// };
+
+// module.exports = { processTransaction };
+
+
 // services/transactionService.js
 const mongoose = require('mongoose');
-const User = require('../Models/User');
-const Admin = require('../Models/AdminModel');
-const SubAdmin = require('../Models/SubAdminModel');
-const Affiliate = require('../Models/AffiliateModel');
-const Agent = require('../Models/AgentModel');
-const SubAgent = require('../Models/SubAgentModel');
-const Transaction = require('../Models/TransactionModel');
-const Bonus = require('../Models/Bonus');
-const UserBonus = require('../Models/UserBonus');
+const User = require('../models/User');
+const Admin = require('../models/AdminModel');
+const SubAdmin = require('../models/SubAdminModel');
+const Affiliate = require('../models/AffiliateModel');
+const Agent = require('../models/AgentModel');
+const SubAgent = require('../models/SubAgentModel');
+const Transaction = require('../models/TransactionModel');
+const Bonus = require('../models/Bonus');
+const UserBonus = require('../models/UserBonus');
 const AppError = require('../utils/AppError');
 const notificationController = require('../controllers/notificationController');
 const generateReferralCode = require('../utils/generateReferralCode');
@@ -108,7 +275,13 @@ const submitTransaction = async (payload) => {
     expiryDate: bonusAmount > 0 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : null
   });
 
-  await notificationController.notifyAdminsOnSubmit(newTransaction);
+  await notificationController.createNotification(
+    `Deposit Request by ${user.name}`,
+    user.userId,
+    `Deposit of ${newTransaction.amount} submitted via ${gateway_name}`,
+    'deposit_request',
+    { amount: newTransaction.amount, transactionID }
+  );
 
   return newTransaction;
 };
@@ -207,7 +380,13 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
       await session.commitTransaction();
       session.endSession();
 
-      await notificationController.notifyUserOnStatusChange(user.userId, transaction, 'approved');
+      await notificationController.createNotification(
+        'Deposit Approved',
+        user.userId,
+        `Your deposit of ${transaction.amount} has been approved`,
+        'deposit_approved',
+        { amount: transaction.amount, transactionID: transaction.transactionID }
+      );
 
       return { transaction, affiliateBonusCut };
     } else if (parseInt(status) === 2) {
@@ -219,7 +398,13 @@ const approveDeposit = async ({ userId, referralCode, transactionID, status }) =
       await session.commitTransaction();
       session.endSession();
 
-      await notificationController.notifyUserOnStatusChange(user.userId, transaction, 'rejected');
+      await notificationController.createNotification(
+        'Deposit Rejected',
+        user.userId,
+        `Your deposit of ${transaction.amount} has been rejected`,
+        'deposit_rejected',
+        { amount: transaction.amount, transactionID: transaction.transactionID }
+      );
 
       return { transaction };
     } else {
@@ -290,7 +475,13 @@ const WithdrawTransaction = async (payload) => {
     console.log("New Transaction:", newTransaction);
     console.log("Updated User:", user);
 
-    await notificationController.notifyAdminsOnSubmit(newTransaction);
+    await notificationController.createNotification(
+    `Withdrawal Request by ${user.name}`,
+    user.userId,
+    `Withdrawal of ${newTransaction.amount} submitted via ${gateway_name}`,
+    'Withdrawal_request',
+    { amount: newTransaction.amount, transactionID }
+  );
 
   return {
     success: true,

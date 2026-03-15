@@ -1,44 +1,149 @@
+
+// routes/transactionRoutes.js
 const express = require('express');
+const { body, query } = require('express-validator');
+const SubAdminControllers = require('../Controllers/SubAdminControllers');
+const AdminController = require('../Controllers/AdminController');
+const AgentController = require('../Controllers/AgentController');
+const SubAgentController = require('../Controllers/SubAgentController');
+const AffiliateController = require('../Controllers/AffiliateController');
+const auth = require('../MiddleWare/subAdminAuth');
+const validate = require('../middleWare/validation');
+const {register, loginUser} = require('../Controllers/AuthController');
 const router = express.Router();
-const SubAdminController = require('../controllers/SubAdminController');
-const BalanceTransferController = require('../controllers/BalanceTransferController');
-const subAdminAuth = require('../middleWare/subAdminAuth');
 
-// All routes in this file are protected and require a sub-admin role
-router.use(subAdminAuth);
+// Search transactions
+router.get('/get_sub_admin_affiliateList', validate, auth, SubAdminControllers.GetAffiliateList);
 
-// --- Agent Management ---
-router.get('/agents', SubAdminController.getAgents);
-router.get('/agents/:agentId/users', SubAdminController.getAgentUsers);
-router.get('/agents/deposits', SubAdminController.getAgentDeposits);
-router.get('/agents/withdrawals', SubAdminController.getAgentWithdrawals);
+router.get('/get_admin_UserList', validate, auth, SubAdminControllers.GetUserList);
+// router.get('/get_user_list_by_role', validate, auth, SubAdminControllers.getTransactionList);
 
-// --- Sub-Agent Management ---
-router.get('/sub-agents', SubAdminController.getSubAgents);
-router.get('/sub-agents/:subAgentId/users', SubAdminController.getSubAgentUsers);
-router.get('/sub-agents/deposits', SubAdminController.getSubAgentDeposits);
-router.get('/sub-agents/withdrawals', SubAdminController.getSubAgentWithdrawals);
+// Search transactions
+router.post('/auth/register_agent', validate,  AgentController.AgentRegister);
+router.post('/auth/register_affiliate', validate,  AffiliateController.registerAffiliate);
 
-// --- Affiliate Management ---
-router.get('/affiliates', SubAdminController.getAffiliates);
-router.get('/affiliates/:affiliateId/users', SubAdminController.getAffiliateUsers);
-router.get('/affiliates/deposits', SubAdminController.getAffiliateDeposits);
-router.get('/affiliates/withdrawals', SubAdminController.getAffiliateWithdrawals);
+// router.post('/auth/agent_login', validate,  AgentController.Login);
+// router.get('/auth/agent_profile', validate, auth, AgentController.GetProfile);
+// router.get('/agent_active_session', validate, auth, AgentController.GetActiveSessions);
+// router.get('/agent_force_logout', validate, auth, AgentController.ForceLogout);
+// router.get('/agent_exists', validate, auth, AgentController.CheckExists);
+// router.post('/agent_request_password_reset', validate, auth, AgentController.RequestPasswordResetUser);
+// router.post('/agent_reset_password', validate, auth, AgentController.ResetPasswordUser);
+router.post('/auth/createUser', register);
+router.post('/auth/register_sub_agent', validate,  SubAgentController.SubAgentRegister);
 
-// --- Balance Transfers ---
-router.post('/transfer/agent', BalanceTransferController.transferBalanceToAgent);
-router.post('/transfer/sub-agent', BalanceTransferController.transferBalanceToSubAgent);
-// TODO(BLACKBOXAI): transferBalanceToAffiliate missing - commented
-// router.post('/transfer/affiliate', BalanceTransferController.transferBalanceToAffiliate);
+////////////////////////Agent////////////////////////////
 
-// --- Banner Management --- (ES module - using destructuring)
-const { getBanners, getBannerById, createBanner, updateBanner, deleteBanner, toggleBannerActive, getPromotionsForBanner } = require('../controllers/BannerController').default || require('../controllers/BannerController');
-router.get('/banners', getBanners);
-router.get('/banners/:id', getBannerById);
-router.post('/banners', createBanner);
-router.put('/banners/:id', updateBanner);
-router.delete('/banners/:id', deleteBanner);
-router.put('/banners/:id/toggle', toggleBannerActive);
-router.get('/promotions-for-banner', getPromotionsForBanner);
+router.get('/get_userList', validate, auth, SubAdminControllers.GetUserList);
+router.get('/get_agent_List', validate, auth, SubAdminControllers.GetAgentList);
+router.get('/get_agent_pending_deposit_list', validate, auth, SubAdminControllers.getPendingAgentDepositTransactions);
+router.get('/get_agent_pending_widthrow_list', validate, auth, SubAdminControllers.getPendingAgentWidthralTransactions);
+///////////////////////Sub Agent////////////////////////////
+router.get('/get_sub_agent_List', validate, auth, SubAdminControllers.getSubListAgent);
+router.get('/get_sub_agent_usert_List', validate, auth, SubAdminControllers.getListSubAgentUsers);
+router.get('/get_sub_agent_user_List', validate, auth, SubAdminControllers.getListSubAgentUsers);
+router.get('/get_sub_agent_pending_deposit_List', validate, auth, SubAdminControllers.getPendingSubAgentDepositTransactions);
+router.get('/get_sub_agent_pending_widthrow_List', validate, auth, SubAdminControllers.getPendingSubAgentWidthralTransactions);
+
+
+///////////////////////////Affiliate//////////////////////////////////
+router.get('/get_affiliate_user_List', validate, auth, SubAdminControllers.getListAffiliateUsers);
+router.get('/get_affiliate__List', validate, auth, SubAdminControllers.GetAffiliateList);
+router.get('/get_affiliate_List', validate, auth, SubAdminControllers.GetAffiliateList);
+router.get('/get_affiliate_pending_deposit_List', validate, auth, SubAdminControllers.getPendingAffiliateDepositTransactions);
+router.get('/get_affiliate_pending_widthrow_List', validate, auth, SubAdminControllers.getPendingAffiliateWidthralTransactions);
+
+
+
+
+
+
+
+router.get('/get_users_by_Id/:userId', validate, auth, AgentController.GetUserById_detaills);
+router.get('/get_agent_users_by_Id/:userId', validate, auth, AgentController.GetAgentUserById_detaills);
+router.put('/get_users_by_Id_update/:userId', validate, auth, (req, res, next) => {
+	if (typeof AgentController.updateUserProfileById !== 'function') {
+		return res.status(500).json({
+			success: false,
+			message: 'updateUserProfileById handler is not available'
+		});
+	}
+
+	return AgentController.updateUserProfileById(req, res, next);
+});
+router.post('/get_users_verify-phone/:userId', validate, auth, AgentController.verifyUserPhone);
+router.post('/get_users_verify-email/:userId', validate, auth, AgentController.verifyUserEmail);
+
+
+
+
+
+
+// router.get('/search_deposit_transactions', validate, auth, AgentController.getPendingAgentDepositTransactions);
+// router.get('/search_Widthrawal_transactions', validate, auth, AgentController.getPendingAgentWidthralTransactions);
+router.get('/deposit_getWay_list', validate, auth, AgentController.DepositGetWayList);
+router.get('/widthrow_getWay_list', validate, auth, AgentController.WidthralGetWayList);
+
+
+router.get('/sub_agent_deposit_transactions_user', validate, auth, AgentController.getListSubAgentUsers);
+router.get('/get_agent_user_List', validate, auth, AgentController.getListSubAgentUsers);
+router.get('/deposit_transactions', validate, auth, SubAdminControllers.getPendingDepositTransactions);
+router.get('/widthrow_transactions', validate, auth, SubAdminControllers.getPendingWidthralTransactions);
+router.get('/agent_transactions_report', validate, auth, AgentController.getAllTransactions);
+
+router.get('/deposit_getWay_list', validate, auth, SubAdminControllers.DepositGetWayList);
+router.get('/widthrow_getWay_list', validate, auth,  SubAdminControllers.WidthralGetWayList);
+router.get('/search_report_deposit_transactions', validate, auth, SubAdminControllers.getPendingAgentDepositTransactions);
+router.get('/search_report_Widthrawal_transactions', validate, auth, SubAdminControllers.getPendingAgentWidthralTransactions);
+router.get('/affiliate_users_deposit_transactions', validate, auth, SubAdminControllers.getPendingAffiliateDepositTransactions);
+router.get('/affiliate_users_Widthrawal_transactions', validate, auth, SubAdminControllers.getPendingAffiliateWidthralTransactions);
+
+// router.post(
+//   '/get_users_verify-email/:userId',
+//   auth,
+//   validate,
+//   SubAdminControllers.verifyEmail
+// );
+
+// // Verify user phone
+// router.post(
+//   '/get_users_verify-phone/:userId',
+//   auth,
+//   validate,
+//   SubAdminControllers.verifyPhone
+// );
+// router.put(
+//   '/get_users_by_Id_update/:userId',
+//   auth,
+//   // validate,[
+//   //   body('email'),
+//   //   body('phone'),
+//   //   body('name'),
+//   //   body('country'),
+//   // ],
+//   SubAdminControllers.updateUserProfileById
+// );
+// router.put(
+//   '/get_users_by_Id_Password_update/:userId',
+//   auth,
+//   SubAdminControllers.changeUserPassword
+// );
+// // router.put(
+// //   '/get_users_transfar_by_Id/:userId',
+// //   auth,
+// //   AdminController.Transfar_Deposit_And_Widthraw
+// // );
+
+
+
+router.post(
+	'/update-deposit-Widthrowal',
+	auth,
+	SubAdminControllers.processTransactionForALL
+);
+
+
+
+
 
 module.exports = router;

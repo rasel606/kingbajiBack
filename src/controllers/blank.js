@@ -26,7 +26,7 @@ const fetchBalance = async (agent, username) => {
 
         // Make the API request
         const response = await axios.get(apiUrl, { params, headers: { 'Content-Type': 'application/json' }, responseType: 'json' });
-
+console.log("API Response:", response.data);
         // Ensure response is an object and contains the expected balance field
         let parsedData = response.data;
         if (typeof parsedData === 'string') {

@@ -7,7 +7,7 @@ const notificationController = require("../Controllers/notificationController");
 const { getUserWithReferralLevels, getReferralOwner } = require("./getReferralOwner");
 
 // ✅ Process Transaction (Deposit / Withdraw / Reject) with Affiliate bonus deduction
-const processTransaction = async ({ userId, action, transactionID, referralUser }) => {
+const processTransaction = async ({ userId, action, transactionID, referralUser, reason }) => {
     // 1️⃣ User & Referral Validation
 
     console.log("processTransaction", userId, action, transactionID, referralUser);
@@ -31,21 +31,37 @@ const processTransaction = async ({ userId, action, transactionID, referralUser 
     const type = transaction.type;
     if (isNaN(baseAmount) || baseAmount <= 0) throw new Error("Invalid amount");
 
+    const normalizedReason = typeof reason === "string" ? reason.trim() : "";
+
     // ✅ Reject Transaction
     if (action === "reject") {
+        if (!normalizedReason) {
+            throw new Error("Rejection reason is required");
+        }
+
+        const actorRole = referralUser?.role || "SubAdmin";
+        const actorLabel = referralUser?.userId || referralUser?.email || actorRole;
+
         transaction = await TransactionModel.findOneAndUpdate(
             { transactionID },
-            { status: 2 },
+            {
+                status: 2,
+                rejectionReason: normalizedReason,
+                rejectedBy: actorLabel,
+                rejectedAt: new Date(),
+                details: `Rejected by ${actorLabel}. Reason: ${normalizedReason}`,
+                updatetime: new Date(),
+            },
             { new: true }
         );
         await notificationController.createNotification(
             `Transaction Rejected (${transactionID})`,
             user.userId,
-            `Your ${parseInt(type) === 0 ? "deposit" : "withdrawal"} of ${baseAmount} was rejected.`,
+            `Your ${parseInt(type) === 0 ? "deposit" : "withdrawal"} of ${baseAmount} was rejected. Reason: ${normalizedReason}`,
             "rejected",
-            { amount: baseAmount, transactionID }
+            { amount: baseAmount, transactionID, reason: normalizedReason }
         );
-        return { status: 2, transaction };
+        return { status: 2, transaction, reason: normalizedReason };
     }
 
     // ✅ Deposit Transaction
@@ -131,7 +147,7 @@ const processTransaction = async ({ userId, action, transactionID, referralUser 
             "approved",
             { amount: transaction.amount, transactionID }
         );
-consolt.log({ status: 1, message: "has been approvedtransaction", transaction })
+        console.log({ status: 1, message: "has been approvedtransaction", transaction })
         return { status: 1, transaction };
     }
 

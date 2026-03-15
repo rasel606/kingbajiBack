@@ -2,7 +2,7 @@ const express = require('express');
 const {
   getRevenueData
 } = require('../services/AffiliateRevenueService');
-const {protectAffiliate} = require('../MiddleWare/affiliateAuth');
+const {protectAffiliate} = require('../middleWare/affiliateAuth');
 
 const router = express.Router();
 

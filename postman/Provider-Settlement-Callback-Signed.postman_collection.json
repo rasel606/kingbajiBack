@@ -1,0 +1,114 @@
+{
+  "info": {
+    "_postman_id": "5e0ce3be-b6d2-4d48-b139-9f123ce88f14",
+    "name": "Provider Settlement Callback Signed",
+    "description": "Signed settlement callback request with HMAC pre-request script and response tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "POST Settlement Callback (Signed)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const secret = pm.collectionVariables.get('providerSecret') || pm.environment.get('providerSecret');",
+              "if (!secret) {",
+              "  throw new Error('Missing providerSecret. Set it in collection/environment variables.');",
+              "}",
+              "",
+              "const timestamp = Math.floor(Date.now() / 1000).toString();",
+              "const nonce = pm.variables.replaceIn('{{$guid}}').replace(/-/g, '').toLowerCase();",
+              "",
+              "const body = pm.request.body && pm.request.body.raw ? pm.request.body.raw : '{}';",
+              "const payload = `${timestamp}.${nonce}.${body}`;",
+              "const signature = CryptoJS.HmacSHA256(payload, secret).toString(CryptoJS.enc.Hex);",
+              "",
+              "pm.request.headers.upsert({ key: 'x-provider-timestamp', value: timestamp });",
+              "pm.request.headers.upsert({ key: 'x-provider-nonce', value: nonce });",
+              "pm.request.headers.upsert({ key: 'x-provider-signature', value: signature });",
+              "",
+              "pm.variables.set('lastProviderTimestamp', timestamp);",
+              "pm.variables.set('lastProviderNonce', nonce);",
+              "pm.variables.set('lastProviderSignature', signature);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200 or 202', function () {",
+              "  pm.expect([200, 202]).to.include(pm.response.code);",
+              "});",
+              "",
+              "pm.test('Response time is below 5000ms', function () {",
+              "  pm.expect(pm.response.responseTime).to.be.below(5000);",
+              "});",
+              "",
+              "pm.test('Response body has success + acknowledged fields', function () {",
+              "  const responseBodyJson = pm.response.json();",
+              "  pm.expect(responseBodyJson).to.have.property('success');",
+              "  pm.expect(responseBodyJson).to.have.property('acknowledged');",
+              "});",
+              "",
+              "pm.test('Lookup identifiers are echoed for 202 ack', function () {",
+              "  if (pm.response.code === 202) {",
+              "    const responseBodyJson = pm.response.json();",
+              "    pm.expect(responseBodyJson).to.have.property('lookup');",
+              "    pm.expect(responseBodyJson.lookup).to.have.property('id');",
+              "    pm.expect(responseBodyJson.lookup).to.have.property('ref_no');",
+              "  }",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ticketId\": \"provider-ticket-10001\",\n  \"ref_no\": \"ref-10001\",\n  \"status\": \"SETTLED\",\n  \"payout\": 11.5,\n  \"commission\": 0.5,\n  \"p_win\": 11,\n  \"settledAt\": \"2026-03-13T14:31:00.000Z\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/provider/settlement-callback",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "provider",
+            "settlement-callback"
+          ]
+        },
+        "description": "Sends a signed settlement callback. Pre-request script injects timestamp/nonce/signature headers."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    },
+    {
+      "key": "providerSecret",
+      "value": "replace_with_long_random_secret"
+    }
+  ]
+}

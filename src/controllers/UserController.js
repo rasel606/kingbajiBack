@@ -104,24 +104,29 @@ exports.GetRefferralList = async (req, res, dataModel, childModel) => {
         }
 console.log("user", user.role, user.referralCode);
 
-        let referredByFilter;
-        if (user.role === 'Admin') {
-            referredByFilter = {
-                     referredBy: "1" || null || undefined 
-            }
-        } else {
-            referredByFilter = { referredBy: user.referralCode };
+        const currentUser = await dataModel.findOne({
+            $or: [
+                ...(user.referralCode ? [{ referralCode: user.referralCode }] : []),
+                ...(user.userId ? [{ userId: user.userId }] : []),
+                ...(user.email ? [{ email: user.email }] : []),
+            ],
+        });
+
+        const adminExists =
+            currentUser ||
+            (user.referralCode ? await dataModel.findOne({ referredBy: user.referralCode }) : null);
+
+        if (!adminExists) {
+            return {
+                success: false,
+                page: Number(page),
+                limit: Number(limit),
+                total: 0,
+                users: [],
+            };
         }
-        // Check if SubAdmin exists
-        const AdminExists = await dataModel.findOne(referredByFilter);
-        // console.log("subAdminExists", AdminExists)
 
-        // only user's deposits
-
-        // if (!AdminExists) {
-        //     return res.status(404).json({ message: 'SubAdmin not found' });
-        // }
-        const filters = { referredBy: AdminExists.referralCode };
+        const filters = { referredBy: adminExists.referralCode };
 
 
 

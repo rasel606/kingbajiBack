@@ -22,6 +22,6 @@ const WidthrowTableHistorySchema = new Schema({
 });
 
 // Create the model based on the schema
-const WidthrowTableHistory = mongoose.model('WidthrowTableHistory', WidthrowTableHistorySchema);
+const WidthrowTableHistory = mongoose.models.WidthrowTableHistory || mongoose.model('WidthrowTableHistory', WidthrowTableHistorySchema);
 
 module.exports = WidthrowTableHistory;

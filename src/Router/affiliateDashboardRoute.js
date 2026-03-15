@@ -1,7 +1,7 @@
 // routes/dashboard.js
 const express = require('express');
 const { getAffiliateDashboard } = require('../Controllers/AffiliateDashboardController');
-const {protectAffiliate} = require('../MiddleWare/affiliateAuth');
+const {protectAffiliate} = require('../middleWare/affiliateAuth');
 
 const router = express.Router();
 

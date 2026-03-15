@@ -54,6 +54,4 @@ const referralStatsSchema = new mongoose.Schema({
   timestamps: true
 });
 
-referralStatsSchema.index({ userId: 1 });
-
 module.exports = mongoose.model('ReferralStats', referralStatsSchema);

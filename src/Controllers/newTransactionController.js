@@ -1,7 +1,7 @@
 // controllers/transactionController.js
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/AppError');
-const transactionService = require('../services/transactionService');
+const transactionService = require('../services/TransactionService');
 const UserModel = require('../models/User');
 
 exports.submitTransaction = catchAsync(async (req, res, next) => {

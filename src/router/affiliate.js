@@ -3,7 +3,7 @@ const {
   getEarningsData,
   refreshEarningsData
 } = require('../Controllers/AffiliateEarningsController');
-const {protectAffiliate} = require('../MiddleWare/affiliateAuth');
+const {protectAffiliate} = require('../middleWare/affiliateAuth');
 
 const router = express.Router();
 

@@ -1,65 +1,148 @@
-import mongoose from 'mongoose';
-import Banner from '../models/Banner.js';
-import Promotion from '../models/PromotionSchema.js';
+const mongoose = require('mongoose');
+const Banner = require('../models/Banner');
+const Promotion = require('../models/PromotionSchema');
 
-const controllerWrapper = (fn) => (req, res, next) => {
-  Promise.resolve(fn(req, res, next)).catch(next);
+const parseBoolean = (value) => {
+	if (typeof value === 'boolean') return value;
+	if (typeof value === 'string') {
+		if (value.toLowerCase() === 'true') return true;
+		if (value.toLowerCase() === 'false') return false;
+	}
+	return undefined;
 };
 
-export const getBanners = controllerWrapper(async (req, res) => {
-  const banners = await Banner.find({}).populate('promotionId', 'name bonusAmount startDate endDate');
-  res.json({ success: true, data: banners });
-});
+const getBanners = async (req, res) => {
+	try {
+		const filter = {};
+		const isActive = parseBoolean(req.query.isActive);
 
-export const getBannerById = controllerWrapper(async (req, res) => {
-  const banner = await Banner.findById(req.params.id).populate('promotionId', 'name bonusAmount startDate endDate');
-  if (!banner) {
-    return res.status(404).json({ success: false, message: 'Banner not found' });
-  }
-  res.json({ success: true, data: banner });
-});
+		if (typeof isActive === 'boolean') {
+			filter.isActive = isActive;
+		}
 
-export const createBanner = controllerWrapper(async (req, res) => {
-  const bannerData = { 
-    ...req.body,
-    createdBy: req.user?.email || req.user?.userId || 'admin'
-  };
-  const banner = new Banner(bannerData);
-  await banner.save();
-  const populatedBanner = await Banner.findById(banner._id).populate('promotionId', 'name bonusAmount startDate endDate');
-  res.status(201).json({ success: true, data: populatedBanner });
-});
+		const banners = await Banner.find(filter)
+			.populate('promotionId', 'name startDate endDate isActive')
+			.sort({ priority: -1, createdAt: -1 });
 
-export const updateBanner = controllerWrapper(async (req, res) => {
-  const banner = await Banner.findByIdAndUpdate(
-    req.params.id,
-    req.body,
-    { new: true, runValidators: true }
-  ).populate('promotionId', 'name bonusAmount startDate endDate');
-  if (!banner) {
-    return res.status(404).json({ success: false, message: 'Banner not found' });
-  }
-  res.json({ success: true, data: banner });
-});
+		return res.status(200).json({ success: true, data: banners });
+	} catch (error) {
+		return res.status(500).json({ success: false, message: 'Failed to fetch banners', error: error.message });
+	}
+};
 
-export const deleteBanner = controllerWrapper(async (req, res) => {
-  const banner = await Banner.findByIdAndDelete(req.params.id);
-  if (!banner) {
-    return res.status(404).json({ success: false, message: 'Banner not found' });
-  }
-  res.json({ success: true, message: 'Banner deleted' });
-});
+const getBannerById = async (req, res) => {
+	try {
+		const { id } = req.params;
 
-export const toggleBannerActive = controllerWrapper(async (req, res) => {
-  const banner = await Banner.findByIdAndUpdate(
-    req.params.id,
-    { $set: { isActive: !req.body.isActive } },
-    { new: true }
-  ).populate('promotionId');
-  res.json({ success: true, data: banner });
-});
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return res.status(400).json({ success: false, message: 'Invalid banner id' });
+		}
 
-export const getPromotionsForBanner = controllerWrapper(async (req, res) => {
-  const promotions = await Promotion.find({ isActive: true });
-  res.json({ success: true, data: promotions });
-});
+		const banner = await Banner.findById(id).populate('promotionId', 'name startDate endDate isActive');
+
+		if (!banner) {
+			return res.status(404).json({ success: false, message: 'Banner not found' });
+		}
+
+		return res.status(200).json({ success: true, data: banner });
+	} catch (error) {
+		return res.status(500).json({ success: false, message: 'Failed to fetch banner', error: error.message });
+	}
+};
+
+const createBanner = async (req, res) => {
+	try {
+		const banner = await Banner.create(req.body);
+		return res.status(201).json({ success: true, data: banner });
+	} catch (error) {
+		return res.status(400).json({ success: false, message: 'Failed to create banner', error: error.message });
+	}
+};
+
+const updateBanner = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return res.status(400).json({ success: false, message: 'Invalid banner id' });
+		}
+
+		const banner = await Banner.findByIdAndUpdate(id, req.body, {
+			new: true,
+			runValidators: true
+		});
+
+		if (!banner) {
+			return res.status(404).json({ success: false, message: 'Banner not found' });
+		}
+
+		return res.status(200).json({ success: true, data: banner });
+	} catch (error) {
+		return res.status(400).json({ success: false, message: 'Failed to update banner', error: error.message });
+	}
+};
+
+const deleteBanner = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return res.status(400).json({ success: false, message: 'Invalid banner id' });
+		}
+
+		const banner = await Banner.findByIdAndDelete(id);
+
+		if (!banner) {
+			return res.status(404).json({ success: false, message: 'Banner not found' });
+		}
+
+		return res.status(200).json({ success: true, message: 'Banner deleted successfully' });
+	} catch (error) {
+		return res.status(500).json({ success: false, message: 'Failed to delete banner', error: error.message });
+	}
+};
+
+const toggleBannerActive = async (req, res) => {
+	try {
+		const { id } = req.params;
+
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return res.status(400).json({ success: false, message: 'Invalid banner id' });
+		}
+
+		const banner = await Banner.findById(id);
+
+		if (!banner) {
+			return res.status(404).json({ success: false, message: 'Banner not found' });
+		}
+
+		banner.isActive = !banner.isActive;
+		await banner.save();
+
+		return res.status(200).json({ success: true, data: banner });
+	} catch (error) {
+		return res.status(500).json({ success: false, message: 'Failed to toggle banner status', error: error.message });
+	}
+};
+
+const getPromotionsForBanner = async (_req, res) => {
+	try {
+		const promotions = await Promotion.find({ isActive: true })
+			.select('_id name startDate endDate isActive')
+			.sort({ startDate: -1 });
+
+		return res.status(200).json({ success: true, data: promotions });
+	} catch (error) {
+		return res.status(500).json({ success: false, message: 'Failed to fetch promotions', error: error.message });
+	}
+};
+
+module.exports = {
+	getBanners,
+	getBannerById,
+	createBanner,
+	updateBanner,
+	deleteBanner,
+	toggleBannerActive,
+	getPromotionsForBanner
+};

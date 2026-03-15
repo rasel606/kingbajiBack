@@ -28,6 +28,9 @@ const transactionModelSchema = new mongoose.Schema({
     },
 
     details: { type: String },
+    rejectionReason: { type: String },
+    rejectedBy: { type: String },
+    rejectedAt: { type: Date },
 
     payment_type: {
         type: String,

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const advertisementSchema = new mongoose.Schema({
   title: {
@@ -37,5 +37,5 @@ const advertisementSchema = new mongoose.Schema({
   timestamps: true
 });
 
-export default mongoose.model('Advertisement', advertisementSchema);
+module.exports = mongoose.model('Advertisement', advertisementSchema);
 

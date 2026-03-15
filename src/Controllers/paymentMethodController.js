@@ -278,10 +278,23 @@ exports.GetParentAndDownlineTransactions = async (
   try {
     console.log("user", query);
 
+    const identityFilters = [
+      ...(user?.referralCode ? [{ referralCode: user.referralCode }] : []),
+      ...(user?.userId ? [{ userId: user.userId }] : []),
+      ...(user?.email ? [{ email: user.email }] : []),
+    ];
+
     // STEP 1: Get parent
-    const parent = await ParentUserModel.findOne({
-      referredBy: user.referralCode,
-    });
+    const parent =
+      (identityFilters.length
+        ? await ParentUserModel.findOne({ $or: identityFilters })
+        : null) ||
+      (user?.referralCode
+        ? await ParentUserModel.findOne({
+            referredBy: user.referralCode,
+          })
+        : null);
+
     if (!parent) return { success: false, message: "Parent not found" };
 
     // STEP 2: Get children (direct downline)

@@ -1,9 +1,6 @@
 const Notification = require("../models/Notification");
-const NotificationService = require("../services/notificationService");
-const webPushService = require("../utils/webPush");
-const UserModel = require('../Models/User');
 
-// Legacy DB-only create (keep for compatibility)
+// Create notification
 exports.createNotification = async (title, userId, content, type, metaData = {}) => {
   try {
     console.log(title, userId, content, type, metaData);
@@ -27,7 +24,7 @@ exports.getGroupedNotifications = async (req, res) => {
 
   try {
     console.log(req.params);
-    const { userId } = req.params.id;
+    const { userId } = req.params;
     // const page = parseInt(req.query.page) || 1; // default page 1
     // const limit = parseInt(req.query.limit) || 5; // default 5 groups per page
 
@@ -203,56 +200,42 @@ exports.updatePreferences = async (req, res) => {
 
 exports.sendPushNotification = async (req, res) => {
   try {
-    const io = req.app.get('socketio'); // Get socket.io instance
-    const notificationService = new NotificationService(io);
     const { userIds, title, message, type, data } = req.body;
     
-    const results = [];
-    for (const userId of userIds) {
-      await notificationService.createAndSendNotification(
-        userId, title, message, type || 'system', data || {}
-      );
-      results.push(userId);
-    }
+    // Create notifications for each user
+    const notifications = userIds.map(userId => ({
+      userId,
+      title,
+      message,
+      type: type || 'system',
+      data: data || {}
+    }));
+    
+    await Notification.insertMany(notifications);
+    
+    // Here you would integrate with actual push notification services
+    // like Firebase Cloud Messaging, OneSignal, etc.
     
     res.json({ 
       success: true, 
-      message: `Push notifications sent to ${results.length} users`,
-      sentTo: results
+      message: `Notification sent to ${userIds.length} users` 
     });
   } catch (error) {
     console.error('Error sending push notification:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 
-// Send admin notification on deposit/withdrawal submit
-exports.notifyAdminsOnSubmit = async (transaction) => {
-  try {
-    const io = global.io || req?.app?.get('socketio'); // Flexible io access
-    const notificationService = new NotificationService(io);
-    
-    await notificationService.sendTransactionNotification(transaction, 'created');
-    console.log(`Admin notifications sent for transaction ${transaction.transactionID || transaction._id}`);
-    return true;
-  } catch (error) {
-    console.error('Error notifying admins:', error);
-    throw error;
-  }
-};
-
-// Notify user on approve/reject
-exports.notifyUserOnStatusChange = async (userId, transaction, action) => {
-  try {
-    const io = global.io || req?.app?.get('socketio');
-    const notificationService = new NotificationService(io);
-    
-    await notificationService.sendTransactionNotification(transaction, action);
-    console.log(`User ${userId} notified of ${action} for transaction ${transaction.transactionID || transaction._id}`);
-    return true;
-  } catch (error) {
-    console.error('Error notifying user:', error);
-    throw error;
-  }
-};
-
+// Helper function for default preferences
+function getDefaultPreferences() {
+  return {
+    email: true,
+    push: true,
+    sms: false,
+    depositAlerts: true,
+    withdrawalAlerts: true,
+    bonusAlerts: true,
+    systemAlerts: true,
+    marketing: false
+  };
+}

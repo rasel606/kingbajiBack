@@ -2,6 +2,7 @@ const redis = require('redis')
 
 // Export a mutable holder so other modules can read updated .client after connect
 const redisHolder = { client: null }
+let hasLoggedRedisFallback = false
 
 const connectRedis = async () => {
 	try {
@@ -15,9 +16,20 @@ const connectRedis = async () => {
 			},
 		})
 
-		client.on('error', (err) => console.warn('Redis Client Error', err && err.message))
+		client.on('error', (err) => {
+			if (err.code === 'ECONNREFUSED') {
+				// Connection refused errors can occur repeatedly during reconnect attempts.
+				// Keep logs quiet here; the initial connect failure path below logs fallback once.
+				return
+			} else {
+				console.warn('Redis Client Error:', err.message)
+			}
+		})
 		client.on('connect', () => console.log('✅ Redis Client connecting'))
-		client.on('ready', () => console.log('✅ Redis Client ready'))
+		client.on('ready', () => {
+			hasLoggedRedisFallback = false
+			console.log('✅ Redis Client ready')
+		})
 
 		await client.connect()
 
@@ -25,7 +37,10 @@ const connectRedis = async () => {
 		console.log('✅ Redis connected at', url)
 		return client
 	} catch (err) {
-		console.warn('⚠️ Redis connect failed, falling back to in-memory cache:', err && err.message)
+		if (!hasLoggedRedisFallback) {
+			console.warn('⚠️ Redis connect failed, falling back to in-memory cache:', err && err.message)
+			hasLoggedRedisFallback = true
+		}
 		redisHolder.client = null
 		return null
 	}

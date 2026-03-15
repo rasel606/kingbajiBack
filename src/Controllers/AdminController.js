@@ -6,7 +6,7 @@ const AdminModel = require('../models/AdminModel')
 const SubAdminModel = require('../models/SubAdminModel')
 
 const SubAgentModel = require('../models/SubAgentModel')
-const transactionService = require('../services/transactionService');
+const transactionService = require('../services/TransactionService');
 const CreateService = require('../services/CreateService')
 const PaymentGateWayTable = require("../models/PaymentGateWayTable");
 const WidthralPaymentGateWayTable = require("../models/WidthralPaymentGateWayTable");
@@ -26,7 +26,7 @@ const { default: axios } = require('axios')
 // const { LoginService, loginUser,Profile } = require('../Services/LoginService')
 const AffiliateModel = require('../models/AffiliateModel')
 const AgentModel = require('../models/AgentModel')
-const UserModel = require('../Models/User')
+const UserModel = require('../models/User')
 const AffiliateCommissionModal = require('../models/AffiliateCommissionModal')
 const AffiliateUserEarnings = require('../models/AffiliateUserEarnings');
 const { ref } = require('joi');
@@ -39,6 +39,8 @@ const TransactionModel = require('../models/TransactionModel');
 // const notificationController = require('../Controllers/notificationController');
 const UserController = require('../Controllers/UserController');
 const paymentMethodController = require('../Controllers/paymentMethodController');
+// const SubAdminModel = require('../Models/SubAdminModel');
+// const SubAdminModel = require('../Models/SubAdminModel');
 const Category = require('../models/Category');
 const SocialLink = require('../models/SocialLink');
 const BettingHistory = require('../models/BettingHistory');
@@ -56,7 +58,6 @@ const { AdminProfile } = require('../services/LoginService');
 const { getUserListServices } = require('../services/getUserListServices');
 const { getReferralData } = require('../services/getReferralOwnerService');
 const { processTransaction } = require('../services/processTransactionService');
-const subAdminService = require('../services/subAdminService');
 const CreateGateWayService = require('../services/CreateGateWayService');
 
 const { createUser } = require('../services/CreateService');
@@ -84,96 +85,6 @@ const { createUser } = require('../services/CreateService');
 
 
 
-exports.getAdminDashboardStats = catchAsync(async (req, res, next) => {
-  try {
-    const user = req.user;
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Authentication required' });
-    }
-    
-    // Get statistics for admin dashboard
-    const totalUsers = await UserModel.countDocuments();
-    const totalAgents = await AgentModel.countDocuments();
-    const totalSubAdmins = await SubAdminModel.countDocuments();
-    const totalAffiliates = await AffiliateModel.countDocuments();
-    const totalBets = await BettingTable.countDocuments() || 0;
-    
-    // Calculate total deposits and withdrawals
-    const deposits = await TransactionModel.aggregate([
-      { $match: { type: 'deposit', status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    
-    const withdrawals = await TransactionModel.aggregate([
-      { $match: { type: 'withdrawal', status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
-    ]);
-    
-    const totalDeposits = deposits.length > 0 ? deposits[0].total : 0;
-    const totalWithdrawals = withdrawals.length > 0 ? withdrawals[0].total : 0;
-    
-    // Get active sessions
-    const activeSessions = await UserModel.countDocuments({ status: 'active' }) || 0;
-    
-    // Calculate revenue (deposits - withdrawals + commissions)
-    const revenue = totalDeposits - totalWithdrawals;
-    
-    return res.json({
-      success: true,
-      data: {
-        stats: {
-          totalUsers,
-          totalAgents,
-          totalSubAdmins,
-          totalAffiliates,
-          totalBets,
-          totalDeposits,
-          totalWithdrawals,
-          revenue,
-          activeSessions
-        },
-        timestamp: new Date()
-      }
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-exports.getSocialLinks = catchAsync(async (req, res, next) => {
-  try {
-    const socialLinks = await SocialLink.find({});
-    return res.json({
-      success: true,
-      data: socialLinks || []
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-exports.updateAndCreateSocialLinks = catchAsync(async (req, res, next) => {
-  try {
-    const { platform, url } = req.body;
-    if (!platform || !url) {
-      return res.status(400).json({ success: false, message: 'Platform and URL required' });
-    }
-    
-    const updated = await SocialLink.findOneAndUpdate(
-      { platform },
-      { platform, url, updatedAt: new Date() },
-      { upsert: true, new: true }
-    );
-    
-    return res.json({
-      success: true,
-      message: 'Social link updated successfully',
-      data: updated
-    });
-  } catch (err) {
-    next(err);
-  }
-});
 
 exports.CreateAdmin = catchAsync(async (req, res, next) => {
   try {
@@ -282,6 +193,54 @@ exports.GetAdminProfile = catchAsync(async (req, res, next) => {
   }
 });
 
+exports.UpdateAdminProfile = catchAsync(async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required',
+      });
+    }
+
+    const allowedFields = ['firstName', 'lastName', 'mobile', 'countryCode'];
+    const updates = {};
+
+    allowedFields.forEach((field) => {
+      if (typeof req.body?.[field] !== 'undefined') {
+        updates[field] = req.body[field];
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid profile fields provided',
+      });
+    }
+
+    const updatedAdmin = await AdminModel.findByIdAndUpdate(
+      req.user._id,
+      { $set: updates },
+      { new: true, runValidators: true, select: '-password' },
+    );
+
+    if (!updatedAdmin) {
+      return res.status(404).json({
+        success: false,
+        message: 'Admin profile not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedAdmin,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Get active sessions (Admin only)
 exports.GetActiveAdminSessions = catchAsync(async (req, res, next) => {
   try {
@@ -361,54 +320,24 @@ exports.AdminUpdate = async (req, res) => {
 
 
 
-// Get SubAdmin List filtered by referredBy (admin's referral code)
 exports.GetSubAdminList = async (req, res) => {
+
+
   try {
-    const { page = 1, limit = 10, userId, email, phone, status } = req.query;
-    
-    // Get current admin's referral code from auth middleware
-    const adminReferralCode = req.user?.referralCode;
-    
-    let query = {};
-    
-    // Filter by referredBy if admin is logged in (for admin to see only their sub-admins)
-    if (adminReferralCode) {
-      query.referredBy = adminReferralCode;
-    }
-    
-    // Add additional filters
-    if (userId) query.userId = { $regex: userId, $options: 'i' };
-    if (email) query.email = { $regex: email, $options: 'i' };
-    if (phone) query.phone = { $regex: phone, $options: 'i' };
-    if (status) query.status = status;
 
-    const total = await SubAdminModel.countDocuments(query);
-    const subAdmins = await SubAdminModel.find(query)
-      .skip((parseInt(page) - 1) * parseInt(limit))
-      .limit(parseInt(limit))
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      data: subAdmins,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
-    });
+    let dataModel = SubAdminModel;
+    let result = await getUserListServices(req, dataModel);
+    res.json({ data: result.data, message: result.message, success: result.success });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 exports.GetSubAdminUserList = catchAsync(async (req, res, next) => {
   try {
     const user = req.user;
     console.log("User:", user.email, user.referralCode, user.userId, user.role);
     if (!user) return res.status(401).json({ success: false, message: "Authentication required" });
-  const { data, pagination } = await subAdminService.getSubAdminUsers(req.query);
 
     const result = await UserController.GetDirectDownlineTree(
       AdminModel,       // parent model
@@ -2348,3 +2277,11 @@ console.log("updateUserProfileById user:", result);
     message: result.message
   })
 });
+
+
+
+
+
+
+
+

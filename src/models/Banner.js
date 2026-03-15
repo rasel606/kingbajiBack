@@ -1,5 +1,4 @@
-// backend/models/Banner.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const bannerSchema = new mongoose.Schema({
   title: {
@@ -48,4 +47,4 @@ targetPlatform: {
   timestamps: true
 });
 
-export default mongoose.model('Banner', bannerSchema);
+module.exports = mongoose.model('Banner', bannerSchema);

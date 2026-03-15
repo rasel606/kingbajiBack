@@ -35,6 +35,7 @@ const { getReferralData } = require('../services/getReferralOwnerService');
 const { processTransaction } = require('../services/processTransactionService');
 const User = require('../models/User');
 const TransactionModel = require('../models/TransactionModel');
+const { setMultipleCookies } = require('../services/tokenService');
 // const SportsBet = require('../Models/OddSportsTable')
 exports.AgentRegister = catchAsync(async (req, res, next) => {
   try {
@@ -46,19 +47,10 @@ exports.AgentRegister = catchAsync(async (req, res, next) => {
       console.log("✅ Admin created successfully", result);
       const getway = await CreateGateWayService(result.data.user);
 
-      // Set cookies
-      res.cookie('adminToken', result.data.token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
-      });
-
-      res.cookie('adminDeviceId', result.data.deviceId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
+      // Set cookies using shared utility
+      setMultipleCookies(res, {
+        adminToken: result.data.token,
+        adminDeviceId: result.data.deviceId
       });
 
       res.status(201).json({
@@ -78,19 +70,10 @@ exports.Login = catchAsync(async (req, res, next) => {
 
     const result = await loginUser(req, AgentModel, 'Agent');
     console.log("📥 Login admin with data after:", result)
-    // Set cookies
-    res.cookie('adminToken', result.data.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000
-    });
-
-    res.cookie('adminDeviceId', result.data.deviceId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000
+    // Set cookies using shared utility
+    setMultipleCookies(res, {
+      adminToken: result.data.token,
+      adminDeviceId: result.data.deviceId
     });
 
     console.log("✅ Admin login successful for device:", result.data.deviceId);

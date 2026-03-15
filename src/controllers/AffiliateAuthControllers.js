@@ -1,5 +1,4 @@
 // controllers/authController.js
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const AffiliateModel = require('../models/AffiliateModel');
 const AppError = require('../utils/AppError');
@@ -7,8 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const SubAdmin = require('../models/SubAdminModel');
 const crypto = require("crypto");
 const bcrypt = require('bcryptjs');
-const JWT_SECRET = process.env.JWT_SECRET || "Kingbaji";
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const { signToken, setMultipleCookies } = require('../services/tokenService');
 
 // ডিভাইস ID জেনারেট করার ফাংশন
 const generateDeviceId = (req) => {
@@ -17,13 +15,11 @@ const generateDeviceId = (req) => {
     .digest('hex');
 };
 
-// টোকেন জেনারেট ফাংশন
-const generateToken = (email, deviceId) => {
-  return jwt.sign({ email, deviceId }, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+// টোকেন জেনারেট ফাংশন (custom for affiliate with extra fields)
+const generateToken = (userId, deviceId, role) => {
+  // Use signToken for simple case, or add custom logic if needed
+  return signToken(userId);
 };
-
 
 // Register new user
 exports.register = catchAsync(async (req, res, next) => {
@@ -51,7 +47,7 @@ exports.register = catchAsync(async (req, res, next) => {
   }
 
   // Hash password
-  // const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   // Generate unique referral code
   const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -68,13 +64,8 @@ exports.register = catchAsync(async (req, res, next) => {
     referralCode
   });
 
-
-
-
   // Create user
   const newUser = await AffiliateModel.findById(user._id).select('-password');
-
-
 
   // Respond with user data and token
   res.status(201).json({
@@ -86,7 +77,6 @@ exports.register = catchAsync(async (req, res, next) => {
     }
   });
 });
-
 
 // Login user
 exports.login = catchAsync(async (req, res, next) => {
@@ -182,19 +172,12 @@ exports.login = catchAsync(async (req, res, next) => {
   await user.save();
   const newUser = await AffiliateModel.findById(user._id).select('-password');
 
-    res.cookie('affiliateToken', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
-      });
+  // Set cookies using shared utility
+  setMultipleCookies(res, {
+    affiliateToken: token,
+    affiliateDeviceId: deviceId
+  });
 
-      res.cookie('affiliateDeviceId',deviceId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 24 * 60 * 60 * 1000
-      });
   // Respond with user data and token
   res.status(200).json({
     success: true,
@@ -212,7 +195,7 @@ exports.login = catchAsync(async (req, res, next) => {
 
 // Get current user
 exports.getMe = catchAsync(async (req, res, next) => {
-  console.log(req.user);
+  console.log('getMe called. req.user:', req.user);
   const user = await AffiliateModel.findOne({ userId: req.user.userId }).select('-password');
   if (!user) {
     return next(new AppError('User not found', 404));
@@ -229,7 +212,7 @@ exports.changePassword = catchAsync(async (req, res, next) => {
   const user = await AffiliateModel.findOne({ userId: req.user.userId }).select('+password');
 
   if (!(await user.comparePassword(currentPassword))) {
-    return next(new AppError('Current password is incorrect', 401));
+    return next(new AppError(req.t('user_not_found'), 401));
   }
 
   user.password = newPassword;
@@ -237,6 +220,16 @@ exports.changePassword = catchAsync(async (req, res, next) => {
 
   res.json({
     success: true,
-    message: 'Password updated successfully'
+    message: req.t('password_updated')
   });
+});
+
+// Forgot password
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  res.status(200).json({ success: true, message: 'Forgot password endpoint hit.' });
+});
+
+// Reset password
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  res.status(200).json({ success: true, message: 'Reset password endpoint hit.' });
 });
