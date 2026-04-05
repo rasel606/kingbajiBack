@@ -12,7 +12,7 @@ const router = express.Router();
 // Import Controllers
 const AuthController = require('../Controllers/AuthController');
 const TransactionController = require('../Controllers/TransactionController');
-const UserController = require('../Controllers/UserController');
+const UserController = require('../controllers/UserController');
 const CreateUserService = require('../services/CreateUserService');
 const UpdateProfile = require('../Controllers/UpdateProfile');
 const BettingController = require('../Controllers/BettingController');

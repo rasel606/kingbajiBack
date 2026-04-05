@@ -3,9 +3,9 @@
 // routes/transactionRoutes.js
 const express = require('express');
 const { body,query } = require('express-validator');
-const UserControllers = require('../Controllers/UserController');
+const UserControllers = require('../controllers/UserController');
 const auth = require('../MiddleWare/AdminAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

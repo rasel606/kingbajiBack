@@ -54,6 +54,8 @@ const announcementRoutes = require('./src/router/announcementRoutes');
 const bettingRoutes = require('./src/router/bettingRoutes');
 const vipUserRoutes = require('./src/router/vipUserRoutes');
 const realTimeBonusRoute = require('./src/router/realTimeBonusRoute');
+const adminBonusRoutes = require('./src/router/adminBonusRoutes');
+const userBonusRoutes = require('./src/router/userBonusRoutes');
 let BettingHistoryJob, SpcialBettingHistoryJob, referralBonusProcessor;
 if (!IS_TEST) {
   BettingHistoryJob = require('./src/corn/BettingHistoryJob');
@@ -103,44 +105,47 @@ app.set('socketio', io);
   });
 }
 
+
 const defaultAllowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:3000',
   'http://localhost:3001',
   'http://127.0.0.1:3001',
   'http://localhost:5000',
-  'http://127.0.0.1:5000'
+  'http://127.0.0.1:5000',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'https://png71.live',
+  'http://png71.live',
+  'https://www.png71.live',
+  'http://www.png71.live',
 ];
 
-const envAllowedOrigins = (process.env.CORS_ORIGIN || process.env.ALLOWED_ORIGINS || '')
+const envAllowedOrigins = (process.env.CORS_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-const allowedCorsOrigins = Array.from(new Set([
-  ...defaultAllowedOrigins,
-  ...envAllowedOrigins
-]));
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    // Allow non-browser or same-origin requests (no Origin header)
-    if (!origin) {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
-    // If wildcard is explicitly configured in env, allow all origins.
-    if (allowedCorsOrigins.includes('*')) {
+    
+    // Allow localhost with any port in development
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
-
-    if (allowedCorsOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    logger.warn('CORS blocked request', { origin });
-    // Do not throw server error for CORS mismatch; just disable CORS headers.
-    return callback(null, false);
+    
+    // Log rejected origins for debugging
+    console.warn(`CORS request blocked from origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -281,6 +286,8 @@ app.use('/api/user/rebet', reportRoutes);
 app.use('/api/user/betting', bettingRoutes);
 app.use('/api/user/vip', vipUserRoutes);
 app.use('/api/user/rebate', realTimeBonusRoute);
+app.use('/api/admin', adminBonusRoutes);
+app.use('/api', userBonusRoutes);
 app.use('/api/transactions', require('./src/router/transactionRoutes'));
 app.use('/api/payment-methods', paymentMethod);
 

@@ -3,7 +3,7 @@ const { body, query, validationResult } = require('express-validator');
 
 const ChatController = require('../Controllers/ChatController');
 const auth = require('../MiddleWare/subAdminAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

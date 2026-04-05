@@ -2,14 +2,14 @@
 // routes/transactionRoutes.js
 const express = require('express');
 const { body, query } = require('express-validator');
-const SubAdminControllers = require('../Controllers/SubAdminControllers');
-const AdminController = require('../Controllers/AdminController');
-const AgentController = require('../Controllers/AgentController');
-const SubAgentController = require('../Controllers/SubAgentController');
-const AffiliateController = require('../Controllers/AffiliateController');
-const auth = require('../MiddleWare/subAdminAuth');
+const SubAdminControllers = require('../controllers/SubAdminControllers');
+const AdminController = require('../controllers/AdminController');
+const AgentController = require('../controllers/AgentController');
+const SubAgentController = require('../controllers/SubAgentController');
+const AffiliateController = require('../controllers/AffiliateController');
+const auth = require('../middleWare/subAdminAuth');
 const validate = require('../middleWare/validation');
-const {register, loginUser} = require('../Controllers/AuthController');
+const {register, loginUser} = require('../controllers/AuthController');
 const router = express.Router();
 
 // Search transactions

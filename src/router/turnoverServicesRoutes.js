@@ -3,7 +3,7 @@ const express = require('express');
 const { body,query } = require('express-validator');
 const turnOverServices = require('../services/turnOverServices');
 const {auth} = require('../MiddleWare/auth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

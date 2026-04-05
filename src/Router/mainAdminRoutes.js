@@ -2,20 +2,20 @@
 // routes/transactionRoutes.js
 const express = require('express');
 const { body, query } = require('express-validator');
-const SubAdminControllers = require('../Controllers/SubAdminControllers');
-const AdminController = require('../Controllers/AdminController');
-const AgentController = require('../Controllers/AgentController');
-const auth = require('../MiddleWare/AdminAuth');
-const validate = require('../MiddleWare/validation');
+const SubAdminControllers = require('../controllers/SubAdminControllers');
+const AdminController = require('../controllers/AdminController');
+const AgentController = require('../controllers/AgentController');
+const auth = require('../middleWare/AdminAuth');
+const validate = require('../middleWare/validation');
 const ModelBettingController = require('../controllers/modelBettingController');
-const GameListControllers = require('../Controllers/GameListControllers');
-const GameMovementController = require('../Controllers/GameMovementController');
+const GameListControllers = require('../controllers/GameListControllers');
+const GameMovementController = require('../controllers/GameMovementController');
 const getPlayerUserGameData = require('../services/getPlayerUserGameData');
-const ProviderController = require('../Controllers/providerController');
-const Refresh_blance = require('../Controllers/Refresh_blance');
-const UserControllers = require('../Controllers/UserController');
-const MainTransactinController = require('../Controllers/MainTransactinController');
-const apiIntregationsController = require('../Controllers/apiIntregationsController');
+const ProviderController = require('../controllers/providerController');
+const Refresh_blance = require('../controllers/Refresh_blance');
+const UserControllers = require('../controllers/UserController');
+const MainTransactinController = require('../controllers/MainTransactinController');
+const apiIntregationsController = require('../controllers/apiIntregationsController');
 const router = express.Router();
 
 // Search transactions

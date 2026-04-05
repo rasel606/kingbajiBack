@@ -45,7 +45,7 @@ const { processTransaction } = require('../services/processTransactionService');
 
 
 const CreateGateWayService = require('../services/CreateGateWayService');
-const UserController = require('../Controllers/UserController');
+const UserController = require('../controllers/UserController');
 const GetWayControllers = require('../Controllers/GetWayControllers');
 const paymentMethodController = require('../Controllers/paymentMethodController');
 const SubAgentModel = require('../models/SubAgentModel');

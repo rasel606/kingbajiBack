@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const AdminController = require('../Controllers/AdminController');
-const apiIntregationsController = require('../Controllers/apiIntregationsController');
+const AdminController = require('../controllers/AdminController');
+const apiIntregationsController = require('../controllers/apiIntregationsController');
 const auth = require('../middleWare/AdminAuth');
-const validate = require('../middleWare/validation');
+const validate = require('../middleWare/validate');
 
 // Commission & Balance
 router.get('/affiliate_get_commissionSettings', validate, auth, AdminController.affiliate_get_commissionSettings);

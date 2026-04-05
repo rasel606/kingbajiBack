@@ -1,9 +1,9 @@
 // routes/subAdminRoutes.js
 const express = require('express');
 const { body } = require('express-validator');
-const SubAdminControllers = require('../Controllers/AdminController');
+const SubAdminControllers = require('../controllers/AdminController');
 const auth = require('../MiddleWare/subAdminAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

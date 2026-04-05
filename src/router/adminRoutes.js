@@ -2,21 +2,21 @@
 // routes/transactionRoutes.js
 const express = require('express');
 const { body, query, validationResult } = require('express-validator');
-const SubAdminControllers = require('../Controllers/SubAdminControllers');
-const AdminController = require('../Controllers/AdminController');
-const AgentController = require('../Controllers/AgentController');
-const ModelBettingController = require('../Controllers/ModelBettingController');
-const GameListControllers = require('../Controllers/GameListControllers');
-const GameMovementController = require('../Controllers/GameMovementController');
-const getPlayerUserGameData = require('../Services/getPlayerUserGameData');
-const ProviderController = require('../Controllers/providerController');
-const Refresh_blance = require('../Controllers/Refresh_blance');
-const auth = require('../MiddleWare/AdminAuth');
-const validate = require('../MiddleWare/validation');
-const CreateUserService = require("../Services/CreateUserService");
-const {register, loginUser} = require('../Controllers/AuthController');
-const apiIntregationsController = require('../Controllers/apiIntregationsController');
-const UpdateProfile = require('../Controllers/UpdateProfile');
+const SubAdminControllers = require('../controllers/SubAdminControllers');
+const AdminController = require('../controllers/AdminController');
+const AgentController = require('../controllers/AgentController');
+const ModelBettingController = require('../controllers/modelBettingController');
+const GameListControllers = require('../controllers/GameListControllers');
+const GameMovementController = require('../controllers/GameMovementController');
+const getPlayerUserGameData = require('../services/getPlayerUserGameData');
+const ProviderController = require('../controllers/providerController');
+const Refresh_blance = require('../controllers/Refresh_blance');
+const auth = require('../middleWare/AdminAuth');
+const validate = require('../middleWare/validation');
+const CreateUserService = require("../services/CreateUserService");
+const {register, loginUser} = require('../controllers/AuthController');
+const apiIntregationsController = require('../controllers/apiIntregationsController');
+const UpdateProfile = require('../controllers/UpdateProfile');
 const router = express.Router();
 
 // Search transactions

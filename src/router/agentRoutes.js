@@ -1,16 +1,15 @@
-
 // routes/transactionRoutes.js
 const express = require('express');
 const { body, query } = require('express-validator');
-const SubAdminControllers = require('../Controllers/SubAdminControllers');
-const AdminController = require('../Controllers/AdminController');
-const AgentController = require('../Controllers/AgentController');
-const SubAgentController = require('../Controllers/SubAgentController');
-const auth = require('../MiddleWare/AgentAuth');
-const {register, loginUser} = require('../Controllers/AuthController');
-const UserControllers = require('../Controllers/UserController');
+const SubAdminControllers = require('../controllers/SubAdminControllers');
+const AdminController = require('../controllers/AdminController');
+const AgentController = require('../controllers/AgentController');
+const SubAgentController = require('../controllers/SubAgentController');
+const auth = require('../middleWare/AgentAuth');
+const {register, loginUser} = require('../controllers/AuthController');
+const UserController = require('../controllers/UserController');
 
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

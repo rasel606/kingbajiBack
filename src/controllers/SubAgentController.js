@@ -14,7 +14,7 @@ const GetWayControllers = require('../Controllers/GetWayControllers');
 const SubAgentModel = require('../models/SubAgentModel')
 const AgentModel = require('../models/AgentModel')
 const TransactionModel = require('../models/TransactionModel');
-const UserController = require('../Controllers/UserController');
+const UserController = require('../controllers/UserController');
 
 
 const { createUser } = require('../services/CreateService');

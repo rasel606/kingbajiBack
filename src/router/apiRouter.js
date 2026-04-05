@@ -1,34 +1,34 @@
 const express = require('express')
 const router = express.Router()
-const AdminController = require("../Controllers/AdminController")
+const AdminController = require('../controllers/AdminController')
 const CreateUserService = require("../services/CreateUserService");
-const UpdateProfile = require('../Controllers/UpdateProfile');
+const UpdateProfile = require('../controllers/UpdateProfile');
 
-const BettingController = require('../Controllers/BettingController');
+const BettingController = require('../controllers/BettingController');
 
 const ModelBettingController = require('../controllers/modelBettingController');
-const TransactionController = require('../Controllers/TransactionController');
-const AffiliateController = require('../Controllers/AffiliateController');
-const AffiliateDashboardController = require('../Controllers/AffiliateDashboardController');
-const AffiliateMemberController = require('../Controllers/AffiliateMemberController');
+const TransactionController = require('../controllers/TransactionController');
+const AffiliateController = require('../controllers/AffiliateController');
+const AffiliateDashboardController = require('../controllers/AffiliateDashboardController');
+const AffiliateMemberController = require('../controllers/AffiliateMemberController');
 
-const AgentController = require('../Controllers/AgentController');
+const AgentController = require('../controllers/AgentController');
 
-const Refresh_blance = require('../Controllers/Refresh_blance');
+const Refresh_blance = require('../controllers/Refresh_blance');
 
-const bettingHistoryController = require ("../Controllers/bettingHistoryController")
+const bettingHistoryController = require ("../controllers/bettingHistoryController")
 
 const GetAllUser= require('../services/GetAllUser');
 // const { Transaction } = require('mongodb');
-const { getDailyWager } = require('../Controllers/MyController');
-const blank= require('../Controllers/blank');
+const { getDailyWager } = require('../controllers/MyController');
+const blank= require('../controllers/blank');
 
-const notificationController = require('../Controllers/notificationController');
-const BankController = require('../Controllers/BankController');
+const notificationController = require('../controllers/notificationController');
+const BankController = require('../controllers/BankController');
 
 const {auth} = require('../middleWare/auth');
-const { createBonus,getAllBonuses } = require('../Controllers/BonusTransactionController');
-const {register, loginUser} = require('../Controllers/AuthController');
+const { createBonus,getAllBonuses } = require('../controllers/BonusTransactionController');
+const {register, loginUser} = require('../controllers/AuthController');
 
 // const BonusTransactionController = require('../Controllers/vipBonusesController');
 const { Console } = require('winston/lib/winston/transports');

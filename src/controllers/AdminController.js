@@ -37,7 +37,7 @@ const AppError = require('../utils/AppError');
 
 const TransactionModel = require('../models/TransactionModel');
 // const notificationController = require('../Controllers/notificationController');
-const UserController = require('../Controllers/UserController');
+const UserController = require('../controllers/UserController');
 const paymentMethodController = require('../Controllers/paymentMethodController');
 // const SubAdminModel = require('../Models/SubAdminModel');
 // const SubAdminModel = require('../Models/SubAdminModel');

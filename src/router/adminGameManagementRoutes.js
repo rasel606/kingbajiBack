@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const AdminController = require('../Controllers/AdminController');
-const getPlayerUserGameData = require('../Services/getPlayerUserGameData');
+const AdminController = require('../controllers/AdminController');
+const getPlayerUserGameData = require('../services/getPlayerUserGameData');
 const auth = require('../middleWare/AdminAuth');
 const validate = require('../middleWare/validation');
 

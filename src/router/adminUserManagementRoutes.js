@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const SubAdminControllers = require('../Controllers/SubAdminControllers');
-const AdminController = require('../Controllers/AdminController');
-const AgentController = require('../Controllers/AgentController');
-const CreateUserService = require("../Services/CreateUserService");
-const { register } = require('../Controllers/AuthController');
-const UpdateProfile = require('../Controllers/UpdateProfile');
+const SubAdminControllers = require('../controllers/SubAdminControllers');
+const AdminController = require('../controllers/AdminController');
+const AgentController = require('../controllers/AgentController');
+const CreateUserService = require("../services/CreateUserService");
+const { register } = require('../controllers/AuthController');
+const UpdateProfile = require('../controllers/UpdateProfile');
 const auth = require('../middleWare/AdminAuth');
 const validate = require('../middleWare/validation');
 

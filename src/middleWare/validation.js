@@ -4,7 +4,7 @@ const AppError = require('../utils/AppError');
 
 const validate = (req, res, next) => {
   const errors = validationResult(req);
-  console.log(errors);
+  // console.log(errors); // Removed for production cleanliness
   if (!errors.isEmpty()) {
     const errorMessages = errors.array().map(error => error.msg);
     return next(new AppError(errorMessages.join('. '), 400));

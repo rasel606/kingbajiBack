@@ -42,12 +42,12 @@
 // routes/transactionRoutes.js
 const express = require('express');
 const { body,query } = require('express-validator');
-const AdminController = require('../Controllers/AdminController');
+const AdminController = require('../controllers/AdminController');
 const newTransactionController = require('../controllers/newTransactionController');
 const { validationResult } = require('express-validator');``
-const auth = require('../MiddleWare/AdminAuth');
-const validate = require('../MiddleWare/validation');
-const MainTransactinController = require('../Controllers/MainTransactinController');
+const auth = require('../middleWare/AdminAuth');
+const validate = require('../middleWare/validation');
+const MainTransactinController = require('../controllers/MainTransactinController');
 
 const router = express.Router();
 

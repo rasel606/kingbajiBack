@@ -8,7 +8,7 @@ const {
   verifyContact
 } = require('../Controllers/AffiliateProfileController');
 const {protectAffiliate} = require('../middleWare/affiliateAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

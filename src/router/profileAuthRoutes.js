@@ -13,7 +13,7 @@ const {
 } = require('../controllers/ProfileAuthController');
 const { protect } = require('../MiddleWare/auth');
 const { protectAffiliate } = require('../MiddleWare/affiliateAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

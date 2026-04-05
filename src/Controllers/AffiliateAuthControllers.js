@@ -233,3 +233,8 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 exports.resetPassword = catchAsync(async (req, res, next) => {
   res.status(200).json({ success: true, message: 'Reset password endpoint hit.' });
 });
+
+// Register affiliate user
+// (Route definitions removed; should be in router files)
+
+const {register, loginUser} = require('../controllers/AuthController');

@@ -3,12 +3,12 @@
 const express = require('express');
 const { body, query } = require('express-validator');
 
-const SubAgentController = require('../Controllers/SubAgentController');
-const auth = require('../MiddleWare/SubAgentAuth');
-const {register, loginUser} = require('../Controllers/AuthController');
+const SubAgentController = require('../controllers/SubAgentController');
+const auth = require('../middleWare/SubAgentAuth');
+const {register, loginUser} = require('../controllers/AuthController');
 
 
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

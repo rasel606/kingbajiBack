@@ -1,4 +1,4 @@
-const BonusConfiguration = require('../models/BonusConfiguration');
+
 
 /**
  * Bonus Setup Configuration
@@ -381,23 +381,18 @@ const bonusConfigurations = [
  */
 async function setupBonusConfigurations() {
   try {
-    console.log('🔧 Setting up Bonus Configurations...');
-    
+    // Removed console logs for production cleanliness
     for (const config of bonusConfigurations) {
       const existing = await BonusConfiguration.findOne({ bonusId: config.bonusId });
-      
       if (existing) {
-        console.log(`⚠️  Bonus already exists: ${config.bonusId}`);
         // Update existing
         await BonusConfiguration.findOneAndUpdate(
           { bonusId: config.bonusId },
           config,
           { new: true }
         );
-        console.log(`✅ Updated: ${config.bonusId}`);
       } else {
         await BonusConfiguration.create(config);
-        console.log(`✅ Created: ${config.bonusId}`);
       }
     }
     
@@ -405,7 +400,7 @@ async function setupBonusConfigurations() {
     return { success: true, count: bonusConfigurations.length };
     
   } catch (error) {
-    console.error('❌ Setup Bonus Configurations Error:', error);
+    // Removed console.error for production cleanliness
     throw error;
   }
 }

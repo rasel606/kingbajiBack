@@ -18,7 +18,7 @@ const cookieHandler = require('../src/middleWare/cookieHandler');
 const logger = require('../src/utils/logger');
 
 const apiRouter = require('../src/router/apiRouter');
-// const adminAuth = require('../src/router/adminAuth');
+
 const transactionRoutes = require('../src/router/transactionRoutes');
 const subAdminRoutes = require('../src/router/subAdminRoutes');
 const subAdminAurth = require('../src/router/subAdminAurth');
@@ -58,7 +58,6 @@ const referralRoutes = require('../src/router/referralRoutes');
 // Import Live Chat Routes
 const chatRoutes = require('../src/router/chatRoutes');
 const adminAuth = require('../src/middleWare/AdminAuth');
-const adminAuthRouter = require('../src/router/adminAuth');
 const AdminController = require('../src/controllers/AdminController');
 // Import Provider and Bonus Routes
 const providerRoutes = require('../src/router/providerRoutes');
@@ -146,7 +145,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
 app.use("/api/v1", apiRouter);
-app.use('/api/admin/auth', adminAuthRouter);
+app.use('/api/admin/auth', adminAuth);
 app.use('/api/admin', mainAdminRoutes);
 app.use('/api/adminannouncement', announcementRoutes);
 

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const AdminController = require('../Controllers/AdminController');
-const SubAdminControllers = require('../Controllers/SubAdminControllers');
+const AdminController = require('../controllers/AdminController');
+const SubAdminControllers = require('../controllers/SubAdminControllers');
 const auth = require('../middleWare/AdminAuth');
 const validate = require('../middleWare/validation');
 

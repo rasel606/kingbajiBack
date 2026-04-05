@@ -7,7 +7,7 @@ const {
   getWithdrawalById
 } = require('../controllers/withdrawalController');
 const {protectAffiliate} = require('../MiddleWare/affiliateAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 

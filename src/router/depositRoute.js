@@ -3,7 +3,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const {depositInitiate, depositConfirm, depositHistory} = require('../Services/depositServices');
 const auth = require('../MiddleWare/subAdminAuth');
-const validate = require('../MiddleWare/validation');
+const validate = require('../middleWare/validation');
 
 const router = express.Router();
 
