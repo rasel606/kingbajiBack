@@ -134,5 +134,14 @@ router.put(
 // Delete a bonus
 router.delete('/delete_bonus/:bonusId', auth, AdminController.deleteBonus);
 
+// VIP Level Configuration Routes
+// Initialize all VIP levels with default or custom configuration
+router.post('/vip-levels/initialize', auth, validate, AdminController.initializeVipLevels);
+
+// Get current VIP levels configuration
+router.get('/vip-levels/config', auth, validate, AdminController.getVipLevelsConfig);
+
+// Update a specific VIP level
+router.put('/vip-levels/:level', auth, validate, AdminController.updateVipLevel);
 
 module.exports = router;
